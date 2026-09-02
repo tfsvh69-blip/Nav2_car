@@ -1,0 +1,10 @@
+build/
+install/
+log/
+
+# Editor and Python cache files
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+
