@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>rosmaster_vendor</name>
+  <version>3.3.9</version>
+  <description>Vendor packaging for the Yahboom Rosmaster Python driver V3.3.9.</description>
+  <maintainer email="maintainer@example.com">carcar maintainers</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>python3-serial</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+

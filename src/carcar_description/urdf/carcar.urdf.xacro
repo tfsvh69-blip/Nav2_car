@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="carcar">
+  <!-- 通用安全初值：实车测量后再修改。单位均为 SI。 -->
+  <xacro:property name="body_length" value="0.36"/>
+  <xacro:property name="body_width" value="0.30"/>
+  <xacro:property name="body_height" value="0.12"/>
+  <xacro:property name="wheel_radius" value="0.048"/>
+  <xacro:property name="wheel_width" value="0.030"/>
+  <xacro:property name="wheel_x" value="0.125"/>
+  <xacro:property name="wheel_y" value="0.165"/>
+
+  <material name="body_blue"><color rgba="0.08 0.30 0.55 1.0"/></material>
+  <material name="wheel_black"><color rgba="0.04 0.04 0.04 1.0"/></material>
+  <material name="sensor_gray"><color rgba="0.35 0.35 0.35 1.0"/></material>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${body_height / 2}"/>
+      <geometry><box size="${body_length} ${body_width} ${body_height}"/></geometry>
+      <material name="body_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${body_height / 2}"/>
+      <geometry><box size="${body_length} ${body_width} ${body_height}"/></geometry>
+    </collision>
+  </link>
+
+  <xacro:macro name="wheel" params="name x y">
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${x} ${y} 0" rpy="${pi / 2} 0 0"/>
+    </joint>
+    <link name="${name}_link">
+      <visual>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="wheel_black"/>
+      </visual>
+    </link>
+  </xacro:macro>
+
+  <xacro:wheel name="front_left_wheel" x="${wheel_x}" y="${wheel_y}"/>
+  <xacro:wheel name="front_right_wheel" x="${wheel_x}" y="${-wheel_y}"/>
+  <xacro:wheel name="rear_left_wheel" x="${-wheel_x}" y="${wheel_y}"/>
+  <xacro:wheel name="rear_right_wheel" x="${-wheel_x}" y="${-wheel_y}"/>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.07" rpy="0 0 0"/>
+  </joint>
+  <link name="imu_link"/>
+
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_frame"/>
+    <origin xyz="0 0 0.20" rpy="0 0 0"/>
+  </joint>
+  <link name="laser_frame">
+    <visual>
+      <geometry><cylinder radius="0.04" length="0.04"/></geometry>
+      <material name="sensor_gray"/>
+    </visual>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.12 0 0.16" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_link"/>
+</robot>
+

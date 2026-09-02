@@ -1,10 +1,11 @@
 build/
 install/
 log/
-
-# Editor and Python cache files
+.colcon/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
 .vscode/
 .idea/
-__pycache__/
-*.pyc
-

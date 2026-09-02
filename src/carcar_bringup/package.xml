@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carcar_bringup</name>
+  <version>0.1.0</version>
+  <description>Top-level launch composition for the Carcar robot.</description>
+  <maintainer email="maintainer@example.com">carcar maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>carcar_base</exec_depend>
+  <exec_depend>carcar_description</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+

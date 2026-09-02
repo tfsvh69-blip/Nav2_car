@@ -1,98 +1,71 @@
-# 巡检小车 ROS 2 工程
+# carcar 导航巡检小车
 
-这是一个独立的 ROS 2 Jazzy 工作空间。当前阶段只接入 RPLIDAR A1，目标是验证雷达能否发布 `/scan`，并在 RViz2 中显示；后续可继续加入底盘、深度相机、机器人描述和 Nav2。
+面向 ROS 2 Humble 的分层工作空间。当前阶段已经接入 Yahboom Rosmaster V3.3.9 底层库，并建立底盘、机器人描述、导航、算法和巡检应用的独立包边界。
 
-## 目录结构
+## 软件分层
 
 ```text
-my_nav2_car/
-├── src/
-│   ├── inspection_bringup/   # 本项目统一启动、参数和 RViz 配置
-│   └── sllidar_ros2/         # SLAMTEC 官方驱动
-├── docs/                      # 硬件实测结论与长期维护记录
-├── scripts/                  # 构建、设备检查和启动脚本
-└── dependencies.repos        # 外部源码版本记录
+硬件串口 / Rosmaster 控制板
+        ↓
+rosmaster_vendor       原厂 Python 驱动（第三方代码，仅封装安装）
+        ↓
+carcar_base            cmd_vel、电机、IMU、编码器、里程计、电池
+        ↓
+carcar_description     URDF/Xacro 与 base_link/传感器静态 TF
+        ↓
+carcar_navigation      SLAM、定位、Nav2 参数与启动入口
+        ↓
+carcar_algorithms      后续感知/规划算法
+        ↓
+carcar_inspection      后续巡检任务、状态机与业务接口
+
+carcar_bringup         只负责编排各层，不承载业务代码
 ```
 
-所有构建产物都生成在本目录的 `build/`、`install/`、`log/` 中。
+项目文档入口见 [文档索引](docs/文档索引.md)。其中包含架构设计、硬件台账、完整测试记录和上车前检查说明。
 
-## 1. 插入雷达并检查设备
+当前仅连接 M1、M2 时，请先按 [电机测试](docs/电机测试.md) 完成架空低速点动测试，不要启动完整机器人 bringup。
 
-不要给不确定用途的红黑线直接接 12 V。先连接原装 USB 转接板，然后执行：
-
-```bash
-./scripts/check_lidar.sh
-```
-
-早期 RPLIDAR A1 通常显示为 `/dev/ttyUSB0`，波特率为 `115200`。如果没有串口，先检查 USB 接线和当前系统/容器是否获得 USB 设备访问权限。
-
-本工程默认使用这颗 A1 固件支持的 `Express` 扫描模式（4 kHz），比 `Standard`（2 kHz）每圈点数更多。需要排障时，可在 launch 命令后传入 `scan_mode:=Standard`。
-
-当前硬件已确认的稳定读数范围为 **0.10～3.00 m**。这是当前设备和测试条件下的实测稳定范围，不等同于驱动报告的 12 m 理论最大量程。详细信息、后续更新和可复制命令见[硬件实测记录](docs/硬件实测记录.md#常用命令速查)。
-
-如果串口存在但当前用户没有权限，临时测试可执行：
+## 快速开始
 
 ```bash
-sudo chmod a+rw /dev/ttyUSB0
-```
-
-长期使用建议配置 udev 规则或把用户加入系统的串口设备组，而不是每次修改权限。
-
-## 2. 构建
-
-```bash
-./scripts/build.sh
-```
-
-## 3. 启动雷达和 RViz2
-
-```bash
-./scripts/run_lidar.sh
-```
-
-脚本默认使用 `/dev/ttyUSB0`。如果设备名不同：
-
-```bash
-./scripts/run_lidar.sh /dev/ttyUSB1
-```
-
-也可以直接使用 ROS 2 launch，并覆盖任意参数：
-
-```bash
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/humble/setup.bash
+sudo apt update
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
 source install/setup.bash
-export ROS_LOG_DIR="$PWD/log/ros"
-ros2 launch inspection_bringup lidar_test.launch.py \
-  serial_port:=/dev/ttyUSB0 \
-  serial_baudrate:=115200 \
-  use_rviz:=true
+ros2 launch carcar_bringup robot.launch.py
 ```
 
-启动成功后，RViz2 中应出现一圈随障碍物变化的点。另开终端验证数据：
+如果系统尚未初始化 rosdep，请先执行 `sudo rosdep init`（仅首次）和 `rosdep update`。导航阶段需要安装 `nav2_bringup` 与 `slam_toolbox`；依赖声明会让 rosdep 自动处理它们。
+
+先架空轮子测试：
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source install/setup.bash
-ros2 topic list
-ros2 topic hz /scan
-ros2 topic echo /scan --once
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.10}, angular: {z: 0.0}}"
+ros2 topic echo /imu/data_raw
+ros2 topic echo /wheel/odometry
 ```
 
-## 常见问题
+停止发送速度指令后，驱动节点会在 0.5 秒内触发看门狗并停车。
 
-- `cannot open /dev/ttyUSB0`：设备名不对、设备未透传到当前环境或串口权限不足。
-- `Wrong body size`、无数据或通信超时：先确认型号；A1 用 `115200`，不要直接套用较新型号的高波特率。
-- `scan mode ... is not supported` 或 `Can not start scan: 80008001`：扫描模式不受当前固件支持。本机已经确认支持 `Standard`、`Express`、`Boost` 和 `Stability`，不支持 `Sensitivity`。
-- 电机转但没有扫描点：查看启动终端里的 health/通信错误，并确认 RViz Fixed Frame 为 `base_link`、LaserScan Topic 为 `/scan`，且存在 `base_link → laser` TF。
-- RViz 报 Qt/display 错误：当前会话没有图形显示能力。可先传入 `use_rviz:=false`，用 `ros2 topic hz /scan` 验证雷达数据。
-- 点云方向相反：启动时增加 `inverted:=true`。
+## 导航阶段入口
 
-## 后续扩展约定
+建图、保存地图后导航的命令已预留：
 
-- `inspection_bringup`：全车 launch 与运行参数。
-- 后续建议新增 `inspection_description`：URDF/Xacro 和 TF。
-- 后续建议新增 `inspection_base`：底盘通信、里程计与控制。
-- 后续建议新增 `inspection_perception`：深度相机及感知节点。
-- 后续建议新增 `inspection_navigation`：SLAM、定位和 Nav2 参数。
+```bash
+# 终端 1：机器人本体
+ros2 launch carcar_bringup robot.launch.py
 
-各硬件驱动保持为独立上游包，本项目只在 bringup 层组合它们，便于替换硬件和单独测试。
+# 终端 2：建图
+ros2 launch carcar_navigation slam.launch.py
+
+# 保存地图（示例）
+ros2 run nav2_map_server map_saver_cli -f maps/site
+
+# 使用已有地图定位与导航
+ros2 launch carcar_navigation navigation.launch.py map:=/absolute/path/to/site.yaml
+```
+
+尺寸、雷达安装位、车辆型号和速度上限目前是安全的通用初值，上车前必须按实车修改 `carcar_base/config/base.yaml` 与 `carcar_description/urdf/carcar.urdf.xacro`。
