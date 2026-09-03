@@ -13,6 +13,8 @@ carcar_base            cmd_vel、电机、IMU、编码器、里程计、电池
         ↓
 carcar_description     URDF/Xacro 与 base_link/传感器静态 TF
         ↓
+carcar_lidar           RPLIDAR A1 的 Humble 驱动编排与 RViz 测试
+        ↓
 carcar_navigation      SLAM、定位、Nav2 参数与启动入口
         ↓
 carcar_algorithms      后续感知/规划算法
@@ -25,6 +27,8 @@ carcar_bringup         只负责编排各层，不承载业务代码
 项目文档入口见 [文档索引](docs/文档索引.md)。其中包含架构设计、硬件台账、完整测试记录和上车前检查说明。
 
 当前仅连接 M1、M2 时，请先按 [电机测试](docs/电机测试.md) 完成架空低速点动测试，不要启动完整机器人 bringup。
+
+RPLIDAR A1 在当前 Jetson/Humble 上的独立测试请按[激光雷达 Humble 迁移与测试](docs/激光雷达Humble迁移与测试.md)执行。V1.0 的 Jazzy 雷达入口继续保留，不作为 Humble 的启动命令。
 
 ## 快速开始
 
