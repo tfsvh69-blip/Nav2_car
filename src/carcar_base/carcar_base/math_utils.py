@@ -64,3 +64,39 @@ def two_motor_pwm(
     motor_1 = int(round(max_pwm * motor_1 / scale)) * motor_1_sign
     motor_2 = int(round(max_pwm * motor_2 / scale)) * motor_2_sign
     return motor_1, motor_2
+
+
+def single_motor_pwm(motor_number: int, pwm: int) -> tuple[int, int, int, int]:
+    """Return one positive PWM command with all other motor outputs at zero."""
+    if motor_number not in (1, 2, 3, 4):
+        raise ValueError('motor_number must be between 1 and 4')
+    if pwm < 1 or pwm > 20:
+        raise ValueError('pwm must be between 1 and 20')
+
+    command = [0, 0, 0, 0]
+    command[motor_number - 1] = pwm
+    return tuple(command)
+
+
+def single_motor_command(
+    motor_number: int,
+    pwm: int,
+) -> tuple[int, int, int, int]:
+    """Return one signed PWM command with every other motor held at zero."""
+    if motor_number not in (1, 2, 3, 4):
+        raise ValueError('motor_number must be between 1 and 4')
+    if pwm == 0 or abs(pwm) > 20:
+        raise ValueError('pwm must be between -20 and 20, excluding zero')
+
+    command = [0, 0, 0, 0]
+    command[motor_number - 1] = pwm
+    return tuple(command)
+
+
+def is_zero_motion_command(
+    linear_x: float,
+    linear_y: float,
+    angular_z: float,
+) -> bool:
+    """Return whether every effective motion component is exactly zero."""
+    return linear_x == 0.0 and linear_y == 0.0 and angular_z == 0.0

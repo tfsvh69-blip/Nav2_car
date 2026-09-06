@@ -2,6 +2,10 @@
 
 本文说明如何在当前 NVIDIA Jetson（Ubuntu 22.04、ROS 2 Humble）上构建、启动和验证 RPLIDAR A1。V1.0 中基于 Ubuntu 24.04、ROS 2 Jazzy 的 `inspection_bringup`、`scripts/build.sh` 和 `scripts/run_lidar.sh` 保留为历史测试资产，不用于当前 Humble 测试。
 
+当前结论（2026-09-06）：Humble 驱动、`Express` 扫描和 `/scan` 连续发布已经可用，用户
+确认当前稳定有效距离为 0.10～3.00 m。无需重复迁移测试；本专题以后只用于故障回归，
+当前主任务是测量 `base_link -> laser_frame` 实际位姿并在 RViz 核对前/左/右方向。
+
 ## 一、迁移结论与文件入口
 
 - 厂商驱动 `src/sllidar_ros2` 未改写，继续使用 V1.0 中已验证的固定版本。
@@ -189,7 +193,7 @@ RViz 已预配置：
 2. 点云方向与雷达周边物体方位一致；若左右镜像，再测试 `inverted:=true`。
 3. RViz 的 LaserScan 状态为 `OK`，无 `No transform` 和 `No map received` 报错。
 4. 静止场景中点云没有周期性整体跳动或长时间清空。
-5. 当前已知稳定读数范围 `0.10～3.00 m` 需在 Humble 环境重新确认，不能直接沿用 Jazzy 的实机结论。
+5. 当前已确认稳定读数范围为 `0.10～3.00 m`；超出该范围不作为本车导航验收能力。
 
 如雷达安装位已经实测，可覆盖测试 TF；以下仅演示参数格式：
 
@@ -241,15 +245,13 @@ ros2 launch carcar_lidar lidar.launch.py \
   serial_port:=/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
 ```
 
-在雷达安装尺寸和朝向尚未现场测量前，不把该入口加入 `carcar_bringup robot.launch.py`，避免临时 TF 参数被误认为已标定值。
+在雷达安装尺寸和朝向尚未现场测量前，不把该入口加入 `carcar_bringup robot.launch.py`，避免临时 TF 参数被误认为已标定值。完成 TF 后即可进入正式 bringup，不再增加新的雷达底层实验。
 
-## 十、需要反馈的实测数据
+## 十、剩余实测数据
 
 请把以下结果追加到 `docs/测试记录.md` 的 `LIDAR-001`：
 
-- `Express` 和 `Standard` 各自的 `/scan` 平均频率；
-- RViz LaserScan 状态是否为 `OK`；
-- 0.10 m、1.00 m、3.00 m 目标是否稳定可见；
+- RViz 中车前、车左、车右目标的点云方位是否与实物一致；
 - 点云是否左右镜像或前后颠倒；
 - 连续运行 10 分钟有无掉线、卡转或异常发热；
 - 雷达相对 `base_link` 的实际 `x/y/z/roll/pitch/yaw`。

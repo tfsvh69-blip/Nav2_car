@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<library path="carcar_hardware">
+  <class
+    name="carcar_hardware/RosmasterSystem"
+    type="carcar_hardware::RosmasterSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Read-only Rosmaster system for raw M1/M2 encoder and board IMU state.
+    </description>
+  </class>
+</library>

@@ -1,0 +1,33 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 25
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    imu_sensor_broadcaster:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
+
+    wheel_velocity_test_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - left_wheel_joint
+      - right_wheel_joint
+
+wheel_velocity_test_controller:
+  ros__parameters:
+    joints:
+      - left_wheel_joint
+      - right_wheel_joint
+    interface_name: velocity
+
+imu_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: board_imu
+    frame_id: imu_link
+    static_covariance_orientation: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    static_covariance_angular_velocity: [0.02, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.02]
+    static_covariance_linear_acceleration: [0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]

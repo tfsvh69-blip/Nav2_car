@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="carcar_four_motor_test">
+  <xacro:arg name="serial_port" default="/dev/myserial"/>
+  <xacro:arg name="motion_enabled" default="false"/>
+
+  <!-- 仅按 M1～M4 端口编号测试，不代表实际轮位或麦克纳姆运动学。 -->
+  <link name="base_link"/>
+  <link name="motor_1_link"/>
+  <link name="motor_2_link"/>
+  <link name="motor_3_link"/>
+  <link name="motor_4_link"/>
+  <link name="imu_link"/>
+
+  <xacro:macro name="test_motor_joint" params="number x y">
+    <joint name="motor_${number}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="motor_${number}_link"/>
+      <origin xyz="${x} ${y} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+  </xacro:macro>
+  <xacro:test_motor_joint number="1" x="0.10" y="0.10"/>
+  <xacro:test_motor_joint number="2" x="0.10" y="-0.10"/>
+  <xacro:test_motor_joint number="3" x="-0.10" y="0.10"/>
+  <xacro:test_motor_joint number="4" x="-0.10" y="-0.10"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <ros2_control name="RosmasterFourMotorTestSystem" type="system">
+    <hardware>
+      <plugin>carcar_hardware/RosmasterSystem</plugin>
+      <param name="serial_port">$(arg serial_port)</param>
+      <param name="car_type">1</param>
+      <param name="motion_enabled">$(arg motion_enabled)</param>
+      <param name="max_motor_pwm">20</param>
+      <param name="encoder_timeout">0.20</param>
+    </hardware>
+    <xacro:macro name="motor_interfaces" params="number">
+      <joint name="motor_${number}_joint">
+        <command_interface name="motor_pwm"/>
+        <state_interface name="encoder_count"/>
+        <state_interface name="encoder_velocity"/>
+      </joint>
+    </xacro:macro>
+    <xacro:motor_interfaces number="1"/>
+    <xacro:motor_interfaces number="2"/>
+    <xacro:motor_interfaces number="3"/>
+    <xacro:motor_interfaces number="4"/>
+    <sensor name="board_imu">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+  </ros2_control>
+</robot>

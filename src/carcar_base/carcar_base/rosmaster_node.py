@@ -15,7 +15,12 @@ from tf2_ros import TransformBroadcaster
 
 from Rosmaster_Lib import Rosmaster
 
-from .math_utils import clamp, integrate_body_twist, yaw_to_quaternion
+from .math_utils import (
+    clamp,
+    integrate_body_twist,
+    is_zero_motion_command,
+    yaw_to_quaternion,
+)
 
 
 class RosmasterNode(Node):
@@ -139,7 +144,9 @@ class RosmasterNode(Node):
         with self._io_lock:
             self._driver.set_car_motion(velocity_x, velocity_y, angular_z)
         self._last_command_ns = self.get_clock().now().nanoseconds
-        self._watchdog_stopped = False
+        self._watchdog_stopped = is_zero_motion_command(
+            velocity_x, velocity_y, angular_z
+        )
 
     def _update(self) -> None:
         now = self.get_clock().now()

@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="carcar_read_only_test">
+  <xacro:arg name="serial_port" default="/dev/myserial"/>
+
+  <!-- 仅供底层接口测试，尺寸不是正式底盘参数。 -->
+  <link name="base_link"/>
+  <link name="left_wheel_link"/>
+  <link name="right_wheel_link"/>
+  <link name="imu_link"/>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <origin xyz="0 0.10 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <origin xyz="0 -0.10 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <ros2_control name="RosmasterReadOnlySystem" type="system">
+    <hardware>
+      <plugin>carcar_hardware/RosmasterSystem</plugin>
+      <param name="serial_port">$(arg serial_port)</param>
+      <param name="car_type">1</param>
+    </hardware>
+    <joint name="left_wheel_joint">
+      <state_interface name="encoder_count"/>
+      <state_interface name="encoder_velocity"/>
+    </joint>
+    <joint name="right_wheel_joint">
+      <state_interface name="encoder_count"/>
+      <state_interface name="encoder_velocity"/>
+    </joint>
+    <sensor name="board_imu">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+  </ros2_control>
+</robot>

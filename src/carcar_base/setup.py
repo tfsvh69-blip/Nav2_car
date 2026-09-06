@@ -26,6 +26,13 @@ setup(
     entry_points={
         'console_scripts': [
             'rosmaster_node = carcar_base.rosmaster_node:main',
+            'safe_velocity_pulse = carcar_base.safe_velocity_pulse:main',
+            'four_motor_forward_pulse = '
+            'carcar_base.four_motor_forward_pulse:main',
+            'motor_mapping_sequence = '
+            'carcar_base.motor_mapping_sequence:main',
+            'wheel_forward_sequence = '
+            'carcar_base.wheel_forward_sequence:main',
             'two_motor_test_node = carcar_base.two_motor_test_node:main',
         ],
     },
