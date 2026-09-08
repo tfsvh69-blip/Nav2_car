@@ -1,0 +1,25 @@
+board_closed_loop_test_driver:
+  ros__parameters:
+    serial_port: /dev/myserial
+    # Yahboom ROSMASTER X3；车体速度由控制板做麦克纳姆分配和编码器 PID。
+    car_type: 1
+    drive_mode: board_motion_pid
+    holonomic: true
+    publish_rate: 25.0
+    command_timeout: 0.3
+    # 直接键盘控制的安全默认上限；teleop_twist_keyboard 的默认 0.5 会在此限幅。
+    max_linear_x: 0.02
+    max_linear_y: 0.02
+    max_angular_z: 0.10
+    base_frame: base_footprint
+    odom_frame: board_closed_loop_test_odom
+    imu_frame: imu_link
+    publish_odom_tf: false
+    battery_min_voltage: 9.6
+    battery_max_voltage: 12.6
+    debug_serial: false
+    # RQT 暂存值；motion_pid_apply=true 时才临时写入控制板，绝不写 Flash。
+    motion_kp: 0.8
+    motion_ki: 0.06
+    motion_kd: 0.5
+    motion_pid_apply: false

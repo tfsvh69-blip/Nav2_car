@@ -33,6 +33,15 @@ setup(
             'carcar_base.motor_mapping_sequence:main',
             'wheel_forward_sequence = '
             'carcar_base.wheel_forward_sequence:main',
+            'chassis_motion_keyboard = '
+            'carcar_base.chassis_motion_keyboard:main',
+            'chassis_direct_keyboard = '
+            'carcar_base.chassis_direct_keyboard:main',
+            'board_motion_mapping_probe = '
+            'carcar_base.board_motion_mapping_probe:main',
+            'four_motor_motion_test_node = '
+            'carcar_base.four_motor_motion_test_node:main',
+            'imu_axis_observer = carcar_base.imu_axis_observer:main',
             'two_motor_test_node = carcar_base.two_motor_test_node:main',
         ],
     },

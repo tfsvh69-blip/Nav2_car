@@ -7,18 +7,23 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
 import rclpy
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import BatteryState, Imu
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float32MultiArray, Int32MultiArray
 from tf2_ros import TransformBroadcaster
 
 from Rosmaster_Lib import Rosmaster
 
 from .math_utils import (
     clamp,
-    integrate_body_twist,
+    integrate_body_delta,
     is_zero_motion_command,
+    mecanum_body_delta_from_encoder_counts,
+    validate_mecanum_odometry_parameters,
+    validate_motion_pid,
     yaw_to_quaternion,
 )
 
@@ -31,6 +36,7 @@ class RosmasterNode(Node):
 
         self.declare_parameter('serial_port', '/dev/myserial')
         self.declare_parameter('car_type', 1)
+        self.declare_parameter('drive_mode', 'board_motion_pid')
         self.declare_parameter('holonomic', True)
         self.declare_parameter('publish_rate', 25.0)
         self.declare_parameter('command_timeout', 0.5)
@@ -41,12 +47,28 @@ class RosmasterNode(Node):
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('imu_frame', 'imu_link')
         self.declare_parameter('publish_odom_tf', False)
+        self.declare_parameter('wheel_odometry_enabled', False)
+        self.declare_parameter('wheel_diameter_m', 0.060)
+        self.declare_parameter('wheelbase_m', 0.120)
+        self.declare_parameter('track_width_m', 0.185)
+        self.declare_parameter('wheel_counts_per_revolution', [0.0] * 4)
+        self.declare_parameter('wheel_encoder_signs', [1] * 4)
+        self.declare_parameter(
+            'wheel_port_wheels',
+            ['left_front', 'left_rear', 'right_front', 'right_rear'],
+        )
+        self.declare_parameter('wheel_odom_max_count_delta', 100000)
         self.declare_parameter('battery_min_voltage', 9.6)
         self.declare_parameter('battery_max_voltage', 12.6)
         self.declare_parameter('debug_serial', False)
+        self.declare_parameter('motion_kp', 0.8)
+        self.declare_parameter('motion_ki', 0.06)
+        self.declare_parameter('motion_kd', 0.5)
+        self.declare_parameter('motion_pid_apply', False)
 
         self._serial_port = str(self.get_parameter('serial_port').value)
         self._car_type = int(self.get_parameter('car_type').value)
+        self._drive_mode = str(self.get_parameter('drive_mode').value)
         self._holonomic = bool(self.get_parameter('holonomic').value)
         self._publish_rate = float(self.get_parameter('publish_rate').value)
         self._command_timeout = float(
@@ -61,21 +83,73 @@ class RosmasterNode(Node):
         self._publish_odom_tf = bool(
             self.get_parameter('publish_odom_tf').value
         )
+        self._wheel_odometry_enabled = bool(
+            self.get_parameter('wheel_odometry_enabled').value
+        )
+        self._wheel_diameter_m = float(
+            self.get_parameter('wheel_diameter_m').value
+        )
+        self._wheelbase_m = float(self.get_parameter('wheelbase_m').value)
+        self._track_width_m = float(
+            self.get_parameter('track_width_m').value
+        )
+        self._wheel_counts_per_revolution = tuple(float(value) for value in
+                                                  self.get_parameter(
+                                                      'wheel_counts_per_revolution'
+                                                  ).value)
+        self._wheel_encoder_signs = tuple(int(value) for value in
+                                          self.get_parameter(
+                                              'wheel_encoder_signs').value)
+        self._wheel_port_wheels = tuple(str(value) for value in
+                                        self.get_parameter(
+                                            'wheel_port_wheels').value)
+        self._wheel_odom_max_count_delta = int(
+            self.get_parameter('wheel_odom_max_count_delta').value
+        )
         self._battery_min = float(
             self.get_parameter('battery_min_voltage').value
         )
         self._battery_max = float(
             self.get_parameter('battery_max_voltage').value
         )
+        configured_pid = validate_motion_pid(
+            self.get_parameter('motion_kp').value,
+            self.get_parameter('motion_ki').value,
+            self.get_parameter('motion_kd').value,
+        )
 
         if self._publish_rate <= 0.0:
             raise ValueError('publish_rate must be greater than zero')
+        if self._drive_mode != 'board_motion_pid':
+            raise ValueError(
+                'rosmaster_node only supports drive_mode=board_motion_pid'
+            )
         if self._command_timeout <= 0.0:
             raise ValueError('command_timeout must be greater than zero')
         if self._battery_max <= self._battery_min:
             raise ValueError(
                 'battery_max_voltage must exceed battery_min_voltage'
             )
+        if self._wheel_odom_max_count_delta <= 0:
+            raise ValueError('wheel_odom_max_count_delta must be positive')
+        calibration_counts = self._wheel_counts_per_revolution
+        if not self._wheel_odometry_enabled:
+            calibration_counts = (1.0, 1.0, 1.0, 1.0)
+        (
+            self._wheel_diameter_m,
+            self._wheelbase_m,
+            self._track_width_m,
+            _,
+            self._wheel_encoder_signs,
+            self._wheel_port_wheels,
+        ) = validate_mecanum_odometry_parameters(
+            self._wheel_diameter_m,
+            self._wheelbase_m,
+            self._track_width_m,
+            calibration_counts,
+            self._wheel_encoder_signs,
+            self._wheel_port_wheels,
+        )
 
         self._io_lock = threading.Lock()
         self._driver = Rosmaster(
@@ -86,7 +160,25 @@ class RosmasterNode(Node):
         self._driver.create_receive_threading()
         self._driver.set_auto_report_state(True, forever=False)
         # Never assume the MCU was stationary before this process connected.
-        self._driver.set_car_motion(0.0, 0.0, 0.0)
+        for _ in range(3):
+            self._driver.set_car_motion(0.0, 0.0, 0.0)
+
+        queried_pid = self._driver.get_motion_pid()
+        try:
+            self._motion_pid_active = validate_motion_pid(*queried_pid)
+            self._motion_pid_status = 'read_from_board'
+            self.set_parameters([
+                Parameter('motion_kp', value=self._motion_pid_active[0]),
+                Parameter('motion_ki', value=self._motion_pid_active[1]),
+                Parameter('motion_kd', value=self._motion_pid_active[2]),
+            ])
+        except (TypeError, ValueError):
+            self._motion_pid_active = configured_pid
+            self._motion_pid_status = 'board_read_failed_using_config'
+            self.get_logger().warning(
+                '读取控制板运动 PID 失败；RQT 显示配置备用值，'
+                '首次应用前请保持停车。')
+        self._motion_pid_staged = self._motion_pid_active
 
         self._odom_pub = self.create_publisher(Odometry, 'wheel/odometry', 10)
         self._imu_pub = self.create_publisher(
@@ -97,6 +189,9 @@ class RosmasterNode(Node):
         )
         self._encoder_pub = self.create_publisher(
             Int32MultiArray, 'wheel/encoders', 10
+        )
+        self._encoder_rate_pub = self.create_publisher(
+            Float32MultiArray, 'wheel/encoder_rates', 10
         )
         self._diagnostics_pub = self.create_publisher(
             DiagnosticArray, 'diagnostics', 10
@@ -112,15 +207,85 @@ class RosmasterNode(Node):
         self._last_command_ns = now_ns
         self._last_update_ns = now_ns
         self._watchdog_stopped = True
+        self._previous_encoders = None
+        self._previous_encoder_ns = None
+        self._previous_odom_encoders = None
+        self._previous_odom_ns = None
+        self._wheel_odom_status = (
+            'waiting_for_encoder_baseline'
+            if self._wheel_odometry_enabled else 'disabled_pending_calibration'
+        )
         self._x = 0.0
         self._y = 0.0
         self._yaw = 0.0
         self._timer = self.create_timer(1.0 / self._publish_rate, self._update)
+        self.add_on_set_parameters_callback(self._on_parameters)
         self.get_logger().info(
             f'Rosmaster connected on {self._serial_port}; '
             f'car_type={self._car_type}, '
-            f'holonomic={self._holonomic}'
+            f'holonomic={self._holonomic}, '
+            f'drive_mode={self._drive_mode}, '
+            f'wheel_odometry_enabled={self._wheel_odometry_enabled}'
         )
+
+    def _on_parameters(self, parameters) -> SetParametersResult:
+        """Stage PID values and apply them temporarily on an explicit commit."""
+        staged = list(self._motion_pid_staged)
+        apply_requested = False
+        names = ('motion_kp', 'motion_ki', 'motion_kd')
+        supported = set(names) | {'motion_pid_apply'}
+        for parameter in parameters:
+            if parameter.name not in supported:
+                return SetParametersResult(
+                    successful=False,
+                    reason=(f'{parameter.name} 不支持运行时修改；'
+                            '请修改 YAML 后停车重启驱动'),
+                )
+            if parameter.name in names:
+                staged[names.index(parameter.name)] = float(parameter.value)
+            elif parameter.name == 'motion_pid_apply':
+                apply_requested = bool(parameter.value)
+
+        try:
+            candidate = validate_motion_pid(*staged)
+        except (TypeError, ValueError) as exc:
+            return SetParametersResult(successful=False, reason=str(exc))
+
+        if apply_requested:
+            if not self._watchdog_stopped:
+                return SetParametersResult(
+                    successful=False,
+                    reason='必须先用空格/k 停车，才能应用运动 PID',
+                )
+            with self._io_lock:
+                for _ in range(3):
+                    self._driver.set_car_motion(0.0, 0.0, 0.0)
+                self._driver.set_pid_param(*candidate, forever=False)
+                confirmed = self._driver.get_motion_pid()
+            try:
+                confirmed = validate_motion_pid(*confirmed)
+            except (TypeError, ValueError):
+                self._motion_pid_status = 'apply_sent_readback_failed'
+                return SetParametersResult(
+                    successful=False,
+                    reason='PID 已临时发送，但控制板回读失败；保持停车并重启控制板恢复',
+                )
+            if any(abs(actual - requested) > 0.002
+                   for actual, requested in zip(confirmed, candidate)):
+                self._motion_pid_status = 'apply_readback_mismatch'
+                return SetParametersResult(
+                    successful=False,
+                    reason=f'PID 回读不一致：请求={candidate}，回读={confirmed}',
+                )
+            self._motion_pid_active = confirmed
+            self._motion_pid_status = 'temporary_apply_confirmed'
+            self.get_logger().warning(
+                '已临时应用控制板运动 PID：'
+                f'Kp={confirmed[0]:.3f}, Ki={confirmed[1]:.3f}, '
+                f'Kd={confirmed[2]:.3f}；未写 Flash，重启控制板可恢复。')
+
+        self._motion_pid_staged = candidate
+        return SetParametersResult(successful=True)
 
     def _on_cmd_vel(self, msg: Twist) -> None:
         values = (msg.linear.x, msg.linear.y, msg.angular.z)
@@ -158,27 +323,77 @@ class RosmasterNode(Node):
             self._watchdog_stopped = True
             self.get_logger().warning('cmd_vel timeout: motors stopped')
 
-        dt = (now_ns - self._last_update_ns) * 1e-9
         self._last_update_ns = now_ns
-        if dt <= 0.0 or dt > 0.25:
-            dt = 1.0 / self._publish_rate
+        with self._io_lock:
+            encoder_values = tuple(self._driver.get_motor_encoder())
+        self._update_wheel_odometry(now.to_msg(), now_ns, encoder_values)
+        self._publish_imu(now.to_msg())
+        self._publish_board_state(
+            now.to_msg(), command_age, now_ns, encoder_values
+        )
 
-        velocity_x, velocity_y, angular_z = self._driver.get_motion_data()
+    def _update_wheel_odometry(
+        self,
+        stamp,
+        now_ns: int,
+        encoder_values: tuple[int, int, int, int],
+    ) -> None:
+        """Integrate direct encoder increments only after calibration is enabled."""
+        if not self._wheel_odometry_enabled:
+            return
+        if self._previous_odom_encoders is None:
+            self._previous_odom_encoders = encoder_values
+            self._previous_odom_ns = now_ns
+            self._wheel_odom_status = 'encoder_baseline_captured'
+            return
+
+        dt = (now_ns - self._previous_odom_ns) * 1e-9
+        count_deltas = tuple(
+            current - previous for current, previous in zip(
+                encoder_values, self._previous_odom_encoders)
+        )
+        self._previous_odom_encoders = encoder_values
+        self._previous_odom_ns = now_ns
+        if dt <= 0.0 or dt > 0.25:
+            self._wheel_odom_status = 'encoder_interval_rejected'
+            return
+        if any(abs(delta) > self._wheel_odom_max_count_delta
+               for delta in count_deltas):
+            self._wheel_odom_status = 'encoder_jump_rejected'
+            self.get_logger().warning(
+                '轮式里程计丢弃异常编码器跳变：'
+                f'{count_deltas}'
+            )
+            return
+
+        delta_x, delta_y, delta_yaw = (
+            mecanum_body_delta_from_encoder_counts(
+                count_deltas,
+                self._wheel_diameter_m,
+                self._wheelbase_m,
+                self._track_width_m,
+                self._wheel_counts_per_revolution,
+                self._wheel_encoder_signs,
+                self._wheel_port_wheels,
+            )
+        )
         if not self._holonomic:
-            velocity_y = 0.0
-        self._x, self._y, self._yaw = integrate_body_twist(
+            delta_y = 0.0
+        self._x, self._y, self._yaw = integrate_body_delta(
             self._x,
             self._y,
             self._yaw,
-            velocity_x,
-            velocity_y,
-            angular_z,
-            dt,
+            delta_x,
+            delta_y,
+            delta_yaw,
         )
-
-        self._publish_odometry(now.to_msg(), velocity_x, velocity_y, angular_z)
-        self._publish_imu(now.to_msg())
-        self._publish_board_state(now.to_msg(), command_age)
+        self._wheel_odom_status = 'encoder_odometry_active'
+        self._publish_odometry(
+            stamp,
+            delta_x / dt,
+            delta_y / dt,
+            delta_yaw / dt,
+        )
 
     def _publish_odometry(
         self,
@@ -243,7 +458,13 @@ class RosmasterNode(Node):
         msg.linear_acceleration_covariance[8] = 0.10
         self._imu_pub.publish(msg)
 
-    def _publish_board_state(self, stamp, command_age: float) -> None:
+    def _publish_board_state(
+        self,
+        stamp,
+        command_age: float,
+        now_ns: int,
+        encoder_values: tuple[int, int, int, int],
+    ) -> None:
         voltage = float(self._driver.get_battery_voltage())
         battery = BatteryState()
         battery.header.stamp = stamp
@@ -267,8 +488,23 @@ class RosmasterNode(Node):
         self._battery_pub.publish(battery)
 
         encoders = Int32MultiArray()
-        encoders.data = list(self._driver.get_motor_encoder())
+        encoders.data = list(encoder_values)
         self._encoder_pub.publish(encoders)
+
+        encoder_rates = Float32MultiArray()
+        encoder_rates.data = [0.0, 0.0, 0.0, 0.0]
+        if (self._previous_encoders is not None
+                and self._previous_encoder_ns is not None):
+            encoder_dt = (now_ns - self._previous_encoder_ns) * 1e-9
+            if 0.0 < encoder_dt <= 0.25:
+                encoder_rates.data = [
+                    float(current - previous) / encoder_dt
+                    for current, previous in zip(
+                        encoder_values, self._previous_encoders)
+                ]
+        self._previous_encoders = encoder_values
+        self._previous_encoder_ns = now_ns
+        self._encoder_rate_pub.publish(encoder_rates)
 
         status = DiagnosticStatus()
         status.name = 'carcar/rosmaster'
@@ -280,11 +516,31 @@ class RosmasterNode(Node):
             status.level = DiagnosticStatus.OK
             status.message = 'Connected'
         status.values = [
+            KeyValue(key='drive_mode', value=self._drive_mode),
             KeyValue(key='battery_voltage', value=f'{voltage:.2f}'),
             KeyValue(key='last_cmd_age_s', value=f'{command_age:.3f}'),
             KeyValue(
                 key='watchdog_stopped',
                 value=str(self._watchdog_stopped),
+            ),
+            KeyValue(
+                key='motion_pid_active',
+                value=','.join(f'{value:.3f}'
+                               for value in self._motion_pid_active),
+            ),
+            KeyValue(
+                key='motion_pid_staged',
+                value=','.join(f'{value:.3f}'
+                               for value in self._motion_pid_staged),
+            ),
+            KeyValue(key='motion_pid_status', value=self._motion_pid_status),
+            KeyValue(
+                key='wheel_odometry_enabled',
+                value=str(self._wheel_odometry_enabled),
+            ),
+            KeyValue(
+                key='wheel_odometry_status',
+                value=self._wheel_odom_status,
             ),
         ]
         diagnostics = DiagnosticArray()
@@ -296,10 +552,15 @@ class RosmasterNode(Node):
         """Best-effort motor stop used during shutdown."""
         try:
             with self._io_lock:
-                self._driver.set_car_motion(0.0, 0.0, 0.0)
+                for _ in range(3):
+                    self._driver.set_car_motion(0.0, 0.0, 0.0)
                 self._driver.set_auto_report_state(False, forever=False)
         except Exception as exc:  # Hardware may already be disconnected.
             self.get_logger().error(f'Failed to stop Rosmaster cleanly: {exc}')
+        finally:
+            serial_port = getattr(self._driver, 'ser', None)
+            if serial_port is not None and serial_port.is_open:
+                serial_port.close()
 
 
 def main(args=None) -> None:

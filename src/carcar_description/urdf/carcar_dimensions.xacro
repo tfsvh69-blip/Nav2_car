@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- ======================== 已由用户实物测量确认 ======================== -->
+  <xacro:property name="wheel_radius" value="0.030"/>
+  <xacro:property name="wheel_width" value="0.031"/>
+  <xacro:property name="wheel_center_x" value="0.060"/>
+  <xacro:property name="wheel_center_y" value="0.0925"/>
+
+  <!-- 2026-09-07 整车实测；宽度与既有轮组推导值存在 3 mm 差异，见硬件台账。 -->
+  <xacro:property name="overall_length" value="0.235"/>
+  <!-- 用户决定整车建模宽度统一为 216 mm；原 213 mm 测量保留在历史台账。 -->
+  <xacro:property name="overall_width_measured" value="0.216"/>
+  <xacro:property name="overall_width_conservative" value="${2 * wheel_center_y + wheel_width}"/>
+  <xacro:property name="overall_height" value="0.230"/>
+  <xacro:property name="ground_clearance" value="0.010"/>
+  <!-- 相机镜头面为当前最前端；据整车总长反推最后端 X=-0.105 m，待包络复测时核对。 -->
+  <xacro:property name="overall_front_x" value="${camera_x}"/>
+  <xacro:property name="overall_rear_x" value="${overall_front_x - overall_length}"/>
+
+  <!-- ======================== 厂家机械资料，不是安装外参 ================== -->
+  <!-- Intel RealSense D435/D435i 外壳：90 × 25 × 25 mm。 -->
+  <xacro:property name="camera_body_x" value="0.025"/>
+  <xacro:property name="camera_body_y" value="0.090"/>
+  <xacro:property name="camera_body_z" value="0.025"/>
+  <!-- SLAMTEC RPLIDAR A1 Dev Kit 最大外廓：96.8 × 70.3 × 55 mm。 -->
+  <xacro:property name="lidar_body_x" value="0.0703"/>
+  <xacro:property name="lidar_body_y" value="0.0968"/>
+  <xacro:property name="lidar_body_z" value="0.055"/>
+  <!-- NVIDIA P3768 参考载板：100 × 79 mm；实车外壳和散热器仍待测。 -->
+  <xacro:property name="compute_board_x" value="0.079"/>
+  <xacro:property name="compute_board_y" value="0.100"/>
+  <xacro:property name="compute_board_z" value="0.017"/>
+
+  <!-- ======================== 混合精度几何参数 ============================ -->
+  <!-- 下层金属双层底盘：底板中心 Z 由实测离地间隙和底板临时厚度换算。 -->
+  <xacro:property name="lower_plate_x" value="0.170"/>
+  <xacro:property name="lower_plate_y" value="0.150"/>
+  <xacro:property name="lower_plate_z" value="0.003"/>
+  <xacro:property name="lower_plate_center_z"
+    value="${ground_clearance - wheel_radius + lower_plate_z / 2}"/>
+  <xacro:property name="upper_plate_center_z" value="0.025"/>
+  <xacro:property name="motor_radius" value="0.018"/>
+  <xacro:property name="motor_length" value="0.050"/>
+  <xacro:property name="chassis_standoff_radius" value="0.003"/>
+
+  <!-- 蓝色顶板为实测值；顶面离地 140 mm，以下换算为相对 base_link 的板中心。 -->
+  <xacro:property name="upper_deck_x" value="0.220"/>
+  <xacro:property name="upper_deck_y" value="0.130"/>
+  <xacro:property name="upper_deck_thickness" value="0.010"/>
+  <xacro:property name="upper_deck_top_height" value="0.140"/>
+  <xacro:property name="upper_deck_z"
+    value="${upper_deck_top_height - wheel_radius - upper_deck_thickness / 2}"/>
+  <xacro:property name="upper_deck_center_x"
+    value="${overall_rear_x + upper_deck_x / 2}"/>
+  <xacro:property name="side_panel_x" value="0.145"/>
+  <xacro:property name="side_panel_thickness" value="0.006"/>
+  <xacro:property name="side_panel_height" value="0.062"/>
+  <xacro:property name="front_panel_thickness" value="0.008"/>
+  <xacro:property name="front_panel_height" value="0.102"/>
+
+  <!-- Jetson 外壳中心；外壳尺寸包含照片中蓝色保护壳和散热器包络。 -->
+  <xacro:property name="compute_xyz" value="-0.010 0 0.048"/>
+  <xacro:property name="compute_enclosure_x" value="0.105"/>
+  <xacro:property name="compute_enclosure_y" value="0.116"/>
+  <xacro:property name="compute_enclosure_z" value="0.045"/>
+
+  <!-- 用户估计相对 base_footprint=(-40,-15,75) mm；位置为近似值，轴向待 IMU-002。 -->
+  <xacro:property name="imu_xyz" value="-0.040 -0.015 ${0.075 - wheel_radius}"/>
+  <xacro:property name="imu_rpy" value="0 0 0"/>
+
+  <!-- 雷达扫描中心由用户相对 base_footprint 实测，再换算到父 frame base_link。 -->
+  <xacro:property name="laser_xyz" value="-0.050 0 ${0.217 - wheel_radius}"/>
+  <xacro:property name="laser_rpy" value="0 0 0"/>
+
+  <!-- RealSense 左红外中心由用户相对 base_footprint 实测；实机图像确认相机倒装。 -->
+  <xacro:property name="camera_x" value="0.130"/>
+  <xacro:property name="camera_y" value="0.033"/>
+  <xacro:property name="camera_z" value="${0.170 - wheel_radius}"/>
+  <xacro:property name="camera_xyz" value="${camera_x} ${camera_y} ${camera_z}"/>
+  <xacro:property name="camera_rpy" value="${pi} 0 0"/>
+
+  <!--
+    车体碰撞体到蓝色顶板顶面；传感器另有独立 collision。Nav2 footprint 使用整车
+    实测长宽，但宽度冲突未复核前应取 overall_width_conservative=0.216 m。
+  -->
+  <xacro:property name="body_collision_x" value="${upper_deck_x}"/>
+  <xacro:property name="body_collision_y" value="${upper_deck_y}"/>
+  <xacro:property name="body_collision_z" value="${upper_deck_top_height - ground_clearance}"/>
+  <xacro:property name="body_collision_center_z"
+    value="${(upper_deck_top_height + ground_clearance) / 2 - wheel_radius}"/>
+</robot>

@@ -1,0 +1,30 @@
+chassis_motion_test_driver:
+  ros__parameters:
+    serial_port: /dev/myserial
+    # 四轮编码器速度 PI 的短时输出上限，不是持续运行额定值。
+    max_pwm_percent: 25
+    linear_full_scale: 0.08
+    angular_full_scale: 0.40
+    # count/rev 尚待 10 圈实测，当前直接以原始 count/s 闭环。
+    target_encoder_rate: 700.0
+    # 根据两次前进日志得到的临时逐轮前馈，只用于克服当前低速负载差异。
+    feedforward_pwm: [9.0, 7.0, 21.0, 21.0]
+    velocity_kp: 0.008
+    velocity_ki: 0.020
+    integral_limit: 400.0
+    velocity_filter_alpha: 0.50
+    feedback_timeout: 0.35
+    # MOTOR-004 已确认的端口机械正向符号。
+    motor_1_sign: 1
+    motor_2_sign: -1
+    motor_3_sign: 1
+    motor_4_sign: -1
+    # MOTOR-006 两次前进已确认的“原始计数 -> 车轮前进为正”换算符号。
+    encoder_1_sign: -1
+    encoder_2_sign: 1
+    encoder_3_sign: -1
+    encoder_4_sign: 1
+    publish_rate: 25.0
+    # 键盘以 10 Hz 刷新命令；丢失三帧左右即由驱动停车。
+    command_timeout: 0.3
+    debug_serial: false

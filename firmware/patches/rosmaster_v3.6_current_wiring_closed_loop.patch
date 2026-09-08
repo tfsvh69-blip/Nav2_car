@@ -1,0 +1,79 @@
+--- a/Source/APP/config.h
++++ b/Source/APP/config.h
+@@ -1,10 +1,21 @@
+ #ifndef __CONFIG_H__
+ #define __CONFIG_H__
+ 
+-// 发布项目，发布前必须确认为1
+-#define APP_RELEASE                  1
+-
+-#if APP_RELEASE
++// 发布项目，发布前必须确认为1
++#define APP_RELEASE                  1
++
++/*
++ * 本车麦克纳姆轮到电机端口的闭环目标映射。
++ * 逻辑轮序：L1=左前，L2=左后，R1=右前，R2=右后。
++ * 实车端口：M1=左前，M2=右后，M3=右前，M4=左后。
++ * 符号来自已确认的原始编码器前进方向 [-,+,-,+]。
++ */
++#define MECANUM_PORT_M1_SIGN         (-1)
++#define MECANUM_PORT_M2_SIGN         (+1)
++#define MECANUM_PORT_M3_SIGN         (-1)
++#define MECANUM_PORT_M4_SIGN         (+1)
++
++#if APP_RELEASE
+ 
+ // 自动发送数据的间隔时间，单位为1毫秒，最小值为10
+ #define AUTO_SEND_TIMEOUT            40
+--- a/Source/APP/app_mecanum.c
++++ b/Source/APP/app_mecanum.c
+@@ -20,10 +20,26 @@
+ static int speed_R1_setup = 0;
+ static int speed_R2_setup = 0;
+ 
+-static int g_offset_yaw = 0;
+-static uint16_t g_speed_setup = 0;
+-
+-// X轴速度(前正后负：±1000)，Y轴速度(左正右负：±1000)，旋转速度(左正右负：±5000)
++static int g_offset_yaw = 0;
++static uint16_t g_speed_setup = 0;
++
++/*
++ * 将麦克纳姆运动学的逻辑轮速写入当前实车端口。
++ * 原厂默认直接按 L1,L2,R1,R2 写 M1,M2,M3,M4；当前实车 M2/M4
++ * 分别接右后/左后轮，因此必须重排。符号使 PID 目标与各端口的
++ * 原始编码器正方向一致。
++ */
++static void Mecanum_Set_Current_Port_Speed(
++    int16_t speed_l1, int16_t speed_l2, int16_t speed_r1, int16_t speed_r2)
++{
++    Motion_Set_Speed(
++        MECANUM_PORT_M1_SIGN * speed_l1,
++        MECANUM_PORT_M2_SIGN * speed_r2,
++        MECANUM_PORT_M3_SIGN * speed_r1,
++        MECANUM_PORT_M4_SIGN * speed_l2);
++}
++
++// X轴速度(前正后负：±1000)，Y轴速度(左正右负：±1000)，旋转速度(左正右负：±5000)
+ // X3 PLUS X轴速度(前正后负：±700)，Y轴速度(左正右负：±700)，旋转速度(左正右负：±3200)
+ void Mecanum_Ctrl(int16_t V_x, int16_t V_y, int16_t V_z, uint8_t adjust)
+ {
+@@ -75,7 +91,7 @@
+         if (speed_R2_setup > 1000) speed_R2_setup = 1000;
+         if (speed_R2_setup < -1000) speed_R2_setup = -1000;
+     }
+-    Motion_Set_Speed(speed_L1_setup, speed_L2_setup, speed_R1_setup, speed_R2_setup);
++    Mecanum_Set_Current_Port_Speed(speed_L1_setup, speed_L2_setup, speed_R1_setup, speed_R2_setup);
+ }
+ 
+ 
+@@ -135,7 +151,7 @@
+         if (speed_R2 > 1000) speed_R2 = 1000;
+         if (speed_R2 < -1000) speed_R2 = -1000;
+     }
+-    Motion_Set_Speed(speed_L1, speed_L2, speed_R1, speed_R2);
++    Mecanum_Set_Current_Port_Speed(speed_L1, speed_L2, speed_R1, speed_R2);
+ }
+ 
+ // 控制麦克纳姆轮小车运动状态。 

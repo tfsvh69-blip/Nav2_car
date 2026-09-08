@@ -3,18 +3,38 @@ rosmaster_base:
     serial_port: /dev/myserial
     # Yahboom: X3=1, X3 Plus=2, X1=4, R2=5
     car_type: 1
+    # 正式底盘只使用控制板内置运动 PID；不通过本节点发送逐轮 PWM。
+    drive_mode: board_motion_pid
     holonomic: true
     publish_rate: 25.0
-    command_timeout: 0.5
-    max_linear_x: 0.5
-    max_linear_y: 0.5
-    max_angular_z: 2.0
+    command_timeout: 0.3
+    # 地面闭环标定完成前采用保守限速，实测通过后再逐级提高。
+    max_linear_x: 0.15
+    max_linear_y: 0.15
+    max_angular_z: 0.8
     base_frame: base_footprint
     odom_frame: odom
     imu_frame: imu_link
-    # 后续由 robot_localization 唯一发布 odom TF；底盘调试时可临时改为 true。
+    # 纯轮式 Odom 验收通过前不发布 odom TF；完成 ENCODER-004 后改由本节点发布。
     publish_odom_tf: false
+    # 只允许用四路累计编码器计算正式 Odom。count/rev 与计数符号未实测前保持 false，
+    # 此时节点仍发布原始编码器和 count/s，但绝不发布伪造的 wheel/odometry。
+    wheel_odometry_enabled: false
+    wheel_diameter_m: 0.060
+    wheelbase_m: 0.120
+    track_width_m: 0.185
+    wheel_counts_per_revolution: [0.0, 0.0, 0.0, 0.0]
+    # +1 表示该端口的原始正计数等于该物理轮使车体前进的方向；等待 10 圈实测后填写。
+    wheel_encoder_signs: [1, 1, 1, 1]
+    # 现有闭环接线：M1=左前、M2=左后、M3=右前、M4=右后。
+    wheel_port_wheels: [left_front, left_rear, right_front, right_rear]
+    # 防止控制板重启/通信异常造成单周期大跳变污染位姿。
+    wheel_odom_max_count_delta: 100000
     battery_min_voltage: 9.6
     battery_max_voltage: 12.6
     debug_serial: false
-
+    # RQT 暂存值；motion_pid_apply=true 时才临时写入控制板，绝不写 Flash。
+    motion_kp: 8.0
+    motion_ki: 1.2
+    motion_kd: 0.8
+    motion_pid_apply: false

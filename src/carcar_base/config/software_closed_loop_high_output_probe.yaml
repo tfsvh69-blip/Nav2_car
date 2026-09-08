@@ -1,0 +1,32 @@
+chassis_motion_test_driver:
+  ros__parameters:
+    serial_port: /dev/myserial
+    # MOTOR-011 架空候选：保持当前端口轮位，不覆盖原 25% PWM 配置。
+    port_wheels: [left_front, right_rear, right_front, left_rear]
+    max_pwm_percent: 45
+    linear_full_scale: 0.08
+    angular_full_scale: 0.40
+    # 架空实测 0.02 m/s 对应约 1000 count/s，故全量程按 4000 count/s 暂定。
+    target_encoder_rate: 4000.0
+    # 目标与 PWM 均渐进变化，避免起转瞬间四轮不一致造成横移偏航。
+    target_acceleration_limit: 2000.0
+    pwm_slew_rate: 120.0
+    # 按 MOTOR-011 地面反馈临时补偿：M2 降低、M4 提高。
+    feedforward_pwm: [22.0, 16.0, 28.0, 34.0]
+    velocity_kp: 0.025
+    velocity_ki: 0.040
+    # 防止架空超速后积分项长期压低起转 PWM。
+    integral_limit: 100.0
+    velocity_filter_alpha: 0.50
+    feedback_timeout: 0.60
+    motor_1_sign: 1
+    motor_2_sign: -1
+    motor_3_sign: 1
+    motor_4_sign: -1
+    encoder_1_sign: -1
+    encoder_2_sign: 1
+    encoder_3_sign: -1
+    encoder_4_sign: 1
+    publish_rate: 25.0
+    command_timeout: 0.30
+    debug_serial: false

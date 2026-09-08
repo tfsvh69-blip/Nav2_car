@@ -5,8 +5,13 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Carcar Mecanum Model1
+        - /TF Frames1
+        - /LaserScan1
+        - /LaserScan1/Status1
+        - /LaserScan1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 326
+    Tree Height: 499
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
@@ -33,7 +38,7 @@ Visualization Manager:
       Plane Cell Count: 20
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.5
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Description File: ""
@@ -65,10 +70,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_optical_frame:
+        compute_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         front_left_wheel_link:
           Alpha: 1
           Show Axes: false
@@ -95,6 +101,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         rear_right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_body_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -118,7 +129,7 @@ Visualization Manager:
           Value: true
         camera_link:
           Value: true
-        camera_optical_frame:
+        compute_link:
           Value: true
         front_left_wheel_link:
           Value: true
@@ -132,7 +143,9 @@ Visualization Manager:
           Value: true
         rear_right_wheel_link:
           Value: true
-      Marker Scale: 0.11999999731779099
+        upper_body_link:
+          Value: true
+      Marker Scale: 0.15000000596046448
       Name: TF Frames
       Show Arrows: true
       Show Axes: true
@@ -141,8 +154,9 @@ Visualization Manager:
         base_footprint:
           base_link:
             camera_link:
-              camera_optical_frame:
-                {}
+              {}
+            compute_link:
+              {}
             front_left_wheel_link:
               {}
             front_right_wheel_link:
@@ -155,11 +169,47 @@ Visualization Manager:
               {}
             rear_right_wheel_link:
               {}
+            upper_body_link:
+              {}
       Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 47
+      Min Color: 0; 0; 0
+      Min Intensity: 47
+      Name: LaserScan
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /scan
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 143; 240; 164
+    Background Color: 255; 255; 255
     Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
@@ -176,35 +226,35 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 0.5319850444793701
+      Distance: 2.166860818862915
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0.05999999865889549
+        X: -0.03241812810301781
+        Y: 0.014877899549901485
+        Z: 0.03686048090457916
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9649991989135742
+      Pitch: 1.2499983310699463
       Target Frame: base_link
       Value: Orbit (rviz)
-      Yaw: 2.3531746864318848
+      Yaw: 1.0131721496582031
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 850
+  Height: 1136
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001cb000002f8fc0200000002fb000000100044006900730070006c006100790073010000003d000001c9000000c900fffffffb0000000a00560069006500770073010000020c00000129000000a400ffffff000003a7000002f800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001cb00000416fc0200000002fb000000100044006900730070006c006100790073010000003d00000276000000c900fffffffb0000000a0056006900650077007301000002b90000019a000000a400ffffff000005590000041600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1400
+  Width: 1834
   X: 86
   Y: 27

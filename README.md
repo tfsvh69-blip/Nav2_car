@@ -1,5 +1,9 @@
 # carcar 四轮麦克纳姆导航巡检小车
 
+2026-09-07 最新修订：用户已决定建模宽统一为 216 mm，原 213 mm 差异不再作为待办。
+IMU 位置暂估为相对 `base_footprint=(-40,-15,75) mm`，轴向待验证。当前操作请以
+[操作手册](docs/操作手册.md) 为准。
+
 面向 ROS 2 Humble 的四轮麦克纳姆室内巡检小车。目标是多点导航巡检、RealSense D435
 视觉自主回充，以及手机 Web 遥控和状态查看。当前进度与下一步以
 [项目现状与路线](docs/项目现状与路线.md)为准。
@@ -28,34 +32,29 @@ carcar_bringup         只负责编排各层，不承载业务代码
 
 项目文档入口见 [文档索引](docs/文档索引.md)。其中包含架构设计、硬件台账、完整测试记录和上车前检查说明。
 
-M1～M4 轮位、机械方向、逐路停车和独立编码反馈已经确认，旧[电机测试](docs/电机测试.md)
-只作故障回归，不需要继续重复逐轮实验。当前优先测量雷达、IMU、D435 安装 TF 和整车外廓。
+M1～M4 的历史轮位和编码反馈结果已归档。整车 description 已接入实车尺寸和 STL。当前不启动正式 bringup；先按
+[操作手册](docs/操作手册.md) 完成 MOTOR-007。
 
-RPLIDAR A1 在当前 Jetson/Humble 上的独立测试请按[激光雷达 Humble 迁移与测试](docs/激光雷达Humble迁移与测试.md)执行。V1.0 的 Jazzy 雷达入口继续保留，不作为 Humble 的启动命令。
+RPLIDAR A1 在当前 Jetson/Humble 上已能稳定发布 `/scan`，详情见[硬件台账](docs/硬件台账.md)；历史迁移记录已归档。
 
 ## 快速开始
 
+下列是依赖安装和离线构建，不启动硬件：
+
 ```bash
+cd /home/jetson/luhao/my_nav_carcar
+conda deactivate 2>/dev/null || true
 source /opt/ros/humble/setup.bash
 sudo apt update
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 source install/setup.bash
-ros2 launch carcar_bringup robot.launch.py
 ```
 
 如果系统尚未初始化 rosdep，请先执行 `sudo rosdep init`（仅首次）和 `rosdep update`。导航阶段需要安装 `nav2_bringup` 与 `slam_toolbox`；依赖声明会让 rosdep 自动处理它们。
 
-先架空轮子测试：
-
-```bash
-ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist \
-  "{linear: {x: 0.10}, angular: {z: 0.0}}"
-ros2 topic echo /imu/data_raw
-ros2 topic echo /wheel/odometry
-```
-
-停止发送速度指令后，驱动节点会在 0.5 秒内触发看门狗并停车。
+硬件首启不使用通用 `/cmd_vel` 单次发布；请先完成 MOTOR-007 的断电接线
+修正和架空短脉冲验收。正式驱动看门狗已改为 `0.3 s`。
 
 ## 导航阶段入口
 
@@ -75,6 +74,7 @@ ros2 run nav2_map_server map_saver_cli -f maps/site
 ros2 launch carcar_navigation navigation.launch.py map:=/absolute/path/to/site.yaml
 ```
 
-轮径、轮宽、轴距和轮距已经写入描述；底盘最大外廓、雷达、IMU、D435 安装位仍是临时
-占位值。完成实测并更新 `carcar_description/urdf/carcar.urdf.xacro` 和 Nav2 footprint
-之前，不进行导航验收。
+轮径、轮宽、轴距、轮距、整车外廓、顶板、雷达位置和 RealSense 左红外镜头位置已经写入
+描述。整车宽按用户决定统一为 `216 mm`；雷达平面方向已通过，相机倒装已按
+`roll=pi` 写入模型。IMU 完整轴向仍待验证。完成这些确认并更新 Nav2 footprint 前，
+不进行导航验收。

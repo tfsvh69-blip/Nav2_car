@@ -1,29 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="carcar_mecanum">
-  <!-- 坐标遵循 REP-103：X 向前、Y 向左、Z 向上；长度单位为 m。 -->
-  <xacro:property name="wheel_radius" value="0.030"/>
-  <xacro:property name="wheel_width" value="0.031"/>
-  <xacro:property name="wheel_center_x" value="0.060"/>
-  <xacro:property name="wheel_center_y" value="0.0925"/>
-
-  <!-- 底盘仅为轮间简化外形；长、高尚未实测，不用于碰撞包络或导航参数。 -->
-  <xacro:property name="body_length_visual" value="0.140"/>
-  <xacro:property name="body_width_visual" value="0.154"/>
-  <xacro:property name="body_height_visual" value="0.035"/>
-
-  <!-- 传感器安装位姿均为可替换临时值，实测前不得用于标定或导航验收。 -->
-  <xacro:property name="imu_xyz" value="0 0 0.035"/>
-  <xacro:property name="imu_rpy" value="0 0 0"/>
-  <xacro:property name="laser_xyz" value="0 0 0.200"/>
-  <xacro:property name="laser_rpy" value="0 0 0"/>
-  <xacro:property name="camera_xyz" value="0.080 0 0.120"/>
-  <xacro:property name="camera_rpy" value="0 0 0"/>
-
-  <material name="body_silver"><color rgba="0.68 0.70 0.72 1.0"/></material>
-  <material name="body_dark"><color rgba="0.10 0.12 0.15 1.0"/></material>
-  <material name="wheel_white"><color rgba="0.94 0.94 0.94 1.0"/></material>
-  <material name="laser_red"><color rgba="0.75 0.08 0.06 1.0"/></material>
-  <material name="camera_gray"><color rgba="0.20 0.22 0.25 1.0"/></material>
+  <!--
+    坐标遵循 REP-103：X 向车头、Y 向车体左侧、Z 向上，长度单位为 m。
+    本文件只负责组装；已确认值和待实测值集中维护在 carcar_dimensions.xacro。
+  -->
+  <xacro:include filename="carcar_dimensions.xacro"/>
+  <xacro:include filename="carcar_materials.xacro"/>
+  <xacro:include filename="carcar_chassis.xacro"/>
+  <xacro:include filename="carcar_sensors.xacro"/>
 
   <link name="base_footprint"/>
   <joint name="base_footprint_joint" type="fixed">
@@ -32,93 +16,6 @@
     <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
   </joint>
 
-  <!-- base_link 位于四个轮心构成矩形的中心，并与轮轴等高。 -->
-  <link name="base_link">
-    <visual>
-      <geometry>
-        <box size="${body_length_visual} ${body_width_visual} ${body_height_visual}"/>
-      </geometry>
-      <material name="body_silver"/>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="${body_length_visual} ${body_width_visual} ${body_height_visual}"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <xacro:macro name="mecanum_wheel" params="name x y mesh_file">
-    <joint name="${name}_joint" type="continuous">
-      <parent link="base_link"/>
-      <child link="${name}_link"/>
-      <origin xyz="${x} ${y} 0" rpy="0 0 0"/>
-      <axis xyz="0 1 0"/>
-    </joint>
-    <link name="${name}_link">
-      <visual>
-        <!-- 开源 STL 原始外廓约 101.2 × 50 mm，缩放到实物 60 × 31 mm。 -->
-        <geometry>
-          <mesh filename="package://carcar_description/meshes/mecanum/${mesh_file}"
-            scale="0.0005928 0.0006200 0.0005928"/>
-        </geometry>
-        <material name="wheel_white"/>
-      </visual>
-      <collision>
-        <origin rpy="${pi / 2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
-      </collision>
-    </link>
-  </xacro:macro>
-
-  <xacro:mecanum_wheel name="front_left_wheel"
-    x="${wheel_center_x}" y="${wheel_center_y}" mesh_file="mecanum_wheel_left.stl"/>
-  <xacro:mecanum_wheel name="front_right_wheel"
-    x="${wheel_center_x}" y="${-wheel_center_y}" mesh_file="mecanum_wheel_right.stl"/>
-  <xacro:mecanum_wheel name="rear_left_wheel"
-    x="${-wheel_center_x}" y="${wheel_center_y}" mesh_file="mecanum_wheel_right.stl"/>
-  <xacro:mecanum_wheel name="rear_right_wheel"
-    x="${-wheel_center_x}" y="${-wheel_center_y}" mesh_file="mecanum_wheel_left.stl"/>
-
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <origin xyz="${imu_xyz}" rpy="${imu_rpy}"/>
-  </joint>
-  <link name="imu_link">
-    <visual>
-      <geometry><box size="0.030 0.024 0.008"/></geometry>
-      <material name="body_dark"/>
-    </visual>
-  </link>
-
-  <joint name="laser_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="laser_frame"/>
-    <origin xyz="${laser_xyz}" rpy="${laser_rpy}"/>
-  </joint>
-  <link name="laser_frame">
-    <visual>
-      <origin xyz="0 0 0.020"/>
-      <geometry><cylinder radius="0.038" length="0.040"/></geometry>
-      <material name="laser_red"/>
-    </visual>
-  </link>
-
-  <joint name="camera_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="camera_link"/>
-    <origin xyz="${camera_xyz}" rpy="${camera_rpy}"/>
-  </joint>
-  <link name="camera_link">
-    <visual>
-      <geometry><box size="0.035 0.055 0.030"/></geometry>
-      <material name="camera_gray"/>
-    </visual>
-  </link>
-  <joint name="camera_optical_joint" type="fixed">
-    <parent link="camera_link"/>
-    <child link="camera_optical_frame"/>
-    <origin xyz="0.0175 0 0" rpy="${-pi / 2} 0 ${-pi / 2}"/>
-  </joint>
-  <link name="camera_optical_frame"/>
+  <xacro:carcar_chassis/>
+  <xacro:carcar_sensors/>
 </robot>
