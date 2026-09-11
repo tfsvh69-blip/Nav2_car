@@ -5,26 +5,30 @@ rosmaster_base:
     car_type: 1
     # 正式底盘只使用控制板内置运动 PID；不通过本节点发送逐轮 PWM。
     drive_mode: board_motion_pid
-    holonomic: true
+    # 整车带载较重，麦轮微型辊子受压滚动受阻；底盘退化为成熟稳定的差速非全向模式，禁用横移。
+    holonomic: false
     publish_rate: 25.0
     command_timeout: 0.3
     # 地面闭环标定完成前采用保守限速，实测通过后再逐级提高。
     max_linear_x: 0.15
-    max_linear_y: 0.15
+    max_linear_y: 0.0
     max_angular_z: 0.8
     base_frame: base_footprint
     odom_frame: odom
     imu_frame: imu_link
-    # 纯轮式 Odom 验收通过前不发布 odom TF；完成 ENCODER-004 后改由本节点发布。
-    publish_odom_tf: false
-    # 只允许用四路累计编码器计算正式 Odom。count/rev 与计数符号未实测前保持 false，
-    # 此时节点仍发布原始编码器和 count/s，但绝不发布伪造的 wheel/odometry。
-    wheel_odometry_enabled: false
+    # IMU 轴向符号校正 [x, y, z]；ROS REP-103 约定右手系逆时针 gz>0，静止 az>0。
+    # 2026-09-08 实测原厂库解析 MPU9250 时对 gz 乘以 -gyro_ratio 导致输出反向，az 同为负值。
+    imu_gyro_signs: [1, 1, -1]
+    imu_accel_signs: [1, 1, -1]
+    # 纯轮式 Odom 验收（ODOM-001）于 2026-09-08 实测通过，由本节点发布 odom TF。
+    publish_odom_tf: true
+    # 纯轮式编码器 Odom 已正式启用。
+    wheel_odometry_enabled: true
     wheel_diameter_m: 0.060
     wheelbase_m: 0.120
     track_width_m: 0.185
-    wheel_counts_per_revolution: [0.0, 0.0, 0.0, 0.0]
-    # +1 表示该端口的原始正计数等于该物理轮使车体前进的方向；等待 10 圈实测后填写。
+    wheel_counts_per_revolution: [1319.2, 1317.9, 1319.2, 1319.2]
+    # +1 表示该端口的原始正计数等于该物理轮使车体前进的方向；2026-09-08 实测全为 +1。
     wheel_encoder_signs: [1, 1, 1, 1]
     # 现有闭环接线：M1=左前、M2=左后、M3=右前、M4=右后。
     wheel_port_wheels: [left_front, left_rear, right_front, right_rear]

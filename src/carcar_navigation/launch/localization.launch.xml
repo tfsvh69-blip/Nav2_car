@@ -1,0 +1,38 @@
+<launch>
+  <!-- NAV-003: 静态地图定位与专用 RViz 可视化启动入口 -->
+  <!-- 遵循约定：XML 格式 Launch，独立启动定位，底盘与雷达使用既有独立入口 -->
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav002_20260909_164237.yaml" description="Full path to map YAML file"/>
+  <arg name="params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml" description="Full path to parameter file"/>
+  <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="use_rviz" default="true" description="Launch RViz2 if true"/>
+  <arg name="rviz_config" default="$(find-pkg-share carcar_navigation)/rviz/navigation.rviz" description="Full path to RViz configuration file"/>
+
+  <!-- 地图服务节点：唯一发布 /map 话题 -->
+  <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="yaml_filename" value="$(var map)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- AMCL 蒙特卡洛定位节点：使用差速运动模型，唯一发布 map -> odom 变换 -->
+  <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- 定位生命周期管理器：按序配置并激活 map_server 与 amcl -->
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_localization" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- Joint State Publisher 提供静态关节默认状态，支持 RViz RobotModel 完整渲染车轮 -->
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- RViz2 可视化节点 -->
+  <group if="$(var use_rviz)">
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config)"/>
+  </group>
+</launch>

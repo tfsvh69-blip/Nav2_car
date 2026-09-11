@@ -4,23 +4,27 @@ wheel_odometry_driver:
     # 控制板内部负责四路速度 PID；本节点只读取累计编码器计算 Odom。
     car_type: 1
     drive_mode: board_motion_pid
-    holonomic: true
+    # 整车带载较重，麦轮微型辊子受压滚动受阻；底盘退化为成熟稳定的差速非全向模式，禁用横移。
+    holonomic: false
     publish_rate: 25.0
     command_timeout: 0.3
     max_linear_x: 0.15
-    max_linear_y: 0.15
+    max_linear_y: 0.0
     max_angular_z: 0.50
     base_frame: base_footprint
     odom_frame: odom
+    imu_frame: imu_link
+    imu_gyro_signs: [1, 1, -1]
+    imu_accel_signs: [1, 1, -1]
     # 仅在填完四轮 count/rev 与方向并完成 ODOM-001 的第一项观察后改为 true。
     publish_odom_tf: true
-    wheel_odometry_enabled: false
-    # 已确认机械尺寸；四个编码标定值必须由 ENCODER-004 实机 10 圈结果填写，禁止猜测。
+    wheel_odometry_enabled: true
+    # 已确认机械尺寸；四个编码标定值来自 2026-09-08 手转 10 圈实测结果。
     wheel_diameter_m: 0.060
     wheelbase_m: 0.120
     track_width_m: 0.185
-    wheel_counts_per_revolution: [0.0, 0.0, 0.0, 0.0]
-    # +1 表示原始累计计数增加时该物理轮朝车体前进方向滚动；-1 表示相反。
+    wheel_counts_per_revolution: [1319.2, 1317.9, 1319.2, 1319.2]
+    # +1 表示原始累计计数增加时该物理轮朝车体前进方向滚动；-1 表示相反。实测均为 +1。
     wheel_encoder_signs: [1, 1, 1, 1]
     # 端口顺序固定为 M1/M2/M3/M4；物理轮位来自已确认的一体插头接线。
     wheel_port_wheels: [left_front, left_rear, right_front, right_rear]

@@ -45,7 +45,7 @@ class ImuAxisObserver(Node):
 
     def __init__(self) -> None:
         super().__init__('imu_axis_observer')
-        self.declare_parameter('topic', '/imu_sensor_broadcaster/imu')
+        self.declare_parameter('topic', '/imu/data_raw')
         self.declare_parameter('phase', 'level')
         self.declare_parameter('sample_seconds', 30.0)
         self.declare_parameter('startup_timeout', 10.0)

@@ -1,4 +1,11 @@
-"""Start Nav2 localization and navigation with an existing map."""
+"""[已停用 / DEPRECATED] 早期 Nav2 Python 启动入口。
+
+根据 AGENTS.md 规范与 NAV-003 方案，本项目 Launch 文件统一采用 XML 格式，
+并解耦为独立的定位与导航入口：
+1. 定位入口：launch/localization.launch.xml
+2. 导航入口：launch/navigation.launch.xml
+本文件仅保留作为历史底层测试资产，不再作为当前启动入口。
+"""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription

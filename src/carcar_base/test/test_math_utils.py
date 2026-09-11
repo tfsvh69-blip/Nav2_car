@@ -2,6 +2,7 @@ import math
 import unittest
 
 from carcar_base.math_utils import (
+    apply_imu_signs,
     clamp,
     counts_per_revolution,
     encoder_deltas,
@@ -18,6 +19,7 @@ from carcar_base.math_utils import (
     single_motor_pwm,
     two_motor_pwm,
     velocity_pi_pwm,
+    validate_imu_signs,
     validate_motion_pid,
     yaw_to_quaternion,
 )
@@ -292,6 +294,27 @@ class MathUtilsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             velocity_pi_pwm(1000.0, 0.0, 0.0, 34.0, 0.025, 0.04, 46, 1)
 
+    def test_validate_imu_signs(self) -> None:
+        self.assertEqual(validate_imu_signs((1, 1, -1)), (1, 1, -1))
+        self.assertEqual(validate_imu_signs([1, -1, 1]), (1, -1, 1))
+        for invalid in ((1, 1), (1, 1, 1, 1), (1, 0, -1), (1, 2, -1)):
+            with self.assertRaises(ValueError):
+                validate_imu_signs(invalid)
+
+    def test_apply_imu_signs(self) -> None:
+        raw_gyro = (0.01, -0.02, -0.5)
+        corrected_gyro = apply_imu_signs(raw_gyro, (1, 1, -1))
+        self.assertAlmostEqual(corrected_gyro[0], 0.01)
+        self.assertAlmostEqual(corrected_gyro[1], -0.02)
+        self.assertAlmostEqual(corrected_gyro[2], 0.5)
+
+        raw_accel = (0.04, -0.07, -9.88)
+        corrected_accel = apply_imu_signs(raw_accel, (1, 1, -1))
+        self.assertAlmostEqual(corrected_accel[0], 0.04)
+        self.assertAlmostEqual(corrected_accel[1], -0.07)
+        self.assertAlmostEqual(corrected_accel[2], 9.88)
+
 
 if __name__ == '__main__':
+
     unittest.main()

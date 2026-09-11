@@ -18,10 +18,12 @@ from tf2_ros import TransformBroadcaster
 from Rosmaster_Lib import Rosmaster
 
 from .math_utils import (
+    apply_imu_signs,
     clamp,
     integrate_body_delta,
     is_zero_motion_command,
     mecanum_body_delta_from_encoder_counts,
+    validate_imu_signs,
     validate_mecanum_odometry_parameters,
     validate_motion_pid,
     yaw_to_quaternion,
@@ -58,6 +60,8 @@ class RosmasterNode(Node):
             ['left_front', 'left_rear', 'right_front', 'right_rear'],
         )
         self.declare_parameter('wheel_odom_max_count_delta', 100000)
+        self.declare_parameter('imu_gyro_signs', [1, 1, -1])
+        self.declare_parameter('imu_accel_signs', [1, 1, -1])
         self.declare_parameter('battery_min_voltage', 9.6)
         self.declare_parameter('battery_max_voltage', 12.6)
         self.declare_parameter('debug_serial', False)
@@ -106,6 +110,13 @@ class RosmasterNode(Node):
         self._wheel_odom_max_count_delta = int(
             self.get_parameter('wheel_odom_max_count_delta').value
         )
+        self._imu_gyro_signs = validate_imu_signs(
+            self.get_parameter('imu_gyro_signs').value
+        )
+        self._imu_accel_signs = validate_imu_signs(
+            self.get_parameter('imu_accel_signs').value
+        )
+
         self._battery_min = float(
             self.get_parameter('battery_min_voltage').value
         )
@@ -434,8 +445,12 @@ class RosmasterNode(Node):
             self._tf_broadcaster.sendTransform(transform)
 
     def _publish_imu(self, stamp) -> None:
-        acceleration = self._driver.get_accelerometer_data()
-        angular_velocity = self._driver.get_gyroscope_data()
+        acceleration = apply_imu_signs(
+            self._driver.get_accelerometer_data(), self._imu_accel_signs
+        )
+        angular_velocity = apply_imu_signs(
+            self._driver.get_gyroscope_data(), self._imu_gyro_signs
+        )
         msg = Imu()
         msg.header.stamp = stamp
         msg.header.frame_id = self._imu_frame

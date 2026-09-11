@@ -100,6 +100,31 @@ def validate_mecanum_odometry_parameters(
     return (*geometry, counts, signs, wheels)
 
 
+def validate_imu_signs(
+    signs: tuple[int, ...] | list[int],
+) -> tuple[int, int, int]:
+    """Validate a 3-element tuple of IMU axis signs (+1 or -1)."""
+    values = tuple(int(value) for value in signs)
+    if len(values) != 3 or any(value not in (-1, 1) for value in values):
+        raise ValueError('IMU axis signs must contain three values of -1 or 1')
+    return (values[0], values[1], values[2])
+
+
+def apply_imu_signs(
+    values: tuple[float, float, float] | list[float],
+    signs: tuple[int, ...] | list[int],
+) -> tuple[float, float, float]:
+    """Apply 3-axis signs to IMU linear acceleration or angular velocity."""
+    validated_signs = validate_imu_signs(signs)
+    if len(values) != 3:
+        raise ValueError('IMU measurement must contain three values')
+    return (
+        float(values[0]) * validated_signs[0],
+        float(values[1]) * validated_signs[1],
+        float(values[2]) * validated_signs[2],
+    )
+
+
 def mecanum_body_delta_from_encoder_counts(
     count_deltas: tuple[int, int, int, int],
     wheel_diameter_m: float,

@@ -35,6 +35,12 @@ class _RosmasterStub:
         self.pid = [kp, ki, kd]
         self.pid_writes.append((kp, ki, kd, forever))
 
+    def get_gyroscope_data(self):
+        return [0.001, -0.002, -0.15]
+
+    def get_accelerometer_data(self):
+        return [0.03, -0.04, -9.88]
+
 
 class RosmasterNodePidTest(unittest.TestCase):
 
@@ -97,6 +103,27 @@ class RosmasterNodePidTest(unittest.TestCase):
         self.assertFalse(result.successful)
         self.assertEqual(self.node._max_linear_x, 0.5)
 
+    def test_imu_signs_configured_and_published(self):
+        self.assertEqual(self.node._imu_gyro_signs, (1, 1, -1))
+        self.assertEqual(self.node._imu_accel_signs, (1, 1, -1))
+
+        published_msgs = []
+        self.node._imu_pub = type(
+            'MockPub', (), {'publish': published_msgs.append})()
+        stamp = self.node.get_clock().now().to_msg()
+        self.node._publish_imu(stamp)
+        self.assertEqual(len(published_msgs), 1)
+        msg = published_msgs[0]
+        self.assertAlmostEqual(msg.angular_velocity.x, 0.001)
+        self.assertAlmostEqual(msg.angular_velocity.y, -0.002)
+        # raw gz was -0.15, with sign -1 it should be +0.15
+        self.assertAlmostEqual(msg.angular_velocity.z, 0.15)
+        self.assertAlmostEqual(msg.linear_acceleration.x, 0.03)
+        self.assertAlmostEqual(msg.linear_acceleration.y, -0.04)
+        # raw az was -9.88, with sign -1 it should be +9.88
+        self.assertAlmostEqual(msg.linear_acceleration.z, 9.88)
+
 
 if __name__ == '__main__':
+
     unittest.main()

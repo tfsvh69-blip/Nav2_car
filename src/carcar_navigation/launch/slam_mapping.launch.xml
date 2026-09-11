@@ -1,0 +1,25 @@
+<launch>
+  <!-- NAV-002: SLAM Toolbox 建图与专用 RViz 可视化启动入口 -->
+  <!-- 遵循约定：XML 格式 Launch，独立启动，不包含底盘与雷达以防串口抢占 -->
+  <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="params_file" default="$(find-pkg-share carcar_navigation)/config/slam_toolbox.yaml" description="Full path to slam_toolbox parameter file"/>
+  <arg name="use_rviz" default="true" description="Launch RViz2 if true"/>
+  <arg name="rviz_config" default="$(find-pkg-share carcar_navigation)/rviz/slam_mapping.rviz" description="Full path to RViz configuration file"/>
+
+  <!-- SLAM Toolbox 异步建图节点 -->
+  <node pkg="slam_toolbox" exec="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- Joint State Publisher 提供静态关节默认状态，使 RViz RobotModel 完整渲染四轮 -->
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- RViz2 可视化节点 -->
+  <group if="$(var use_rviz)">
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config)"/>
+  </group>
+</launch>
+

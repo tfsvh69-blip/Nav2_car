@@ -1,0 +1,43 @@
+<launch>
+  <!-- NAV-003: Nav2 差速自主导航规划与控制启动入口 -->
+  <!-- 遵循约定：XML 格式 Launch，在定位就绪后独立启动；底盘与雷达使用既有独立入口 -->
+  <arg name="params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml" description="Full path to parameter file"/>
+  <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="default_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_to_pose_no_recovery.xml" description="Full path to behavior tree XML"/>
+  <arg name="default_nav_through_poses_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_through_poses_no_recovery.xml" description="Full path to behavior tree XML for through poses"/>
+
+  <!-- 控制器节点：DWB 差速非全向规划，输出重映射至 /cmd_vel_nav -->
+  <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- 速度平滑器：接收 /cmd_vel_nav，平滑限速后输出至 /cmd_vel 给底盘驱动 -->
+  <node pkg="nav2_velocity_smoother" exec="velocity_smoother" name="velocity_smoother" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <remap from="cmd_vel_smoothed" to="/cmd_vel"/>
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- 全局规划器节点：Navfn 禁止穿越未知区域 -->
+  <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+
+  <!-- 行为树导航器：加载无恢复单目标与多目标行为树 -->
+  <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="default_nav_to_pose_bt_xml" value="$(var default_bt_xml)"/>
+    <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
+  </node>
+
+  <!-- 导航生命周期管理器：按序配置并激活 controller_server, velocity_smoother, planner_server, bt_navigator -->
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>
