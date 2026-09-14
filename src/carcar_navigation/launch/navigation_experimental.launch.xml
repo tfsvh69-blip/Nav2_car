@@ -1,0 +1,63 @@
+<launch>
+  <!-- NAV-008 实验导航入口：稳定 navigation.launch.xml 保持不变。 -->
+  <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
+  <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <!-- NAV-010/NAV-011: Groot 与桥接监视器默认关闭并停用，由 nav_event_logger 终端摘要与会话录包替代 -->
+  <arg name="start_bt_monitor" default="false"/>
+  <arg name="start_groot" default="false"/>
+  <arg name="default_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_to_pose_experimental_recovery.xml"/>
+  <arg name="default_nav_through_poses_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_through_poses_experimental_recovery.xml"/>
+
+  <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="nav2_velocity_smoother" exec="velocity_smoother" name="velocity_smoother" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <remap from="cmd_vel_smoothed" to="/cmd_vel"/>
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <!-- 所有恢复动作重映射到平滑器输入，避免绕过零速超时与速度限制。 -->
+  <node pkg="nav2_behaviors" exec="behavior_server" name="behavior_server" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="default_nav_to_pose_bt_xml" value="$(var default_bt_xml)"/>
+    <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
+  </node>
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <!-- NAV-011 导航事件与终端状态摘要及会话录包节点：只读监听，零速度输出。 -->
+  <node pkg="carcar_navigation" exec="nav_event_logger" name="nav_event_logger" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="base_params_file" value="$(var base_params_file)"/>
+    <param name="experiment_params_file" value="$(var experiment_params_file)"/>
+    <param name="default_bt_xml" value="$(var default_bt_xml)"/>
+    <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
+  </node>
+
+  <!-- 引入 Groot 行为树监视器 -->
+  <include file="$(find-pkg-share carcar_bt_monitor)/launch/bt_monitor.launch.xml" if="$(var start_bt_monitor)">
+    <arg name="bt_xml_path" value="$(var default_bt_xml)"/>
+    <arg name="start_groot" value="$(var start_groot)"/>
+  </include>
+</launch>

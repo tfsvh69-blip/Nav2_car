@@ -1,11 +1,16 @@
 <launch>
-  <!-- NAV-003: 静态地图定位与专用 RViz 可视化启动入口 -->
+  <!-- NAV-003/NAV-005: 静态地图定位与专用 RViz 可视化启动入口 -->
   <!-- 遵循约定：XML 格式 Launch，独立启动定位，底盘与雷达使用既有独立入口 -->
-  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav002_20260909_164237.yaml" description="Full path to map YAML file"/>
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml" description="Full path to map YAML file"/>
   <arg name="params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml" description="Full path to parameter file"/>
   <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
   <arg name="use_rviz" default="true" description="Launch RViz2 if true"/>
-  <arg name="rviz_config" default="$(find-pkg-share carcar_navigation)/rviz/navigation.rviz" description="Full path to RViz configuration file"/>
+  <!-- rviz_mode: navigation（map 固定帧，完整导航视图）或 debug_odom（odom 固定帧，排查雷达错位）-->
+  <arg name="rviz_mode" default="navigation" description="RViz display mode: navigation or debug_odom"/>
+
+  <!-- 根据 rviz_mode 选择配置文件 -->
+  <let name="rviz_config_navigation" value="$(find-pkg-share carcar_navigation)/rviz/navigation.rviz"/>
+  <let name="rviz_config_debug" value="$(find-pkg-share carcar_navigation)/rviz/debug_odom.rviz"/>
 
   <!-- 地图服务节点：唯一发布 /map 话题 -->
   <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
@@ -31,8 +36,14 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
-  <!-- RViz2 可视化节点 -->
+  <!-- RViz2 可视化节点：navigation 模式（Fixed Frame: map） -->
   <group if="$(var use_rviz)">
-    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config)"/>
+    <group if="$(eval '\'$(var rviz_mode)\' == \'navigation\'')">
+      <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config_navigation)"/>
+    </group>
+    <!-- RViz2 可视化节点：debug_odom 模式（Fixed Frame: odom，排查雷达错位） -->
+    <group if="$(eval '\'$(var rviz_mode)\' == \'debug_odom\'')">
+      <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config_debug)"/>
+    </group>
   </group>
 </launch>

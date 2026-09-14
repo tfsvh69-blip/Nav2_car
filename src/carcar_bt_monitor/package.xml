@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carcar_bt_monitor</name>
+  <version>0.1.0</version>
+  <description>
+    NAV-006: C++ BT 状态日志桥接包。
+    订阅 /behavior_tree_log 并通过 BehaviorTree.CPP v3 的 PublisherZMQ
+    将行为树状态转发给本机 Groot 1（ZMQ 端口 1666/1667）。
+    发布 /bt_monitor/diagnostics 报告监控同步状态。
+    不执行 Nav2 导航树，不加载 Nav2 导航插件，不操作串口或电机。
+  </description>
+  <maintainer email="maintainer@example.com">carcar maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>nav2_msgs</depend>
+  <depend>action_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>behaviortree_cpp_v3</depend>
+
+  <!-- behaviortree_cpp_v3 已随 ros-humble-behaviortree-cpp-v3 3.8.7 安装 -->
+  <!-- ZMQ (libzmq3-dev) 已随 behaviortree_cpp_v3 安装 -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

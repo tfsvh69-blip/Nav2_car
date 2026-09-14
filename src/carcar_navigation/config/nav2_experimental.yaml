@@ -1,0 +1,86 @@
+# NAV-007/NAV-008 实验覆盖参数。
+# 本文件必须与 config/nav2.yaml 一起加载，后者仍是当前稳定对照配置。
+# 所有值都只在实车验收前作为实验值使用。
+
+amcl:
+  ros__parameters:
+    update_min_a: 0.05
+    update_min_d: 0.05
+    recovery_alpha_fast: 0.1
+    recovery_alpha_slow: 0.001
+
+controller_server:
+  ros__parameters:
+    # 频率校准：由 20.0 Hz 降至 10.0 Hz，与雷达 10Hz/代价地图 5Hz 匹配，消除 Jetson CPU 瞬时拥塞与 Controller patience 超时
+    controller_frequency: 10.0
+    failure_tolerance: 2.0
+    progress_checker_plugin: progress_checker
+    progress_checker:
+      plugin: nav2_controller::PoseProgressChecker
+      required_movement_radius: 0.05
+      required_movement_angle: 0.20
+      movement_time_allowance: 20.0
+    FollowPath:
+      debug_trajectory_details: true
+      transform_tolerance: 0.3
+      min_vel_x: 0.0
+      max_vel_x: 0.15
+      min_vel_y: 0.0
+      max_vel_y: 0.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.15
+      sim_time: 2.5
+      critics: [RotateToGoal, Oscillation, ObstacleFootprint, GoalAlign, PathAlign, PathDist, GoalDist]
+      ObstacleFootprint.scale: 0.02
+      publish_evaluation: true
+      publish_local_plan: true
+      publish_trajectories: true
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      inflation_layer:
+        enabled: true
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.15
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      inflation_layer:
+        enabled: true
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.30
+
+velocity_smoother:
+  ros__parameters:
+    smoothing_frequency: 10.0
+    velocity_timeout: 0.30
+    max_velocity: [0.15, 0.0, 0.60]
+    # 正常 DWB 仍然只采样前进速度；-0.05 只供 behavior_server 的 BackUp 恢复使用。
+    min_velocity: [-0.05, 0.0, -0.60]
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    cycle_frequency: 10.0
+    global_frame: odom
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.2
+    behavior_plugins: [spin, backup, wait]
+    spin:
+      plugin: nav2_behaviors/Spin
+    backup:
+      plugin: nav2_behaviors/BackUp
+    wait:
+      plugin: nav2_behaviors/Wait
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 0.25
+    min_rotational_vel: 0.10
+    rotational_acc_lim: 0.50
+
+lifecycle_manager_navigation:
+  ros__parameters:
+    node_names: ['controller_server', 'velocity_smoother', 'planner_server', 'behavior_server', 'bt_navigator']

@@ -1,19 +1,20 @@
 <!--
-  NAV-003: 单目标周期重规划跟随行为树
+  NAV-003/NAV-006: 单目标周期重规划跟随行为树（节点已添加唯一 name）
   设计原则：
   1. 仅包含周期重规划 (1.0 Hz) 与路径跟随；
   2. 严格剔除上游默认的自转 (Spin)、倒车 (BackUp)、原地等待 (Wait) 及代价地图清除恢复行为；
   3. 规划失败或遇障阻断时立即返回 FAILURE 并安全停车；
   4. 正常转向与终点调头由 DWB 控制器自行闭环完成。
+  NAV-006 补充：每个节点已添加唯一 name（ntp_ 前缀），使 Humble 的
+  /behavior_tree_log 日志可按名称精确匹配，供桥接节点和 Groot 显示。
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <PipelineSequence name="NavigateWithReplanning">
-      <RateController hz="1.0">
-        <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+    <PipelineSequence name="ntp_NavigateWithReplanning">
+      <RateController name="ntp_RateController" hz="1.0">
+        <ComputePathToPose name="ntp_ComputePathToPose" goal="{goal}" path="{path}" planner_id="GridBased"/>
       </RateController>
-      <FollowPath path="{path}" controller_id="FollowPath"/>
+      <FollowPath name="ntp_FollowPath" path="{path}" controller_id="FollowPath"/>
     </PipelineSequence>
   </BehaviorTree>
 </root>
-

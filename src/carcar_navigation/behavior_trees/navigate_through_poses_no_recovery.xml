@@ -1,18 +1,19 @@
 <!--
-  NAV-003: 多目标单向无恢复行为树
+  NAV-003/NAV-006: 多目标单向无恢复行为树（节点已添加唯一 name）
   设计原则：
   1. 仅包含单向规划与跟随；
   2. 严格剔除自转 (Spin)、倒车 (BackUp)、原地等待 (Wait) 及代价地图清除恢复行为；
   3. 遇阻断时立即返回 FAILURE 并安全停车。
+  NAV-006 补充：每个节点已添加唯一 name（ntpp_ 前缀），使 Humble 的
+  /behavior_tree_log 日志可按名称精确匹配，供桥接节点和 Groot 显示。
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <PipelineSequence name="NavigateWithReplanning">
-      <RateController hz="1.0">
-        <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridBased"/>
+    <PipelineSequence name="ntpp_NavigateWithReplanning">
+      <RateController name="ntpp_RateController" hz="1.0">
+        <ComputePathThroughPoses name="ntpp_ComputePathThroughPoses" goals="{goals}" path="{path}" planner_id="GridBased"/>
       </RateController>
-      <FollowPath path="{path}" controller_id="FollowPath"/>
+      <FollowPath name="ntpp_FollowPath" path="{path}" controller_id="FollowPath"/>
     </PipelineSequence>
   </BehaviorTree>
 </root>
-

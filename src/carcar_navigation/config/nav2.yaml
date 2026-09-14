@@ -106,6 +106,9 @@ bt_navigator:
       - nav2_assisted_teleop_cancel_bt_node
       - nav2_drive_on_heading_cancel_bt_node
       - nav2_is_battery_charging_condition_bt_node
+      # NAV-007/NAV-008 自定义节点只在实验恢复行为树中被引用；保留在基础插件表中，
+      # 避免 YAML 数组覆盖导致实验树丢失 Nav2 内置插件。
+      - carcar_nav_bt_nodes
 
 controller_server:
   ros__parameters:
@@ -114,16 +117,16 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    failure_tolerance: 2.0
     odom_topic: /wheel/odometry
     progress_checker_plugin: progress_checker
     goal_checker_plugins: [general_goal_checker]
     controller_plugins: [FollowPath]
     progress_checker:
       plugin: nav2_controller::SimpleProgressChecker
-      # 首轮安全验收：10 秒内未移动 0.10 m 即中止任务并由速度链路停车。
-      required_movement_radius: 0.10
-      movement_time_allowance: 10.0
+      # 放宽看门狗：允许 60 秒内位移达到 0.05 m，给原地调头与避障充裕时间，避免误报卡死
+      required_movement_radius: 0.05
+      movement_time_allowance: 60.0
     general_goal_checker:
       stateful: true
       plugin: nav2_controller::SimpleGoalChecker
@@ -135,22 +138,22 @@ controller_server:
       debug_trajectory_details: false
       # 严格差速非全向：禁止倒车，禁止横移
       min_vel_x: 0.0
-      # NAV-003 实车调参：速度上限由 0.10 m/s 提高 1.8 倍，用于克服带载静摩擦。
+      # 速度上限保持 0.18 m/s
       max_vel_x: 0.18
       min_vel_y: 0.0
       max_vel_y: 0.0
-      # 原地旋转上限由 0.20 rad/s 提高 1.8 倍；正负方向保持严格对称。
-      max_vel_theta: 0.36
+      # 原地旋转上限提升至 0.60 rad/s，提高原地调头动力与克服静摩擦能力
+      max_vel_theta: 0.60
       min_speed_xy: 0.0
       max_speed_xy: 0.18
       min_speed_theta: 0.0
-      # 实机待调的保守初始加减速度。
+      # 提高角加速度至 0.80 rad/s²，使原地起转更果断
       acc_lim_x: 0.20
       acc_lim_y: 0.0
-      acc_lim_theta: 0.40
+      acc_lim_theta: 0.80
       decel_lim_x: -0.20
       decel_lim_y: 0.0
-      decel_lim_theta: -0.40
+      decel_lim_theta: -0.80
       vx_samples: 20
       vy_samples: 1
       vtheta_samples: 20
@@ -164,13 +167,13 @@ controller_server:
       stateful: true
       critics: [RotateToGoal, Oscillation, BaseObstacle, GoalAlign, PathAlign, PathDist, GoalDist]
       BaseObstacle.scale: 0.02
-      PathAlign.scale: 24.0
+      PathAlign.scale: 12.0
       PathAlign.forward_point_distance: 0.10
-      GoalAlign.scale: 20.0
+      GoalAlign.scale: 10.0
       GoalAlign.forward_point_distance: 0.10
       PathDist.scale: 24.0
       GoalDist.scale: 20.0
-      RotateToGoal.scale: 24.0
+      RotateToGoal.scale: 12.0
       RotateToGoal.slowing_factor: 2.5
       RotateToGoal.lookahead_time: -1.0
 
@@ -186,8 +189,8 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      # 首轮保留保守矩形安全包络 x=±0.20 m, y=±0.17 m（实车 0.235x0.216 m）
-      footprint: "[[-0.20, -0.17], [-0.20, 0.17], [0.20, 0.17], [0.20, -0.17]]"
+      # 校准安全包络至贴近实车 0.235x0.216 m（半长 0.14m，半宽 0.13m），消除超大虚拟包络导致的旋转扫墙误报
+      footprint: "[[-0.14, -0.13], [-0.14, 0.13], [0.14, 0.13], [0.14, -0.13]]"
       footprint_padding: 0.0
       plugins: [obstacle_layer, inflation_layer]
       obstacle_layer:
@@ -207,10 +210,9 @@ local_costmap:
           obstacle_min_range: 0.10
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
-        # NAV-003 实车观察参数：缩小膨胀范围，并使代价在边界外更快衰减。
-        # 未知区域不参与膨胀，避免在已完整建成的 nav002 地图中额外封闭通道。
+        # 提高衰减系数使边界代价下降更快，保留 0.18 m 膨胀半径以保持安全缓冲
         enabled: true
-        cost_scaling_factor: 8.0
+        cost_scaling_factor: 10.0
         inflation_radius: 0.18
         inflate_unknown: false
         inflate_around_unknown: false
@@ -226,8 +228,8 @@ global_costmap:
       robot_base_frame: base_footprint
       resolution: 0.05
       track_unknown_space: true
-      # 首轮保留保守矩形安全包络
-      footprint: "[[-0.20, -0.17], [-0.20, 0.17], [0.20, 0.17], [0.20, -0.17]]"
+      # 校准安全包络至贴近实车 0.235x0.216 m（半长 0.14m，半宽 0.13m）
+      footprint: "[[-0.14, -0.13], [-0.14, 0.13], [0.14, 0.13], [0.14, -0.13]]"
       footprint_padding: 0.0
       plugins: [static_layer, obstacle_layer, inflation_layer]
       static_layer:
@@ -250,8 +252,11 @@ global_costmap:
           obstacle_min_range: 0.10
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
-        # 与局部代价地图保持完全一致，防止全局与局部路径对可通行空间的判断不一致。
-        enabled: true
+        # NAV-005 对照配置：关闭全局膨胀层，仅保留静态层与雷达障碍层。
+        # 保留参数原值，便于恢复对照：将 enabled 改回 true 即可恢复原配置。
+        # 警告：关闭后全局路径可能贴近墙体，现场需检查局部控制器净空；
+        # 若持续产生无法安全执行的路径，恢复 enabled: true，不缩小机器人包络。
+        enabled: false
         cost_scaling_factor: 8.0
         inflation_radius: 0.18
         inflate_unknown: false
@@ -281,12 +286,12 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: OPEN_LOOP
-    # 与 DWB 保持同一速度上限：前进 0.18 m/s，旋转 ±0.36 rad/s。
+    # 与 DWB 保持同一速度上限：前进 0.18 m/s，旋转 ±0.60 rad/s。
     # 仍禁止横移和倒车。
-    max_velocity: [0.18, 0.0, 0.36]
-    min_velocity: [0.0, 0.0, -0.36]
-    max_accel: [0.20, 0.0, 0.40]
-    max_decel: [-0.20, 0.0, -0.40]
+    max_velocity: [0.18, 0.0, 0.60]
+    min_velocity: [0.0, 0.0, -0.60]
+    max_accel: [0.20, 0.0, 0.80]
+    max_decel: [-0.20, 0.0, -0.80]
     odom_topic: /wheel/odometry
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

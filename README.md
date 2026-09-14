@@ -1,80 +1,85 @@
 # carcar 四轮麦克纳姆导航巡检小车
 
-2026-09-07 最新修订：用户已决定建模宽统一为 216 mm，原 213 mm 差异不再作为待办。
-IMU 位置暂估为相对 `base_footprint=(-40,-15,75) mm`，轴向待验证。当前操作请以
-[操作手册](docs/操作手册.md) 为准。
+最后更新：2026-09-14
 
-面向 ROS 2 Humble 的四轮麦克纳姆室内巡检小车。目标是多点导航巡检、RealSense D435
-视觉自主回充，以及手机 Web 遥控和状态查看。当前进度与下一步以
-[项目现状与路线](docs/项目现状与路线.md)为准。
+面向 ROS 2 Humble (Ubuntu 22.04 LTS) 的四轮麦克纳姆室内巡检小车。业务目标涵盖室内自主建图、静态地图定位、Nav2 单点与多点自主导航巡检、Groot 实时行为树监控，以及 RealSense D435 视觉辅助回充。
 
-## 软件分层
+当前进度、最新结论与唯一下一步请以 [项目现状与路线](docs/项目现状与路线.md) 为准；所有实机构建、启动、观察与应急停止命令统一收敛于 [操作手册](docs/操作手册.md)。
+
+---
+
+## 核心技术选型与当前状态
+
+* **计算平台**：NVIDIA Jetson Orin NX，Ubuntu 22.04 LTS，ROS 2 Humble。
+* **运动模型**：四轮麦克纳姆轮底盘，因带载重载静摩擦大，软件层正式锁定为**非全向差速模型**（`holonomic=false`，禁用横移），保障行驶轨迹与里程计的高精度与高重复性。
+* **底盘控制**：STM32 控制板板载闭环运动 PID（`Kp=8.0, Ki=1.2, Kd=0.8` 已固化入 Flash），四轮编码器标定完成，底层硬件看门狗 `0.30 s`。
+* **里程计基线**：四轮累计编码器纯轮式里程计（1 m 直行与 360° 原地自转实测通过，静止零漂移）。严格遵循状态估计推进规范，IMU 虽已完成 REP-103 驱动校正，但当前**保持纯轮式里程计独立输入，暂不接入滤波融合**。
+* **建图与导航**：
+  * SLAM Toolbox 异步建图通过（NAV-001/002/004），已建立覆盖大范围的高清栅格地图（`nav004_20260914_093032`）并通过独立 C++ 重载比对校验。
+  * Nav2 差速导航栈就绪（AMCL 差速模型、DWB 控制器、实车贴合包络 `0.28x0.26m`）。
+  * 全局膨胀层开启（`0.30 m / 5.0`），确保规避垃圾桶等突发障碍时保有大于半车宽的安全净空；局部膨胀维持 `0.15 m / 5.0`。
+  * 状态监控与会话归档：Groot 1 与桥接监视器已正式停用并默认关闭；全面改由 C++ `nav_event_logger` 提供 1 Hz 终端中文摘要、阶段流转即时告警，并在 `log/nav_sessions/` 自动生成含 1 GiB 分卷 rosbag2 的完整会话包（带 10 GiB 与磁盘 <2 GiB 保护）；配套 C++ 工具 `nav_log_tool` 提供会话清单、时序时间线与纯离线零发布回看。
+  * 当前正在开展 NAV-010（垃圾桶动态绕障）与 NAV-011（终端状态与会话录包系统）实车现场验收。
+
+---
+
+## 软件架构与分层
 
 ```text
-硬件串口 / Rosmaster 控制板
+硬件串口 (/dev/myserial, /dev/ttyUSB0)
         ↓
-rosmaster_vendor       原厂 Python 驱动（第三方代码，仅封装安装）
+rosmaster_vendor       原厂底层通信封装（第三方驱动）
         ↓
-carcar_base            cmd_vel、电机、IMU、编码器、里程计、电池
+carcar_base            电机动力学、纯轮式里程计、底层安全看门狗
         ↓
-carcar_description     URDF/Xacro 与 base_link/传感器静态 TF
+carcar_description     URDF/Xacro 模型、实车物理尺寸与静态 TF 树
         ↓
-carcar_lidar           RPLIDAR A1 的 Humble 驱动编排与 RViz 测试
+carcar_lidar           RPLIDAR A1 雷达驱动编排与点云滤波
         ↓
-carcar_navigation      SLAM、定位、Nav2 参数与启动入口
+carcar_navigation      SLAM 建图、AMCL 定位、Nav2 导航参数、nav_event_logger (状态与会话录包)、nav_log_tool 分析工具、XML Launch
         ↓
-carcar_algorithms      后续感知/规划算法
+carcar_bt_monitor      【已停用】早期基于 BehaviorTree.CPP ZMQ 的 Groot 1 桥接（保留作历史测试对照）
         ↓
-carcar_inspection      后续巡检任务、状态机与业务接口
-
-carcar_bringup         只负责编排各层，不承载业务代码
+carcar_algorithms      感知与特征提取通用算法（规划中）
+        ↓
+carcar_inspection      巡检业务状态机、多点调度与视觉回充逻辑（规划中）
+        ↓
+carcar_bringup         整车启动编排
 ```
 
-项目文档入口见 [文档索引](docs/文档索引.md)。其中包含架构设计、硬件台账、完整测试记录和上车前检查说明。
+---
 
-M1～M4 的历史轮位和编码反馈结果已归档。整车 description 已接入实车尺寸和 STL。当前不启动正式 bringup；先按
-[操作手册](docs/操作手册.md) 完成 MOTOR-007。
+## 文档架构
 
-RPLIDAR A1 在当前 Jetson/Humble 上已能稳定发布 `/scan`，详情见[硬件台账](docs/硬件台账.md)；历史迁移记录已归档。
+项目严格遵守文档收敛约定，`docs/` 根目录仅维护当前有效的 5 份核心文档：
 
-## 快速开始
+| 核心文档 | 用途说明 |
+|---|---|
+| [文档索引](docs/文档索引.md) | 文档总入口与维护规范 |
+| [项目现状与路线](docs/项目现状与路线.md) | 当前阶段状态、实车/离线结论表、唯一下一步与推进顺序 |
+| [硬件台账](docs/硬件台账.md) | 已确认的硬件连接、端口、实测尺寸、标定参数与待确认事实 |
+| [操作手册](docs/操作手册.md) | **全项目唯一命令维护入口**：环境加载、编译、节点启动、观察与安全停机 |
+| [测试记录](docs/测试记录.md) | 自底向上各测试项（DRV/MOTOR/IMU/ODOM/TF/NAV）详细过程与结果归档 |
+| [历史资料](docs/历史/README.md) | 早期专题调研、旧方案、停用命令与系统架构审计文档归档 |
 
-下列是依赖安装和离线构建，不启动硬件：
+*注：系统级 Ubuntu/Jetson 配置变更记录请查阅桌面维护文档 `/home/jetson/Desktop/系统配置维护记录.md`。*
+
+---
+
+## 快速构建
+
+离线编译整车核心功能包（不访问串口、不触动电机）：
 
 ```bash
 cd /home/jetson/luhao/my_nav_carcar
 conda deactivate 2>/dev/null || true
 source /opt/ros/humble/setup.bash
-sudo apt update
-rosdep install --from-paths src --ignore-src -r -y
-colcon build --symlink-install
+
+# 构建底盘、描述、雷达与导航核心包
+colcon build --symlink-install --packages-select \
+  rosmaster_vendor carcar_base carcar_description carcar_lidar carcar_navigation carcar_bt_monitor
+
 source install/setup.bash
 ```
 
-如果系统尚未初始化 rosdep，请先执行 `sudo rosdep init`（仅首次）和 `rosdep update`。导航阶段需要安装 `nav2_bringup` 与 `slam_toolbox`；依赖声明会让 rosdep 自动处理它们。
-
-硬件首启不使用通用 `/cmd_vel` 单次发布；请先完成 MOTOR-007 的断电接线
-修正和架空短脉冲验收。正式驱动看门狗已改为 `0.3 s`。
-
-## 导航阶段入口
-
-建图、保存地图后导航的命令已预留：
-
-```bash
-# 终端 1：机器人本体
-ros2 launch carcar_bringup robot.launch.py
-
-# 终端 2：建图
-ros2 launch carcar_navigation slam.launch.py
-
-# 保存地图（示例）
-ros2 run nav2_map_server map_saver_cli -f maps/site
-
-# 使用已有地图定位与导航
-ros2 launch carcar_navigation navigation.launch.py map:=/absolute/path/to/site.yaml
-```
-
-轮径、轮宽、轴距、轮距、整车外廓、顶板、雷达位置和 RealSense 左红外镜头位置已经写入
-描述。整车宽按用户决定统一为 `216 mm`；雷达平面方向已通过，相机倒装已按
-`roll=pi` 写入模型。IMU 完整轴向仍待验证。完成这些确认并更新 Nav2 footprint 前，
-不进行导航验收。
+完整的多终端启动、传感器联调、SLAM 建图、Nav2 导航与终端状态录包操作流程，请直接查阅 **[操作手册](docs/操作手册.md)**。

@@ -1,0 +1,26 @@
+<launch>
+  <!-- 【已停用 (DEPRECATED)】NAV-010/NAV-011：已停止维护 Groot 1 与状态桥接监视器，全面改由终端状态摘要与会话日志包替代。保留本文件仅供历史对照。关闭本 Launch 不影响导航。 -->
+
+  <!-- bt_xml_path 必须与 navigation.launch.xml 中 default_bt_xml 保持一致 -->
+  <arg name="bt_xml_path"
+       default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_to_pose_no_recovery.xml"
+       description="行为树 XML 路径，与 bt_navigator 加载的 XML 保持一致"/>
+  <arg name="zmq_publisher_port" default="1666" description="Groot 订阅端口（Publisher）"/>
+  <arg name="zmq_server_port"    default="1667" description="Groot 连接端口（Server）"/>
+  <arg name="max_msg_per_second" default="25"   description="ZMQ 每秒最大消息数"/>
+  <arg name="start_groot" default="true" description="是否启动 Jetson 本机 Groot 1 窗口"/>
+  <arg name="groot_executable" default="/home/jetson/.local/bin/Groot" description="固定提交构建后的 Groot 1 可执行文件"/>
+
+  <!-- BT 状态桥接节点 -->
+  <node pkg="carcar_bt_monitor" exec="bt_monitor_node" name="bt_monitor_node" output="screen">
+    <param name="bt_xml_path"         value="$(var bt_xml_path)"/>
+    <param name="zmq_publisher_port"  value="$(var zmq_publisher_port)"/>
+    <param name="zmq_server_port"     value="$(var zmq_server_port)"/>
+    <param name="max_msg_per_second"  value="$(var max_msg_per_second)"/>
+    <param name="bt_log_topic"        value="/behavior_tree_log"/>
+    <param name="action_status_topic" value="/navigate_to_pose/_action/status"/>
+  </node>
+
+  <!-- Groot 1 启动时直连本机 ZMQ 监视器，避免模态弹窗要求人工干预 -->
+  <executable cmd="$(var groot_executable) --mode monitor --publisher_port $(var zmq_publisher_port) --server_port $(var zmq_server_port) --autoconnect" name="groot" output="screen" if="$(var start_groot)"/>
+</launch>

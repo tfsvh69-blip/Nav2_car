@@ -1,0 +1,43 @@
+<launch>
+  <!-- NAV-007 实验定位入口：只叠加 AMCL 参数，地图、底盘与雷达仍独立启动。 -->
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
+  <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
+  <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="use_rviz" default="true"/>
+  <arg name="rviz_mode" default="navigation"/>
+  <let name="rviz_config_navigation" value="$(find-pkg-share carcar_navigation)/rviz/navigation.rviz"/>
+  <let name="rviz_config_debug" value="$(find-pkg-share carcar_navigation)/rviz/debug_odom.rviz"/>
+
+  <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="yaml_filename" value="$(var map)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <!-- NAV-007 门控只读地图、扫描、轮式里程计、AMCL 粒子和 TF；它不发布速度。 -->
+  <node pkg="carcar_navigation" exec="localization_monitor" name="localization_monitor" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_localization" output="screen">
+    <param from="$(var base_params_file)"/>
+    <param from="$(var experiment_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <group if="$(var use_rviz)">
+    <group if="$(eval '\'$(var rviz_mode)\' == \'navigation\'')">
+      <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config_navigation)"/>
+    </group>
+    <group if="$(eval '\'$(var rviz_mode)\' == \'debug_odom\'')">
+      <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config_debug)"/>
+    </group>
+  </group>
+</launch>
