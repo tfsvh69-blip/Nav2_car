@@ -1,0 +1,5 @@
+<launch>
+  <!-- 转发包含 carcar_lidar 的标准 XML 启动文件，兼容从 carcar_bringup 启动的调用习惯 -->
+  <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml"/>
+</launch>
+

@@ -1,0 +1,23 @@
+<launch>
+  <!-- RPLIDAR A1 雷达标准 XML 启动文件 (遵守约定：XML 格式 Launch) -->
+  <arg name="config_file" default="$(find-pkg-share carcar_lidar)/config/rplidar_a1.yaml" description="RPLIDAR A1 configuration file"/>
+  <arg name="serial_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0" description="RPLIDAR A1 serial device"/>
+  <arg name="serial_baudrate" default="115200" description="RPLIDAR A1 serial baudrate"/>
+  <arg name="frame_id" default="laser_frame" description="Frame ID for laser scans"/>
+  <arg name="inverted" default="false" description="Invert scan direction"/>
+  <arg name="angle_compensate" default="true" description="Enable angle compensation"/>
+  <arg name="scan_mode" default="Express" description="Scan mode (Express or Standard)"/>
+  <arg name="scan_frequency" default="10.0" description="Target scan frequency"/>
+
+  <node pkg="sllidar_ros2" exec="sllidar_node" name="sllidar_node" output="screen">
+    <param from="$(var config_file)"/>
+    <param name="serial_port" value="$(var serial_port)"/>
+    <param name="serial_baudrate" value="$(var serial_baudrate)"/>
+    <param name="frame_id" value="$(var frame_id)"/>
+    <param name="inverted" value="$(var inverted)"/>
+    <param name="angle_compensate" value="$(var angle_compensate)"/>
+    <param name="scan_mode" value="$(var scan_mode)"/>
+    <param name="scan_frequency" value="$(var scan_frequency)"/>
+  </node>
+</launch>
+

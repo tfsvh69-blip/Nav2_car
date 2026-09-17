@@ -6,8 +6,14 @@
   <!-- NAV-010/NAV-011: Groot 与桥接监视器默认关闭并停用，由 nav_event_logger 终端摘要与会话录包替代 -->
   <arg name="start_bt_monitor" default="false"/>
   <arg name="start_groot" default="false"/>
+  <arg name="record_raw_bag" default="false" description="Whether to record raw rosbag (capped at 120s / 256 MiB)"/>
   <arg name="default_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_to_pose_experimental_recovery.xml"/>
   <arg name="default_nav_through_poses_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_through_poses_experimental_recovery.xml"/>
+  <!-- NAV-014: 导航声光提示与停车诊断参数 -->
+  <arg name="enable_indicator" default="true" description="Whether to launch navigation sound and light indicator"/>
+  <arg name="mute_audio" default="false" description="Whether to mute navigation buzzer sounds"/>
+  <arg name="indicator_preview" default="false" description="Whether to run in preview mode (log without publishing to hardware)"/>
+  <arg name="indicator_brightness" default="85" description="RGB lamp brightness (0-255); 85 yields cyan (0,85,85)"/>
 
   <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
     <remap from="cmd_vel" to="/cmd_vel_nav"/>
@@ -17,10 +23,15 @@
   </node>
   <node pkg="nav2_velocity_smoother" exec="velocity_smoother" name="velocity_smoother" output="screen">
     <remap from="cmd_vel" to="/cmd_vel_nav"/>
-    <remap from="cmd_vel_smoothed" to="/cmd_vel"/>
+    <remap from="cmd_vel_smoothed" to="/cmd_vel_smoothed_raw"/>
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+  <!-- 最终速度联锁：默认关闭；停止或异常时由底盘既有看门狗继续兜底。 -->
+  <node pkg="carcar_navigation" exec="navigation_motion_gate" name="navigation_motion_gate" output="screen">
+    <param name="permit_timeout" value="0.20"/>
+    <param name="command_timeout" value="0.30"/>
   </node>
   <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
     <param from="$(var base_params_file)"/>
@@ -53,6 +64,17 @@
     <param name="experiment_params_file" value="$(var experiment_params_file)"/>
     <param name="default_bt_xml" value="$(var default_bt_xml)"/>
     <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
+    <param name="record_raw_bag" value="$(var record_raw_bag)"/>
+  </node>
+
+  <!-- NAV-014 导航声光提示与停车诊断节点：监听状态并控制底盘声光。 -->
+  <node pkg="carcar_navigation" exec="navigation_indicator" name="navigation_indicator" output="screen" if="$(var enable_indicator)">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="brightness" value="$(var indicator_brightness)"/>
+    <param name="mute_audio" value="$(var mute_audio)"/>
+    <param name="preview_mode" value="$(var indicator_preview)"/>
+    <param name="status_timeout_s" value="2.0"/>
+    <param name="publish_rate_hz" value="20.0"/>
   </node>
 
   <!-- 引入 Groot 行为树监视器 -->

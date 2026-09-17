@@ -1,0 +1,15 @@
+<launch>
+  <!-- 正式整车入口：模型/固定 TF 与底盘串口驱动各启动一次。 -->
+  <arg name="params_file" default="$(find-pkg-share carcar_base)/config/base.yaml" description="Rosmaster base driver parameters"/>
+  <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
+  <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+
+  <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+  </include>
+
+  <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
+    <arg name="params_file" value="$(var params_file)"/>
+    <arg name="serial_port" value="$(var serial_port)"/>
+  </include>
+</launch>

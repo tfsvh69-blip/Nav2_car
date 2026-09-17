@@ -97,10 +97,10 @@ class RosmasterNode(Node):
         self._track_width_m = float(
             self.get_parameter('track_width_m').value
         )
-        self._wheel_counts_per_revolution = tuple(float(value) for value in
-                                                  self.get_parameter(
-                                                      'wheel_counts_per_revolution'
-                                                  ).value)
+        self._wheel_counts_per_revolution = tuple(
+            float(value) for value in self.get_parameter(
+                'wheel_counts_per_revolution').value
+        )
         self._wheel_encoder_signs = tuple(int(value) for value in
                                           self.get_parameter(
                                               'wheel_encoder_signs').value)
@@ -229,6 +229,28 @@ class RosmasterNode(Node):
         self._x = 0.0
         self._y = 0.0
         self._yaw = 0.0
+
+        # 初始化关闭声光并订阅指示器控制话题
+        with self._io_lock:
+            self._driver.set_beep(0)
+            self._driver.set_colorful_lamps(0xFF, 0, 0, 0)
+
+        self._last_indicator_cmd_ns = 0
+        self._indicator_active = False
+        try:
+            from carcar_interfaces.msg import IndicatorCommand
+            self._indicator_sub = self.create_subscription(
+                IndicatorCommand,
+                '/hardware/indicator/command',
+                self._on_indicator_cmd,
+                10,
+            )
+        except ImportError:
+            self.get_logger().warning(
+                'carcar_interfaces 未找到，声光控制话题未启用'
+            )
+            self._indicator_sub = None
+
         self._timer = self.create_timer(1.0 / self._publish_rate, self._update)
         self.add_on_set_parameters_callback(self._on_parameters)
         self.get_logger().info(
@@ -239,8 +261,33 @@ class RosmasterNode(Node):
             f'wheel_odometry_enabled={self._wheel_odometry_enabled}'
         )
 
+    def _on_indicator_cmd(self, msg) -> None:
+        """Handle incoming sound and light indicator command safely."""
+        self._last_indicator_cmd_ns = self.get_clock().now().nanoseconds
+
+        # 校验并限制 RGB (0..255)
+        r = int(clamp(msg.r, 0, 255))
+        g = int(clamp(msg.g, 0, 255))
+        b = int(clamp(msg.b, 0, 255))
+
+        # 校验蜂鸣时间：绝不接受持续常鸣 1；只允许 0 或 10..3000ms (10倍数)
+        beep_ms = int(msg.beep_duration_ms)
+        if beep_ms == 1 or beep_ms < 0:
+            beep_ms = 0
+        elif beep_ms > 3000:
+            beep_ms = 3000
+        else:
+            beep_ms = (beep_ms // 10) * 10
+
+        # 硬件调用（严格互斥保护，且不改变运动看门狗状态）
+        with self._io_lock:
+            self._driver.set_colorful_lamps(0xFF, r, g, b)
+            if msg.beep_trigger and beep_ms >= 10:
+                self._driver.set_beep(beep_ms)
+        self._indicator_active = True
+
     def _on_parameters(self, parameters) -> SetParametersResult:
-        """Stage PID values and apply them temporarily on an explicit commit."""
+        """Stage PID values and apply them on an explicit commit."""
         staged = list(self._motion_pid_staged)
         apply_requested = False
         names = ('motion_kp', 'motion_ki', 'motion_kd')
@@ -334,6 +381,15 @@ class RosmasterNode(Node):
             self._watchdog_stopped = True
             self.get_logger().warning('cmd_vel timeout: motors stopped')
 
+        # 声光指示器超时保护：若超过 1.0s 未收到 IndicatorCommand，自动熄灭并停音
+        if self._indicator_active and self._last_indicator_cmd_ns > 0:
+            indicator_age = (now_ns - self._last_indicator_cmd_ns) * 1e-9
+            if indicator_age >= 1.0:
+                with self._io_lock:
+                    self._driver.set_beep(0)
+                    self._driver.set_colorful_lamps(0xFF, 0, 0, 0)
+                self._indicator_active = False
+
         self._last_update_ns = now_ns
         with self._io_lock:
             encoder_values = tuple(self._driver.get_motor_encoder())
@@ -349,7 +405,7 @@ class RosmasterNode(Node):
         now_ns: int,
         encoder_values: tuple[int, int, int, int],
     ) -> None:
-        """Integrate direct encoder increments only after calibration is enabled."""
+        """Integrate encoder increments after calibration is enabled."""
         if not self._wheel_odometry_enabled:
             return
         if self._previous_odom_encoders is None:
@@ -569,6 +625,8 @@ class RosmasterNode(Node):
             with self._io_lock:
                 for _ in range(3):
                     self._driver.set_car_motion(0.0, 0.0, 0.0)
+                self._driver.set_beep(0)
+                self._driver.set_colorful_lamps(0xFF, 0, 0, 0)
                 self._driver.set_auto_report_state(False, forever=False)
         except Exception as exc:  # Hardware may already be disconnected.
             self.get_logger().error(f'Failed to stop Rosmaster cleanly: {exc}')

@@ -1,0 +1,24 @@
+<launch>
+  <!-- DRV-004: Rosmaster 控制板蜂鸣器与 RGB 灯带测试 Launch 入口 -->
+  <!-- 遵循约定：XML 格式 Launch；默认处于 Dry-Run 离线展示模式，不访问物理串口 -->
+  <arg name="serial_port" default="/dev/myserial"/>
+  <arg name="real_hardware" default="false"/>
+  <arg name="action" default="test"/>
+  <arg name="car_type" default="1"/>
+  <arg name="led_id" default="255"/>
+  <arg name="beep_duration_ms" default="100"/>
+  <arg name="color_duration_sec" default="1.0"/>
+  <arg name="color_brightness" default="30"/>
+
+  <node pkg="carcar_hardware" exec="rosmaster_indicator_test" name="rosmaster_indicator_test" output="screen">
+    <param name="serial_port" value="$(var serial_port)"/>
+    <param name="real_hardware" value="$(var real_hardware)"/>
+    <param name="action" value="$(var action)"/>
+    <param name="car_type" value="$(var car_type)"/>
+    <param name="led_id" value="$(var led_id)"/>
+    <param name="beep_duration_ms" value="$(var beep_duration_ms)"/>
+    <param name="color_duration_sec" value="$(var color_duration_sec)"/>
+    <param name="color_brightness" value="$(var color_brightness)"/>
+  </node>
+</launch>
+

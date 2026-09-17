@@ -1,0 +1,10 @@
+<launch>
+  <!-- 发布整车 URDF、/robot_description 与所有固定关节 TF。 -->
+  <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="model" default="$(find-pkg-share carcar_description)/urdf/carcar.urdf.xacro" description="Carcar Xacro model path"/>
+
+  <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="robot_description" value="$(command 'xacro $(var model)')"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>

@@ -7,6 +7,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -25,6 +26,14 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(nav2_behaviors REQUIRED)
+find_package(nav2_core REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(nav2_behavior_tree REQUIRED)
+find_package(nav2_costmap_2d REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(carcar_interfaces REQUIRED)
 
 # NAV-003/NAV-004: C++ 地图重载与格式验证工具（支持 expected_map_yaml 参数）
 add_executable(check_map_reload src/check_map_reload.cpp)
@@ -70,7 +79,14 @@ ament_target_dependencies(localization_monitor
 # NAV-007/NAV-008: 供 bt_navigator 动态加载的本项目行为树节点。
 # RecoverLocalization 只调用 AMCL 服务并等待健康门控；RearClear 只读取
 # 本地代价地图、扫描新鲜度和 TF，所有实际运动仍由 Nav2 behavior_server 执行。
-add_library(carcar_nav_bt_nodes SHARED src/carcar_nav_bt_nodes.cpp)
+add_library(carcar_recovery_runtime SHARED src/recovery_runtime.cpp)
+target_include_directories(carcar_recovery_runtime PUBLIC include)
+ament_target_dependencies(carcar_recovery_runtime rclcpp nav2_util nav2_msgs nav_msgs sensor_msgs
+  geometry_msgs std_msgs diagnostic_msgs tf2 tf2_ros tf2_geometry_msgs nav2_costmap_2d)
+target_link_libraries(carcar_recovery_runtime BT::behaviortree_cpp_v3)
+
+add_library(carcar_nav_bt_nodes SHARED src/carcar_nav_bt_nodes.cpp src/nav012_nodes.cpp)
+target_include_directories(carcar_nav_bt_nodes PUBLIC include)
 ament_target_dependencies(carcar_nav_bt_nodes
   rclcpp
   nav2_msgs
@@ -81,9 +97,37 @@ ament_target_dependencies(carcar_nav_bt_nodes
   tf2_ros
   tf2_geometry_msgs
   diagnostic_msgs
+  rclcpp_action
+  nav2_behavior_tree
+  nav2_util
+  nav_msgs
 )
-target_link_libraries(carcar_nav_bt_nodes BT::behaviortree_cpp_v3)
+target_link_libraries(carcar_nav_bt_nodes BT::behaviortree_cpp_v3 carcar_recovery_runtime)
 target_compile_definitions(carcar_nav_bt_nodes PRIVATE BT_PLUGIN_EXPORT)
+
+# NAV-012: 倒车周期安全防护插件
+add_library(carcar_protected_backup SHARED src/protected_backup.cpp)
+target_include_directories(carcar_protected_backup PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(carcar_protected_backup
+  rclcpp
+  rclcpp_lifecycle
+  nav2_behaviors
+  nav2_core
+  nav2_msgs
+  nav2_util
+  sensor_msgs
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  pluginlib
+)
+pluginlib_export_plugin_description_file(nav2_core behavior_plugins.xml)
+target_link_libraries(carcar_protected_backup carcar_recovery_runtime)
 
 # NAV-008/NAV-011: 导航事件监控、终端状态摘要与多维度会话录包节点
 add_executable(nav_event_logger src/nav_event_logger.cpp)
@@ -107,6 +151,11 @@ ament_target_dependencies(nav_event_logger
 target_link_libraries(nav_event_logger
   nlohmann_json::nlohmann_json
 )
+target_include_directories(nav_event_logger PRIVATE include)
+
+add_executable(navigation_motion_gate src/navigation_motion_gate.cpp)
+target_include_directories(navigation_motion_gate PRIVATE include)
+ament_target_dependencies(navigation_motion_gate rclcpp geometry_msgs std_msgs diagnostic_msgs)
 
 # NAV-008/NAV-011: 导航问题点诊断、会话分析与离线回看工具
 add_executable(nav_log_tool src/nav_log_tool.cpp)
@@ -125,6 +174,23 @@ target_link_libraries(nav_log_tool
   nlohmann_json::nlohmann_json
 )
 
+# NAV-014: 导航声光提示与停车诊断转发节点
+add_executable(navigation_indicator src/navigation_indicator.cpp)
+target_include_directories(navigation_indicator PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(navigation_indicator
+  rclcpp
+  diagnostic_msgs
+  carcar_interfaces
+)
+
+# 安装头文件
+install(DIRECTORY include/
+  DESTINATION include
+)
+
 # 安装可执行文件
 install(TARGETS
   check_map_reload
@@ -133,12 +199,14 @@ install(TARGETS
   localization_monitor
   nav_event_logger
   nav_log_tool
+  navigation_indicator
+  navigation_motion_gate
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # bt_navigator 按 ament 前缀的 lib/ 目录查找动态 BT 插件；不能安装在包专用
 # lib/carcar_navigation/ 目录，否则实验树启动时会找不到 carcar_nav_bt_nodes。
-install(TARGETS carcar_nav_bt_nodes
+install(TARGETS carcar_nav_bt_nodes carcar_protected_backup carcar_recovery_runtime
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
@@ -152,6 +220,16 @@ install(DIRECTORY config launch maps rviz behavior_trees
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_nav012_regressions test/test_nav012_regressions.cpp)
+  ament_target_dependencies(test_nav012_regressions rclcpp rclcpp_action nav2_msgs nav2_behavior_tree
+    nav2_util nav_msgs sensor_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs action_msgs)
+  target_link_libraries(test_nav012_regressions carcar_nav_bt_nodes BT::behaviortree_cpp_v3)
+  target_compile_definitions(test_nav012_regressions PRIVATE
+    CARCAR_NAV_BT_PLUGIN_PATH="$<TARGET_FILE:carcar_nav_bt_nodes>"
+    NAV_LOGGER_EXECUTABLE="$<TARGET_FILE:nav_event_logger>"
+    BEHAVIOR_TREES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/behavior_trees")
+  set_tests_properties(test_nav012_regressions PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 90)
   ament_add_gtest(test_nav_bt_nodes test/test_nav_bt_nodes.cpp)
   ament_target_dependencies(test_nav_bt_nodes
     rclcpp
@@ -183,6 +261,26 @@ if(BUILD_TESTING)
   target_link_libraries(test_obstacle_bypass_offline
     nlohmann_json::nlohmann_json
   )
+
+  ament_add_gtest(test_nav_logger_logic test/test_nav_logger_logic.cpp)
+  ament_target_dependencies(test_nav_logger_logic
+    rclcpp
+  )
+  target_link_libraries(test_nav_logger_logic
+    nlohmann_json::nlohmann_json
+  )
+
+  ament_add_gtest(test_navigation_indicator_logic test/test_navigation_indicator_logic.cpp)
+  target_include_directories(test_navigation_indicator_logic PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  ament_target_dependencies(test_navigation_indicator_logic
+    rclcpp
+    carcar_interfaces
+  )
+  set_tests_properties(test_nav_bt_nodes test_obstacle_bypass_offline test_nav_logger_logic
+    test_navigation_indicator_logic PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE)
 endif()
 
 ament_package()

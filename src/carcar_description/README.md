@@ -9,6 +9,10 @@ IMU 位置暂估为相对 `base_footprint=(-40,-15,75) mm`，轴向待验证。�
 四台电机、四个麦克纳姆轮、Rosmaster 控制板、电池、蓝色顶板/围护件、Jetson 与双天线、
 RPLIDAR A1、RealSense D435 系列外壳及安装支架。
 
+正式模型发布入口为 `launch/description.launch.xml`，由唯一的 `robot_state_publisher` 发布
+`/robot_description` 与固定 TF；旧 Python 入口按历史资产保留。整车实机启动使用
+`carcar_bringup/launch/robot.launch.xml`，完整命令和停止顺序见操作手册第 17.3 节。
+
 ## 坐标与 TF 所有权
 
 坐标遵循 REP-103：X 指向车头、Y 指向车体左侧、Z 向上。`base_footprint` 位于四轮接地点

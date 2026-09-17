@@ -1,0 +1,10 @@
+<class_libraries>
+  <library path="carcar_protected_backup">
+    <class name="carcar_navigation/ProtectedBackUp" type="carcar_navigation::ProtectedBackUp" base_class_type="nav2_core::Behavior">
+      <description>
+        Protected BackUp behavior plugin with realtime laser and TF freshness safety guard
+      </description>
+    </class>
+  </library>
+</class_libraries>
+

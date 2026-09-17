@@ -9,6 +9,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>nav2_behavior_tree</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
@@ -27,14 +29,14 @@
   <depend>rosbag2_storage</depend>
   <depend>rosbag2_transport</depend>
   <depend>nlohmann_json</depend>
+  <depend>carcar_interfaces</depend>
 
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>nav2_amcl</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_bt_navigator</exec_depend>
-  <exec_depend>nav2_behaviors</exec_depend>
   <exec_depend>nav2_controller</exec_depend>
-  <exec_depend>nav2_costmap_2d</exec_depend>
+  <depend>nav2_costmap_2d</depend>
   <exec_depend>nav2_dwb_controller</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
@@ -46,7 +48,14 @@
   <exec_depend>slam_toolbox</exec_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
+  <depend>nav2_behaviors</depend>
+  <depend>nav2_core</depend>
+  <depend>nav2_util</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp_lifecycle</depend>
+
   <export>
     <build_type>ament_cmake</build_type>
+    <nav2_core plugin="${prefix}/behavior_plugins.xml" />
   </export>
 </package>

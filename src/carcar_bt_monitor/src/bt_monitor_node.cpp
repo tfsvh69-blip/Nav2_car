@@ -77,9 +77,10 @@ BT::PortsList generic_ports()
     BT::InputPort<std::string>("path"),
     BT::InputPort<std::string>("planner_id"),
     BT::InputPort<std::string>("controller_id"),
-    BT::InputPort<std::string>("health_topic"),
-    BT::InputPort<std::string>("status_topic"),
-    BT::InputPort<std::string>("recovery_allowed_topic"),
+    BT::InputPort<std::string>("goal_checker_id"),
+    BT::InputPort<std::string>("through_poses"),
+    BT::InputPort<std::string>("input_goals"),BT::InputPort<std::string>("output_goals"),
+    BT::InputPort<std::string>("radius"),BT::InputPort<std::string>("robot_base_frame"),
     BT::InputPort<std::string>("costmap_topic"),
     BT::InputPort<std::string>("scan_topic"),
     BT::InputPort<std::string>("nomotion_service"),
@@ -95,7 +96,14 @@ BT::PortsList generic_ports()
     BT::InputPort<std::string>("max_data_age"),
     BT::InputPort<std::string>("local_timeout"),
     BT::InputPort<std::string>("global_timeout"),
-    BT::InputPort<std::string>("number_of_retries")
+    BT::InputPort<std::string>("number_of_retries"),
+    BT::InputPort<std::string>("linear_stagnation_timeout"),
+    BT::InputPort<std::string>("linear_displacement_threshold"),
+    BT::InputPort<std::string>("angular_stagnation_timeout"),
+    BT::InputPort<std::string>("angular_convergence_threshold"),
+    BT::InputPort<std::string>("max_rotation_budget"),
+    BT::InputPort<std::string>("max_spin_angle"),
+    BT::InputPort<std::string>("observe_duration")
   };
 }
 
@@ -193,17 +201,20 @@ private:
   {
     for (const auto & tag : {
         "ComputePathToPose", "ComputePathThroughPoses", "FollowPath", "Wait", "Spin", "BackUp",
-        "RecoverLocalization", "WaitForLocalizationStatus"})
+        "RecoverLocalization", "WaitForLocalizationStatus", "ProtectedBackUp", "ControlledSpin", "ParkAndObserve",
+        "SafeFollowPath", "SafeBackUp", "SafeComputePathToPose", "SafeComputePathThroughPoses", "RemovePassedGoals"})
     {
       factory_.registerNodeType<MirrorAction>(tag);
     }
-    for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear"}) {
+    for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
       factory_.registerNodeType<MirrorCondition>(tag);
     }
-    for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin"}) {
+    for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin", "RecoverySupervisor"}) {
       factory_.registerNodeType<MirrorControl>(tag);
     }
-    factory_.registerNodeType<MirrorDecorator>("RateController");
+    for (const auto & tag : {"RateController", "ProgressGuard"}) {
+      factory_.registerNodeType<MirrorDecorator>(tag);
+    }
 
     tree_ = std::make_unique<BT::Tree>(factory_.createTreeFromFile(bt_xml_path_));
     for (const auto & node : tree_->nodes) {

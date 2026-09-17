@@ -9,6 +9,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>carcar_base</exec_depend>
   <exec_depend>carcar_description</exec_depend>
+  <exec_depend>carcar_lidar</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
   <export>

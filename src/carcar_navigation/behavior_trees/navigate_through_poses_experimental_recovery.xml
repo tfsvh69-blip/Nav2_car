@@ -1,37 +1,36 @@
-<!-- NAV-008 多目标实验恢复树；恢复后保留 goals 并重新规划当前剩余路线。 -->
+<!-- NAV-012 修复版：监督节点负责取消/停稳/新目标与 90s 总预算；旧故障记录保留在测试记录中。 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <RecoveryNode name="ntppe_NavigationRecovery" number_of_retries="3">
+    <RecoverySupervisor through_poses="true" name="ntppe_RecoverySupervisor" goals="{goals}">
       <PipelineSequence name="ntppe_NavigateWithReplanning">
-        <WaitForLocalizationStatus name="ntppe_WaitForLocalizationStatus" health_topic="/localization_monitor/ready" timeout="2.0"/>
+        <WaitForLocalizationStatus name="ntppe_WaitForLocalizationStatus" timeout="2.0"/>
         <RateController name="ntppe_RateController" hz="1.0">
-          <ComputePathThroughPoses name="ntppe_ComputePathThroughPoses" goals="{goals}" path="{path}" planner_id="GridBased"/>
-        </RateController>
-        <ReactiveSequence name="ntppe_LocalizationGate">
-          <LocalizationHealthy name="ntppe_LocalizationHealthy" health_topic="/localization_monitor/ready"/>
-          <FollowPath name="ntppe_FollowPath" path="{path}" controller_id="FollowPath"/>
-        </ReactiveSequence>
-      </PipelineSequence>
-      <ReactiveFallback name="ntppe_RecoveryFallback">
-        <GoalUpdated name="ntppe_GoalUpdated"/>
-        <Fallback name="ntppe_LocalizationOrLimitedRecovery">
-          <Sequence name="ntppe_LimitedRecoveryWhenLocalized">
-            <LocalizationHealthy name="ntppe_LocalizationHealthyBeforeRecovery" health_topic="/localization_monitor/ready"/>
-            <RoundRobin name="ntppe_LimitedRecovery">
-              <Wait name="ntppe_WaitForReplan" wait_duration="2.0"/>
-              <Spin name="ntppe_SpinForObservability" spin_dist="1.570796" time_allowance="10.0"/>
-              <Fallback name="ntppe_BackUpOnlyWhenRearClear">
-                <Sequence name="ntppe_RearClearAndBackUp">
-                  <RearClear name="ntppe_RearClear" costmap_topic="/local_costmap/costmap_raw" scan_topic="/scan" max_data_age="0.5" backup_distance="0.15"/>
-                  <BackUp name="ntppe_BackUp" backup_dist="0.15" backup_speed="0.05" time_allowance="6.0"/>
-                </Sequence>
-                <Wait name="ntppe_BackUpDeniedWait" wait_duration="2.0"/>
-              </Fallback>
-            </RoundRobin>
+          <Sequence name="ntppe_PlanRemainingGoals">
+            <RemovePassedGoals name="ntppe_RemovePassedGoals" input_goals="{goals}" output_goals="{goals}" radius="0.20" robot_base_frame="base_footprint"/>
+            <SafeComputePathThroughPoses name="ntppe_ComputePathThroughPoses" goals="{goals}" path="{path}" planner_id="GridBased" timeout="5.0"/>
           </Sequence>
-          <RecoverLocalization name="ntppe_RecoverLocalization" health_topic="/localization_monitor/ready" recovery_allowed_topic="/localization_monitor/recovery_allowed" local_timeout="10.0" global_timeout="20.0"/>
-        </Fallback>
-      </ReactiveFallback>
-    </RecoveryNode>
+        </RateController>
+        <ProgressGuard name="ntppe_ProgressGuard" path="{path}" goals="{goals}" linear_stagnation_timeout="5.0" linear_displacement_threshold="0.03" angular_stagnation_timeout="5.0" angular_convergence_threshold="0.10" max_rotation_budget="15.0">
+          <SafeFollowPath name="ntppe_FollowPath" path="{path}" controller_id="FollowPath"/>
+        </ProgressGuard>
+      </PipelineSequence>
+      <Fallback name="ntppe_RecoveryFallback">
+        <Sequence name="ntppe_LocalizationRecovery">
+          <Inverter><LocalizationHealthy name="ntppe_CheckLocalization"/></Inverter>
+          <RecoverLocalization name="ntppe_RecoverLocalization" local_timeout="10.0" global_timeout="20.0"/>
+        </Sequence>
+        <ReactiveSequence name="ntppe_MotionRecoveryGate">
+          <RecoveryInputsReady name="ntppe_RecoveryInputsReady"/>
+          <Fallback name="ntppe_OrderedEscape">
+            <Sequence name="ntppe_RearClearAndBackUp">
+              <RearClear name="ntppe_RearClear" backup_distance="0.10" max_data_age="0.5"/>
+              <SafeBackUp name="ntppe_BackUp" backup_dist="0.10" backup_speed="0.05" time_allowance="4.0"/>
+            </Sequence>
+            <ControlledSpin name="ntppe_ControlledSpin" path="{path}" goals="{goals}" max_spin_angle="1.570796" time_allowance="10.0"/>
+          </Fallback>
+        </ReactiveSequence>
+        <ParkAndObserve name="ntppe_ParkAndObserve" path="{path}" goals="{goals}" observe_duration="30.0"/>
+      </Fallback>
+    </RecoverySupervisor>
   </BehaviorTree>
 </root>

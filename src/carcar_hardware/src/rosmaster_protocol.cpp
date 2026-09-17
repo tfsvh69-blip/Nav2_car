@@ -30,6 +30,9 @@ constexpr std::uint8_t kCommandDevice = 0xFC;
 constexpr std::uint8_t kReportDevice = 0xFB;
 constexpr std::uint8_t kChecksumComplement = 5;
 constexpr std::uint8_t kFunctionAutoReport = 0x01;
+constexpr std::uint8_t kFunctionBeep = 0x02;
+constexpr std::uint8_t kFunctionRgb = 0x05;
+constexpr std::uint8_t kFunctionRgbEffect = 0x06;
 constexpr std::uint8_t kFunctionReportMpuRaw = 0x0B;
 constexpr std::uint8_t kFunctionReportEncoder = 0x0D;
 constexpr std::uint8_t kFunctionReportIcmRaw = 0x0E;
@@ -224,6 +227,29 @@ std::vector<std::uint8_t> make_motion_command(
   append_scaled_i16(command, linear_y);
   append_scaled_i16(command, angular_z);
   return finish_command(std::move(command));
+}
+
+std::vector<std::uint8_t> make_beep_command(std::uint16_t on_time_ms)
+{
+  const auto low = static_cast<std::uint8_t>(on_time_ms & 0xFFU);
+  const auto high = static_cast<std::uint8_t>((on_time_ms >> 8U) & 0xFFU);
+  return finish_command(
+    {kCommandHead, kCommandDevice, 0U, kFunctionBeep, low, high});
+}
+
+std::vector<std::uint8_t> make_rgb_command(
+  std::uint8_t led_id, std::uint8_t red, std::uint8_t green,
+  std::uint8_t blue)
+{
+  return finish_command(
+    {kCommandHead, kCommandDevice, 0U, kFunctionRgb, led_id, red, green, blue});
+}
+
+std::vector<std::uint8_t> make_rgb_effect_command(
+  std::uint8_t effect, std::uint8_t speed, std::uint8_t parm)
+{
+  return finish_command(
+    {kCommandHead, kCommandDevice, 0U, kFunctionRgbEffect, effect, speed, parm});
 }
 
 }  // namespace carcar_hardware

@@ -31,6 +31,22 @@ def _expanded_robot():
     return ET.fromstring(document.toxml())
 
 
+def test_xml_description_launch_publishes_xacro_model_once():
+    share = Path(get_package_share_directory('carcar_description'))
+    launch = ET.parse(share / 'launch' / 'description.launch.xml').getroot()
+    publishers = [
+        node for node in launch.findall('node')
+        if node.attrib.get('pkg') == 'robot_state_publisher'
+    ]
+    assert len(publishers) == 1
+    params = {
+        param.attrib['name']: param.attrib.get('value')
+        for param in publishers[0].findall('param')
+    }
+    assert params['robot_description'] == "$(command 'xacro $(var model)')"
+    assert params['use_sim_time'] == '$(var use_sim_time)'
+
+
 def _xyz(joint):
     values = joint.find('origin').attrib['xyz'].split()
     return tuple(float(value) for value in values)

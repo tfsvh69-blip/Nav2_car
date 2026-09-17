@@ -41,6 +41,12 @@ class _RosmasterStub:
     def get_accelerometer_data(self):
         return [0.03, -0.04, -9.88]
 
+    def set_beep(self, duration_ms):
+        pass
+
+    def set_colorful_lamps(self, index, r, g, b):
+        pass
+
 
 class RosmasterNodePidTest(unittest.TestCase):
 

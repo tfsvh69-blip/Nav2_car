@@ -1,0 +1,11 @@
+<launch>
+  <!-- Rosmaster 底盘驱动标准 XML 启动文件 (遵守约定：XML 格式 Launch) -->
+  <arg name="params_file" default="$(find-pkg-share carcar_base)/config/base.yaml" description="Rosmaster base driver parameters"/>
+  <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
+
+  <node pkg="carcar_base" exec="rosmaster_node" name="rosmaster_base" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="serial_port" value="$(var serial_port)"/>
+  </node>
+</launch>
+

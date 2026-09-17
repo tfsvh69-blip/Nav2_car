@@ -182,4 +182,35 @@ TEST(RosmasterProtocol, RejectsInvalidMotionCommand)
     std::out_of_range);
 }
 
+TEST(RosmasterProtocol, BuildsIndicatorCommands)
+{
+  // 1. 蜂鸣器：关闭 (0) 与 100ms 短鸣 (100)
+  const auto beep_off = carcar_hardware::make_beep_command(0U);
+  EXPECT_EQ(
+    beep_off,
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x05, 0x02, 0x00, 0x00, 0x07}));
+
+  const auto beep_100ms = carcar_hardware::make_beep_command(100U);
+  EXPECT_EQ(
+    beep_100ms,
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x05, 0x02, 0x64, 0x00, 0x6B}));
+
+  // 2. RGB 单色控制：全灭与低亮度红色 (led_id=255, r=30, g=0, b=0)
+  const auto rgb_off = carcar_hardware::make_rgb_command(255U, 0U, 0U, 0U);
+  EXPECT_EQ(
+    rgb_off,
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x07, 0x05, 0xFF, 0x00, 0x00, 0x00, 0x0B}));
+
+  const auto rgb_red = carcar_hardware::make_rgb_command(255U, 30U, 0U, 0U);
+  EXPECT_EQ(
+    rgb_red,
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x07, 0x05, 0xFF, 0x1E, 0x00, 0x00, 0x29}));
+
+  // 3. RGB 灯效：停止灯效 (effect=0)
+  const auto effect_stop = carcar_hardware::make_rgb_effect_command(0U);
+  EXPECT_EQ(
+    effect_stop,
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x06, 0x06, 0x00, 0xFF, 0xFF, 0x0A}));
+}
+
 }  // namespace

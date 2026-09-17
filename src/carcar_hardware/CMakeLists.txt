@@ -32,12 +32,26 @@ pluginlib_export_plugin_description_file(
   hardware_interface carcar_hardware_plugins.xml
 )
 
+add_executable(rosmaster_indicator_test
+  src/rosmaster_indicator_test.cpp
+)
+target_link_libraries(rosmaster_indicator_test
+  ${PROJECT_NAME}
+)
+ament_target_dependencies(rosmaster_indicator_test
+  rclcpp
+)
+
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+install(
+  TARGETS rosmaster_indicator_test
+  DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY config launch urdf DESTINATION share/${PROJECT_NAME})

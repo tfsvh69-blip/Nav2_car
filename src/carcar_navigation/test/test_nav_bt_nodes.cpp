@@ -18,6 +18,7 @@
 #include "nav2_msgs/msg/costmap.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "geometry_msgs/msg/polygon_stamped.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "behaviortree_cpp_v3/bt_factory.h"
 #include "behaviortree_cpp_v3/action_node.h"
@@ -44,9 +45,10 @@ BT::PortsList mock_ports() {
     BT::InputPort<std::string>("path"),
     BT::InputPort<std::string>("planner_id"),
     BT::InputPort<std::string>("controller_id"),
-    BT::InputPort<std::string>("health_topic"),
-    BT::InputPort<std::string>("status_topic"),
-    BT::InputPort<std::string>("recovery_allowed_topic"),
+    BT::InputPort<std::string>("goal_checker_id"),
+    BT::InputPort<std::string>("through_poses"),
+    BT::InputPort<std::string>("input_goals"),BT::InputPort<std::string>("output_goals"),
+    BT::InputPort<std::string>("radius"),BT::InputPort<std::string>("robot_base_frame"),
     BT::InputPort<std::string>("costmap_topic"),
     BT::InputPort<std::string>("scan_topic"),
     BT::InputPort<std::string>("nomotion_service"),
@@ -62,7 +64,14 @@ BT::PortsList mock_ports() {
     BT::InputPort<std::string>("max_data_age"),
     BT::InputPort<std::string>("local_timeout"),
     BT::InputPort<std::string>("global_timeout"),
-    BT::InputPort<std::string>("number_of_retries")
+    BT::InputPort<std::string>("number_of_retries"),
+    BT::InputPort<std::string>("linear_stagnation_timeout"),
+    BT::InputPort<std::string>("linear_displacement_threshold"),
+    BT::InputPort<std::string>("angular_stagnation_timeout"),
+    BT::InputPort<std::string>("angular_convergence_threshold"),
+    BT::InputPort<std::string>("max_rotation_budget"),
+    BT::InputPort<std::string>("max_spin_angle"),
+    BT::InputPort<std::string>("observe_duration")
   };
 }
 
@@ -101,7 +110,7 @@ public:
 
 void register_nav2_standard_mocks(BT::BehaviorTreeFactory & factory) {
   for (const auto & tag : {
-      "ComputePathToPose", "ComputePathThroughPoses", "FollowPath", "Wait", "Spin", "BackUp"}) {
+      "ComputePathToPose", "ComputePathThroughPoses", "FollowPath", "Wait", "Spin", "BackUp", "RemovePassedGoals"}) {
     factory.registerNodeType<MockAction>(tag);
   }
   for (const auto & tag : {"GoalUpdated"}) {
@@ -182,25 +191,18 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationHealthy) {
   BT::BehaviorTreeFactory factory;
   factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
 
-  std::string unique_topic = "/test_loc_ready_" + std::to_string(std::rand() % 100000);
   auto pub = test_node_->create_publisher<std_msgs::msg::Bool>(
-      unique_topic, rclcpp::QoS(1).reliable().transient_local());
+      "/localization_monitor/ready", rclcpp::QoS(1).reliable().transient_local());
 
   std_msgs::msg::Bool msg;
   msg.data = true;
   pub->publish(msg);
-
-  // 模拟处理让发布生效
-  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor->add_node(test_node_);
-  executor->spin_some();
 
   auto bb = BT::Blackboard::create();
   bb->set("node", test_node_);
 
   BT::NodeConfiguration config;
   config.blackboard = bb;
-  config.input_ports["health_topic"] = unique_topic;
   config.input_ports["timeout"] = "2.0";
 
   auto node = factory.instantiateTreeNode("wait_healthy_node", "WaitForLocalizationStatus", config);
@@ -222,24 +224,18 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationUnhealthyImmediateFailure) {
   BT::BehaviorTreeFactory factory;
   factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
 
-  std::string unique_topic = "/test_loc_unhealthy_" + std::to_string(std::rand() % 100000);
   auto pub = test_node_->create_publisher<std_msgs::msg::Bool>(
-      unique_topic, rclcpp::QoS(1).reliable().transient_local());
+      "/localization_monitor/ready", rclcpp::QoS(1).reliable().transient_local());
 
   std_msgs::msg::Bool msg;
   msg.data = false;
   pub->publish(msg);
-
-  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  executor->add_node(test_node_);
-  executor->spin_some();
 
   auto bb = BT::Blackboard::create();
   bb->set("node", test_node_);
 
   BT::NodeConfiguration config;
   config.blackboard = bb;
-  config.input_ports["health_topic"] = unique_topic;
   config.input_ports["timeout"] = "2.0";
 
   auto node = factory.instantiateTreeNode("wait_unhealthy_node", "WaitForLocalizationStatus", config);
@@ -261,16 +257,14 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationDelayedMessage) {
   BT::BehaviorTreeFactory factory;
   factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
 
-  std::string unique_topic = "/test_loc_delayed_" + std::to_string(std::rand() % 100000);
   auto pub = test_node_->create_publisher<std_msgs::msg::Bool>(
-      unique_topic, rclcpp::QoS(1).reliable().transient_local());
+      "/localization_monitor/ready", rclcpp::QoS(1).reliable().transient_local());
 
   auto bb = BT::Blackboard::create();
   bb->set("node", test_node_);
 
   BT::NodeConfiguration config;
   config.blackboard = bb;
-  config.input_ports["health_topic"] = unique_topic;
   config.input_ports["timeout"] = "2.0";
 
   auto node = factory.instantiateTreeNode("wait_delayed_node", "WaitForLocalizationStatus", config);
@@ -285,7 +279,7 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationDelayedMessage) {
   msg.data = true;
   pub->publish(msg);
 
-  std::this_thread::sleep_for(50ms);
+  std::this_thread::sleep_for(150ms);
 
   // 3. 再次 tick，预期收到后转为 SUCCESS
   status = node->executeTick();
@@ -297,14 +291,11 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationTimeoutFailure) {
   BT::BehaviorTreeFactory factory;
   factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
 
-  std::string unique_topic = "/test_loc_timeout_" + std::to_string(std::rand() % 100000);
-
   auto bb = BT::Blackboard::create();
   bb->set("node", test_node_);
 
   BT::NodeConfiguration config;
   config.blackboard = bb;
-  config.input_ports["health_topic"] = unique_topic;
   config.input_ports["timeout"] = "0.2";  // 0.2 秒短超时加速测试
 
   auto node = factory.instantiateTreeNode("wait_timeout_node", "WaitForLocalizationStatus", config);
@@ -325,12 +316,10 @@ TEST_F(NavBtNodesTest, TestWaitForLocalizationHalt) {
   BT::BehaviorTreeFactory factory;
   factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
 
-  std::string unique_topic = "/test_loc_halt_" + std::to_string(std::rand() % 100000);
-
   std::string xml =
     "<root main_tree_to_execute=\"Main\">"
     "  <BehaviorTree ID=\"Main\">"
-    "    <WaitForLocalizationStatus name=\"wait_halt\" health_topic=\"" + unique_topic + "\" timeout=\"2.0\"/>"
+    "    <WaitForLocalizationStatus name=\"wait_halt\" timeout=\"2.0\"/>"
     "  </BehaviorTree>"
     "</root>";
 
@@ -355,16 +344,19 @@ TEST_F(NavBtNodesTest, TestGrootDisplayBridgeCompatibility) {
   // 严格模拟 bt_monitor_node.cpp 中的注册逻辑
   for (const auto & tag : {
       "ComputePathToPose", "ComputePathThroughPoses", "FollowPath", "Wait", "Spin", "BackUp",
-      "RecoverLocalization", "WaitForLocalizationStatus"}) {
+      "RecoverLocalization", "WaitForLocalizationStatus", "ProtectedBackUp", "ControlledSpin", "ParkAndObserve",
+      "SafeFollowPath", "SafeBackUp", "SafeComputePathToPose", "SafeComputePathThroughPoses", "RemovePassedGoals"}) {
     factory.registerNodeType<MockAction>(tag);
   }
-  for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear"}) {
+  for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
     factory.registerNodeType<MockCondition>(tag);
   }
-  for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin"}) {
+  for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin", "RecoverySupervisor"}) {
     factory.registerNodeType<MockControl>(tag);
   }
-  factory.registerNodeType<MockDecorator>("RateController");
+  for (const auto & tag : {"RateController", "ProgressGuard"}) {
+    factory.registerNodeType<MockDecorator>(tag);
+  }
 
   const std::vector<std::string> tree_files = {
     std::string(BEHAVIOR_TREES_DIR) + "/navigate_to_pose_no_recovery.xml",
@@ -397,7 +389,7 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
   config.input_ports["costmap_topic"] = costmap_topic;
   config.input_ports["scan_topic"] = scan_topic;
   config.input_ports["max_data_age"] = "0.5";
-  config.input_ports["backup_distance"] = "0.15";
+  config.input_ports["backup_distance"] = "0.10";
 
   auto node = factory.instantiateTreeNode("test_rear_clear", "RearClear", config);
   ASSERT_NE(node, nullptr);
@@ -410,6 +402,16 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
     costmap_topic, rclcpp::QoS(1).reliable().transient_local());
   auto scan_pub = test_node_->create_publisher<sensor_msgs::msg::LaserScan>(
     scan_topic, rclcpp::SensorDataQoS());
+  auto footprint_pub = test_node_->create_publisher<geometry_msgs::msg::PolygonStamped>(
+    "/local_costmap/published_footprint", rclcpp::QoS(1));
+  geometry_msgs::msg::PolygonStamped footprint;
+  footprint.header.frame_id="base_footprint";
+  for (auto xy : {std::pair<float,float>{-.14F,-.13F},{-.14F,.13F},{.14F,.13F},{.14F,-.13F}}) {
+    geometry_msgs::msg::Point32 p;p.x=xy.first;p.y=xy.second;footprint.polygon.points.push_back(p);
+  }
+  auto publish_footprint = [&] {
+    footprint.header.stamp=test_node_->now();footprint_pub->publish(footprint);
+  };
 
   // 广播 map -> base_footprint 静态 TF
   auto tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(test_node_);
@@ -425,7 +427,10 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
 
   // 2. 发布过期数据 (时间戳为 10 秒前) -> 预期 FAILURE (数据过期)
   {
+    publish_footprint();
     sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id="base_footprint";scan.range_min=.05;scan.range_max=10;
+    scan.angle_increment=.01;scan.ranges.assign(629,5);
     scan.header.stamp = test_node_->now() - rclcpp::Duration::from_seconds(10.0);
     scan_pub->publish(scan);
 
@@ -447,7 +452,10 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
 
   // 3. 发布新鲜数据，但回退路径存在障碍物 (254) -> 预期 FAILURE (障碍占用)
   {
+    publish_footprint();
     sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id="base_footprint";scan.range_min=.05;scan.range_max=10;
+    scan.angle_increment=.01;scan.ranges.assign(629,5);
     scan.header.stamp = test_node_->now();
     scan_pub->publish(scan);
 
@@ -471,7 +479,10 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
 
   // 4. 发布新鲜数据，回退路径全空闲 (0) -> 预期 SUCCESS (通过)
   {
+    publish_footprint();
     sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id="base_footprint";scan.range_min=.05;scan.range_max=10;
+    scan.angle_increment=.01;scan.ranges.assign(629,5);
     scan.header.stamp = test_node_->now();
     scan_pub->publish(scan);
 
@@ -491,4 +502,3 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
     EXPECT_EQ(node->executeTick(), BT::NodeStatus::SUCCESS);
   }
 }
-
