@@ -23,7 +23,7 @@
 3. 后续新增和修改的 ROS 2 Launch 文件统一使用 XML 格式，文件扩展名为 `.launch.xml`，不使用 Python Launch 文件。
 4. 需要图形化调试时，应协助用户启动 RViz，并提供可直接使用的 RViz 配置文件；不得只给出让用户自行逐项配置的说明。
 5. 创建或修改 RViz 配置前，必须先向用户确认本次需要启用的显示组件、每个组件使用的话题、`Fixed Frame`，以及各订阅话题是否使用 Best Effort QoS；未经确认不得自行固化这些选项。
-6. 用户确认后，应把显示组件、话题和 QoS 设置保存到项目内的 RViz 配置，并通过 XML Launch 文件加载，使后续调试可以直接启动使用。
+6. 用户确认后，应把显示组件、话题和 QoS 设置保存到项目内的 RViz 配置。实车联调默认不在 Jetson 上启动 `rviz2`：实验定位 Launch 的 `use_rviz` 默认为 `false`。日常在同一局域网的 Ubuntu 22.04 主机上用 `navigation_lite.rviz` 打开；禁止把完整 `navigation.rviz` 或 VNC 三维窗口当作日常操作。确需在板上临时打开时，必须显式传入 `use_rviz:=true`。
 
 ## 二、自底向上的开发顺序
 

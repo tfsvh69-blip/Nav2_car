@@ -4,7 +4,8 @@
   <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
   <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
   <arg name="use_sim_time" default="false"/>
-  <arg name="use_rviz" default="true"/>
+  <!-- 实车联调默认不在 Jetson 上起 rviz2；RViz 在 Ubuntu 主机用 navigation_lite.rviz。 -->
+  <arg name="use_rviz" default="false"/>
   <arg name="rviz_mode" default="navigation"/>
   <let name="rviz_config_navigation" value="$(find-pkg-share carcar_navigation)/rviz/navigation.rviz"/>
   <let name="rviz_config_debug" value="$(find-pkg-share carcar_navigation)/rviz/debug_odom.rviz"/>
