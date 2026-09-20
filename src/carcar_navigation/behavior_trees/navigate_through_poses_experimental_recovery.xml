@@ -7,7 +7,14 @@
         <RateController name="ntppe_RateController" hz="1.0">
           <Sequence name="ntppe_PlanRemainingGoals">
             <RemovePassedGoals name="ntppe_RemovePassedGoals" input_goals="{goals}" output_goals="{goals}" radius="0.20" robot_base_frame="base_footprint"/>
-            <SafeComputePathThroughPoses name="ntppe_ComputePathThroughPoses" goals="{goals}" path="{path}" planner_id="GridBased" timeout="5.0"/>
+            <Fallback name="ntppe_KeepValidPathOrReplan">
+              <ReactiveSequence name="ntppe_KeepValidPath">
+                <Inverter><PathExpiringTimer name="ntppe_PathRefreshTimer" seconds="5.0" path="{path}"/></Inverter>
+                <Inverter><GlobalUpdatedGoal name="ntppe_GlobalGoalUnchanged"/></Inverter>
+                <IsPathValid name="ntppe_IsPathValid" path="{path}"/>
+              </ReactiveSequence>
+              <SafeComputePathThroughPoses name="ntppe_ComputePathThroughPoses" goals="{goals}" path="{path}" planner_id="GridBased" timeout="5.0"/>
+            </Fallback>
           </Sequence>
         </RateController>
         <ProgressGuard name="ntppe_ProgressGuard" path="{path}" goals="{goals}" linear_stagnation_timeout="3.0" linear_displacement_threshold="0.03" angular_stagnation_timeout="3.0" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">

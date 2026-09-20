@@ -86,6 +86,8 @@ BT::PortsList generic_ports()
     BT::InputPort<std::string>("nomotion_service"),
     BT::InputPort<std::string>("global_service"),
     BT::InputPort<std::string>("hz"),
+    BT::InputPort<std::string>("seconds"),
+    BT::InputPort<std::string>("server_timeout"),
     BT::InputPort<std::string>("timeout"),
     BT::InputPort<std::string>("wait_duration"),
     BT::InputPort<std::string>("spin_dist"),
@@ -206,7 +208,8 @@ private:
     {
       factory_.registerNodeType<MirrorAction>(tag);
     }
-    for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
+    for (const auto & tag : {"GoalUpdated", "GlobalUpdatedGoal", "IsPathValid", "PathExpiringTimer",
+        "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
       factory_.registerNodeType<MirrorCondition>(tag);
     }
     for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin", "RecoverySupervisor"}) {

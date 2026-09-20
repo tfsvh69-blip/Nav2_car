@@ -34,6 +34,7 @@ find_package(nav2_costmap_2d REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(carcar_interfaces REQUIRED)
+find_package(rmw REQUIRED)
 find_package(dwb_core REQUIRED)
 find_package(dwb_plugins REQUIRED)
 find_package(dwb_msgs REQUIRED)
@@ -162,6 +163,7 @@ ament_target_dependencies(nav_event_logger
   rosbag2_cpp
   rosbag2_storage
   rosbag2_transport
+  rmw
 )
 target_link_libraries(nav_event_logger
   nlohmann_json::nlohmann_json
@@ -294,8 +296,10 @@ if(BUILD_TESTING)
   )
 
   ament_add_gtest(test_nav_logger_logic test/test_nav_logger_logic.cpp)
+  target_include_directories(test_nav_logger_logic PRIVATE include)
   ament_target_dependencies(test_nav_logger_logic
     rclcpp
+    action_msgs
   )
   target_link_libraries(test_nav_logger_logic
     nlohmann_json::nlohmann_json

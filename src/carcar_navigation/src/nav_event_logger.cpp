@@ -65,6 +65,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+#include "rmw/rmw.h"
 
 #include <rosbag2_cpp/writer.hpp>
 #include <rosbag2_storage/storage_options.hpp>
@@ -670,6 +671,7 @@ private:
       storage_options.max_bagfile_size = static_cast<uint64_t>(raw_bag_max_bytes_);
 
       rosbag2_transport::RecordOptions record_options;
+      record_options.rmw_serialization_format = rmw_get_serialization_format();
       record_options.include_hidden_topics = true;
       record_options.include_unpublished_topics = true;
       // 停止默认保存 /evaluation 与 /trajectories 等高频轨迹明细，仅保留关键状态与感知数据
@@ -1381,10 +1383,15 @@ private:
     latest_progress_guard_msg_ = msg->message;
     std::string reason_code = "PROGRESS_STAGNATION";
     std::string detail;
+    nlohmann::json fields = nlohmann::json::object();
     for (const auto & kv : msg->values) {
+      fields[kv.key] = kv.value;
       if (kv.key == "reason_code") reason_code = kv.value;
       if (kv.key == "detail") detail = kv.value;
     }
+
+    record_event_locked("PROGRESS_GUARD_STATUS", active_uuid_, "ProgressGuard",
+      msg->message, fields);
 
     if (msg->level != diagnostic_msgs::msg::DiagnosticStatus::OK) {
       record_event_locked("PROGRESS_GUARD_STAGNATION", active_uuid_, "ProgressGuard",
@@ -1421,15 +1428,18 @@ private:
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     for (const auto & s : msg->status_list) {
+      const std::string action_uuid = uuid_to_hex(s.goal_info.goal_id.uuid);
+      if (!backup_status_deduplicator_.changed(action_uuid,s.status)) {continue;}
+      nlohmann::json fields = {{"action_uuid", action_uuid}, {"action_status", s.status}};
       if (s.status == action_msgs::msg::GoalStatus::STATUS_SUCCEEDED) {
         record_event_locked("BACKUP_STATUS_SUCCEEDED", active_uuid_, "behavior_server",
-          "BackUp Action 状态: SUCCEEDED (已完成倒车)");
+          "BackUp Action 状态: SUCCEEDED (已完成倒车, action=" + uuid_short(action_uuid) + ")", fields);
       } else if (s.status == action_msgs::msg::GoalStatus::STATUS_ABORTED) {
         record_event_locked("BACKUP_STATUS_ABORTED", active_uuid_, "behavior_server",
-          "BackUp Action 状态: ABORTED (倒车中止)");
+          "BackUp Action 状态: ABORTED (倒车中止, action=" + uuid_short(action_uuid) + ")", fields);
       } else if (s.status == action_msgs::msg::GoalStatus::STATUS_CANCELED) {
         record_event_locked("BACKUP_STATUS_CANCELED", active_uuid_, "behavior_server",
-          "BackUp Action 状态: CANCELED (倒车取消)");
+          "BackUp Action 状态: CANCELED (倒车取消, action=" + uuid_short(action_uuid) + ")", fields);
       }
     }
   }
@@ -2210,6 +2220,7 @@ private:
   std::string active_uuid_;
   GoalTask unassociated_goal_;
   std::map<std::string, GoalTask> goals_by_uuid_;
+  carcar_navigation::ActionStatusDeduplicator backup_status_deduplicator_;
 
   // 行为树活跃节点跟踪
   std::set<std::string> active_bt_nodes_;

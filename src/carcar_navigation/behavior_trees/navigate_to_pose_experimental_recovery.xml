@@ -5,7 +5,14 @@
       <PipelineSequence name="ntpe_NavigateWithReplanning">
         <WaitForLocalizationStatus name="ntpe_WaitForLocalizationStatus" timeout="2.0"/>
         <RateController name="ntpe_RateController" hz="1.0">
-          <SafeComputePathToPose name="ntpe_ComputePathToPose" goal="{goal}" path="{path}" planner_id="GridBased" timeout="5.0"/>
+          <Fallback name="ntpe_KeepValidPathOrReplan">
+            <ReactiveSequence name="ntpe_KeepValidPath">
+              <Inverter><PathExpiringTimer name="ntpe_PathRefreshTimer" seconds="5.0" path="{path}"/></Inverter>
+              <Inverter><GlobalUpdatedGoal name="ntpe_GlobalGoalUnchanged"/></Inverter>
+              <IsPathValid name="ntpe_IsPathValid" path="{path}"/>
+            </ReactiveSequence>
+            <SafeComputePathToPose name="ntpe_ComputePathToPose" goal="{goal}" path="{path}" planner_id="GridBased" timeout="5.0"/>
+          </Fallback>
         </RateController>
         <ProgressGuard name="ntpe_ProgressGuard" path="{path}" goal="{goal}" linear_stagnation_timeout="3.0" linear_displacement_threshold="0.03" angular_stagnation_timeout="3.0" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">
           <SafeFollowPath name="ntpe_FollowPath" path="{path}" controller_id="FollowPath"/>

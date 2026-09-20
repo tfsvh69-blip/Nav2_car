@@ -211,7 +211,7 @@ Visualization Manager:
       Head Diameter: 0.1
       Head Length: 0.2
       Length: 0.3
-      Line Style: Lines
+      Line Style: Billboards
       Line Width: 0.04
       Name: Global Plan
       Offset:
@@ -239,7 +239,7 @@ Visualization Manager:
       Head Diameter: 0.1
       Head Length: 0.2
       Length: 0.3
-      Line Style: Lines
+      Line Style: Billboards
       Line Width: 0.05
       Name: Local Plan
       Offset:

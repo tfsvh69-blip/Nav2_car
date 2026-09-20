@@ -355,39 +355,49 @@ public:
       if (!std::isfinite(value)||value<=0) {return failure("INVALID_PARAMETER","进展守卫阈值无效");}
     }
     if (max_flips<1) {return failure("INVALID_PARAMETER","进展守卫阈值无效");}
+    const double dx=odom->pose.pose.position.x-baseline_.position.x;
+    const double dy=odom->pose.pose.position.y-baseline_.position.y;
+    const double baseline_yaw=tf2::getYaw(baseline_.orientation);
+    const auto progress=classify_forward_progress(dx,dy,baseline_yaw,linear_threshold);
+    last_forward_step_=0.0;
+    if (progress.displaced) {
+      baseline_=odom->pose.pose;
+      if (progress.plausible) {
+        runtime_->forward_progress(progress.forward);
+        last_forward_step_=progress.forward;
+        if (progress.forward>=linear_threshold) {
+          // 边转边前进属于有效连续绕行：刷新停滞窗口，但不靠路径版本变化续期。
+          cruise_=now;heading_flips_=0;
+          if (in_turn_) {
+            turn_=window_=now;target_yaw_=ref.yaw;error_=std::abs(ref.error);
+          }
+        }
+      }
+    }
     if (std::abs(ref.error)>=.35) {
       auto event=classify_heading_align(in_turn_,target_yaw_,ref.yaw,heading_flips_,
         flip_threshold,static_cast<unsigned>(max_flips));
       if (event==HeadingAlignEvent::Oscillating) {
         return failure("PATH_HEADING_OSCILLATION","路径参考航向反复翻转，停止原地对准");
       }
-      if (!in_turn_ || event==HeadingAlignEvent::NewTarget) {
-        if (in_turn_ && event==HeadingAlignEvent::NewTarget) {++heading_flips_;}
+      if (!in_turn_) {
         in_turn_=true;turn_=window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;
-      } else if (path_changed || std::abs(normalize(ref.yaw-target_yaw_))>.10) {
-        // 小幅参考变化只刷新改善窗口，不把左右绕行合成一次转向失败。
-        window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;
+      } else if (event==HeadingAlignEvent::NewTarget) {
+        // 明显换向只建立新的改善参考；同一受阻回合的总转向预算不得刷新。
+        ++heading_flips_;window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;
       }
       if (seconds(turn_)>=total) {return failure("ROTATION_BUDGET_EXCEEDED","单次转向总预算耗尽");}
       if (seconds(window_)>=angular_timeout) {
-        double improvement=error_-std::abs(ref.error);
+        const double tracked_error=std::abs(normalize(target_yaw_-robot_yaw_));
+        double improvement=error_-tracked_error;
         if (improvement<angular_threshold) {
           return failure("ANGULAR_CONVERGENCE_FAIL",std::to_string(angular_timeout)+
             "s 内朝向改善 "+std::to_string(improvement)+" rad");
         }
-        window_=now;error_=std::abs(ref.error);
+        window_=now;error_=tracked_error;
       }
     } else {
       if (in_turn_) {in_turn_=false;heading_flips_=0;baseline_=odom->pose.pose;cruise_=now;}
-      double dx=odom->pose.pose.position.x-baseline_.position.x;
-      double dy=odom->pose.pose.position.y-baseline_.position.y;
-      if (std::hypot(dx,dy)>=linear_threshold) {
-        // 充能取轮式里程计的净前向投影，侧移、后退及定位跳变不能充能。
-        double yaw=tf2::getYaw(baseline_.orientation);
-        double forward=dx*std::cos(yaw)+dy*std::sin(yaw);
-        runtime_->forward_progress(forward);baseline_=odom->pose.pose;
-        if (forward>=linear_threshold) {cruise_=now;heading_flips_=0;}
-      }
       if (seconds(cruise_)>=linear_timeout) {return failure("LINEAR_STAGNATION","轮式里程计有效前向位移不足");}
     }
     if (seconds(last_diag_)>=1) {
@@ -409,8 +419,12 @@ private:
     msg.level=code=="NONE"?0:1;msg.message=detail;msg.hardware_id="carcar_nav_bt_nodes";
     for (auto pair : {std::pair<std::string,std::string>{"reason_code",code},{"detail",detail},
         {"reference_yaw",std::to_string(target)},{"robot_yaw",std::to_string(yaw)},
+        {"tracked_reference_yaw",std::to_string(target_yaw_)},
         {"measured_wz",std::to_string(wz)},{"path_revision",std::to_string(path_revision_)},
-        {"heading_flips",std::to_string(heading_flips_)}}) {
+        {"heading_flips",std::to_string(heading_flips_)},
+        {"forward_step",std::to_string(last_forward_step_)},
+        {"turn_elapsed_s",in_turn_?std::to_string(seconds(turn_)):"0"},
+        {"window_elapsed_s",in_turn_?std::to_string(seconds(window_)):"0"}}) {
       diagnostic_msgs::msg::KeyValue kv;kv.key=pair.first;kv.value=pair.second;msg.values.push_back(kv);
     }
     pub_->publish(msg);
@@ -421,7 +435,7 @@ private:
   geometry_msgs::msg::Pose baseline_;
   TimePoint cruise_{},turn_{},window_{},last_diag_{};
   double error_{0},target_yaw_{0};
-  double reference_yaw_{0},robot_yaw_{0},measured_wz_{0};
+  double reference_yaw_{0},robot_yaw_{0},measured_wz_{0},last_forward_step_{0};
   uint64_t path_revision_{0};nav_msgs::msg::Path previous_path_;
 };
 

@@ -13,6 +13,7 @@
 #include <vector>
 #include <chrono>
 #include <nlohmann/json.hpp>
+#include "carcar_navigation/goal_status_policy.hpp"
 
 using json = nlohmann::json;
 
@@ -272,6 +273,16 @@ TEST(NavLoggerLogicTest, HistoricalLogJsonCompatibility) {
   });
 }
 
+TEST(NavLoggerLogicTest, BackupActionStatusIsDeduplicatedPerUuid)
+{
+  carcar_navigation::ActionStatusDeduplicator deduplicator;
+  EXPECT_TRUE(deduplicator.changed("backup-a",2));
+  EXPECT_FALSE(deduplicator.changed("backup-a",2));
+  EXPECT_TRUE(deduplicator.changed("backup-a",4));
+  EXPECT_FALSE(deduplicator.changed("backup-a",4));
+  EXPECT_TRUE(deduplicator.changed("backup-b",4));
+}
+
 // 5. 验证会话分类与陈旧 ACTIVE 状态自动修正逻辑
 TEST(NavLoggerLogicTest, SessionClassificationAndStaleActiveRepair) {
   // 模拟会话四分类判定
@@ -443,4 +454,3 @@ TEST(NavLoggerLogicTest, StopCategoriesAnd7ColumnParsing) {
   EXPECT_FALSE(old_record.contains("odom_vel"));
   EXPECT_EQ(old_record.value("recovery_or_terminal", "缺失"), "缺失");
 }
-

@@ -54,6 +54,8 @@ BT::PortsList mock_ports() {
     BT::InputPort<std::string>("nomotion_service"),
     BT::InputPort<std::string>("global_service"),
     BT::InputPort<std::string>("hz"),
+    BT::InputPort<std::string>("seconds"),
+    BT::InputPort<std::string>("server_timeout"),
     BT::InputPort<std::string>("timeout"),
     BT::InputPort<std::string>("wait_duration"),
     BT::InputPort<std::string>("spin_dist"),
@@ -115,7 +117,7 @@ void register_nav2_standard_mocks(BT::BehaviorTreeFactory & factory) {
       "ComputePathToPose", "ComputePathThroughPoses", "FollowPath", "Wait", "Spin", "BackUp", "RemovePassedGoals"}) {
     factory.registerNodeType<MockAction>(tag);
   }
-  for (const auto & tag : {"GoalUpdated"}) {
+  for (const auto & tag : {"GoalUpdated", "GlobalUpdatedGoal", "IsPathValid", "PathExpiringTimer"}) {
     factory.registerNodeType<MockCondition>(tag);
   }
   for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin"}) {
@@ -350,7 +352,8 @@ TEST_F(NavBtNodesTest, TestGrootDisplayBridgeCompatibility) {
       "SafeFollowPath", "SafeBackUp", "SafeComputePathToPose", "SafeComputePathThroughPoses", "RemovePassedGoals"}) {
     factory.registerNodeType<MockAction>(tag);
   }
-  for (const auto & tag : {"GoalUpdated", "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
+  for (const auto & tag : {"GoalUpdated", "GlobalUpdatedGoal", "IsPathValid", "PathExpiringTimer",
+      "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
     factory.registerNodeType<MockCondition>(tag);
   }
   for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin", "RecoverySupervisor"}) {

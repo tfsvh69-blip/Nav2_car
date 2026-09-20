@@ -71,6 +71,33 @@ inline HeadingAlignEvent classify_heading_align(
   return HeadingAlignEvent::NewTarget;
 }
 
+struct ForwardProgressSample {
+  bool displaced{false};
+  bool plausible{false};
+  double forward{0.0};
+  double lateral{0.0};
+};
+
+// 只用轮式里程计相对上一采样基准的车体前向投影认定有效进展。
+// 单步跳变超过 0.15 m 视为定位/里程计异常，不为转向预算续期。
+inline ForwardProgressSample classify_forward_progress(
+  double dx, double dy, double baseline_yaw,
+  double displacement_threshold = 0.03, double max_step = 0.15)
+{
+  ForwardProgressSample result;
+  if (!std::isfinite(dx) || !std::isfinite(dy) || !std::isfinite(baseline_yaw) ||
+      !std::isfinite(displacement_threshold) || displacement_threshold <= 0.0 ||
+      !std::isfinite(max_step) || max_step <= displacement_threshold) {
+    return result;
+  }
+  const double distance = std::hypot(dx, dy);
+  result.displaced = distance >= displacement_threshold;
+  result.plausible = result.displaced && distance <= max_step;
+  result.forward = dx * std::cos(baseline_yaw) + dy * std::sin(baseline_yaw);
+  result.lateral = -dx * std::sin(baseline_yaw) + dy * std::cos(baseline_yaw);
+  return result;
+}
+
 // 倒车恢复几何限额，与 nav2_experimental.yaml / 实验行为树保持一致。
 // 实验上限：单次 0.20 m、累计 0.40 m。默认倒车后冷却 12 s，冷却期内改走跟随或转向；
 // 净前向 0.20 m 后重置额度。能否脱困须实测。

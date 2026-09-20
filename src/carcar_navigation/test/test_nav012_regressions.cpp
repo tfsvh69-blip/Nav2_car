@@ -9,6 +9,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <nav2_msgs/action/spin.hpp>
 #include <nav2_msgs/msg/costmap.hpp>
+#include <nav2_msgs/srv/is_path_valid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -48,6 +49,18 @@ protected:
     exec.add_node(provider);
     thread = std::thread([this] {exec.spin();});
     factory.registerFromPlugin(CARCAR_NAV_BT_PLUGIN_PATH);
+    factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_goal_updated_condition_bt_node.so");
+    factory.registerFromPlugin(
+      "/opt/ros/humble/lib/libnav2_globally_updated_goal_condition_bt_node.so");
+    factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_is_path_valid_condition_bt_node.so");
+    factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_path_expiring_timer_condition.so");
+    path_valid_service = provider->create_service<nav2_msgs::srv::IsPathValid>(
+      "/is_path_valid",
+      [this](
+        const std::shared_ptr<nav2_msgs::srv::IsPathValid::Request> request,
+        std::shared_ptr<nav2_msgs::srv::IsPathValid::Response> response) {
+        response->is_valid = path_valid.load() && !request->path.poses.empty();
+      });
     bb = BT::Blackboard::create();
     bb->set("node", client);
     bb->set("bt_loop_duration", 10ms);
@@ -76,6 +89,8 @@ protected:
   BT::BehaviorTreeFactory factory;
   BT::Blackboard::Ptr bb;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster;
+  std::atomic<bool> path_valid{true};
+  rclcpp::Service<nav2_msgs::srv::IsPathValid>::SharedPtr path_valid_service;
 };
 
 TEST_F(Nav012Regression, RearClearConsumesWithoutSpinningBlackboardNode)
@@ -208,6 +223,42 @@ TEST(HeadingAlign, FlipResetsBeforeOscillation)
   EXPECT_EQ(classify_heading_align(true,0.8,-0.8,2,0.35,3),HeadingAlignEvent::Oscillating);
   EXPECT_TRUE(carcar_navigation::heading_target_flipped(0.8,-0.8,0.35));
   EXPECT_FALSE(carcar_navigation::heading_target_flipped(0.8,0.85,0.35));
+}
+
+TEST(ForwardProgress, AcceptsForwardArcButRejectsSidewaysReverseAndJump)
+{
+  using carcar_navigation::classify_forward_progress;
+  const auto forward=classify_forward_progress(0.04,0.01,0.0);
+  EXPECT_TRUE(forward.plausible);EXPECT_GT(forward.forward,0.03);
+  const auto sideways=classify_forward_progress(0.0,0.04,0.0);
+  EXPECT_TRUE(sideways.plausible);EXPECT_LT(std::abs(sideways.forward),0.03);
+  const auto reverse=classify_forward_progress(-0.04,0.0,0.0);
+  EXPECT_TRUE(reverse.plausible);EXPECT_LT(reverse.forward,0.0);
+  const auto jump=classify_forward_progress(0.30,0.0,0.0);
+  EXPECT_TRUE(jump.displaced);EXPECT_FALSE(jump.plausible);
+}
+
+TEST_F(Nav012Regression, ValidPathIsHeldUntilExpiryAndInvalidPathReplansImmediately)
+{
+  std::atomic<int> replans{0};
+  factory.registerSimpleAction("CountReplan", [&replans](BT::TreeNode &) {
+    ++replans;return BT::NodeStatus::SUCCESS;
+  });
+  nav_msgs::msg::Path path;path.header.frame_id="map";
+  geometry_msgs::msg::PoseStamped pose;pose.header.frame_id="map";pose.pose.orientation.w=1;
+  path.poses={pose,pose};bb->set("path",path);
+  auto tree=factory.createTreeFromText(
+    "<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><Fallback>"
+    "<ReactiveSequence><Inverter><PathExpiringTimer seconds='0.15' path='{path}'/></Inverter>"
+    "<IsPathValid path='{path}'/></ReactiveSequence><CountReplan/>"
+    "</Fallback></BehaviorTree></root>",bb);
+  EXPECT_EQ(tree.tickRoot(),BT::NodeStatus::SUCCESS);EXPECT_EQ(replans.load(),0);
+  std::this_thread::sleep_for(50ms);
+  EXPECT_EQ(tree.tickRoot(),BT::NodeStatus::SUCCESS);EXPECT_EQ(replans.load(),0);
+  std::this_thread::sleep_for(120ms);
+  EXPECT_EQ(tree.tickRoot(),BT::NodeStatus::SUCCESS);EXPECT_EQ(replans.load(),1);
+  path_valid=false;
+  EXPECT_EQ(tree.tickRoot(),BT::NodeStatus::SUCCESS);EXPECT_EQ(replans.load(),2);
 }
 TEST(HeadingReference, ChoosesForwardSegmentInsteadOfOldPathStart)
 {
@@ -550,7 +601,6 @@ public:
 };
 TEST_F(Nav012Regression, RealGoalUpdatedIsResetByReactiveFallback)
 {
-  factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_goal_updated_condition_bt_node.so");
   factory.registerNodeType<KeepRunning>("KeepRunning");
   geometry_msgs::msg::PoseStamped goal;goal.header.frame_id="map";goal.pose.orientation.w=1;
   bb->set("goal",goal);bb->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{});
@@ -562,6 +612,38 @@ TEST_F(Nav012Regression, RealGoalUpdatedIsResetByReactiveFallback)
   goal.pose.position.x=2;bb->set("goal",goal);
   // 刻画安装版本的原始缺陷；完整树测试验证替代监督节点，而非修改这个断言掩盖根因。
   EXPECT_EQ(tree.tickRoot(),BT::NodeStatus::RUNNING);
+  tree.haltTree();
+}
+
+TEST_F(Nav012Regression, PathRevisionUpdatesDoNotResetAngularProgressWindow)
+{
+  factory.registerNodeType<KeepRunning>("KeepRunning");
+  static_tf();
+  SimInputs inputs(provider);
+  geometry_msgs::msg::PoseStamped goal;
+  goal.header.frame_id="map";goal.pose.position.y=1.0;goal.pose.orientation.w=1.0;
+  nav_msgs::msg::Path path;path.header.frame_id="map";
+  geometry_msgs::msg::PoseStamped start=goal;start.pose.position.y=0.0;
+  path.poses={start,goal};bb->set("goal",goal);bb->set("path",path);
+  auto tree=factory.createTreeFromText(
+    "<root main_tree_to_execute='Main'><BehaviorTree ID='Main'>"
+    "<ProgressGuard path='{path}' goal='{goal}' angular_stagnation_timeout='0.25' "
+    "angular_convergence_threshold='0.05' max_rotation_budget='0.80'>"
+    "<KeepRunning/></ProgressGuard></BehaviorTree></root>",bb);
+  std::this_thread::sleep_for(120ms);
+  auto status=BT::NodeStatus::RUNNING;
+  const auto began=carcar_navigation::Steady::now();
+  const auto deadline=carcar_navigation::after(.65);
+  unsigned revision=0;
+  while (status==BT::NodeStatus::RUNNING && carcar_navigation::Steady::now()<deadline) {
+    path.poses.back().pose.position.x=1e-4*++revision;
+    bb->set("path",path);
+    status=tree.tickRoot();
+    std::this_thread::sleep_for(30ms);
+  }
+  EXPECT_EQ(status,BT::NodeStatus::FAILURE);
+  EXPECT_GE(carcar_navigation::seconds(began),.20);
+  EXPECT_GT(revision,3u);
   tree.haltTree();
 }
 
