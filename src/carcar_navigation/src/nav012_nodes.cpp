@@ -66,13 +66,20 @@ public:
     return {BT::InputPort<std::string>("scan_topic","/scan",""),
       BT::InputPort<std::string>("costmap_topic","/local_costmap/costmap_raw",""),
       BT::InputPort<std::string>("footprint_topic","/local_costmap/published_footprint",""),
-      BT::InputPort<double>("backup_distance",0.10,""),BT::InputPort<double>("max_data_age",0.5,"")};
+      BT::InputPort<double>("backup_distance",kMaxSingleBackupDistance,""),BT::InputPort<double>("max_data_age",0.5,"")};
   }
   BT::NodeStatus tick() override {
-    double distance=0.10,age=0.5; getInput("backup_distance",distance); getInput("max_data_age",age);
-    auto result=swept_clear(cache_->snapshot(),runtime_->tf,runtime_->node->now(),runtime_->base_frame,-distance,0,age);
-    if (runtime_->escape_stage>0 || !std::isfinite(distance) || distance<=0 || distance>0.100001 || runtime_->backup_used+distance>0.300001) {
-      result={false,"BUDGET_EXHAUSTED","后退距离无效或本次受阻额度不足"};
+    double distance=kMaxSingleBackupDistance,age=0.5; getInput("backup_distance",distance); getInput("max_data_age",age);
+    SafetyResult result;
+    if (runtime_->backup_cooling()) {
+      result={false,"BACKUP_COOLDOWN","倒车冷却中，先跟随已重规划路径或受控转向"};
+    } else {
+      result=swept_clear(cache_->snapshot(),runtime_->tf,runtime_->node->now(),runtime_->base_frame,-distance,0,age);
+      if (!std::isfinite(distance) || distance<=0 ||
+          distance>kMaxSingleBackupDistance+1e-6 ||
+          runtime_->backup_used+distance>kMaxBackupBudget+1e-6) {
+        result={false,"BUDGET_EXHAUSTED","后退距离无效或本次受阻额度不足"};
+      }
     }
     diagnostic_msgs::msg::DiagnosticStatus msg;
     msg.name="RearClear"; msg.hardware_id="carcar_nav_bt_nodes"; msg.level=result.ok?0:1;
@@ -108,6 +115,7 @@ protected:
   virtual bool prepare(typename ActionT::Goal &) = 0;
   virtual bool reserve() {return true;}
   virtual void rejected() {}
+  virtual void failed() {}
   virtual void completed(typename ActionT::Result::SharedPtr) {}
   virtual void update() {}
   BT::NodeStatus onStart() override {
@@ -167,6 +175,7 @@ protected:
     if (state.success && !state.cancel_requested && !state.timed_out) {
       completed(session_->result());return BT::NodeStatus::SUCCESS;
     }
+    if (!released_) {failed();released_=true;}
     return BT::NodeStatus::FAILURE;
   }
   void onHalted() override {
@@ -219,15 +228,18 @@ class SafeBackUp : public SafeActionLeaf<nav2_msgs::action::BackUp> {
 public:
   SafeBackUp(const std::string & n,const BT::NodeConfiguration & c):SafeActionLeaf(n,c,"/backup",true) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("backup_dist",0.10,""),BT::InputPort<double>("backup_speed",0.05,""),
-      BT::InputPort<double>("time_allowance",4.0,"")};
+    return {BT::InputPort<double>("backup_dist",kMaxSingleBackupDistance,""),
+      BT::InputPort<double>("backup_speed",kMaxBackupSpeed,""),
+      BT::InputPort<double>("time_allowance",kMaxBackupTimeAllowance,"")};
   }
 private:
   bool prepare(nav2_msgs::action::BackUp::Goal & goal) override {
-    double distance=.10,speed=.05,time=4;
+    double distance=kMaxSingleBackupDistance,speed=kMaxBackupSpeed,time=kMaxBackupTimeAllowance;
     getInput("backup_dist",distance);getInput("backup_speed",speed);getInput("time_allowance",time);
-    if (!std::isfinite(distance)||distance<=0||distance>.10||!std::isfinite(speed)||speed<=0||speed>.05||
-      !std::isfinite(time)||time<=0||time>4) {return false;}
+    if (!std::isfinite(distance)||distance<=0||distance>kMaxSingleBackupDistance+1e-6||
+      !std::isfinite(speed)||speed<=0||speed>kMaxBackupSpeed+1e-6||
+      !std::isfinite(time)||time<=0||time>kMaxBackupTimeAllowance+1e-6) {return false;}
+    if (runtime_->backup_cooling()) {runtime_->diagnostic("BACKUP","BACKUP_COOLDOWN");return false;}
     auto check=swept_clear(runtime_->sensors()->snapshot(),runtime_->tf,runtime_->node->now(),
       runtime_->base_frame,-distance,0,runtime_->data_age);
     if (!check.ok) {runtime_->diagnostic("BACKUP",check.code);return false;}
@@ -235,11 +247,13 @@ private:
     goal.time_allowance=rclcpp::Duration::from_seconds(time);result_timeout_=time+1;return true;
   }
   bool reserve() override {
-    if (runtime_->escape_stage>0 || !runtime_->reserve_backup(distance_)) {return false;}
+    if (!runtime_->reserve_backup(distance_)) {return false;}
     runtime_->escape_stage=1;return true;
   }
-  void rejected() override {runtime_->release_backup(distance_);}
-  double distance_{0.10};
+  void rejected() override {runtime_->release_backup(distance_);runtime_->note_backup(false);}
+  void failed() override {runtime_->release_backup(distance_);runtime_->note_backup(false);}
+  void completed(nav2_msgs::action::BackUp::Result::SharedPtr) override {runtime_->note_backup(true);}
+  double distance_{kMaxSingleBackupDistance};
 };
 class SafeFollowPath : public SafeActionLeaf<nav2_msgs::action::FollowPath> {
 public:
@@ -297,17 +311,19 @@ public:
     return {BT::InputPort<nav_msgs::msg::Path>("path"),
       BT::InputPort<geometry_msgs::msg::PoseStamped>("goal"),
       BT::InputPort<std::vector<geometry_msgs::msg::PoseStamped>>("goals"),
-      BT::InputPort<double>("linear_stagnation_timeout",5.0,""),
+      BT::InputPort<double>("linear_stagnation_timeout",3.0,""),
       BT::InputPort<double>("linear_displacement_threshold",0.03,""),
-      BT::InputPort<double>("angular_stagnation_timeout",5.0,""),
+      BT::InputPort<double>("angular_stagnation_timeout",3.0,""),
       BT::InputPort<double>("angular_convergence_threshold",0.10,""),
-      BT::InputPort<double>("max_rotation_budget",15.0,"")};
+      BT::InputPort<double>("max_rotation_budget",8.0,""),
+      BT::InputPort<double>("heading_flip_threshold",0.35,""),
+      BT::InputPort<int>("max_heading_flips",3,"")};
   }
-  void halt() override {initialized_=false;in_turn_=false;BT::DecoratorNode::halt();}
+  void halt() override {initialized_=false;in_turn_=false;heading_flips_=0;BT::DecoratorNode::halt();}
   BT::NodeStatus tick() override {
-    if (status()==BT::NodeStatus::IDLE) {initialized_=false;in_turn_=false;}
+    if (status()==BT::NodeStatus::IDLE) {initialized_=false;in_turn_=false;heading_flips_=0;}
     if (runtime_->motion && runtime_->motion->state().terminal) {
-      initialized_=false;in_turn_=false;
+      initialized_=false;in_turn_=false;heading_flips_=0;
       return child_node_->executeTick(); // 动作结束后的停车确认不计入行驶进展窗口。
     }
     if (!runtime_->healthy() || !runtime_->odom_fresh()) {return failure("DATA_EXPIRED","定位或轮式里程计无效");}
@@ -326,19 +342,30 @@ public:
     if (path_changed) {++path_revision_;previous_path_=path;}
     const auto now=Steady::now();
     if (!initialized_ || epoch_!=runtime_->epoch) {
-      initialized_=true;epoch_=runtime_->epoch;baseline_=odom->pose.pose;cruise_=now;in_turn_=false;
+      initialized_=true;epoch_=runtime_->epoch;baseline_=odom->pose.pose;cruise_=now;
+      in_turn_=false;heading_flips_=0;
     }
-    double linear_timeout=5,linear_threshold=.03,angular_timeout=5,angular_threshold=.1,total=15;
+    double linear_timeout=3,linear_threshold=.03,angular_timeout=3,angular_threshold=.1,total=8;
+    double flip_threshold=.35; int max_flips=3;
     getInput("linear_stagnation_timeout",linear_timeout);getInput("linear_displacement_threshold",linear_threshold);
     getInput("angular_stagnation_timeout",angular_timeout);getInput("angular_convergence_threshold",angular_threshold);
     getInput("max_rotation_budget",total);
-    for (double value : {linear_timeout,linear_threshold,angular_timeout,angular_threshold,total}) {
+    getInput("heading_flip_threshold",flip_threshold);getInput("max_heading_flips",max_flips);
+    for (double value : {linear_timeout,linear_threshold,angular_timeout,angular_threshold,total,flip_threshold}) {
       if (!std::isfinite(value)||value<=0) {return failure("INVALID_PARAMETER","进展守卫阈值无效");}
     }
+    if (max_flips<1) {return failure("INVALID_PARAMETER","进展守卫阈值无效");}
     if (std::abs(ref.error)>=.35) {
-      if (!in_turn_) {in_turn_=true;turn_=window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;}
-      // 参考方向发生改变时重新建立比较窗口，但单次转向总预算不会刷新。
-      if (path_changed || std::abs(normalize(ref.yaw-target_yaw_))>.10) {
+      auto event=classify_heading_align(in_turn_,target_yaw_,ref.yaw,heading_flips_,
+        flip_threshold,static_cast<unsigned>(max_flips));
+      if (event==HeadingAlignEvent::Oscillating) {
+        return failure("PATH_HEADING_OSCILLATION","路径参考航向反复翻转，停止原地对准");
+      }
+      if (!in_turn_ || event==HeadingAlignEvent::NewTarget) {
+        if (in_turn_ && event==HeadingAlignEvent::NewTarget) {++heading_flips_;}
+        in_turn_=true;turn_=window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;
+      } else if (path_changed || std::abs(normalize(ref.yaw-target_yaw_))>.10) {
+        // 小幅参考变化只刷新改善窗口，不把左右绕行合成一次转向失败。
         window_=now;error_=std::abs(ref.error);target_yaw_=ref.yaw;
       }
       if (seconds(turn_)>=total) {return failure("ROTATION_BUDGET_EXCEEDED","单次转向总预算耗尽");}
@@ -351,7 +378,7 @@ public:
         window_=now;error_=std::abs(ref.error);
       }
     } else {
-      if (in_turn_) {in_turn_=false;baseline_=odom->pose.pose;cruise_=now;}
+      if (in_turn_) {in_turn_=false;heading_flips_=0;baseline_=odom->pose.pose;cruise_=now;}
       double dx=odom->pose.pose.position.x-baseline_.position.x;
       double dy=odom->pose.pose.position.y-baseline_.position.y;
       if (std::hypot(dx,dy)>=linear_threshold) {
@@ -359,7 +386,7 @@ public:
         double yaw=tf2::getYaw(baseline_.orientation);
         double forward=dx*std::cos(yaw)+dy*std::sin(yaw);
         runtime_->forward_progress(forward);baseline_=odom->pose.pose;
-        if (forward>=linear_threshold) {cruise_=now;}
+        if (forward>=linear_threshold) {cruise_=now;heading_flips_=0;}
       }
       if (seconds(cruise_)>=linear_timeout) {return failure("LINEAR_STAGNATION","轮式里程计有效前向位移不足");}
     }
@@ -382,14 +409,15 @@ private:
     msg.level=code=="NONE"?0:1;msg.message=detail;msg.hardware_id="carcar_nav_bt_nodes";
     for (auto pair : {std::pair<std::string,std::string>{"reason_code",code},{"detail",detail},
         {"reference_yaw",std::to_string(target)},{"robot_yaw",std::to_string(yaw)},
-        {"measured_wz",std::to_string(wz)},{"path_revision",std::to_string(path_revision_)}}) {
+        {"measured_wz",std::to_string(wz)},{"path_revision",std::to_string(path_revision_)},
+        {"heading_flips",std::to_string(heading_flips_)}}) {
       diagnostic_msgs::msg::KeyValue kv;kv.key=pair.first;kv.value=pair.second;msg.values.push_back(kv);
     }
     pub_->publish(msg);
   }
   std::shared_ptr<RecoveryRuntime> runtime_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_;
-  bool initialized_{false},in_turn_{false};uint64_t epoch_{0};
+  bool initialized_{false},in_turn_{false};unsigned heading_flips_{0};uint64_t epoch_{0};
   geometry_msgs::msg::Pose baseline_;
   TimePoint cruise_{},turn_{},window_{},last_diag_{};
   double error_{0},target_yaw_{0};
@@ -402,13 +430,13 @@ public:
   ParkAndObserve(const std::string & n,const BT::NodeConfiguration & c)
   :BT::StatefulActionNode(n,c),runtime_(RecoveryRuntime::get(c)) {}
   static BT::PortsList providedPorts() {
-    return {BT::InputPort<double>("observe_duration",30.0,""),BT::InputPort<nav_msgs::msg::Path>("path"),
+    return {BT::InputPort<double>("observe_duration",8.0,""),BT::InputPort<nav_msgs::msg::Path>("path"),
       BT::InputPort<geometry_msgs::msg::PoseStamped>("goal"),
       BT::InputPort<std::vector<geometry_msgs::msg::PoseStamped>>("goals")};
   }
 private:
   BT::NodeStatus onStart() override {
-    double duration=30;getInput("observe_duration",duration);
+    double duration=8;getInput("observe_duration",duration);
     if (!std::isfinite(duration)||duration<=0||duration>30) {return BT::NodeStatus::FAILURE;}
     if (runtime_->observe_started==TimePoint{}) {runtime_->observe_started=Steady::now();}
     deadline_=runtime_->observe_started+
@@ -417,7 +445,14 @@ private:
   }
   BT::NodeStatus onRunning() override {
     runtime_->permit(false);
-    if (Steady::now()>=deadline_) {runtime_->diagnostic("PARK_AND_OBSERVE","OBSERVE_TIMEOUT");return BT::NodeStatus::FAILURE;}
+    if (Steady::now()>=deadline_) {
+      if (runtime_->request_observe_replan()) {
+        runtime_->diagnostic("PARK_AND_OBSERVE","REPLAN_AFTER_OBSERVE");
+        return BT::NodeStatus::SUCCESS;
+      }
+      runtime_->diagnostic("PARK_AND_OBSERVE","OBSERVE_TIMEOUT");
+      return BT::NodeStatus::FAILURE;
+    }
     if (seconds(last_check_)<1) {return BT::NodeStatus::RUNNING;}
     last_check_=Steady::now();
     auto ready=runtime_->inputs_ready();

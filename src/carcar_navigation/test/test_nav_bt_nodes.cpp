@@ -70,6 +70,8 @@ BT::PortsList mock_ports() {
     BT::InputPort<std::string>("angular_stagnation_timeout"),
     BT::InputPort<std::string>("angular_convergence_threshold"),
     BT::InputPort<std::string>("max_rotation_budget"),
+    BT::InputPort<std::string>("heading_flip_threshold"),
+    BT::InputPort<std::string>("max_heading_flips"),
     BT::InputPort<std::string>("max_spin_angle"),
     BT::InputPort<std::string>("observe_duration")
   };
@@ -468,12 +470,12 @@ TEST_F(NavBtNodesTest, TestRearClearStructuredRejections) {
     cm.metadata.origin.position.x = -1.0;
     cm.metadata.origin.position.y = -1.0;
     cm.data.assign(40 * 40, 0);
-    // 在车身正后方 (local x ≈ -0.20, y ≈ 0.0 -> world x ≈ -0.20, y ≈ 0.0 -> map_x ≈ 16, map_y ≈ 20) 设置障碍
-    cm.data[20 * 40 + 16] = 254;
+    // 车体后缘约 x=-0.14。格子 15 覆盖 [-0.25,-0.20]，在当前包络外、0.10/0.20 m 倒车扫掠内。
+    cm.data[20 * 40 + 15] = 254;
     costmap_pub->publish(cm);
 
     executor->spin_some();
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(50ms);
     EXPECT_EQ(node->executeTick(), BT::NodeStatus::FAILURE);
   }
 

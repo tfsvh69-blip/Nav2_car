@@ -34,6 +34,50 @@ inline TimePoint after(double s) {
   return Steady::now() + std::chrono::duration_cast<Steady::duration>(std::chrono::duration<double>(s));
 }
 inline double normalize(double a) {return std::atan2(std::sin(a), std::cos(a));}
+
+// ROS 时钟与回调采样可能差几毫秒，略负的年龄是刚收到，不是过期。
+inline constexpr double kRosTimeJitter = 0.05;
+inline bool ros_age_fresh(double age, double max_age, double jitter = kRosTimeJitter)
+{
+  if (!std::isfinite(age) || !std::isfinite(max_age) || max_age <= 0 ||
+      !std::isfinite(jitter) || jitter < 0) {
+    return false;
+  }
+  if (age < -jitter) {return false;}
+  return (age < 0.0 ? 0.0 : age) <= max_age;
+}
+
+inline bool heading_target_flipped(double previous_yaw, double new_yaw, double threshold = 0.35)
+{
+  return std::abs(normalize(new_yaw - previous_yaw)) >= threshold;
+}
+
+enum class HeadingAlignEvent { Hold, NewTarget, Oscillating };
+
+// 同一轮绕障里路径参考左右翻转时，不要把两段对准合成一次 8 s 转向失败。
+inline HeadingAlignEvent classify_heading_align(
+  bool in_turn, double previous_target, double new_target,
+  unsigned flips_so_far, double flip_threshold, unsigned max_flips)
+{
+  if (!std::isfinite(previous_target) || !std::isfinite(new_target) ||
+      !std::isfinite(flip_threshold) || flip_threshold <= 0 || max_flips < 1) {
+    return HeadingAlignEvent::Oscillating;
+  }
+  if (!in_turn) {return HeadingAlignEvent::NewTarget;}
+  if (!heading_target_flipped(previous_target, new_target, flip_threshold)) {
+    return HeadingAlignEvent::Hold;
+  }
+  if (flips_so_far + 1 >= max_flips) {return HeadingAlignEvent::Oscillating;}
+  return HeadingAlignEvent::NewTarget;
+}
+
+// 倒车恢复几何限额，与 nav2_experimental.yaml / 实验行为树保持一致。
+// 实验上限：单次 0.20 m、累计 0.40 m。默认倒车后冷却 12 s，冷却期内改走跟随或转向；
+// 净前向 0.20 m 后重置额度。能否脱困须实测。
+inline constexpr double kMaxSingleBackupDistance = 0.20;
+inline constexpr double kMaxBackupBudget = 0.40;
+inline constexpr double kMaxBackupSpeed = 0.05;
+inline constexpr double kMaxBackupTimeAllowance = 6.0;
 struct SafetyResult {
   bool ok{false};
   std::string code{"DATA_MISSING"};
@@ -125,6 +169,9 @@ public:
   void forward_progress(double distance);
   bool reserve_backup(double distance);
   void release_backup(double distance);
+  void note_backup(bool succeeded = true);
+  bool backup_cooling() const;
+  bool request_observe_replan();
 
   rclcpp::Node::SharedPtr node;
   rclcpp::CallbackGroup::SharedPtr group;
@@ -139,11 +186,14 @@ public:
   std::vector<std::shared_ptr<ManagedSession>> retiring;
   double backup_used{0}, forward_distance{0};
   bool spin_used{false}, recovery_active{false};
-  unsigned escape_stage{0};
+  unsigned escape_stage{0}, observe_replans_used{0};
   TimePoint observe_started{};
   TimePoint recovery_started{};
-  double response_timeout{1}, cancel_timeout{1}, settle_timeout{2}, still_duration{1};
-  double data_age{0.5}, recovery_timeout{90};
+  TimePoint last_backup_at_{};
+  bool last_backup_ok_{true};
+  double response_timeout{1}, cancel_timeout{1}, settle_timeout{1}, still_duration{0.4};
+  double data_age{0.5}, recovery_timeout{90}, backup_cooldown{12};
+  unsigned max_observe_replans{1};
 private:
   struct DiagSnapshot {
     std::string phase, reason;
@@ -151,6 +201,7 @@ private:
     uint64_t epoch{0};
     std::string navigation_uuid, previous_navigation_uuid;
     double backup_used{0}, recovery_elapsed{0}, recovery_deadline{0};
+    unsigned observe_replans_used{0}, max_observe_replans{0};
     TimePoint last_bt_tick{};
     std::shared_ptr<ManagedSession> motion;
   };

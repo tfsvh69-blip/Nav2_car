@@ -189,6 +189,26 @@ TEST(GoalStatusPolicy, OldTerminalCannotOwnNewTaskRegardlessOfArrayOrder)
   old.status=2;array.status_list={old}; // 旧的 EXECUTING 状态包晚到也不能倒退。
   EXPECT_EQ(policy.observe(array),carcar_navigation::goal_uuid_text(newer.goal_info.goal_id));
 }
+TEST(RecoveryFreshness, RosAgeTreatsTinyNegativeAsFresh)
+{
+  EXPECT_TRUE(carcar_navigation::ros_age_fresh(-0.001,0.5));
+  EXPECT_TRUE(carcar_navigation::ros_age_fresh(0.10,0.5));
+  EXPECT_FALSE(carcar_navigation::ros_age_fresh(0.60,0.5));
+  EXPECT_FALSE(carcar_navigation::ros_age_fresh(-0.20,0.5));
+  EXPECT_FALSE(carcar_navigation::ros_age_fresh(0.10,0.0));
+}
+TEST(HeadingAlign, FlipResetsBeforeOscillation)
+{
+  using carcar_navigation::HeadingAlignEvent;
+  using carcar_navigation::classify_heading_align;
+  EXPECT_EQ(classify_heading_align(false,0.0,0.8,0,0.35,3),HeadingAlignEvent::NewTarget);
+  EXPECT_EQ(classify_heading_align(true,0.8,0.85,0,0.35,3),HeadingAlignEvent::Hold);
+  EXPECT_EQ(classify_heading_align(true,0.8,-0.8,0,0.35,3),HeadingAlignEvent::NewTarget);
+  EXPECT_EQ(classify_heading_align(true,0.8,-0.8,1,0.35,3),HeadingAlignEvent::NewTarget);
+  EXPECT_EQ(classify_heading_align(true,0.8,-0.8,2,0.35,3),HeadingAlignEvent::Oscillating);
+  EXPECT_TRUE(carcar_navigation::heading_target_flipped(0.8,-0.8,0.35));
+  EXPECT_FALSE(carcar_navigation::heading_target_flipped(0.8,0.85,0.35));
+}
 TEST(HeadingReference, ChoosesForwardSegmentInsteadOfOldPathStart)
 {
   geometry_msgs::msg::PoseStamped robot,goal;robot.header.frame_id="map";
@@ -203,12 +223,47 @@ TEST(HeadingReference, ChoosesForwardSegmentInsteadOfOldPathStart)
 TEST_F(Nav012Regression, BudgetCannotBeResetByGoalEpoch)
 {
   auto runtime=carcar_navigation::RecoveryRuntime::get(configuration());
-  ASSERT_TRUE(runtime->reserve_backup(.1));ASSERT_TRUE(runtime->reserve_backup(.1));
-  ASSERT_TRUE(runtime->reserve_backup(.1));++runtime->epoch;
-  EXPECT_FALSE(runtime->reserve_backup(.1));runtime->forward_progress(-.5);
-  EXPECT_FALSE(runtime->reserve_backup(.1));runtime->forward_progress(.19);
-  EXPECT_FALSE(runtime->reserve_backup(.1));runtime->forward_progress(.02);
-  EXPECT_TRUE(runtime->reserve_backup(.1));
+  EXPECT_FALSE(runtime->reserve_backup(.21));
+  ASSERT_TRUE(runtime->reserve_backup(.2));ASSERT_TRUE(runtime->reserve_backup(.2));
+  ++runtime->epoch;
+  EXPECT_FALSE(runtime->reserve_backup(.2));runtime->forward_progress(-.5);
+  EXPECT_FALSE(runtime->reserve_backup(.2));runtime->forward_progress(.19);
+  EXPECT_FALSE(runtime->reserve_backup(.2));runtime->forward_progress(.02);
+  EXPECT_TRUE(runtime->reserve_backup(.2));
+}
+TEST_F(Nav012Regression, BackupCooldownBlocksImmediateRetry)
+{
+  auto runtime=carcar_navigation::RecoveryRuntime::get(configuration());
+  runtime->backup_cooldown=12;
+  EXPECT_FALSE(runtime->backup_cooling());
+  runtime->begin_recovery();
+  runtime->note_backup(true);
+  EXPECT_TRUE(runtime->backup_cooling());
+  runtime->note_backup(false);
+  EXPECT_TRUE(runtime->backup_cooling());
+  runtime->last_backup_at_=carcar_navigation::Steady::now()-
+    std::chrono::duration_cast<carcar_navigation::Steady::duration>(std::chrono::duration<double>(13));
+  EXPECT_FALSE(runtime->backup_cooling());
+  runtime->backup_cooldown=0;
+  runtime->note_backup(true);
+  EXPECT_FALSE(runtime->backup_cooling());
+}
+TEST_F(Nav012Regression, ParkObserveAllowsOneBoundedFreshReplan)
+{
+  auto runtime=carcar_navigation::RecoveryRuntime::get(configuration());
+  runtime->max_observe_replans=1;
+  runtime->observe_started=carcar_navigation::Steady::now();
+  EXPECT_TRUE(runtime->request_observe_replan());
+  EXPECT_EQ(runtime->observe_replans_used,1u);
+  EXPECT_EQ(runtime->observe_started,carcar_navigation::TimePoint{});
+  EXPECT_FALSE(runtime->request_observe_replan());
+
+  // 只有确认净前进 0.20 m 脱离当前受阻区，才恢复观察重规划额度。
+  runtime->forward_progress(.19);
+  EXPECT_FALSE(runtime->request_observe_replan());
+  runtime->forward_progress(.02);
+  EXPECT_EQ(runtime->observe_replans_used,0u);
+  EXPECT_TRUE(runtime->request_observe_replan());
 }
 
 struct CallbackLifetime {std::mutex mutex;bool alive{true};};
@@ -546,8 +601,10 @@ TEST_F(Nav012Regression, SweptGeometryHandlesWorldFootprintAndInteriorUnknown)
     EXPECT_TRUE(check().ok)<<check().detail;
     cm->data[body_cell(.12,0)]=254;EXPECT_TRUE(check().ok)<<check().detail;
     cm->data[body_cell(.12,0)]=0;
-    cm->data[20*40+20]=255;EXPECT_TRUE(check().ok)<<check().detail;
-    cm->data[20*40+20]=254;EXPECT_TRUE(check().ok)<<check().detail;
+    cm->data[body_cell(.12,0)]=255;EXPECT_EQ(check().code,"COSTMAP_UNKNOWN");
+    cm->data[body_cell(.12,0)]=0;
+    cm->data[20*40+20]=255;EXPECT_EQ(check().code,"COSTMAP_UNKNOWN");
+    cm->data[20*40+20]=254;EXPECT_EQ(check().code,"COSTMAP_OBSTACLE");
     cm->data[20*40+20]=0;
     cm->data[body_cell(-.24,0)]=255;EXPECT_EQ(check().code,"COSTMAP_UNKNOWN");
     cm->data[body_cell(-.24,0)]=254;EXPECT_EQ(check().code,"COSTMAP_OBSTACLE");
@@ -749,7 +806,7 @@ TEST_F(Nav012Regression, LoggerProcessKeepsNewGoalStateWhenOldAbortArrives)
   EXPECT_NE(observed->values["task_status"],"ABORTED");
 }
 
-TEST_F(Nav012Regression, FullTreeUsesBackupThenSpinWithoutRepeatingBackup)
+TEST_F(Nav012Regression, FullTreeUsesBackupThenSpinDuringCooldown)
 {
   using namespace carcar_navigation;
   FakeAction<nav2_msgs::action::ComputePathToPose> planner(provider,"/compute_path_to_pose");
@@ -757,6 +814,7 @@ TEST_F(Nav012Regression, FullTreeUsesBackupThenSpinWithoutRepeatingBackup)
     result->path.header.frame_id="map";auto start=handle->get_goal()->goal;
     start.pose.position.x=start.pose.position.y=0;result->path.poses={start,handle->get_goal()->goal};
   };
+  // 首次跟随失败后倒车一段；冷却期内再次失败改走转向，不再立刻倒第二次。
   FakeAction<nav2_msgs::action::FollowPath> follow(provider,"/follow_path");follow.abort_first=3;
   FakeAction<nav2_msgs::action::Spin> spin(provider,"/spin");
   FakeAction<nav2_msgs::action::BackUp> backup(provider,"/backup");
@@ -772,7 +830,7 @@ TEST_F(Nav012Regression, FullTreeUsesBackupThenSpinWithoutRepeatingBackup)
     if (spin.accepted>0) {EXPECT_EQ(backup.finished,1);}
   }
   EXPECT_EQ(status,BT::NodeStatus::SUCCESS);EXPECT_EQ(backup.accepted,1);EXPECT_EQ(spin.accepted,1);
-  EXPECT_EQ(follow.accepted,4);EXPECT_NEAR(RecoveryRuntime::get(configuration())->backup_used,.1,1e-8);
+  EXPECT_EQ(follow.accepted,4);EXPECT_NEAR(RecoveryRuntime::get(configuration())->backup_used,.2,1e-8);
   tree.haltTree();exec.cancel();thread.join();
 }
 

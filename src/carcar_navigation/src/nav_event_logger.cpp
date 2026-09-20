@@ -21,8 +21,10 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <ctime>
 #include <deque>
+#include <exception>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -512,6 +514,7 @@ private:
     std::ifstream in(xml_path);
     std::string line;
     std::regex re(R"xml(<([A-Za-z0-9_]+)[^>]*\bname="([^"]+)")xml");
+    std::regex observe_re(R"xml(observe_duration="([^"]+)")xml");
     while (std::getline(in, line)) {
       std::smatch match;
       if (std::regex_search(line, match, re) && match.size() > 2) {
@@ -519,7 +522,24 @@ private:
         const std::string name = match[2].str();
         bt_node_name_to_type_[name] = tag;
       }
+      std::smatch observe_match;
+      if (std::regex_search(line, observe_match, observe_re) && observe_match.size() > 1) {
+        try {
+          const double parsed = std::stod(observe_match[1].str());
+          if (std::isfinite(parsed) && parsed > 0.0) {
+            observe_duration_s_ = parsed;
+          }
+        } catch (const std::exception &) {
+        }
+      }
     }
+  }
+
+  std::string observe_budget_text() const
+  {
+    char buf[16];
+    std::snprintf(buf, sizeof(buf), "%.0f", observe_duration_s_);
+    return buf;
   }
 
   std::string resolve_bt_node_type(const std::string & node_name)
@@ -1322,11 +1342,11 @@ private:
           transition_stage_locked(NavStage::REAR_CHECK, "执行倒车后方净空检查");
         }
       }
-      // 7. 叶节点：BackUp (真实倒车动作，NAV-012 参数更新：限额 0.10m, 0.05m/s, 最长 4.0s)
+      // 7. 叶节点：BackUp (真实倒车动作：限额 0.20m, 0.05m/s, 最长 6.0s)
       else if (btype == "BackUp") {
         if (curr == "RUNNING") {
           backup_odom_moving_ = false;
-          transition_stage_locked(NavStage::BACKING_UP, "执行受限倒车恢复 (限额 0.10m, 0.05m/s, 最长 4.0s)");
+          transition_stage_locked(NavStage::BACKING_UP, "执行受限倒车恢复 (限额 0.20m, 0.05m/s, 最长 6.0s)");
           record_event_locked("BACKUP_ACTION_STARTED", active_uuid_, node, "倒车 Action 开始执行");
         } else if (curr == "SUCCESS") {
           record_event_locked("BACKUP_ACTION_SUCCESS", active_uuid_, node, "倒车 Action 完成");
@@ -1335,11 +1355,14 @@ private:
           check_stop_trigger_locked("BACKUP_ACTION_FAILURE", "倒车 Action 失败中止", "CONTROL_FAILED");
         }
       }
-      // 8. 叶节点：ParkAndObserve (停车观察 30 秒)
+      // 8. 叶节点：ParkAndObserve（预算取实验树 observe_duration）
       else if (btype == "ParkAndObserve") {
         if (curr == "RUNNING") {
-          transition_stage_locked(NavStage::PARK_AND_OBSERVE, "执行停车观察 (预算 30s，每秒轮询通道与定位)");
-          check_stop_trigger_locked("PARK_AND_OBSERVE", "触发停车观察脱困 (30s 周期轮询)", "PARK_AND_OBSERVE");
+          const std::string budget = observe_budget_text();
+          transition_stage_locked(NavStage::PARK_AND_OBSERVE,
+            "执行停车观察 (预算 " + budget + "s，每秒轮询通道与定位)");
+          check_stop_trigger_locked("PARK_AND_OBSERVE",
+            "触发停车观察脱困 (" + budget + "s 周期轮询)", "PARK_AND_OBSERVE");
         }
       }
       // 9. 叶节点：RecoverLocalization
@@ -1572,7 +1595,8 @@ private:
     } else if (trigger_source == "PARK_AND_OBSERVE") {
       rec.stop_category = "ACTIVE_WAIT";
       rec.cause_code = "PARK_AND_OBSERVE";
-      rec.trigger_reason = "触发停车观察脱困 (PARK_AND_OBSERVE, 预算30s)";
+      rec.trigger_reason = "触发停车观察脱困 (PARK_AND_OBSERVE, 预算" +
+        observe_budget_text() + "s)";
       rec.evidence_status = "CERTAIN";
       rec.recovery_or_terminal = "停车观察脱困中";
     } else if (trigger_source == "REAR_CLEAR_DENIED") {
@@ -1932,7 +1956,7 @@ private:
     if (current_stage_ == NavStage::BACKING_UP) {
       std::ostringstream ss;
       ss << " [倒车位移: " << std::fixed << std::setprecision(2)
-         << latest_backup_feedback_dist_ << "m/0.10m (里程计反馈)]";
+         << latest_backup_feedback_dist_ << "m/0.20m (里程计反馈)]";
       extra_backup = ss.str();
     }
 
@@ -2131,6 +2155,7 @@ private:
   std::string experiment_params_file_;
   std::string default_bt_xml_;
   std::string default_nav_through_poses_bt_xml_;
+  double observe_duration_s_{8.0};
 
   std::string jsonl_path_;
   std::string text_log_path_;

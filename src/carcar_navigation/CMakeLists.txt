@@ -34,6 +34,10 @@ find_package(nav2_costmap_2d REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(carcar_interfaces REQUIRED)
+find_package(dwb_core REQUIRED)
+find_package(dwb_plugins REQUIRED)
+find_package(dwb_msgs REQUIRED)
+find_package(nav_2d_msgs REQUIRED)
 
 # NAV-003/NAV-004: C++ 地图重载与格式验证工具（支持 expected_map_yaml 参数）
 add_executable(check_map_reload src/check_map_reload.cpp)
@@ -129,6 +133,17 @@ ament_target_dependencies(carcar_protected_backup
 pluginlib_export_plugin_description_file(nav2_core behavior_plugins.xml)
 target_link_libraries(carcar_protected_backup carcar_recovery_runtime)
 
+add_library(carcar_dwb_plugins SHARED src/split_horizon_traj_generator.cpp)
+target_include_directories(carcar_dwb_plugins PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(carcar_dwb_plugins
+  rclcpp nav2_util dwb_core dwb_plugins dwb_msgs nav_2d_msgs pluginlib)
+
+# 旧 escape_controller / 自写 EKF 草稿保留但停用；恢复统一走受保护 Action。
+pluginlib_export_plugin_description_file(dwb_core controller_plugins.xml)
+
 # NAV-008/NAV-011: 导航事件监控、终端状态摘要与多维度会话录包节点
 add_executable(nav_event_logger src/nav_event_logger.cpp)
 ament_target_dependencies(nav_event_logger
@@ -207,6 +222,7 @@ install(TARGETS
 # bt_navigator 按 ament 前缀的 lib/ 目录查找动态 BT 插件；不能安装在包专用
 # lib/carcar_navigation/ 目录，否则实验树启动时会找不到 carcar_nav_bt_nodes。
 install(TARGETS carcar_nav_bt_nodes carcar_protected_backup carcar_recovery_runtime
+  carcar_dwb_plugins
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
@@ -220,6 +236,21 @@ install(DIRECTORY config launch maps rviz behavior_trees
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_protected_backup_execution test/test_protected_backup_execution.cpp)
+  target_include_directories(test_protected_backup_execution PRIVATE include)
+  ament_target_dependencies(test_protected_backup_execution rclcpp rclcpp_lifecycle
+    nav2_behaviors nav2_core nav2_util nav2_msgs nav2_costmap_2d tf2 tf2_ros
+    tf2_geometry_msgs sensor_msgs nav_msgs geometry_msgs)
+  target_link_libraries(test_protected_backup_execution carcar_protected_backup)
+  set_tests_properties(test_protected_backup_execution PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 20)
+  ament_add_gtest(test_nav_escape_logic test/test_nav_escape_logic.cpp)
+  target_include_directories(test_nav_escape_logic PRIVATE include)
+  ament_target_dependencies(test_nav_escape_logic rclcpp nav2_util dwb_core dwb_plugins dwb_msgs
+    nav_2d_msgs pluginlib)
+  target_link_libraries(test_nav_escape_logic carcar_dwb_plugins)
+  set_tests_properties(test_nav_escape_logic PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 30)
   ament_add_gtest(test_nav012_regressions test/test_nav012_regressions.cpp)
   ament_target_dependencies(test_nav012_regressions rclcpp rclcpp_action nav2_msgs nav2_behavior_tree
     nav2_util nav_msgs sensor_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs action_msgs)

@@ -3,6 +3,7 @@
   <arg name="params_file" default="$(find-pkg-share carcar_base)/config/base.yaml" description="Rosmaster base driver parameters"/>
   <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
   <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="publish_odom_tf" default="true" description="默认轮式里程计发布 TF；外部融合接管须独立验收"/>
 
   <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml">
     <arg name="use_sim_time" value="$(var use_sim_time)"/>
@@ -11,5 +12,6 @@
   <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
     <arg name="params_file" value="$(var params_file)"/>
     <arg name="serial_port" value="$(var serial_port)"/>
+    <arg name="publish_odom_tf" value="$(var publish_odom_tf)"/>
   </include>
 </launch>

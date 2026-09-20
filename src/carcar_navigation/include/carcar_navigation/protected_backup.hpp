@@ -56,6 +56,7 @@ protected:
   double max_data_age_{0.5};
   double rear_clearance_limit_{0.08};
   double half_length_{0.14};
+  double requested_distance_{kMaxSingleBackupDistance};
 };
 
 }  // namespace carcar_navigation

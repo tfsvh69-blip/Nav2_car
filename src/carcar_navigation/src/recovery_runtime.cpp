@@ -20,7 +20,13 @@ template<class UUID> std::string uuid_text(const UUID & uuid) {
   return s.str();
 }
 double parameter(rclcpp::Node::SharedPtr node, const std::string & key, double fallback) {
-  if (node->has_parameter(key)) {return node->get_parameter(key).as_double();}
+  if (node->has_parameter(key)) {
+    const auto value=node->get_parameter(key);
+    if (value.get_type()==rclcpp::ParameterType::PARAMETER_INTEGER) {
+      return static_cast<double>(value.as_int());
+    }
+    return value.as_double();
+  }
   return fallback;
 }
 }  // namespace
@@ -55,7 +61,7 @@ bool fresh_stamp(const builtin_interfaces::msg::Time & stamp, const rclcpp::Time
 {
   if (received == TimePoint{} || !std::isfinite(age) || age <= 0) {return false;}
   const double elapsed = (now - rclcpp::Time(stamp, now.get_clock_type())).seconds();
-  return elapsed >= 0 && elapsed <= age && seconds(received) <= age;
+  return ros_age_fresh(elapsed, age) && seconds(received) <= age;
 }
 HeadingReference heading_reference(const geometry_msgs::msg::PoseStamped & pose,
   const nav_msgs::msg::Path & path, const geometry_msgs::msg::PoseStamped & goal, double lookahead)
@@ -174,7 +180,7 @@ SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
     const double yaw=tf2::getYaw(pose.transform.rotation);
     const int steps=std::max(1,int(std::ceil(std::hypot(dx,dy)/(md.resolution*0.5))));
     // 倒车时忽略当前包络已压住的前方格子，只拦新进入的后方体积。
-    const bool escape_rear=dx<0 && std::abs(dx)>=std::abs(dy);
+    const bool escape_rear=dx<0 && std::abs(dy)<1e-6;
     std::unordered_set<uint64_t> start_cells;
     for (int i=0;i<=steps;++i) {
       double t=double(i)/steps;
@@ -197,9 +203,13 @@ SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
       map.convexFillCells(polygon,cells);
       if (i==0) {
         for (const auto & cell : cells) {
-          start_cells.insert((uint64_t(cell.x)<<32)|cell.y);
+          // 只豁免车头边缘的既有致死格；车腹、后半部和未知格不可豁免。
+          double cx,cy;map.mapToWorld(cell.x,cell.y,cx,cy);
+          const double bx=std::cos(yaw-origin_yaw)*(cx-mx)+std::sin(yaw-origin_yaw)*(cy-my);
+          if (escape_rear && bx>=half_l-md.resolution && map.getCost(cell.x,cell.y)==254) {
+            start_cells.insert((uint64_t(cell.x)<<32)|cell.y);
+          }
         }
-        if (escape_rear) {continue;}
       }
       for (const auto & cell : cells) {
         if (escape_rear && start_cells.count((uint64_t(cell.x)<<32)|cell.y)) {continue;}
@@ -249,13 +259,23 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
   node->get_parameter_or("global_frame",global_frame,global_frame);
   response_timeout=parameter(node,"recovery.response_timeout",1);
   cancel_timeout=parameter(node,"recovery.cancel_timeout",1);
-  settle_timeout=parameter(node,"recovery.settle_timeout",2);
-  still_duration=parameter(node,"recovery.still_duration",1);
+  settle_timeout=parameter(node,"recovery.settle_timeout",1);
+  still_duration=parameter(node,"recovery.still_duration",0.4);
   data_age=parameter(node,"recovery.max_data_age",0.5);
   recovery_timeout=parameter(node,"recovery.total_timeout",90);
+  backup_cooldown=parameter(node,"recovery.backup_cooldown",12);
+  auto observe_replans=parameter(node,"recovery.max_observe_replans",1);
   for (double v : {response_timeout,cancel_timeout,settle_timeout,still_duration,data_age,recovery_timeout}) {
     if (!std::isfinite(v) || v<=0) {throw std::invalid_argument("恢复时限必须为正有限数");}
   }
+  if (!std::isfinite(backup_cooldown) || backup_cooldown<0) {
+    throw std::invalid_argument("倒车冷却必须为非负有限数");
+  }
+  if (!std::isfinite(observe_replans) || observe_replans<0 || observe_replans>3 ||
+      std::floor(observe_replans)!=observe_replans) {
+    throw std::invalid_argument("停车观察重规划次数必须是 0 到 3 的整数");
+  }
+  max_observe_replans=static_cast<unsigned>(observe_replans);
   group=node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive,false);
   executor_=std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
   executor_->add_callback_group(group,node->get_node_base_interface());
@@ -400,6 +420,8 @@ void RecoveryRuntime::diagnostic(const std::string & phase,const std::string & r
     snap.phase=phase; snap.reason=reason; snap.fault=fault; snap.epoch=epoch;
     snap.navigation_uuid=navigation_uuid; snap.previous_navigation_uuid=previous_navigation_uuid;
     snap.backup_used=backup_used;
+    snap.observe_replans_used=observe_replans_used;
+    snap.max_observe_replans=max_observe_replans;
     snap.recovery_elapsed=recovery_active?seconds(recovery_started):0;
     snap.recovery_deadline=recovery_timeout; snap.last_bt_tick=last_bt_tick_;
     snap.motion=motion;
@@ -427,6 +449,8 @@ void RecoveryRuntime::emit_recovery_status(DiagSnapshot snap) {
   add("phase",snap.phase); add("reason_code",snap.reason); add("epoch",std::to_string(snap.epoch));
   add("navigation_uuid",snap.navigation_uuid);add("previous_navigation_uuid",snap.previous_navigation_uuid);
   add("backup_reserved",std::to_string(snap.backup_used));
+  add("observe_replans_used",std::to_string(snap.observe_replans_used));
+  add("max_observe_replans",std::to_string(snap.max_observe_replans));
   add("recovery_elapsed",std::to_string(snap.recovery_elapsed));
   add("recovery_deadline_s",std::to_string(snap.recovery_deadline));
   add("bt_tick_age_s",snap.last_bt_tick==TimePoint{}?"0":std::to_string(seconds(snap.last_bt_tick)));
@@ -453,13 +477,36 @@ void RecoveryRuntime::forward_progress(double distance) {
   if (!std::isfinite(distance)) {return;}
   forward_distance=std::max(0.0,forward_distance+distance);
   if (forward_distance>=0.20) {
-    backup_used=0; spin_used=false; escape_stage=0; observe_started=TimePoint{};
+    backup_used=0; spin_used=false; escape_stage=0; observe_replans_used=0;
+    observe_started=TimePoint{};
     forward_distance=0; recovery_active=false;
   }
 }
 bool RecoveryRuntime::reserve_backup(double distance) {
-  if (!std::isfinite(distance) || distance<=0 || distance>0.100001 || backup_used+distance>0.300001) {return false;}
+  if (!std::isfinite(distance) || distance<=0 ||
+      distance>kMaxSingleBackupDistance+1e-6 ||
+      backup_used+distance>kMaxBackupBudget+1e-6) {return false;}
   backup_used+=distance; forward_distance=0; return true;
 }
 void RecoveryRuntime::release_backup(double distance) {backup_used=std::max(0.0,backup_used-distance);}
+void RecoveryRuntime::note_backup(bool succeeded)
+{
+  last_backup_at_=Steady::now();
+  last_backup_ok_=succeeded;
+}
+bool RecoveryRuntime::backup_cooling() const {
+  if (backup_cooldown<=0 || last_backup_at_==TimePoint{} || seconds(last_backup_at_)>=backup_cooldown) {
+    return false;
+  }
+  // 成功或失败后都冷却：回到跟随后不要立刻再倒，改走绕行路径或受控转向。
+  return true;
+}
+bool RecoveryRuntime::request_observe_replan()
+{
+  if (observe_replans_used>=max_observe_replans) {return false;}
+  ++observe_replans_used;
+  // 下一次若再次进入停车观察，重新给完整观察窗口；次数仍由上面的额度限制。
+  observe_started=TimePoint{};
+  return true;
+}
 }  // namespace carcar_navigation

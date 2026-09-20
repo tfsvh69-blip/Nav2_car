@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="carcar_dwb_plugins">
+    <class name="carcar_navigation/SplitHorizonTrajectoryGenerator"
+           type="carcar_navigation::SplitHorizonTrajectoryGenerator"
+           base_class_type="dwb_core::TrajectoryGenerator">
+      <description>Forward sim_time with a shorter horizon for in-place rotation commands.</description>
+    </class>
+  </library>
+</class_libraries>

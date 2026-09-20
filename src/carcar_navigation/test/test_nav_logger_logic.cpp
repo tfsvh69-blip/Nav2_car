@@ -1,10 +1,11 @@
 // NAV-013: 导航事件日志与状态归因逻辑单元测试
 // 验证内容：
-// 1. 行为树节点类型识别（ProgressGuard, ControlledSpin, ParkAndObserve, BackUp 等）及后退参数规范（0.10m, 0.05m/s, 4.0s）
+// 1. 行为树节点类型识别（ProgressGuard, ControlledSpin, ParkAndObserve, BackUp 等）及后退参数规范（0.20m, 0.05m/s, 6.0s）
 // 2. 里程计运动反馈状态机逻辑（静止判据：线速<0.01 m/s & 角速<0.02 rad/s 持续1.0s；超时判据：>0.6s 标记为数据过期）
 // 3. 停车归因多维定级（确定 CERTAIN / 关联 CORRELATED / 证据不足 INSUFFICIENT），禁止将 watchdog 或零速直接定性为唯一根本原因
 // 4. 历史会话日志兼容解析（缺失 NAVIGATION_STOP 记录时平滑推测，不抛出异常）
 
+#include <cstdio>
 #include <gtest/gtest.h>
 #include <string>
 #include <regex>
@@ -168,12 +169,16 @@ TEST(NavLoggerLogicTest, BTNodeTypeResolutionAndBackupDescription) {
   EXPECT_EQ(resolve_bt_type_mock("UnrelatedNode", {}), "UnknownNode");
 
   // 验证 BackUp 动作的实测物理参数描述格式
-  const double backup_dist = 0.10;
+  const double backup_dist = 0.20;
   const double backup_speed = 0.05;
-  const double time_allowance = 4.0;
+  const double time_allowance = 6.0;
   char buf[128];
   snprintf(buf, sizeof(buf), "距离=%.2fm, 速度=%.2fm/s, 超时=%.1fs", backup_dist, backup_speed, time_allowance);
-  EXPECT_STREQ(buf, "距离=0.10m, 速度=0.05m/s, 超时=4.0s");
+  EXPECT_STREQ(buf, "距离=0.20m, 速度=0.05m/s, 超时=6.0s");
+
+  const double observe_duration = 8.0;
+  snprintf(buf, sizeof(buf), "执行停车观察 (预算 %.0fs，每秒轮询通道与定位)", observe_duration);
+  EXPECT_STREQ(buf, "执行停车观察 (预算 8s，每秒轮询通道与定位)");
 }
 
 // 2. 验证里程计运动反馈状态机判据

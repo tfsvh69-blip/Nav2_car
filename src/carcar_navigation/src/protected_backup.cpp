@@ -80,6 +80,7 @@ void ProtectedBackUp::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 nav2_behaviors::Status ProtectedBackUp::onRun(const std::shared_ptr<const BackUpAction::Goal> command)
 {
+  this->stopRobot();
   auto modified_cmd = std::make_shared<BackUpAction::Goal>(*command);
   if (!std::isfinite(command->target.x) || !std::isfinite(command->target.y) ||
     !std::isfinite(command->target.z) || !std::isfinite(command->speed) ||
@@ -87,9 +88,10 @@ nav2_behaviors::Status ProtectedBackUp::onRun(const std::shared_ptr<const BackUp
     this->stopRobot();return nav2_behaviors::Status::FAILED;
   }
   // BackUp 的契约始终为负 X；DriveOnHeading 本身不会替我们校正方向。
-  modified_cmd->target.x=-std::min(0.10,std::abs(command->target.x));
+  requested_distance_=std::min(kMaxSingleBackupDistance,std::abs(command->target.x));
+  modified_cmd->target.x=-requested_distance_;
   const double budget=rclcpp::Duration(command->time_allowance).seconds();
-  if (budget<=0 || budget>4.0) {this->stopRobot();return nav2_behaviors::Status::FAILED;}
+  if (budget<=0 || budget>kMaxBackupTimeAllowance) {this->stopRobot();return nav2_behaviors::Status::FAILED;}
   deadline_=carcar_navigation::after(budget);
   modified_cmd->speed=-std::min(0.05,std::abs(static_cast<double>(modified_cmd->speed)));
 
@@ -108,44 +110,70 @@ nav2_behaviors::Status ProtectedBackUp::onCycleUpdate()
     this->stopRobot();return nav2_behaviors::Status::FAILED;
   }
 
+  geometry_msgs::msg::PoseStamped pose;
+  if (!nav2_util::getCurrentPose(pose,*this->tf_,this->global_frame_,
+      this->robot_base_frame_,this->transform_tolerance_)) {
+    this->stopRobot();return nav2_behaviors::Status::FAILED;
+  }
+  const double yaw=tf2::getYaw(initial_pose_.pose.orientation);
+  const double dx=pose.pose.position.x-initial_pose_.pose.position.x;
+  const double dy=pose.pose.position.y-initial_pose_.pose.position.y;
+  const double traveled=-(std::cos(yaw)*dx+std::sin(yaw)*dy);
+  const double lateral=-std::sin(yaw)*dx+std::cos(yaw)*dy;
+  if (!std::isfinite(traveled) || !std::isfinite(lateral) ||
+      !std::isfinite(tf2::getYaw(pose.pose.orientation)) || traveled < -0.02 ||
+      std::abs(lateral)>0.03 || std::abs(normalize(tf2::getYaw(pose.pose.orientation)-yaw))>0.10) {
+    this->stopRobot();return nav2_behaviors::Status::FAILED;
+  }
+  feedback_->distance_traveled=std::max(0.0,traveled);
+  this->action_server_->publish_feedback(feedback_);
+  if (traveled>=requested_distance_) {
+    this->stopRobot();return nav2_behaviors::Status::SUCCEEDED;
+  }
+
   // 1. 数据时效性与生命周期校验
   {
     std::lock_guard<std::mutex> lock(data_mutex_);
-    if (!last_scan_ || !last_odom_) {
+    if (!last_scan_ || !last_odom_ ||
+        scan_received_==std::chrono::steady_clock::time_point{} ||
+        odom_received_==std::chrono::steady_clock::time_point{}) {
       this->stopRobot();
       RCLCPP_WARN(this->logger_, "[ProtectedBackUp] 尚未收到激光扫描数据，安全停止倒车");
       return nav2_behaviors::Status::FAILED;
     }
 
-    const double scan_stamp_age = (now - last_scan_stamp_).seconds();
-    const double scan_recv_age = (now - last_scan_recv_time_).seconds();
-    if (carcar_navigation::seconds(scan_received_)>max_data_age_ ||
-        carcar_navigation::seconds(odom_received_)>max_data_age_ ||
-        scan_stamp_age < 0.0 || scan_stamp_age > max_data_age_ ||
-        scan_recv_age < 0.0 || scan_recv_age > max_data_age_)
+    // 在锁内取时，避免回调刚写入更新的 recv 时刻后，锁外旧 now 算出负年龄。
+    const auto freshness_now = this->clock_->now();
+    const double scan_stamp_age = (freshness_now - last_scan_stamp_).seconds();
+    const double scan_recv_age = (freshness_now - last_scan_recv_time_).seconds();
+    const double scan_steady_age = carcar_navigation::seconds(scan_received_);
+    const double odom_steady_age = carcar_navigation::seconds(odom_received_);
+    if (scan_steady_age>max_data_age_ || odom_steady_age>max_data_age_ ||
+        !carcar_navigation::ros_age_fresh(scan_stamp_age,max_data_age_) ||
+        !carcar_navigation::ros_age_fresh(scan_recv_age,max_data_age_))
     {
       this->stopRobot();
       RCLCPP_WARN(
         this->logger_,
-        "[ProtectedBackUp] 扫描数据过期 (stamp_age=%.2fs, recv_age=%.2fs > %.2fs)，安全中止倒车",
-        scan_stamp_age, scan_recv_age, max_data_age_);
+        "[ProtectedBackUp] 扫描数据过期 (stamp_age=%.3fs, recv_age=%.3fs, "
+        "steady_age=%.3fs, limit=%.2fs)，安全中止倒车",
+        scan_stamp_age, scan_recv_age, scan_steady_age, max_data_age_);
       return nav2_behaviors::Status::FAILED;
     }
 
-    if (last_odom_) {
-      const double odom_stamp_age = (now - last_odom_stamp_).seconds();
-      if (odom_stamp_age < 0.0 || odom_stamp_age > max_data_age_) {
-        this->stopRobot();
-        RCLCPP_WARN(
-          this->logger_,
-          "[ProtectedBackUp] 里程计数据过期 (odom_age=%.2fs > %.2fs)，安全中止倒车",
-          odom_stamp_age, max_data_age_);
-        return nav2_behaviors::Status::FAILED;
-      }
+    const double odom_stamp_age = (freshness_now - last_odom_stamp_).seconds();
+    if (!carcar_navigation::ros_age_fresh(odom_stamp_age,max_data_age_)) {
+      this->stopRobot();
+      RCLCPP_WARN(
+        this->logger_,
+        "[ProtectedBackUp] 里程计数据过期 (odom_age=%.3fs, limit=%.2fs)，安全中止倒车",
+        odom_stamp_age, max_data_age_);
+      return nav2_behaviors::Status::FAILED;
     }
 
     // 2. 与 BT 后方检查共用完整包络扫掠；后退期间新出现的内部障碍也必须中止。
-    auto check=swept_clear(safety_data_,*this->tf_,now,base_frame_,-0.10,0,max_data_age_);
+    auto check=swept_clear(safety_data_,*this->tf_,now,base_frame_,
+      -(requested_distance_-std::max(0.0,traveled)),0,max_data_age_);
     if (!check.ok) {
       this->stopRobot();
       RCLCPP_WARN(this->logger_,"[ProtectedBackUp] %s: %s",check.code.c_str(),check.detail.c_str());
@@ -172,8 +200,13 @@ nav2_behaviors::Status ProtectedBackUp::onCycleUpdate()
     }
   }
 
-  // 3. 调用基类执行代价地图碰撞模拟与速度发布
-  return nav2_behaviors::DriveOnHeading<BackUpAction>::onCycleUpdate();
+  // Humble 基类从 t=0 再次检查轮廓，会拒绝离开既有车头碰撞格。
+  // 以上完整扫掠替代该检查；仍复用 TimedBehavior 的取消、退出停车和 Action 生命周期。
+  // 外部速度平滑器负责加减速，最终运动联锁继续约束这一路输出。
+  auto cmd=std::make_unique<geometry_msgs::msg::Twist>();
+  cmd->linear.x=command_speed_;
+  this->vel_pub_->publish(std::move(cmd));
+  return nav2_behaviors::Status::RUNNING;
 }
 
 }  // namespace carcar_navigation

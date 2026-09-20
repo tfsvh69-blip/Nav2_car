@@ -6,10 +6,15 @@ bt_navigator:
   ros__parameters:
     recovery.response_timeout: 1.0
     recovery.cancel_timeout: 1.0
-    recovery.settle_timeout: 2.0
-    recovery.still_duration: 1.0
+    recovery.settle_timeout: 1.0
+    recovery.still_duration: 0.4
     recovery.max_data_age: 0.5
     recovery.total_timeout: 90.0
+    # 倒车成功或失败后 12 s 内不再立刻倒车，避免垃圾桶旁前进-倒车振荡。
+    recovery.backup_cooldown: 12.0
+    # 停车观察期间旧路径持续受阻时，只允许一次回到规划分支生成全新路径；
+    # 第二轮仍受阻则失败，避免拿旧路径直接超时，也避免无限重规划循环。
+    recovery.max_observe_replans: 1
 
 amcl:
   ros__parameters:
@@ -27,43 +32,63 @@ controller_server:
       plugin: nav2_controller::PoseProgressChecker
       required_movement_radius: 0.05
       required_movement_angle: 0.20
-      movement_time_allowance: 20.0
+      # 障碍前左右抽搐时尽早交给恢复，不要空转 20 s。
+      movement_time_allowance: 12.0
     controller_plugins: [FollowPath]
     FollowPath:
-      # NAV-012 套餐 A: 引入本机自带的 RotationShimController 包装 DWB
+      # 逃生统一由行为树 ProtectedBackUp 执行，控制器不得绕过恢复预算。
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "dwb_core::DWBLocalPlanner"
-      # Rotation Shim 参数基线
-      angular_dist_threshold: 0.60          # 触发起步对向角偏差 (~34.4°)
-      angular_disengage_threshold: 0.25     # 退出起步对向角偏差 (~14.3°)
-      forward_sampling_distance: 0.30       # 路线前向采样距离 (m)
-      rotate_to_heading_angular_vel: 0.30   # 起步对向角速度 (rad/s)
-      max_angular_accel: 0.80               # 转向角加速度 (rad/s²)
-      simulate_ahead_time: 2.0              # 转向预测时间 (s)，旋转前校验扫掠包络
+      # 约 69° 才原地对准；转到约 40° 就交回 DWB 边走边绕，避免 45° 右绕后再拧回障碍。
+      angular_dist_threshold: 1.20
+      angular_disengage_threshold: 0.70
+      forward_sampling_distance: 0.45
+      rotate_to_heading_angular_vel: 0.45
+      max_angular_accel: 1.20
+      # 0.8 s × 0.45 rad/s ≈ 21° 扫掠预演；2.0 s 会把车角前瞻扫进仍贴着的障碍致死格。
+      simulate_ahead_time: 0.8
       rotate_to_goal_heading: false         # 终点调向由 DWB RotateToGoal 处理
+      # 前进 1.2 s，原地转 0.5 s，避免同一 sim_time 把转向预演拉得过长。
+      trajectory_generator_name: "carcar_navigation/SplitHorizonTrajectoryGenerator"
+      rotate_sim_time: 0.5
 
-      # 被包装的 DWB 本地规划器参数 (统一 0.12 m/s 低速基线)
+      # DWB：线速度 0.12→0.18（1.5 倍），中小角度边走边绕，不再贴死原路径。
       debug_trajectory_details: true
       transform_tolerance: 0.3
       min_vel_x: 0.0
-      max_vel_x: 0.12
+      max_vel_x: 0.18
       min_vel_y: 0.0
       max_vel_y: 0.0
-      min_speed_xy: 0.0
-      max_speed_xy: 0.12
-      max_vel_theta: 0.60
+      min_speed_xy: 0.05
+      max_speed_xy: 0.18
+      max_vel_theta: 0.80
       min_speed_theta: 0.0
-      sim_time: 2.0
+      acc_lim_x: 0.30
+      acc_lim_y: 0.0
+      acc_lim_theta: 1.20
+      decel_lim_x: -0.30
+      decel_lim_y: 0.0
+      decel_lim_theta: -1.20
+      vx_samples: 24
+      vy_samples: 1
+      vtheta_samples: 24
+      # 1.2 s × 0.18 m/s = 0.22 m 前向视界，足够选定绕障一侧。
+      sim_time: 1.2
       critics: [RotateToGoal, Oscillation, ObstacleFootprint, GoalAlign, PathAlign, PathDist, GoalDist]
-      ObstacleFootprint.scale: 0.02
-      PathAlign.scale: 12.0
-      PathAlign.forward_point_distance: 0.10
-      GoalAlign.scale: 10.0
-      GoalAlign.forward_point_distance: 0.10
-      PathDist.scale: 24.0
-      GoalDist.scale: 20.0
-      RotateToGoal.scale: 12.0
+      ObstacleFootprint.scale: 0.03
+      PathAlign.scale: 5.0
+      PathAlign.forward_point_distance: 0.15
+      # 高 GoalAlign 会在右绕起步后把车头拽回目标方向（常正对障碍）。
+      GoalAlign.scale: 3.0
+      GoalAlign.forward_point_distance: 0.15
+      PathDist.scale: 18.0
+      GoalDist.scale: 22.0
+      RotateToGoal.scale: 8.0
       RotateToGoal.slowing_factor: 2.5
+      Oscillation.scale: 6.0
+      Oscillation.x_only_threshold: -1.0
+      Oscillation.oscillation_reset_dist: 0.12
+      Oscillation.oscillation_reset_angle: 0.50
       publish_evaluation: true
       publish_local_plan: true
       publish_trajectories: true
@@ -81,7 +106,7 @@ local_costmap:
       inflation_layer:
         enabled: true
         cost_scaling_factor: 5.0
-        inflation_radius: 0.25
+        inflation_radius: 0.20
 
 global_costmap:
   global_costmap:
@@ -92,15 +117,40 @@ global_costmap:
         cost_scaling_factor: 3.0
         inflation_radius: 0.30
 
+planner_server:
+  ros__parameters:
+    planner_plugins: [GridBased]
+    GridBased:
+      # NAV-012-R6：实验栈改用 Nav2 Humble 自带的代价感知 A* 与内置平滑。
+      # 稳定 nav2.yaml 继续保留 Navfn，实机对照通过前不替换正式默认值。
+      plugin: "nav2_smac_planner/SmacPlanner2D"
+      tolerance: 0.10
+      downsample_costmap: false
+      downsampling_factor: 1
+      allow_unknown: false
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 1.0
+      # 官方建议 2.0 为兼顾速度与远离高代价格的折中；先使用该基线，
+      # 不靠继续放大膨胀半径挤占现有窄通道。
+      cost_travel_multiplier: 2.0
+      use_final_approach_orientation: false
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.30
+        w_data: 0.20
+        tolerance: 1.0e-10
+        do_refinement: true
+
 velocity_smoother:
   ros__parameters:
     smoothing_frequency: 10.0
     velocity_timeout: 0.30
-    max_velocity: [0.12, 0.0, 0.60]
+    max_velocity: [0.18, 0.0, 0.80]
     # 正常 DWB 仍只采样前进速度；-0.05 供 ProtectedBackUp 恢复使用
-    min_velocity: [-0.05, 0.0, -0.60]
-    max_accel: [0.20, 0.0, 0.80]
-    max_decel: [-0.20, 0.0, -0.80]
+    min_velocity: [-0.05, 0.0, -0.80]
+    max_accel: [0.30, 0.0, 1.20]
+    max_decel: [-0.30, 0.0, -1.20]
 
 behavior_server:
   ros__parameters:
@@ -119,10 +169,10 @@ behavior_server:
       plugin: carcar_navigation/ProtectedBackUp
     wait:
       plugin: nav2_behaviors/Wait
-    simulate_ahead_time: 2.0
-    max_rotational_vel: 0.30
+    simulate_ahead_time: 0.8
+    max_rotational_vel: 0.45
     min_rotational_vel: 0.10
-    rotational_acc_lim: 0.80
+    rotational_acc_lim: 1.20
 
 lifecycle_manager_navigation:
   ros__parameters:

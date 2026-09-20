@@ -37,11 +37,17 @@
   <exec_depend>nav2_bt_navigator</exec_depend>
   <exec_depend>nav2_controller</exec_depend>
   <depend>nav2_costmap_2d</depend>
+  <depend>dwb_core</depend>
+  <depend>dwb_plugins</depend>
+  <depend>dwb_msgs</depend>
+  <depend>nav_2d_msgs</depend>
   <exec_depend>nav2_dwb_controller</exec_depend>
+  <exec_depend>nav2_rotation_shim_controller</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_navfn_planner</exec_depend>
   <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>nav2_smac_planner</exec_depend>
   <exec_depend>nav2_velocity_smoother</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>rviz2</exec_depend>
@@ -57,5 +63,6 @@
   <export>
     <build_type>ament_cmake</build_type>
     <nav2_core plugin="${prefix}/behavior_plugins.xml" />
+    <dwb_core plugin="${prefix}/controller_plugins.xml" />
   </export>
 </package>

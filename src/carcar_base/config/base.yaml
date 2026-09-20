@@ -9,8 +9,8 @@ rosmaster_base:
     holonomic: false
     publish_rate: 25.0
     command_timeout: 0.3
-    # 地面闭环标定完成前采用保守限速，实测通过后再逐级提高。
-    max_linear_x: 0.15
+    # 2026-09-18 临时提高到 0.18，配合实验导航 1.5 倍速（原 0.12）；待实机确认后再写入正式值。
+    max_linear_x: 0.18
     max_linear_y: 0.0
     max_angular_z: 0.8
     base_frame: base_footprint
