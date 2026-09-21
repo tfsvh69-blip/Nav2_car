@@ -1,0 +1,26 @@
+# NAV-012 State Lattice 独立对照覆盖；必须叠加 nav2.yaml 与 nav2_experimental.yaml。
+# 日常入口仍使用 SmacPlanner2D。本文件只替换 planner_server 的 GridBased 插件。
+planner_server:
+  ros__parameters:
+    planner_plugins: [GridBased]
+    GridBased:
+      plugin: "nav2_smac_planner/SmacPlannerLattice"
+      tolerance: 0.10
+      allow_unknown: false
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 1.0
+      lattice_filepath: "/opt/ros/humble/share/nav2_smac_planner/sample_primitives/5cm_resolution/0.5m_turning_radius/diff/output.json"
+      # 首轮只对照上游差速原语本身，不反向扩展、不对结果再次平滑。
+      allow_reverse_expansion: false
+      smooth_path: false
+      lookup_table_size: 20.0
+      cache_obstacle_heuristic: false
+      reverse_penalty: 2.0
+      change_penalty: 0.05
+      non_straight_penalty: 1.05
+      cost_penalty: 2.0
+      rotation_penalty: 5.0
+      retrospective_penalty: 0.015
+      analytic_expansion_ratio: 3.5
+      analytic_expansion_max_length: 3.0

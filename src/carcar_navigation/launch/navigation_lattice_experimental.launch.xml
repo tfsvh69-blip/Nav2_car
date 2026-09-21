@@ -1,0 +1,26 @@
+<launch>
+  <!-- State Lattice 独立对照入口；只覆盖全局规划器，控制、地图和恢复流程全部复用实验入口。 -->
+  <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
+  <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
+  <arg name="lattice_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_lattice_experimental.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="odom_topic" default="/wheel/odometry"/>
+  <arg name="record_raw_bag" default="false"/>
+  <arg name="raw_bag_max_duration_s" default="0.0"/>
+  <arg name="raw_bag_max_bytes" default="0"/>
+  <arg name="raw_bag_split_bytes" default="1073741824"/>
+  <arg name="raw_bag_min_free_bytes" default="2147483648"/>
+
+  <include file="$(find-pkg-share carcar_navigation)/launch/navigation_experimental.launch.xml">
+    <arg name="base_params_file" value="$(var base_params_file)"/>
+    <arg name="experiment_params_file" value="$(var experiment_params_file)"/>
+    <arg name="planner_params_file" value="$(var lattice_params_file)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="odom_topic" value="$(var odom_topic)"/>
+    <arg name="record_raw_bag" value="$(var record_raw_bag)"/>
+    <arg name="raw_bag_max_duration_s" value="$(var raw_bag_max_duration_s)"/>
+    <arg name="raw_bag_max_bytes" value="$(var raw_bag_max_bytes)"/>
+    <arg name="raw_bag_split_bytes" value="$(var raw_bag_split_bytes)"/>
+    <arg name="raw_bag_min_free_bytes" value="$(var raw_bag_min_free_bytes)"/>
+  </include>
+</launch>
