@@ -81,6 +81,10 @@ ament_target_dependencies(localization_monitor
   tf2_geometry_msgs
 )
 
+add_executable(imu_gyro_bias_corrector src/imu_gyro_bias_corrector.cpp)
+target_include_directories(imu_gyro_bias_corrector PRIVATE include)
+ament_target_dependencies(imu_gyro_bias_corrector rclcpp sensor_msgs diagnostic_msgs)
+
 # NAV-007/NAV-008: 供 bt_navigator 动态加载的本项目行为树节点。
 # RecoverLocalization 只调用 AMCL 服务并等待健康门控；RearClear 只读取
 # 本地代价地图、扫描新鲜度和 TF，所有实际运动仍由 Nav2 behavior_server 执行。
@@ -214,6 +218,7 @@ install(TARGETS
   check_nav_link
   nav_runtime_snapshot
   localization_monitor
+  imu_gyro_bias_corrector
   nav_event_logger
   nav_log_tool
   navigation_indicator
@@ -314,8 +319,11 @@ if(BUILD_TESTING)
     rclcpp
     carcar_interfaces
   )
+  ament_add_gtest(test_imu_gyro_bias test/test_imu_gyro_bias.cpp)
+  target_include_directories(test_imu_gyro_bias PRIVATE include)
   set_tests_properties(test_nav_bt_nodes test_obstacle_bypass_offline test_nav_logger_logic
-    test_navigation_indicator_logic PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE)
+    test_navigation_indicator_logic test_imu_gyro_bias PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE)
 endif()
 
 ament_package()

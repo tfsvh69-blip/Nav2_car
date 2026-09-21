@@ -1,0 +1,23 @@
+<launch>
+  <!-- 默认关闭的 EKF 对照入口：底盘不再发布 odom TF，由 robot_localization 唯一发布。 -->
+  <arg name="base_params_file" default="$(find-pkg-share carcar_base)/config/base.yaml"/>
+  <arg name="ekf_params_file" default="$(find-pkg-share carcar_navigation)/config/ekf_wheel_imu_experimental.yaml"/>
+  <arg name="serial_port" default="/dev/myserial"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="gyro_z_bias" default="0.0" description="Only use a value measured from a stationary IMU test"/>
+
+  <include file="$(find-pkg-share carcar_bringup)/launch/robot.launch.xml">
+    <arg name="params_file" value="$(var base_params_file)"/>
+    <arg name="serial_port" value="$(var serial_port)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="publish_odom_tf" value="false"/>
+  </include>
+  <node pkg="carcar_navigation" exec="imu_gyro_bias_corrector" name="imu_gyro_bias_corrector" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="gyro_z_bias" value="$(var gyro_z_bias)"/>
+  </node>
+  <node pkg="robot_localization" exec="ekf_node" name="ekf_filter_node" output="screen">
+    <param from="$(var ekf_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>

@@ -1,0 +1,11 @@
+<launch>
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="use_rviz" default="false"/>
+  <include file="$(find-pkg-share carcar_navigation)/launch/localization_experimental.launch.xml">
+    <arg name="map" value="$(var map)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="use_rviz" value="$(var use_rviz)"/>
+    <arg name="odom_topic" value="/odometry/filtered"/>
+  </include>
+</launch>

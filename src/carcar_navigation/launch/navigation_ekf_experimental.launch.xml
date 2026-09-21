@@ -1,0 +1,9 @@
+<launch>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="record_raw_bag" default="false"/>
+  <include file="$(find-pkg-share carcar_navigation)/launch/navigation_experimental.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="odom_topic" value="/odometry/filtered"/>
+    <arg name="record_raw_bag" value="$(var record_raw_bag)"/>
+  </include>
+</launch>
