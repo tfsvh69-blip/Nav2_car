@@ -4,9 +4,10 @@
     <RecoverySupervisor name="ntpe_RecoverySupervisor" goal="{goal}">
       <PipelineSequence name="ntpe_NavigateWithReplanning">
         <WaitForLocalizationStatus name="ntpe_WaitForLocalizationStatus" timeout="2.0"/>
-        <RateController name="ntpe_RateController" hz="1.0">
+        <RateController name="ntpe_RateController" hz="3.0">
           <Fallback name="ntpe_KeepValidPathOrReplan">
             <ReactiveSequence name="ntpe_KeepValidPath">
+              <ReplanNotRequired name="ntpe_ReplanNotRequired"/>
               <Inverter><PathExpiringTimer name="ntpe_PathRefreshTimer" seconds="5.0" path="{path}"/></Inverter>
               <Inverter><GlobalUpdatedGoal name="ntpe_GlobalGoalUnchanged"/></Inverter>
               <IsPathValid name="ntpe_IsPathValid" path="{path}"/>
@@ -27,8 +28,8 @@
           <RecoveryInputsReady name="ntpe_RecoveryInputsReady"/>
           <Fallback name="ntpe_OrderedEscape">
             <Sequence name="ntpe_RearClearAndBackUp">
-              <RearClear name="ntpe_RearClear" backup_distance="0.20" max_data_age="0.5"/>
-              <SafeBackUp name="ntpe_BackUp" backup_dist="0.20" backup_speed="0.05" time_allowance="6.0"/>
+              <RearClear name="ntpe_RearClear" backup_distance="0.20" selected_distance="{backup_distance}" max_data_age="0.5"/>
+              <SafeBackUp name="ntpe_BackUp" backup_dist="{backup_distance}" backup_speed="0.05" time_allowance="6.0"/>
             </Sequence>
             <ControlledSpin name="ntpe_ControlledSpin" path="{path}" goal="{goal}" max_spin_angle="1.570796" time_allowance="10.0"/>
           </Fallback>

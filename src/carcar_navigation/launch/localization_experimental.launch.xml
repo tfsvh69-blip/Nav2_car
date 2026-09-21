@@ -4,6 +4,7 @@
   <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
   <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
   <arg name="use_sim_time" default="false"/>
+  <arg name="odom_topic" default="/wheel/odometry" description="Odometry source checked by localization health monitor"/>
   <!-- 实车联调默认不在 Jetson 上起 rviz2；RViz 在 Ubuntu 主机用 navigation_lite.rviz。 -->
   <arg name="use_rviz" default="false"/>
   <arg name="rviz_mode" default="navigation"/>
@@ -24,6 +25,7 @@
   <!-- NAV-007 门控只读地图、扫描、轮式里程计、AMCL 粒子和 TF；它不发布速度。 -->
   <node pkg="carcar_navigation" exec="localization_monitor" name="localization_monitor" output="screen">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
   <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_localization" output="screen">
     <param from="$(var base_params_file)"/>

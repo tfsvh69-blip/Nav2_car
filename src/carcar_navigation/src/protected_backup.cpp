@@ -33,13 +33,14 @@ void ProtectedBackUp::onConfigure()
   node->get_parameter(this->behavior_name_ + ".rear_clearance_limit", rear_clearance_limit_);
   node->get_parameter(this->behavior_name_ + ".half_length", half_length_);
   node->get_parameter_or("robot_base_frame",base_frame_,base_frame_);
+  node->get_parameter_or("odom_topic",odom_topic_,odom_topic_);
 
   scan_sub_ = node->create_subscription<sensor_msgs::msg::LaserScan>(
     "/scan", rclcpp::SensorDataQoS(),
     std::bind(&ProtectedBackUp::on_scan, this, std::placeholders::_1));
 
   odom_sub_ = node->create_subscription<nav_msgs::msg::Odometry>(
-    "/wheel/odometry", rclcpp::SensorDataQoS(),
+    odom_topic_, rclcpp::SensorDataQoS(),
     std::bind(&ProtectedBackUp::on_odom, this, std::placeholders::_1));
   costmap_sub_=node->create_subscription<nav2_msgs::msg::Costmap>(
     "/local_costmap/costmap_raw",rclcpp::QoS(1).transient_local(),
@@ -94,6 +95,18 @@ nav2_behaviors::Status ProtectedBackUp::onRun(const std::shared_ptr<const BackUp
   if (budget<=0 || budget>kMaxBackupTimeAllowance) {this->stopRobot();return nav2_behaviors::Status::FAILED;}
   deadline_=carcar_navigation::after(budget);
   modified_cmd->speed=-std::min(0.05,std::abs(static_cast<double>(modified_cmd->speed)));
+
+  {
+    std::lock_guard<std::mutex> lock(data_mutex_);
+    auto check=swept_clear(safety_data_,*this->tf_,this->clock_->now(),base_frame_,
+      -(requested_distance_+rear_clearance_limit_),0,max_data_age_);
+    if (!check.ok) {
+      this->stopRobot();
+      RCLCPP_WARN(this->logger_,"[ProtectedBackUp] 启动复核拒绝: %s: %s",
+        check.code.c_str(),check.detail.c_str());
+      return nav2_behaviors::Status::FAILED;
+    }
+  }
 
   RCLCPP_INFO(
     this->logger_,
@@ -173,7 +186,7 @@ nav2_behaviors::Status ProtectedBackUp::onCycleUpdate()
 
     // 2. 与 BT 后方检查共用完整包络扫掠；后退期间新出现的内部障碍也必须中止。
     auto check=swept_clear(safety_data_,*this->tf_,now,base_frame_,
-      -(requested_distance_-std::max(0.0,traveled)),0,max_data_age_);
+      -(requested_distance_-std::max(0.0,traveled)+rear_clearance_limit_),0,max_data_age_);
     if (!check.ok) {
       this->stopRobot();
       RCLCPP_WARN(this->logger_,"[ProtectedBackUp] %s: %s",check.code.c_str(),check.detail.c_str());

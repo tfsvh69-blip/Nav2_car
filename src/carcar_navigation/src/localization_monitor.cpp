@@ -1,5 +1,5 @@
 // NAV-007: 静态地图定位健康监控。
-// 本节点只读取 /scan、/wheel/odometry、/amcl_pose、/particle_cloud、/map 和 TF，
+// 本节点只读取扫描、所选里程计、AMCL、粒子、地图和 TF，
 // 发布健康门控与 diagnostics；它不发布速度，不调用电机或串口。
 
 #include <algorithm>
@@ -52,6 +52,7 @@ public:
   {
     global_frame_ = this->declare_parameter<std::string>("global_frame", "map");
     scan_topic_ = this->declare_parameter<std::string>("scan_topic", "/scan");
+    odom_topic_ = this->declare_parameter<std::string>("odom_topic", "/wheel/odometry");
     map_topic_ = this->declare_parameter<std::string>("map_topic", "/map");
     ready_topic_ = this->declare_parameter<std::string>("ready_topic", "/localization_monitor/ready");
     fault_topic_ = this->declare_parameter<std::string>("fault_topic", "/localization_monitor/fault");
@@ -72,7 +73,7 @@ public:
       scan_topic_, scan_qos,
       std::bind(&LocalizationMonitor::on_scan, this, std::placeholders::_1));
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/wheel/odometry", rclcpp::QoS(10).reliable(),
+      odom_topic_, rclcpp::QoS(10).reliable(),
       std::bind(&LocalizationMonitor::on_odom, this, std::placeholders::_1));
     amcl_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "/amcl_pose", rclcpp::QoS(10).reliable(),
@@ -282,6 +283,7 @@ private:
     add_value(status, "ready", ready ? "true" : "false");
     add_value(status, "recovery_allowed", source_chain_valid ? "true" : "false");
     add_value(status, "scan_topic", scan_topic_);
+    add_value(status, "odom_topic", odom_topic_);
     add_value(status, "map_topic", map_topic_);
     add_value(status, "map_frame", map_ ? map_->header.frame_id : "");
     add_value(status, "scan_age_s", as_string(scan_age));
@@ -324,7 +326,7 @@ private:
   {
     if (!have_amcl_pose_) return "等待 AMCL 初始位姿";
     if (!scan_fresh) return "扫描数据过期：不执行自动重定位";
-    if (!odom_fresh) return "轮式里程计数据过期：不执行自动重定位";
+    if (!odom_fresh) return "所选里程计数据过期：不执行自动重定位";
     if (!last_scan_tf_valid_) return "扫描时刻 TF 不可用：不执行自动重定位";
     if (!map_alignment) return "激光端点与静态地图匹配不足";
     if (!particle_ok) return "AMCL 粒子尚未收敛或分布多解";
@@ -333,6 +335,7 @@ private:
 
   std::string global_frame_;
   std::string scan_topic_;
+  std::string odom_topic_;
   std::string map_topic_;
   std::string ready_topic_;
   std::string fault_topic_;

@@ -63,6 +63,7 @@ BT::PortsList mock_ports() {
     BT::InputPort<std::string>("backup_dist"),
     BT::InputPort<std::string>("backup_speed"),
     BT::InputPort<std::string>("backup_distance"),
+    BT::OutputPort<std::string>("selected_distance"),
     BT::InputPort<std::string>("max_data_age"),
     BT::InputPort<std::string>("local_timeout"),
     BT::InputPort<std::string>("global_timeout"),
@@ -168,6 +169,7 @@ TEST_F(NavBtNodesTest, TestPluginAndAllTreesLoading) {
   EXPECT_TRUE(registered.find("LocalizationHealthy") != registered.end());
   EXPECT_TRUE(registered.find("RecoverLocalization") != registered.end());
   EXPECT_TRUE(registered.find("RearClear") != registered.end());
+  EXPECT_TRUE(registered.find("ReplanNotRequired") != registered.end());
 
   // 3. 逐个实例化四棵行为树
   auto bb = BT::Blackboard::create();
@@ -353,7 +355,7 @@ TEST_F(NavBtNodesTest, TestGrootDisplayBridgeCompatibility) {
     factory.registerNodeType<MockAction>(tag);
   }
   for (const auto & tag : {"GoalUpdated", "GlobalUpdatedGoal", "IsPathValid", "PathExpiringTimer",
-      "LocalizationHealthy", "RearClear", "RecoveryInputsReady"}) {
+      "LocalizationHealthy", "RearClear", "RecoveryInputsReady", "ReplanNotRequired"}) {
     factory.registerNodeType<MockCondition>(tag);
   }
   for (const auto & tag : {"PipelineSequence", "RecoveryNode", "RoundRobin", "RecoverySupervisor"}) {

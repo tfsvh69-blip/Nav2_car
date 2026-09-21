@@ -53,6 +53,17 @@ public:
 private:
   std::shared_ptr<RecoveryRuntime> runtime_;
 };
+class ReplanNotRequired : public BT::ConditionNode {
+public:
+  ReplanNotRequired(const std::string & n,const BT::NodeConfiguration & c)
+  :BT::ConditionNode(n,c),runtime_(RecoveryRuntime::get(c)) {}
+  static BT::PortsList providedPorts() {return {};}
+  BT::NodeStatus tick() override {
+    return runtime_->replan_required?BT::NodeStatus::FAILURE:BT::NodeStatus::SUCCESS;
+  }
+private:
+  std::shared_ptr<RecoveryRuntime> runtime_;
+};
 class RearClear : public BT::ConditionNode {
 public:
   RearClear(const std::string & name,const BT::NodeConfiguration & config)
@@ -66,19 +77,28 @@ public:
     return {BT::InputPort<std::string>("scan_topic","/scan",""),
       BT::InputPort<std::string>("costmap_topic","/local_costmap/costmap_raw",""),
       BT::InputPort<std::string>("footprint_topic","/local_costmap/published_footprint",""),
-      BT::InputPort<double>("backup_distance",kMaxSingleBackupDistance,""),BT::InputPort<double>("max_data_age",0.5,"")};
+      BT::InputPort<double>("backup_distance",kMaxSingleBackupDistance,""),
+      BT::OutputPort<double>("selected_distance"),
+      BT::InputPort<double>("max_data_age",0.5,"")};
   }
   BT::NodeStatus tick() override {
     double distance=kMaxSingleBackupDistance,age=0.5; getInput("backup_distance",distance); getInput("max_data_age",age);
+    double chosen=0;
     SafetyResult result;
     if (runtime_->backup_cooling()) {
       result={false,"BACKUP_COOLDOWN","倒车冷却中，先跟随已重规划路径或受控转向"};
     } else {
-      result=swept_clear(cache_->snapshot(),runtime_->tf,runtime_->node->now(),runtime_->base_frame,-distance,0,age);
-      if (!std::isfinite(distance) || distance<=0 ||
-          distance>kMaxSingleBackupDistance+1e-6 ||
-          runtime_->backup_used+distance>kMaxBackupBudget+1e-6) {
-        result={false,"BUDGET_EXHAUSTED","后退距离无效或本次受阻额度不足"};
+      const auto data=cache_->snapshot();
+      const auto selected=select_backup_distance(
+        distance,kMaxBackupBudget-runtime_->backup_used,
+        [&](double sweep) {return swept_clear(
+          data,runtime_->tf,runtime_->node->now(),runtime_->base_frame,-sweep,0,age);});
+      result=selected.result;
+      if (selected.ok) {
+        chosen=selected.selected;
+        setOutput("selected_distance",selected.selected);
+        result.detail="选定倒车 "+std::to_string(selected.selected)+
+          "m，含停车余量扫掠 "+std::to_string(selected.swept_distance)+"m";
       }
     }
     diagnostic_msgs::msg::DiagnosticStatus msg;
@@ -86,6 +106,10 @@ public:
     msg.message=result.ok?"通过":"拒绝倒车";
     diagnostic_msgs::msg::KeyValue kv; kv.key="reason_code";kv.value=result.code;msg.values.push_back(kv);
     kv.key="detail";kv.value=result.detail;msg.values.push_back(kv);
+    kv.key="requested_distance";kv.value=std::to_string(distance);msg.values.push_back(kv);
+    kv.key="selected_distance";kv.value=std::to_string(chosen);msg.values.push_back(kv);
+    kv.key="remaining_budget";kv.value=std::to_string(
+      std::max(0.0,kMaxBackupBudget-runtime_->backup_used));msg.values.push_back(kv);
     publisher_->publish(msg);
     // 条件检查无额度副作用，反复 tick 不会消耗后退预算。
     return result.ok?BT::NodeStatus::SUCCESS:BT::NodeStatus::FAILURE;
@@ -200,7 +224,10 @@ private:
 class ControlledSpin : public SafeActionLeaf<nav2_msgs::action::Spin> {
 public:
   ControlledSpin(const std::string & n,const BT::NodeConfiguration & c)
-  : SafeActionLeaf(n,c,"/spin",true) {}
+  : SafeActionLeaf(n,c,"/spin",true) {
+    diagnostic_pub_=runtime_->node->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>(
+      "/controlled_spin/status",10);
+  }
   static BT::PortsList providedPorts() {
     return {BT::InputPort<nav_msgs::msg::Path>("path"),
       BT::InputPort<geometry_msgs::msg::PoseStamped>("goal"),
@@ -216,13 +243,59 @@ private:
     double max_angle=1.570796,time=10; getInput("max_spin_angle",max_angle);getInput("time_allowance",time);
     if (!std::isfinite(max_angle) || max_angle<=0 || max_angle>1.570797 ||
       !std::isfinite(time) || time<=0 || time>10.0) {return false;}
-    goal.target_yaw=std::clamp(ref.error,-max_angle,max_angle);
+    std::vector<double> candidates;
+    for (double degrees : {15.0,30.0,45.0,60.0,75.0,90.0}) {
+      const double angle=degrees*M_PI/180.0;
+      if (angle<=max_angle+1e-6) {candidates.push_back(angle);candidates.push_back(-angle);}
+    }
+    const double path_angle=std::clamp(ref.error,-max_angle,max_angle);
+    if (std::abs(path_angle)>=0.10) {candidates.push_back(path_angle);}
+    std::sort(candidates.begin(),candidates.end());
+    candidates.erase(std::unique(candidates.begin(),candidates.end(),
+      [](double a,double b) {return std::abs(a-b)<1e-6;}),candidates.end());
+    const auto data=runtime_->sensors()->snapshot();
+    SpinCandidateEvaluation best;
+    double left_clear=0,right_clear=0;unsigned rejected=0;
+    for (double angle : candidates) {
+      auto rotation=swept_pose_clear(data,runtime_->tf,runtime_->node->now(),runtime_->base_frame,
+        0,0,0,0,0,angle,runtime_->data_age);
+      if (!rotation.ok) {++rejected;continue;}
+      double forward=0;
+      for (double distance=.05;distance<=.350001;distance+=.05) {
+        auto travel=swept_pose_clear(data,runtime_->tf,runtime_->node->now(),runtime_->base_frame,
+          0,0,angle,distance*std::cos(angle),distance*std::sin(angle),angle,runtime_->data_age);
+        if (!travel.ok) {break;}
+        forward=distance;
+      }
+      if (angle>0) {left_clear=std::max(left_clear,forward);}
+      else {right_clear=std::max(right_clear,forward);}
+      SpinCandidateEvaluation candidate{forward>=.05,angle,forward,
+        std::abs(normalize(ref.error-angle))};
+      if (better_spin_candidate(candidate,best,runtime_->preferred_spin_direction)) {best=candidate;}
+    }
+    publish_selection(best,left_clear,right_clear,rejected);
+    if (!best.valid) {return false;}
+    goal.target_yaw=best.angle;
+    runtime_->preferred_spin_direction=best.angle>=0?1:-1;
     goal.time_allowance=rclcpp::Duration::from_seconds(time);result_timeout_=time+1;
     if (std::abs(goal.target_yaw)<0.10) {no_motion_=true;runtime_->spin_used=true;runtime_->escape_stage=2;}
     return true;
   }
   bool reserve() override {runtime_->spin_used=true;runtime_->escape_stage=2;return true;}
   void rejected() override {runtime_->spin_used=false;}
+  void publish_selection(const SpinCandidateEvaluation & best,double left,double right,unsigned rejected) {
+    diagnostic_msgs::msg::DiagnosticStatus msg;msg.name="ControlledSpin";
+    msg.hardware_id="carcar_nav_bt_nodes";msg.level=best.valid?0:1;
+    msg.message=best.valid?"已选择双向评估后的恢复转向":"左右均无安全转向后前进候选";
+    auto add=[&](const std::string & key,double value) {
+      diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=std::to_string(value);msg.values.push_back(kv);
+    };
+    add("selected_angle",best.angle);add("selected_forward_clearance",best.forward_clearance);
+    add("left_forward_clearance",left);add("right_forward_clearance",right);
+    add("path_error_after_turn",best.path_error);add("rejected_candidates",rejected);
+    diagnostic_pub_->publish(msg);
+  }
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnostic_pub_;
 };
 class SafeBackUp : public SafeActionLeaf<nav2_msgs::action::BackUp> {
 public:
@@ -240,20 +313,70 @@ private:
       !std::isfinite(speed)||speed<=0||speed>kMaxBackupSpeed+1e-6||
       !std::isfinite(time)||time<=0||time>kMaxBackupTimeAllowance+1e-6) {return false;}
     if (runtime_->backup_cooling()) {runtime_->diagnostic("BACKUP","BACKUP_COOLDOWN");return false;}
-    auto check=swept_clear(runtime_->sensors()->snapshot(),runtime_->tf,runtime_->node->now(),
-      runtime_->base_frame,-distance,0,runtime_->data_age);
-    if (!check.ok) {runtime_->diagnostic("BACKUP",check.code);return false;}
-    distance_=distance; goal.target.x=-distance; goal.speed=speed;
+    const auto data=runtime_->sensors()->snapshot();
+    const auto selected=select_backup_distance(
+      distance,kMaxBackupBudget-runtime_->backup_used,
+      [&](double sweep) {return swept_clear(data,runtime_->tf,runtime_->node->now(),
+        runtime_->base_frame,-sweep,0,runtime_->data_age);});
+    if (!selected.ok) {runtime_->diagnostic("BACKUP",selected.result.code);return false;}
+    requested_distance_=distance;
+    distance_=selected.selected; goal.target.x=-distance_; goal.speed=speed;
     goal.time_allowance=rclcpp::Duration::from_seconds(time);result_timeout_=time+1;return true;
   }
   bool reserve() override {
+    // Action server 可在 prepare 后才变为就绪；在真正提交前用最新数据再检查一次。
+    // 该次只允许保持或缩短 RearClear 已选距离，绝不因环境变化扩大。
+    const auto data=runtime_->sensors()->snapshot();
+    const auto selected=select_backup_distance(
+      distance_,kMaxBackupBudget-runtime_->backup_used,
+      [&](double sweep) {return swept_clear(data,runtime_->tf,runtime_->node->now(),
+        runtime_->base_frame,-sweep,0,runtime_->data_age);});
+    if (!selected.ok) {
+      runtime_->diagnostic("BACKUP_RECHECK_REJECTED",selected.result.code);
+      return false;
+    }
+    distance_=selected.selected;goal_.target.x=-distance_;
     if (!runtime_->reserve_backup(distance_)) {return false;}
+    initial_odom_=runtime_->odom();
+    runtime_->diagnostic("BACKUP_SELECTED","requested="+std::to_string(requested_distance_)+
+      ",selected="+std::to_string(distance_)+",remaining_budget="+
+      std::to_string(std::max(0.0,kMaxBackupBudget-runtime_->backup_used)));
     runtime_->escape_stage=1;return true;
   }
   void rejected() override {runtime_->release_backup(distance_);runtime_->note_backup(false);}
-  void failed() override {runtime_->release_backup(distance_);runtime_->note_backup(false);}
-  void completed(nav2_msgs::action::BackUp::Result::SharedPtr) override {runtime_->note_backup(true);}
+  void failed() override {
+    const auto progress=actual_progress();
+    runtime_->reconcile_backup(distance_,progress.second,progress.first);
+    runtime_->diagnostic("BACKUP_FAILED","requested="+std::to_string(distance_)+
+      ",actual="+std::to_string(progress.second)+",remaining_budget="+
+      std::to_string(std::max(0.0,kMaxBackupBudget-runtime_->backup_used))+
+      ",odom_reliable="+(progress.first?"true":"false"));
+    runtime_->note_backup(false);
+  }
+  void completed(nav2_msgs::action::BackUp::Result::SharedPtr) override {
+    const auto progress=actual_progress();
+    // Action 报成功但里程计仍近似零位移属于相互矛盾证据，不能把预留额度退回。
+    const bool displacement_confirmed=progress.first && progress.second>0.01;
+    runtime_->reconcile_backup(distance_,progress.second,displacement_confirmed);
+    runtime_->diagnostic("BACKUP_COMPLETED","requested="+std::to_string(distance_)+
+      ",actual="+std::to_string(progress.second)+",remaining_budget="+
+      std::to_string(std::max(0.0,kMaxBackupBudget-runtime_->backup_used))+
+      ",odom_reliable="+(displacement_confirmed?"true":"false"));
+    runtime_->note_backup(true);
+  }
+  std::pair<bool,double> actual_progress() const {
+    auto current=runtime_->odom();
+    if (!initial_odom_ || !current || !runtime_->odom_fresh()) {return {false,0};}
+    const double yaw=tf2::getYaw(initial_odom_->pose.pose.orientation);
+    const double dx=current->pose.pose.position.x-initial_odom_->pose.pose.position.x;
+    const double dy=current->pose.pose.position.y-initial_odom_->pose.pose.position.y;
+    const double value=-(std::cos(yaw)*dx+std::sin(yaw)*dy);
+    if (!std::isfinite(value) || value<-.02) {return {false,0};}
+    return {true,std::clamp(value,0.0,distance_)};
+  }
+  double requested_distance_{kMaxSingleBackupDistance};
   double distance_{kMaxSingleBackupDistance};
+  nav_msgs::msg::Odometry::ConstSharedPtr initial_odom_;
 };
 class SafeFollowPath : public SafeActionLeaf<nav2_msgs::action::FollowPath> {
 public:
@@ -297,7 +420,9 @@ private:
     else {return bool(this->getInput("goal",goal.goal));}
   }
   void completed(typename Action::Result::SharedPtr result) override {
-    if (result) {this->setOutput("path",result->path);}
+    if (result && !result->path.poses.empty()) {
+      this->setOutput("path",result->path);this->runtime_->replan_required=false;
+    }
   }
 };
 
@@ -569,7 +694,7 @@ public:
     if (active_==0) {
       runtime_->begin_recovery();
       if (!replan_tried_) {replan_tried_=true;stop_then(0);} else {stop_then(1);}
-    } else {stop_then(0);}
+    } else {runtime_->replan_required=true;stop_then(0);}
     return BT::NodeStatus::RUNNING;
   }
   void halt() override {
@@ -617,6 +742,7 @@ private:
 }  // namespace
 void register_nav012_nodes(BT::BehaviorTreeFactory & factory) {
   factory.registerNodeType<RecoveryInputsReady>("RecoveryInputsReady");
+  factory.registerNodeType<ReplanNotRequired>("ReplanNotRequired");
   factory.registerNodeType<RearClear>("RearClear");
   factory.registerNodeType<ProgressGuard>("ProgressGuard");
   factory.registerNodeType<ControlledSpin>("ControlledSpin");

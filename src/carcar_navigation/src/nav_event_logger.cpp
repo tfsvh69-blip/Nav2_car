@@ -305,8 +305,10 @@ public:
       "sessions_base_dir", "/home/jetson/luhao/my_nav_carcar/log/nav_sessions");
     global_frame_ = this->declare_parameter<std::string>("global_frame", "map");
     base_frame_ = this->declare_parameter<std::string>("base_frame", "base_footprint");
+    odom_topic_ = this->declare_parameter<std::string>("odom_topic", "/wheel/odometry");
     base_params_file_ = this->declare_parameter<std::string>("base_params_file", "");
     experiment_params_file_ = this->declare_parameter<std::string>("experiment_params_file", "");
+    planner_params_file_ = this->declare_parameter<std::string>("planner_params_file", "");
     default_bt_xml_ = this->declare_parameter<std::string>("default_bt_xml", "");
     default_nav_through_poses_bt_xml_ = this->declare_parameter<std::string>("default_nav_through_poses_bt_xml", "");
 
@@ -317,8 +319,17 @@ public:
     motion_data_timeout_ = this->declare_parameter<double>("motion_data_timeout", 0.6);
 
     record_raw_bag_ = this->declare_parameter<bool>("record_raw_bag", false);
-    raw_bag_max_duration_s_ = this->declare_parameter<double>("raw_bag_max_duration_s", 120.0);
-    raw_bag_max_bytes_ = this->declare_parameter<int64_t>("raw_bag_max_bytes", 268435456LL);  // 256 MiB
+    raw_bag_max_duration_s_ = this->declare_parameter<double>("raw_bag_max_duration_s", 0.0);
+    raw_bag_max_bytes_ = this->declare_parameter<int64_t>("raw_bag_max_bytes", 0);
+    raw_bag_split_bytes_ = this->declare_parameter<int64_t>(
+      "raw_bag_split_bytes", 1073741824LL);  // 1 GiB 分卷，不是总量上限
+    raw_bag_min_free_bytes_ = this->declare_parameter<int64_t>(
+      "raw_bag_min_free_bytes", 2147483648LL);  // 低于 2 GiB 停止原始录包
+    if (!std::isfinite(raw_bag_max_duration_s_) || raw_bag_max_duration_s_ < 0.0 ||
+      raw_bag_max_bytes_ < 0 || raw_bag_split_bytes_ <= 0 || raw_bag_min_free_bytes_ <= 0)
+    {
+      throw std::invalid_argument("录包限制必须为非负值，分卷和磁盘余量必须为正值");
+    }
     full_bt_debug_events_ = this->declare_parameter<bool>("full_bt_debug_events", false);
     replanning_summary_interval_s_ = this->declare_parameter<double>("replanning_summary_interval_s", 30.0);
     evidence_window_pre_s_ = this->declare_parameter<double>("evidence_window_pre_s", 10.0);
@@ -415,7 +426,7 @@ public:
 
     // 订阅纯轮式里程计
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/wheel/odometry", rclcpp::QoS(10),
+      odom_topic_, rclcpp::QoS(10),
       std::bind(&NavEventLogger::on_odom, this, std::placeholders::_1));
 
     // 订阅底盘状态与硬件看门狗诊断
@@ -590,8 +601,15 @@ private:
     info["ros_distro"] = "humble";
     info["base_params_file"] = base_params_file_;
     info["experiment_params_file"] = experiment_params_file_;
+    info["planner_params_file"] = planner_params_file_;
     info["default_bt_xml"] = default_bt_xml_;
     info["default_nav_through_poses_bt_xml"] = default_nav_through_poses_bt_xml_;
+    info["odom_topic"] = odom_topic_;
+    info["record_raw_bag"] = record_raw_bag_;
+    info["raw_bag_max_duration_s"] = raw_bag_max_duration_s_;
+    info["raw_bag_max_bytes"] = raw_bag_max_bytes_;
+    info["raw_bag_split_bytes"] = raw_bag_split_bytes_;
+    info["raw_bag_min_free_bytes"] = raw_bag_min_free_bytes_;
 
     std::error_code ec;
     auto space = std::filesystem::space(session_dir_, ec);
@@ -622,6 +640,18 @@ private:
     if (!experiment_params_file_.empty() && std::filesystem::exists(experiment_params_file_)) {
       std::filesystem::copy_file(
         experiment_params_file_, session_dir_ + "/active_config.yaml",
+        std::filesystem::copy_options::overwrite_existing, ec);
+    }
+    if (!base_params_file_.empty() && std::filesystem::exists(base_params_file_)) {
+      std::filesystem::copy_file(
+        base_params_file_, session_dir_ + "/base_config.yaml",
+        std::filesystem::copy_options::overwrite_existing, ec);
+    }
+    if (!planner_params_file_.empty() && std::filesystem::exists(planner_params_file_) &&
+      planner_params_file_ != experiment_params_file_)
+    {
+      std::filesystem::copy_file(
+        planner_params_file_, session_dir_ + "/planner_config.yaml",
         std::filesystem::copy_options::overwrite_existing, ec);
     }
 
@@ -663,18 +693,29 @@ private:
     }
 
     try {
+      std::error_code space_error;
+      const auto initial_space = std::filesystem::space(session_dir_, space_error);
+      if (space_error || initial_space.available < static_cast<uint64_t>(raw_bag_min_free_bytes_)) {
+        evidence_incomplete_ = true;
+        incomplete_reason_ = space_error ?
+          "启动录包前无法读取磁盘空间: " + space_error.message() :
+          "启动录包前磁盘剩余空间低于保护阈值";
+        is_recording_bag_ = false;
+        record_event_locked("ROSBAG_RECORDING_REFUSED", active_uuid_, "rosbag2", incomplete_reason_);
+        write_session_state("ACTIVE");
+        return;
+      }
       auto writer = std::make_shared<rosbag2_cpp::Writer>();
       rosbag2_storage::StorageOptions storage_options;
       storage_options.uri = session_dir_ + "/bag";
       storage_options.storage_id = "sqlite3";
-      storage_options.max_bagfile_size = 1073741824ULL;  // 1 GiB 分卷
-      storage_options.max_bagfile_size = static_cast<uint64_t>(raw_bag_max_bytes_);
+      storage_options.max_bagfile_size = static_cast<uint64_t>(raw_bag_split_bytes_);
 
       rosbag2_transport::RecordOptions record_options;
       record_options.rmw_serialization_format = rmw_get_serialization_format();
       record_options.include_hidden_topics = true;
       record_options.include_unpublished_topics = true;
-      // 停止默认保存 /evaluation 与 /trajectories 等高频轨迹明细，仅保留关键状态与感知数据
+      // 专项录包明确保留 DWB 评分与候选轨迹，便于还原路径换向和无可行轨迹原因。
       record_options.topics = {
         "/scan",
         "/map",
@@ -682,6 +723,7 @@ private:
         "/tf",
         "/tf_static",
         "/wheel/odometry",
+        "/odometry/filtered",
         "/odom",
         "/amcl_pose",
         "/particlecloud",
@@ -734,7 +776,7 @@ private:
       is_recording_bag_ = true;
       bag_start_time_ = this->now();
       record_event_locked("ROSBAG_RECORDING_STARTED", "NONE", "rosbag2",
-        "按需原始录包已启动 (限额: 120s / 256 MiB, 存储: sqlite3)");
+        "按需原始录包已启动 (时长/总量 0=不限，独立分卷与磁盘余量保护，存储: sqlite3)");
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "启动 rosbag2 自动录包失败: %s", e.what());
       is_recording_bag_ = false;
@@ -786,7 +828,7 @@ private:
 
     if (is_recording_bag_) {
       const double duration_s = (this->now() - bag_start_time_).seconds();
-      if (duration_s >= raw_bag_max_duration_s_) {
+      if (raw_bag_max_duration_s_ > 0.0 && duration_s >= raw_bag_max_duration_s_) {
         std::ostringstream ss;
         ss << "达到录包时长上限 (已录制 " << std::fixed << std::setprecision(1)
            << duration_s << "s / 上限 " << raw_bag_max_duration_s_ << "s)";
@@ -794,7 +836,7 @@ private:
         return;
       }
 
-      if (bag_size >= static_cast<uint64_t>(raw_bag_max_bytes_)) {
+      if (raw_bag_max_bytes_ > 0 && bag_size >= static_cast<uint64_t>(raw_bag_max_bytes_)) {
         const double mb = bag_size / (1024.0 * 1024.0);
         std::ostringstream ss;
         ss << "达到录包大小上限 (已占用 " << std::fixed << std::setprecision(1)
@@ -805,16 +847,17 @@ private:
 
       std::error_code ec;
       auto space = std::filesystem::space(session_dir_, ec);
-      if (!ec && space.available < 2147483648ULL) {
+      if (ec) {
         evidence_incomplete_ = true;
-        incomplete_reason_ = "磁盘剩余空间低于 2 GiB (" + std::to_string(space.available / (1024 * 1024)) + " MB)";
-        std::cout << "\n[告警] 磁盘剩余空间低于 2 GiB，停止原始录包，继续记录状态摘要与结构化事件 (证据标记为不完整)\n" << std::endl;
+        incomplete_reason_ = "录包期间无法读取磁盘空间: " + ec.message();
         stop_rosbag_recorder(incomplete_reason_);
         return;
-      } else if (bag_size >= 10737418240ULL) {  // 单次达到 10 GiB
+      }
+      if (space.available < static_cast<uint64_t>(raw_bag_min_free_bytes_)) {
         evidence_incomplete_ = true;
-        incomplete_reason_ = "单次会话录包达到 10 GiB 保护上限";
-        std::cout << "\n[告警] 单次会话录包达到 10 GiB 保护上限，停止原始录包，继续记录状态摘要与结构化事件 (证据标记为不完整)\n" << std::endl;
+        incomplete_reason_ = "磁盘剩余空间低于保护阈值 (" +
+          std::to_string(space.available / (1024 * 1024)) + " MB)";
+        std::cout << "\n[告警] 磁盘剩余空间低于保护阈值，停止原始录包，继续记录状态摘要与结构化事件 (证据标记为不完整)\n" << std::endl;
         stop_rosbag_recorder(incomplete_reason_);
         return;
       }
@@ -2163,6 +2206,7 @@ private:
   std::string base_frame_;
   std::string base_params_file_;
   std::string experiment_params_file_;
+  std::string planner_params_file_;
   std::string default_bt_xml_;
   std::string default_nav_through_poses_bt_xml_;
   double observe_duration_s_{8.0};
@@ -2245,6 +2289,7 @@ private:
   geometry_msgs::msg::Twist latest_cmd_vel_;
   rclcpp::Time cmd_vel_stamp_{0, 0, RCL_ROS_TIME};
   nav_msgs::msg::Odometry latest_odom_;
+  std::string odom_topic_{"/wheel/odometry"};
   rclcpp::Time odom_stamp_{0, 0, RCL_ROS_TIME};
 
   // 底盘诊断与看门狗
@@ -2283,8 +2328,10 @@ private:
 
   // rosbag2 录包参数与配额控制
   bool record_raw_bag_{false};
-  double raw_bag_max_duration_s_{120.0};
-  int64_t raw_bag_max_bytes_{268435456LL};
+  double raw_bag_max_duration_s_{0.0};
+  int64_t raw_bag_max_bytes_{0};
+  int64_t raw_bag_split_bytes_{1073741824LL};
+  int64_t raw_bag_min_free_bytes_{2147483648LL};
   rclcpp::Time bag_start_time_{0, 0, RCL_ROS_TIME};
   std::shared_ptr<rosbag2_transport::Recorder> bag_recorder_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> bag_executor_;

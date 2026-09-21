@@ -111,6 +111,9 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
+      # 突发障碍实验：与 3 Hz 路径有效性检查协调，缩短全局地图可见延迟。
+      update_frequency: 3.0
+      publish_frequency: 3.0
       footprint: "[[-0.14, -0.13], [-0.14, 0.13], [0.14, 0.13], [0.14, -0.13]]"
       inflation_layer:
         enabled: true

@@ -149,6 +149,23 @@ TEST_F(Nav012Regression, ControlledSpinConsumesSuccessfulResult)
     [](auto) {return rclcpp_action::CancelResponse::ACCEPT;},
     [](auto handle) {handle->succeed(std::make_shared<Spin::Result>());});
   static_tf();
+  auto cm_pub = provider->create_publisher<nav2_msgs::msg::Costmap>(
+    "/local_costmap/costmap_raw", rclcpp::QoS(1).reliable().transient_local());
+  auto scan_pub = provider->create_publisher<sensor_msgs::msg::LaserScan>(
+    "/scan", rclcpp::SensorDataQoS());
+  auto footprint_pub = provider->create_publisher<geometry_msgs::msg::PolygonStamped>(
+    "/local_costmap/published_footprint", rclcpp::QoS(1).reliable());
+  std::mutex diagnostic_mutex;
+  std::string spin_diagnostic;
+  auto diagnostic_sub = provider->create_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
+    "/controlled_spin/status", 10,
+    [&](diagnostic_msgs::msg::DiagnosticStatus::ConstSharedPtr msg) {
+      std::lock_guard<std::mutex> lock(diagnostic_mutex);
+      spin_diagnostic=msg->message;
+      for (const auto & value : msg->values) {
+        spin_diagnostic += " " + value.key + "=" + value.value;
+      }
+    });
   nav_msgs::msg::Path path;
   path.header.frame_id = "map";
   geometry_msgs::msg::PoseStamped p;
@@ -160,14 +177,50 @@ TEST_F(Nav012Regression, ControlledSpinConsumesSuccessfulResult)
   auto tree = factory.createTreeFromText(
     "<root main_tree_to_execute='Main'><BehaviorTree ID='Main'>"
     "<ControlledSpin path='{path}'/></BehaviorTree></root>", bb);
-  std::this_thread::sleep_for(300ms);
+  // 先让传感器订阅真正收到首批数据；条件节点一旦首 tick 缺数据会按设计立即失败。
+  for (int warmup=0;warmup<10;++warmup) {
+    nav2_msgs::msg::Costmap cm;
+    cm.header.frame_id="map";cm.header.stamp=provider->now();
+    cm.metadata.resolution=.05;cm.metadata.size_x=cm.metadata.size_y=80;
+    cm.metadata.origin.position.x=cm.metadata.origin.position.y=-2.;
+    cm.metadata.origin.orientation.w=1.;cm.data.assign(6400,0);cm_pub->publish(cm);
+    sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id="base_footprint";scan.header.stamp=provider->now();
+    scan.range_min=.05;scan.range_max=10.;scan.angle_min=-3.14;scan.angle_increment=.01;
+    scan.ranges.assign(629,5.);scan_pub->publish(scan);
+    geometry_msgs::msg::PolygonStamped fp;fp.header=scan.header;
+    for (auto xy : {std::pair<float,float>{-.14F,-.13F}, {-.14F,.13F},
+        {.14F,.13F}, {.14F,-.13F}}) {
+      geometry_msgs::msg::Point32 point;point.x=xy.first;point.y=xy.second;
+      fp.polygon.points.push_back(point);
+    }
+    footprint_pub->publish(fp);std::this_thread::sleep_for(30ms);
+  }
   auto deadline = std::chrono::steady_clock::now() + 2s;
-  auto status = tree.tickRoot();
+  auto status = BT::NodeStatus::RUNNING;
   while (status == BT::NodeStatus::RUNNING && std::chrono::steady_clock::now() < deadline) {
-    std::this_thread::sleep_for(10ms);
+    nav2_msgs::msg::Costmap cm;
+    cm.header.frame_id="map";cm.header.stamp=provider->now();
+    cm.metadata.resolution=.05;cm.metadata.size_x=cm.metadata.size_y=80;
+    cm.metadata.origin.position.x=cm.metadata.origin.position.y=-2.;
+    cm.metadata.origin.orientation.w=1.;cm.data.assign(6400,0);cm_pub->publish(cm);
+    sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id="base_footprint";scan.header.stamp=provider->now();
+    scan.range_min=.05;scan.range_max=10.;scan.angle_min=-3.14;scan.angle_increment=.01;
+    scan.ranges.assign(629,5.);scan_pub->publish(scan);
+    geometry_msgs::msg::PolygonStamped fp;fp.header=scan.header;
+    for (auto xy : {std::pair<float,float>{-.14F,-.13F}, {-.14F,.13F},
+        {.14F,.13F}, {.14F,-.13F}}) {
+      geometry_msgs::msg::Point32 point;point.x=xy.first;point.y=xy.second;
+      fp.polygon.points.push_back(point);
+    }
+    footprint_pub->publish(fp);
+    std::this_thread::sleep_for(30ms);
     status = tree.tickRoot();
   }
-  EXPECT_EQ(status, BT::NodeStatus::SUCCESS);
+  std::string diagnostic;
+  {std::lock_guard<std::mutex> lock(diagnostic_mutex);diagnostic=spin_diagnostic;}
+  EXPECT_EQ(status, BT::NodeStatus::SUCCESS) << diagnostic;
   tree.haltTree();
 }
 
@@ -238,6 +291,48 @@ TEST(ForwardProgress, AcceptsForwardArcButRejectsSidewaysReverseAndJump)
   EXPECT_TRUE(jump.displaced);EXPECT_FALSE(jump.plausible);
 }
 
+TEST(AdaptiveBackup, SelectsLongestSafeSteppedDistanceWithStoppingClearance)
+{
+  std::vector<double> checked;
+  const auto selected=carcar_navigation::select_backup_distance(
+    .20,.40,[&](double swept) {
+      checked.push_back(swept);
+      return carcar_navigation::SafetyResult{swept<=.231,"TEST",swept<=.231?"safe":"blocked"};
+    });
+  ASSERT_TRUE(selected.ok);
+  EXPECT_NEAR(selected.selected,.15,1e-9);
+  EXPECT_NEAR(selected.swept_distance,.23,1e-9);
+  ASSERT_FALSE(checked.empty());
+  EXPECT_NEAR(checked.front(),.28,1e-9);
+}
+
+TEST(AdaptiveBackup, HonorsBudgetAndRejectsLessThanMinimum)
+{
+  auto clear=[](double) {return carcar_navigation::SafetyResult{true,"CLEAR","safe"};};
+  const auto budgeted=carcar_navigation::select_backup_distance(.20,.12,clear);
+  ASSERT_TRUE(budgeted.ok);
+  EXPECT_NEAR(budgeted.selected,.10,1e-9);
+  const auto exhausted=carcar_navigation::select_backup_distance(.20,.049,clear);
+  EXPECT_FALSE(exhausted.ok);
+  EXPECT_EQ(exhausted.result.code,"BUDGET_EXHAUSTED");
+}
+
+TEST(ControlledSpinRanking, UsesClearancePathAngleAndStableDirectionInOrder)
+{
+  using carcar_navigation::SpinCandidateEvaluation;
+  using carcar_navigation::better_spin_candidate;
+  SpinCandidateEvaluation current{true,-.52,.14,.05};
+  EXPECT_TRUE(better_spin_candidate({true,.78,.15,.40},current,0));
+  current={true,-.52,.15,.30};
+  EXPECT_TRUE(better_spin_candidate({true,.78,.15,.20},current,0));
+  current={true,-.78,.15,.20};
+  EXPECT_TRUE(better_spin_candidate({true,.52,.15,.20},current,0));
+  current={true,-.52,.15,.20};
+  EXPECT_FALSE(better_spin_candidate({true,.52,.15,.20},current,-1));
+  EXPECT_TRUE(better_spin_candidate({true,.52,.15,.20},current,1));
+  EXPECT_TRUE(better_spin_candidate({true,.52,.15,.20},current,0));
+}
+
 TEST_F(Nav012Regression, ValidPathIsHeldUntilExpiryAndInvalidPathReplansImmediately)
 {
   std::atomic<int> replans{0};
@@ -281,6 +376,16 @@ TEST_F(Nav012Regression, BudgetCannotBeResetByGoalEpoch)
   EXPECT_FALSE(runtime->reserve_backup(.2));runtime->forward_progress(.19);
   EXPECT_FALSE(runtime->reserve_backup(.2));runtime->forward_progress(.02);
   EXPECT_TRUE(runtime->reserve_backup(.2));
+}
+TEST_F(Nav012Regression, PartialBackupFailureChargesMeasuredTravelAndUnknownRetainsReservation)
+{
+  auto runtime=carcar_navigation::RecoveryRuntime::get(configuration());
+  ASSERT_TRUE(runtime->reserve_backup(.20));
+  runtime->reconcile_backup(.20,.075,true);
+  EXPECT_NEAR(runtime->backup_used,.075,1e-9);
+  ASSERT_TRUE(runtime->reserve_backup(.20));
+  runtime->reconcile_backup(.20,0.0,false);
+  EXPECT_NEAR(runtime->backup_used,.275,1e-9);
 }
 TEST_F(Nav012Regression, BackupCooldownBlocksImmediateRetry)
 {

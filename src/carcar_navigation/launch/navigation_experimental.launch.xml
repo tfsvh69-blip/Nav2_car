@@ -3,10 +3,16 @@
   <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
   <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
   <arg name="use_sim_time" default="false"/>
+  <arg name="odom_topic" default="/wheel/odometry" description="Navigation odometry source"/>
+  <arg name="planner_params_file" default="$(var experiment_params_file)" description="Optional final planner overlay"/>
   <!-- NAV-010/NAV-011: Groot 与桥接监视器默认关闭并停用，由 nav_event_logger 终端摘要与会话录包替代 -->
   <arg name="start_bt_monitor" default="false"/>
   <arg name="start_groot" default="false"/>
-  <arg name="record_raw_bag" default="false" description="Whether to record raw rosbag (capped at 120s / 256 MiB)"/>
+  <arg name="record_raw_bag" default="false" description="Whether to record a continuous raw rosbag"/>
+  <arg name="raw_bag_max_duration_s" default="0.0" description="0 means unlimited recording duration"/>
+  <arg name="raw_bag_max_bytes" default="0" description="0 means unlimited total bag size"/>
+  <arg name="raw_bag_split_bytes" default="1073741824" description="Per-file split size, default 1 GiB"/>
+  <arg name="raw_bag_min_free_bytes" default="2147483648" description="Stop recording below this free-space threshold"/>
   <arg name="default_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_to_pose_experimental_recovery.xml"/>
   <arg name="default_nav_through_poses_bt_xml" default="$(find-pkg-share carcar_navigation)/behavior_trees/navigate_through_poses_experimental_recovery.xml"/>
   <!-- NAV-014: 导航声光提示与停车诊断参数 -->
@@ -20,6 +26,7 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
   <node pkg="nav2_velocity_smoother" exec="velocity_smoother" name="velocity_smoother" output="screen">
     <remap from="cmd_vel" to="/cmd_vel_nav"/>
@@ -27,6 +34,7 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
   <!-- 最终速度联锁：默认关闭；停止或异常时由底盘既有看门狗继续兜底。 -->
   <node pkg="carcar_navigation" exec="navigation_motion_gate" name="navigation_motion_gate" output="screen">
@@ -36,6 +44,7 @@
   <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
+    <param from="$(var planner_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
   <!-- 所有恢复动作重映射到平滑器输入，避免绕过零速超时与速度限制。 -->
@@ -44,11 +53,13 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
   <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
     <param name="default_nav_to_pose_bt_xml" value="$(var default_bt_xml)"/>
     <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
   </node>
@@ -62,9 +73,15 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="base_params_file" value="$(var base_params_file)"/>
     <param name="experiment_params_file" value="$(var experiment_params_file)"/>
+    <param name="planner_params_file" value="$(var planner_params_file)"/>
     <param name="default_bt_xml" value="$(var default_bt_xml)"/>
     <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
     <param name="record_raw_bag" value="$(var record_raw_bag)"/>
+    <param name="odom_topic" value="$(var odom_topic)"/>
+    <param name="raw_bag_max_duration_s" value="$(var raw_bag_max_duration_s)"/>
+    <param name="raw_bag_max_bytes" value="$(var raw_bag_max_bytes)"/>
+    <param name="raw_bag_split_bytes" value="$(var raw_bag_split_bytes)"/>
+    <param name="raw_bag_min_free_bytes" value="$(var raw_bag_min_free_bytes)"/>
   </node>
 
   <!-- NAV-014 导航声光提示与停车诊断节点：监听状态并控制底盘声光。 -->

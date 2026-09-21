@@ -58,7 +58,10 @@ int main(int argc, char ** argv)
       {"/controller_server", {"failure_tolerance", "progress_checker_plugin",
         "progress_checker.required_movement_radius", "progress_checker.required_movement_angle",
         "progress_checker.movement_time_allowance", "FollowPath.min_vel_x", "FollowPath.max_vel_x",
-        "FollowPath.sim_time", "FollowPath.critics", "FollowPath.publish_evaluation"}},
+        "FollowPath.sim_time", "FollowPath.critics", "FollowPath.publish_evaluation", "odom_topic"}},
+      {"/planner_server", {"GridBased.plugin", "GridBased.tolerance", "GridBased.allow_unknown",
+        "GridBased.max_planning_time", "GridBased.lattice_filepath",
+        "GridBased.allow_reverse_expansion", "GridBased.smooth_path"}},
       {"/local_costmap/local_costmap", {"update_frequency", "publish_frequency", "width", "height",
         "resolution", "footprint", "footprint_padding", "inflation_layer.enabled",
         "inflation_layer.inflation_radius", "inflation_layer.cost_scaling_factor"}},
@@ -68,9 +71,9 @@ int main(int argc, char ** argv)
       {"/velocity_smoother", {"smoothing_frequency", "velocity_timeout", "max_velocity", "min_velocity",
         "max_accel", "max_decel"}},
       {"/behavior_server", {"cycle_frequency", "costmap_topic", "footprint_topic", "transform_tolerance",
-        "simulate_ahead_time", "max_rotational_vel"}},
+        "simulate_ahead_time", "max_rotational_vel", "odom_topic"}},
       {"/bt_navigator", {"bt_loop_duration", "default_server_timeout", "default_nav_to_pose_bt_xml",
-        "default_nav_through_poses_bt_xml", "plugin_lib_names"}}})
+        "default_nav_through_poses_bt_xml", "plugin_lib_names", "odom_topic"}}})
   {
     print_target(node, target);
   }

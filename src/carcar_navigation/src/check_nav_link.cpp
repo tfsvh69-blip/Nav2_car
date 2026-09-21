@@ -47,6 +47,7 @@ public:
         amcl_received_(false),
         tf_buffer_(this->get_clock()),
         tf_listener_(tf_buffer_) {
+    odom_topic_ = this->declare_parameter<std::string>("odom_topic", "/wheel/odometry");
     // 激光订阅：匹配 sllidar_node 的 KeepLast(10), Reliable
     rclcpp::QoS scan_qos(rclcpp::KeepLast(10));
     scan_qos.reliable();
@@ -68,7 +69,7 @@ public:
     odom_qos.durability_volatile();
 
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/wheel/odometry", odom_qos,
+        odom_topic_, odom_qos,
         [this](const nav_msgs::msg::Odometry::SharedPtr) { ++odom_count_; });
 
     // AMCL 位姿订阅：Reliable, Volatile
@@ -278,7 +279,7 @@ public:
     std::cout << "1. 话题采样频率 (" << duration_sec << " s 均值):\n";
     std::cout << "   /scan             : " << scan_hz << " Hz (要求 >= 8.0 Hz) -> "
               << (scan_hz >= 8.0 ? "PASS" : "WARN/FAIL") << "\n";
-    std::cout << "   /wheel/odometry   : " << odom_hz << " Hz (要求 >= 20.0 Hz) -> "
+    std::cout << "   " << odom_topic_ << "   : " << odom_hz << " Hz (要求 >= 20.0 Hz) -> "
               << (odom_hz >= 20.0 ? "PASS" : "WARN/FAIL") << "\n";
 
     std::cout << "2. AMCL 位姿反馈:\n";
@@ -433,6 +434,7 @@ public:
   }
 
 private:
+  std::string odom_topic_{"/wheel/odometry"};
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr amcl_sub_;

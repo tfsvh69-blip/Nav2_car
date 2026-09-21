@@ -52,6 +52,7 @@ protected:
   rclcpp::Time last_odom_stamp_{0, 0, RCL_ROS_TIME};
   std::chrono::steady_clock::time_point scan_received_{},odom_received_{},deadline_{};
   std::string base_frame_{"base_footprint"};
+  std::string odom_topic_{"/wheel/odometry"};
 
   double max_data_age_{0.5};
   double rear_clearance_limit_{0.08};

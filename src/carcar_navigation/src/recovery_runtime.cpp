@@ -29,7 +29,73 @@ double parameter(rclcpp::Node::SharedPtr node, const std::string & key, double f
   }
   return fallback;
 }
+bool point_in_polygon(double x, double y, const nav2_costmap_2d::Footprint & polygon) {
+  bool inside=false;
+  for (size_t i=0,j=polygon.size()-1;i<polygon.size();j=i++) {
+    const auto & a=polygon[i];const auto & b=polygon[j];
+    const double cross=(x-a.x)*(b.y-a.y)-(y-a.y)*(b.x-a.x);
+    const double dot=(x-a.x)*(x-b.x)+(y-a.y)*(y-b.y);
+    if (std::abs(cross)<1e-9 && dot<=0) {return true;}
+    if (((a.y>y)!=(b.y>y)) &&
+      x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x) {inside=!inside;}
+  }
+  return inside;
+}
 }  // namespace
+
+BackupDistanceSelection select_backup_distance(
+  double requested, double remaining_budget,
+  const std::function<SafetyResult(double)> & check,
+  double minimum, double step, double stopping_clearance)
+{
+  BackupDistanceSelection selection;selection.requested=requested;
+  if (!std::isfinite(requested) || !std::isfinite(remaining_budget) ||
+    !std::isfinite(minimum) || !std::isfinite(step) || !std::isfinite(stopping_clearance) ||
+    requested<=0 || remaining_budget<=0 || minimum<=0 || step<=0 || stopping_clearance<0 || !check)
+  {
+    selection.result={false,"INVALID_PARAMETER","自适应倒车参数无效"};return selection;
+  }
+  const double limit=std::min({requested,remaining_budget,kMaxSingleBackupDistance});
+  const int count=static_cast<int>(std::floor((limit-minimum+1e-9)/step));
+  if (count<0) {
+    selection.result={false,"BUDGET_EXHAUSTED","剩余倒车预算不足最短脱困距离"};return selection;
+  }
+  SafetyResult last{false,"NO_SAFE_DISTANCE","后方没有满足停车余量的短距离"};
+  for (int i=count;i>=0;--i) {
+    const double distance=minimum+i*step;
+    auto result=check(distance+stopping_clearance);
+    if (result.ok) {
+      selection.ok=true;selection.selected=distance;
+      selection.swept_distance=distance+stopping_clearance;selection.result=std::move(result);
+      return selection;
+    }
+    last=std::move(result);
+  }
+  selection.result=std::move(last);return selection;
+}
+
+bool better_spin_candidate(
+  const SpinCandidateEvaluation & candidate,
+  const SpinCandidateEvaluation & current,
+  int preferred_direction)
+{
+  if (!candidate.valid) {return false;}
+  if (!current.valid) {return true;}
+  const int candidate_bucket=static_cast<int>(std::floor((candidate.forward_clearance+1e-9)/0.05));
+  const int current_bucket=static_cast<int>(std::floor((current.forward_clearance+1e-9)/0.05));
+  if (candidate_bucket!=current_bucket) {return candidate_bucket>current_bucket;}
+  if (std::abs(candidate.path_error-current.path_error)>1e-6) {
+    return candidate.path_error<current.path_error;
+  }
+  if (std::abs(std::abs(candidate.angle)-std::abs(current.angle))>1e-6) {
+    return std::abs(candidate.angle)<std::abs(current.angle);
+  }
+  const int candidate_direction=candidate.angle>=0?1:-1;
+  const int current_direction=current.angle>=0?1:-1;
+  if (candidate_direction==current_direction) {return false;}
+  if (preferred_direction!=0) {return candidate_direction==preferred_direction;}
+  return candidate_direction>0;  // 首次完全同分固定选左（正角）。
+}
 
 SensorCache::SensorCache(rclcpp::Node::SharedPtr node, rclcpp::CallbackGroup::SharedPtr group,
   const std::string & scan, const std::string & costmap, const std::string & footprint)
@@ -127,8 +193,10 @@ bool scan_points_in_base(const sensor_msgs::msg::LaserScan & scan, tf2_ros::Buff
     return usable;
   } catch (const tf2::TransformException &) {return false;}
 }
-SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
-  const rclcpp::Time & now, const std::string & base, double dx, double dy, double age)
+SafetyResult swept_pose_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
+  const rclcpp::Time & now, const std::string & base,
+  double start_x, double start_y, double start_yaw,
+  double end_x, double end_y, double end_yaw, double age)
 {
   if (!d.scan || !d.costmap || !d.footprint || d.footprint->polygon.points.size()<3) {
     return {false,"DATA_MISSING","等待扫描、原始代价地图及真实包络"};
@@ -143,7 +211,8 @@ SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
     md.size_x>10000 || md.size_y>10000 ||
     size_t(md.size_x)*md.size_y!=d.costmap->data.size() ||
     !std::isfinite(md.origin.position.x) || !std::isfinite(md.origin.position.y) ||
-    !std::isfinite(dx) || !std::isfinite(dy)) {
+    !std::isfinite(start_x) || !std::isfinite(start_y) || !std::isfinite(start_yaw) ||
+    !std::isfinite(end_x) || !std::isfinite(end_y) || !std::isfinite(end_yaw)) {
     return {false,"DATA_MISSING","代价地图元数据或扫掠参数无效"};
   }
   try {
@@ -178,19 +247,27 @@ SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
     std::copy(d.costmap->data.begin(),d.costmap->data.end(),map.getCharMap());
     nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D*> checker(&map);
     const double yaw=tf2::getYaw(pose.transform.rotation);
-    const int steps=std::max(1,int(std::ceil(std::hypot(dx,dy)/(md.resolution*0.5))));
+    const double translation=std::hypot(end_x-start_x,end_y-start_y);
+    const double rotation=std::abs(end_yaw-start_yaw);
+    const int steps=std::max({1,int(std::ceil(translation/(md.resolution*0.5))),
+      int(std::ceil(rotation/0.025))});
     // 倒车时忽略当前包络已压住的前方格子，只拦新进入的后方体积。
-    const bool escape_rear=dx<0 && std::abs(dy)<1e-6;
+    const bool escape_rear=std::abs(start_x)<1e-9 && std::abs(start_y)<1e-9 &&
+      std::abs(start_yaw)<1e-9 && end_x<0 && std::abs(end_y)<1e-9 && std::abs(end_yaw)<1e-9;
     std::unordered_set<uint64_t> start_cells;
     for (int i=0;i<=steps;++i) {
       double t=double(i)/steps;
-      double wx=pose.transform.translation.x+std::cos(yaw)*dx*t-std::sin(yaw)*dy*t;
-      double wy=pose.transform.translation.y+std::sin(yaw)*dx*t+std::cos(yaw)*dy*t;
+      const double rx=start_x+(end_x-start_x)*t;
+      const double ry=start_y+(end_y-start_y)*t;
+      const double relative_yaw=start_yaw+(end_yaw-start_yaw)*t;
+      double wx=pose.transform.translation.x+std::cos(yaw)*rx-std::sin(yaw)*ry;
+      double wy=pose.transform.translation.y+std::sin(yaw)*rx+std::cos(yaw)*ry;
       wx-=md.origin.position.x; wy-=md.origin.position.y;
       double mx=std::cos(origin_yaw)*wx+std::sin(origin_yaw)*wy;
       double my=-std::sin(origin_yaw)*wx+std::cos(origin_yaw)*wy;
       nav2_costmap_2d::Footprint transformed;
-      nav2_costmap_2d::transformFootprint(mx,my,yaw-origin_yaw,footprint,transformed);
+      nav2_costmap_2d::transformFootprint(
+        mx,my,yaw+relative_yaw-origin_yaw,footprint,transformed);
       std::vector<nav2_costmap_2d::MapLocation> polygon,cells;
       for (const auto & p : transformed) {
         nav2_costmap_2d::MapLocation loc;
@@ -223,18 +300,37 @@ SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
     if (!scan_points_in_base(*d.scan,tf,base,points)) {
       return {false,"TF_UNAVAILABLE","扫描格式或扫描时刻安装 TF 不可用"};
     }
-    for (const auto & p : points) {
-      const bool in_y=p.y>=std::min(0.0,dy)-half_w-0.02 && p.y<=std::max(0.0,dy)+half_w+0.02;
-      if (escape_rear) {
-        if (in_y && p.x< -half_l+md.resolution && p.x>=dx-half_l-0.02) {
+    if (escape_rear) {
+      for (const auto & p : points) {
+        const bool in_y=p.y>=-half_w-0.02 && p.y<=half_w+0.02;
+        if (in_y && p.x< -half_l+md.resolution && p.x>=end_x-half_l-0.02) {
           return {false,"SCAN_OBSTACLE","扫描点进入包络扫掠区"};
         }
-      } else if (in_y && p.x>=std::min(0.0,dx)-half_l-0.02 && p.x<=std::max(0.0,dx)+half_l+0.02) {
-        return {false,"SCAN_OBSTACLE","扫描点进入包络扫掠区"};
+      }
+    } else {
+      for (int i=0;i<=steps;++i) {
+        const double t=double(i)/steps;
+        const double rx=start_x+(end_x-start_x)*t;
+        const double ry=start_y+(end_y-start_y)*t;
+        const double relative_yaw=start_yaw+(end_yaw-start_yaw)*t;
+        const double c=std::cos(relative_yaw),s=std::sin(relative_yaw);
+        for (const auto & p : points) {
+          const double px=c*(p.x-rx)+s*(p.y-ry);
+          const double py=-s*(p.x-rx)+c*(p.y-ry);
+          if (point_in_polygon(px,py,footprint)) {
+            return {false,"SCAN_OBSTACLE","扫描点进入旋转或前进包络扫掠区"};
+          }
+        }
       }
     }
     return {true,"NONE","数据新鲜、TF 有效、完整包络扫掠通过"};
   } catch (const tf2::TransformException & e) {return {false,"TF_UNAVAILABLE",e.what()};}
+}
+
+SafetyResult swept_clear(const SensorSnapshot & d, tf2_ros::Buffer & tf,
+  const rclcpp::Time & now, const std::string & base, double dx, double dy, double age)
+{
+  return swept_pose_clear(d,tf,now,base,0,0,0,dx,dy,0,age);
 }
 
 std::shared_ptr<RecoveryRuntime> RecoveryRuntime::get(const BT::NodeConfiguration & config)
@@ -257,6 +353,7 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
 {
   node->get_parameter_or("robot_base_frame",base_frame,base_frame);
   node->get_parameter_or("global_frame",global_frame,global_frame);
+  node->get_parameter_or("odom_topic",odom_topic,odom_topic);
   response_timeout=parameter(node,"recovery.response_timeout",1);
   cancel_timeout=parameter(node,"recovery.cancel_timeout",1);
   settle_timeout=parameter(node,"recovery.settle_timeout",1);
@@ -292,7 +389,7 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
       recovery_allowed_.received=true; recovery_allowed_.value=msg->data;
       recovery_allowed_.received_at=Steady::now();
     },options);
-  odom_sub_=node->create_subscription<nav_msgs::msg::Odometry>("/wheel/odometry",
+  odom_sub_=node->create_subscription<nav_msgs::msg::Odometry>(odom_topic,
     rclcpp::QoS(1).best_effort(),[this](nav_msgs::msg::Odometry::ConstSharedPtr msg) {
       std::lock_guard<std::mutex> lock(mutex_);
       bool gap=odom_received_==TimePoint{} || seconds(odom_received_)>data_age;
@@ -478,6 +575,7 @@ void RecoveryRuntime::forward_progress(double distance) {
   forward_distance=std::max(0.0,forward_distance+distance);
   if (forward_distance>=0.20) {
     backup_used=0; spin_used=false; escape_stage=0; observe_replans_used=0;
+    preferred_spin_direction=0;
     observe_started=TimePoint{};
     forward_distance=0; recovery_active=false;
   }
@@ -489,6 +587,11 @@ bool RecoveryRuntime::reserve_backup(double distance) {
   backup_used+=distance; forward_distance=0; return true;
 }
 void RecoveryRuntime::release_backup(double distance) {backup_used=std::max(0.0,backup_used-distance);}
+void RecoveryRuntime::reconcile_backup(double reserved,double traveled,bool odom_reliable) {
+  if (!std::isfinite(reserved) || reserved<=0) {return;}
+  if (!odom_reliable || !std::isfinite(traveled) || traveled<0) {return;}
+  backup_used=std::max(0.0,backup_used-reserved)+std::min(reserved,traveled);
+}
 void RecoveryRuntime::note_backup(bool succeeded)
 {
   last_backup_at_=Steady::now();

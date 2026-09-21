@@ -308,18 +308,18 @@ TEST(NavLoggerLogicTest, SessionClassificationAndStaleActiveRepair) {
   EXPECT_EQ(status, "ENDED");
 }
 
-// 6. 验证原始录包配额与限制逻辑 (120s / 256 MiB / 2 GiB 磁盘)
+// 6. 验证持续录包默认不限总时长/总量，分卷不触发停录，磁盘阈值仍熔断。
 TEST(NavLoggerLogicTest, RawBagLimitsLogic) {
-  const double max_duration_s = 120.0;
-  const uint64_t max_bytes = 268435456ULL; // 256 MiB
+  const uint64_t split_bytes = 1073741824ULL; // 1 GiB 仅用于分卷
   const uint64_t min_disk_free = 2147483648ULL; // 2 GiB
 
-  auto check_limits = [&](double duration_s, uint64_t bag_bytes, uint64_t disk_free) -> std::pair<bool, std::string> {
-    if (duration_s >= max_duration_s) {
-      return {true, "达到录包时长上限 (120s)"};
+  auto check_limits = [&](double duration_s, uint64_t bag_bytes, uint64_t disk_free,
+      double max_duration_s, uint64_t max_bytes) -> std::pair<bool, std::string> {
+    if (max_duration_s > 0.0 && duration_s >= max_duration_s) {
+      return {true, "达到可选录包时长上限"};
     }
-    if (bag_bytes >= max_bytes) {
-      return {true, "达到录包大小上限 (256 MiB)"};
+    if (max_bytes > 0 && bag_bytes >= max_bytes) {
+      return {true, "达到可选录包总量上限"};
     }
     if (disk_free < min_disk_free) {
       return {true, "磁盘剩余空间低于 2 GiB"};
@@ -327,24 +327,16 @@ TEST(NavLoggerLogicTest, RawBagLimitsLogic) {
     return {false, "正常录制中"};
   };
 
-  // 正常录制
-  auto r1 = check_limits(60.0, 100 * 1024 * 1024, 10ULL * 1024 * 1024 * 1024);
+  // 超过旧的 120 秒和 256 MiB，且跨过 1 GiB 分卷点，仍应继续录制。
+  auto r1 = check_limits(121.0, split_bytes + 64 * 1024 * 1024,
+    10ULL * 1024 * 1024 * 1024, 0.0, 0);
   EXPECT_FALSE(r1.first);
 
-  // 达到 120s
-  auto r2 = check_limits(120.0, 50 * 1024 * 1024, 10ULL * 1024 * 1024 * 1024);
-  EXPECT_TRUE(r2.first);
-  EXPECT_NE(r2.second.find("120s"), std::string::npos);
-
-  // 达到 256 MiB
-  auto r3 = check_limits(30.0, 268435456ULL, 10ULL * 1024 * 1024 * 1024);
-  EXPECT_TRUE(r3.first);
-  EXPECT_NE(r3.second.find("256 MiB"), std::string::npos);
-
   // 磁盘低于 2 GiB
-  auto r4 = check_limits(10.0, 10 * 1024 * 1024, 1024ULL * 1024 * 1024); // 1 GiB free
-  EXPECT_TRUE(r4.first);
-  EXPECT_NE(r4.second.find("2 GiB"), std::string::npos);
+  auto r2 = check_limits(10.0, 10 * 1024 * 1024,
+    1024ULL * 1024 * 1024, 0.0, 0); // 1 GiB free
+  EXPECT_TRUE(r2.first);
+  EXPECT_NE(r2.second.find("2 GiB"), std::string::npos);
 }
 
 // 7. 验证重规划 30s 聚合与告警去重合并

@@ -105,11 +105,38 @@ inline constexpr double kMaxSingleBackupDistance = 0.20;
 inline constexpr double kMaxBackupBudget = 0.40;
 inline constexpr double kMaxBackupSpeed = 0.05;
 inline constexpr double kMaxBackupTimeAllowance = 6.0;
+inline constexpr double kMinAdaptiveBackupDistance = 0.05;
+inline constexpr double kAdaptiveBackupStep = 0.025;
+inline constexpr double kRearStoppingClearance = 0.08;
 struct SafetyResult {
   bool ok{false};
   std::string code{"DATA_MISSING"};
   std::string detail;
 };
+struct BackupDistanceSelection {
+  bool ok{false};
+  double requested{0.0};
+  double selected{0.0};
+  double swept_distance{0.0};
+  SafetyResult result;
+};
+BackupDistanceSelection select_backup_distance(
+  double requested, double remaining_budget,
+  const std::function<SafetyResult(double)> & check,
+  double minimum = kMinAdaptiveBackupDistance,
+  double step = kAdaptiveBackupStep,
+  double stopping_clearance = kRearStoppingClearance);
+
+struct SpinCandidateEvaluation {
+  bool valid{false};
+  double angle{0.0};
+  double forward_clearance{0.0};
+  double path_error{0.0};
+};
+bool better_spin_candidate(
+  const SpinCandidateEvaluation & candidate,
+  const SpinCandidateEvaluation & current,
+  int preferred_direction = 0);
 struct SensorSnapshot {
   nav2_msgs::msg::Costmap::ConstSharedPtr costmap;
   sensor_msgs::msg::LaserScan::ConstSharedPtr scan;
@@ -168,6 +195,10 @@ bool scan_points_in_base(const sensor_msgs::msg::LaserScan & scan, tf2_ros::Buff
 SafetyResult swept_clear(const SensorSnapshot & data, tf2_ros::Buffer & tf,
   const rclcpp::Time & now, const std::string & base, double dx, double dy,
   double max_age = 0.5);
+SafetyResult swept_pose_clear(const SensorSnapshot & data, tf2_ros::Buffer & tf,
+  const rclcpp::Time & now, const std::string & base,
+  double start_x, double start_y, double start_yaw,
+  double end_x, double end_y, double end_yaw, double max_age = 0.5);
 
 // 一个机器人实例的运行期上下文；blackboard 持有强引用，注册表只保留弱引用。
 class RecoveryRuntime {
@@ -196,6 +227,7 @@ public:
   void forward_progress(double distance);
   bool reserve_backup(double distance);
   void release_backup(double distance);
+  void reconcile_backup(double reserved, double traveled, bool odom_reliable);
   void note_backup(bool succeeded = true);
   bool backup_cooling() const;
   bool request_observe_replan();
@@ -204,6 +236,7 @@ public:
   rclcpp::CallbackGroup::SharedPtr group;
   tf2_ros::Buffer tf;
   std::string base_frame{"base_footprint"}, global_frame{"map"};
+  std::string odom_topic{"/wheel/odometry"};
   bool supervised{false}, fault{false};
   std::string fault_reason;
   std::string navigation_uuid,previous_navigation_uuid;
@@ -212,7 +245,8 @@ public:
   // 保留待取消请求直到结果到达或运行上下文析构，晚到响应仍能按 UUID 取消。
   std::vector<std::shared_ptr<ManagedSession>> retiring;
   double backup_used{0}, forward_distance{0};
-  bool spin_used{false}, recovery_active{false};
+  bool spin_used{false}, recovery_active{false}, replan_required{false};
+  int preferred_spin_direction{0};
   unsigned escape_stage{0}, observe_replans_used{0};
   TimePoint observe_started{};
   TimePoint recovery_started{};
