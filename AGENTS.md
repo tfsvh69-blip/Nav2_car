@@ -22,9 +22,8 @@
 2. 已有 Python 底层测试资产仍按“底层测试资产只增不删”规则保留，不得仅为统一语言而删除或覆盖；需要替代时，应新增 C++ 入口，并将旧入口标记为“已停用”及记录替代关系。
 3. 后续新增和修改的 ROS 2 Launch 文件统一使用 XML 格式，文件扩展名为 `.launch.xml`，不使用 Python Launch 文件。
 4. 需要图形化调试时，应协助用户启动 RViz，并提供可直接使用的 RViz 配置文件；不得只给出让用户自行逐项配置的说明。
-5. 创建或修改 RViz 配置前，必须先向用户确认本次需要启用的显示组件、每个组件使用的话题、`Fixed Frame`，以及各订阅话题是否使用 Best Effort QoS；未经确认不得自行固化这些选项。
-6. 用户确认后，应把显示组件、话题和 QoS 设置保存到项目内的 RViz 配置。实车联调默认不在 Jetson 上启动 `rviz2`：实验定位 Launch 的 `use_rviz` 默认为 `false`。日常在同一局域网的 Ubuntu 22.04 主机上用 `navigation_lite.rviz` 打开；禁止把完整 `navigation.rviz` 或 VNC 三维窗口当作日常操作。确需在板上临时打开时，必须显式传入 `use_rviz:=true`。
-7. Cursor / 智能代理的工作区在车上 Jetson（`jetson@xiaozhu`，`192.168.5.11`），不是用户眼前的 Ubuntu 主机。用户本机是 `luhao@Hao`（2026-09-18 实测 `192.168.5.17`，也可 `Hao.local`）。本机新开终端默认还在 Hao 上，没有进 Jetson；车上节点必须先 `ssh jetson@192.168.5.11`。RViz 只在 Hao 本机开，不要 SSH、不要在 Cursor 远程终端里开。代理若要在 Hao 上执行检查，用车上已授权密钥 `ssh -i /home/jetson/.ssh/id_ed25519 luhao@192.168.5.17`。IP、域号、软件渲染与车模覆盖的完整命令只维护在 [操作手册第 19 节](docs/操作手册.md#19-ubuntu-主机-rviz-联调)，不要在对话里另写一套。
+5. 应把显示组件、话题和 QoS 设置保存到项目内的 RViz 配置，并在交付时向用户列出相关配置。实车联调默认不在 Jetson 上启动 `rviz2`：实验定位 Launch 的 `use_rviz` 默认为 `false`。日常在同一局域网的 Ubuntu 22.04 主机上用 `navigation_lite.rviz` 打开；禁止把完整 `navigation.rviz` 或 VNC 三维窗口当作日常操作。确需在板上临时打开时，必须显式传入 `use_rviz:=true`。
+6. Cursor / 智能代理的工作区在车上 Jetson（`jetson@xiaozhu`，`192.168.5.11`），不是用户眼前的 Ubuntu 主机。用户本机是 `luhao@Hao`（2026-09-18 实测 `192.168.5.17`，也可 `Hao.local`）。本机新开终端默认还在 Hao 上，没有进 Jetson；车上节点必须先 `ssh jetson@192.168.5.11`。RViz 只在 Hao 本机开，不要 SSH、不要在 Cursor 远程终端里开。代理若要在 Hao 上执行检查，用车上已授权密钥 `ssh -i /home/jetson/.ssh/id_ed25519 luhao@192.168.5.17`。IP、域号、软件渲染与车模覆盖的完整命令只维护在 [操作手册第 19 节](docs/操作手册.md#19-ubuntu-主机-rviz-联调)，不要在对话里另写一套。
 
 ## 二、自底向上的开发顺序
 
