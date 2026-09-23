@@ -15,7 +15,7 @@
             <SafeComputePathToPose name="ntpe_ComputePathToPose" goal="{goal}" path="{path}" planner_id="GridBased" timeout="5.0"/>
           </Fallback>
         </RateController>
-        <ProgressGuard name="ntpe_ProgressGuard" path="{path}" goal="{goal}" linear_stagnation_timeout="3.0" linear_displacement_threshold="0.03" angular_stagnation_timeout="3.0" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">
+        <ProgressGuard name="ntpe_ProgressGuard" path="{path}" goal="{goal}" linear_stagnation_timeout="2.5" linear_displacement_threshold="0.03" angular_stagnation_timeout="2.5" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">
           <SafeFollowPath name="ntpe_FollowPath" path="{path}" controller_id="FollowPath"/>
         </ProgressGuard>
       </PipelineSequence>
@@ -34,7 +34,7 @@
             <ControlledSpin name="ntpe_ControlledSpin" path="{path}" goal="{goal}" max_spin_angle="1.570796" time_allowance="10.0"/>
           </Fallback>
         </ReactiveSequence>
-        <ParkAndObserve name="ntpe_ParkAndObserve" path="{path}" goal="{goal}" observe_duration="8.0"/>
+        <ParkAndObserve name="ntpe_ParkAndObserve" path="{path}" goal="{goal}" observe_duration="4.0"/>
       </Fallback>
     </RecoverySupervisor>
   </BehaviorTree>

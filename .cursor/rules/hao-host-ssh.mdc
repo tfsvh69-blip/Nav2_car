@@ -1,0 +1,16 @@
+---
+description: Jetson/Hao 两机分工、IP、SSH 与本机 RViz
+alwaysApply: true
+---
+
+# 联调主机与终端
+
+代理工作区在车上 Jetson，不是用户眼前的 Ubuntu。完整命令只写在 `docs/操作手册.md` 第 19 节，不要在对话里另写一套。
+
+- 车：`jetson@xiaozhu`，`192.168.5.11`，工程 `/home/jetson/luhao/my_nav_carcar`
+- 用户本机：`luhao@Hao`（`Hao.local`），2026-09-18 为 `192.168.5.17`（DHCP 变了以 `ip a` 为准）
+- Hao 新开终端默认还在本机，没有上车。车上节点每个窗口先 `ssh jetson@192.168.5.11`
+- RViz 只在 Hao 本机开 `navigation_lite.rviz`，不要 SSH，不要在 Cursor 远程终端或 VNC 里开三维
+- 代理检查 Hao：`ssh -i /home/jetson/.ssh/id_ed25519 luhao@192.168.5.17`
+- 实车：`ROS_DOMAIN_ID=31`，`ROS_LOCALHOST_ONLY=0`，Wi‑Fi `小泽`，默认 Fast DDS
+- 实验导航与稳定 `nav2.yaml` 分开；改速度后必须重启底盘和导航

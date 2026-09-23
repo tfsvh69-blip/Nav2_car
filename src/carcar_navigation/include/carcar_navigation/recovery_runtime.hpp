@@ -223,6 +223,7 @@ public:
   void permit(bool allowed);
   void diagnostic(const std::string & phase, const std::string & reason);
   void fail(const std::string & reason);
+  void reset_for_new_task(const std::string & uuid);
   void begin_recovery();
   void forward_progress(double distance);
   bool reserve_backup(double distance);

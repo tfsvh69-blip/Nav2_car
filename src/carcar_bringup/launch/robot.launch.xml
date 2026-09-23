@@ -1,6 +1,7 @@
 <launch>
   <!-- 正式整车入口：模型/固定 TF 与底盘串口驱动各启动一次。 -->
   <arg name="params_file" default="$(find-pkg-share carcar_base)/config/base.yaml" description="Rosmaster base driver parameters"/>
+  <arg name="speed_params_file" default="$(var params_file)" description="Optional final speed-limit overlay"/>
   <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
   <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
   <arg name="publish_odom_tf" default="true" description="默认轮式里程计发布 TF；外部融合接管须独立验收"/>
@@ -11,6 +12,7 @@
 
   <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
     <arg name="params_file" value="$(var params_file)"/>
+    <arg name="speed_params_file" value="$(var speed_params_file)"/>
     <arg name="serial_port" value="$(var serial_port)"/>
     <arg name="publish_odom_tf" value="$(var publish_odom_tf)"/>
   </include>

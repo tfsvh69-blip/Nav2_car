@@ -18,7 +18,7 @@
             </Fallback>
           </Sequence>
         </RateController>
-        <ProgressGuard name="ntppe_ProgressGuard" path="{path}" goals="{goals}" linear_stagnation_timeout="3.0" linear_displacement_threshold="0.03" angular_stagnation_timeout="3.0" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">
+        <ProgressGuard name="ntppe_ProgressGuard" path="{path}" goals="{goals}" linear_stagnation_timeout="2.5" linear_displacement_threshold="0.03" angular_stagnation_timeout="2.5" angular_convergence_threshold="0.10" max_rotation_budget="8.0" heading_flip_threshold="0.35" max_heading_flips="3">
           <SafeFollowPath name="ntppe_FollowPath" path="{path}" controller_id="FollowPath"/>
         </ProgressGuard>
       </PipelineSequence>
@@ -37,7 +37,7 @@
             <ControlledSpin name="ntppe_ControlledSpin" path="{path}" goals="{goals}" max_spin_angle="1.570796" time_allowance="10.0"/>
           </Fallback>
         </ReactiveSequence>
-        <ParkAndObserve name="ntppe_ParkAndObserve" path="{path}" goals="{goals}" observe_duration="8.0"/>
+        <ParkAndObserve name="ntppe_ParkAndObserve" path="{path}" goals="{goals}" observe_duration="4.0"/>
       </Fallback>
     </RecoverySupervisor>
   </BehaviorTree>

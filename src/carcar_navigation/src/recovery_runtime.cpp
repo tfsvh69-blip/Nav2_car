@@ -567,6 +567,21 @@ void RecoveryRuntime::emit_recovery_status(DiagSnapshot snap) {
 void RecoveryRuntime::fail(const std::string & reason) {
   fault=true; fault_reason=reason; permit(false); diagnostic("FAILED",reason);
 }
+void RecoveryRuntime::reset_for_new_task(const std::string & uuid) {
+  permit(false);
+  if (navigation_uuid!=uuid) {
+    previous_navigation_uuid=navigation_uuid;
+    navigation_uuid=uuid;
+  }
+  fault=false;fault_reason.clear();
+  backup_used=0;forward_distance=0;spin_used=false;recovery_active=false;
+  replan_required=true;preferred_spin_direction=0;escape_stage=0;observe_replans_used=0;
+  observe_started=TimePoint{};recovery_started=TimePoint{};last_backup_at_=TimePoint{};
+  last_backup_ok_=true;
+  motion.reset();
+  ++epoch;
+  diagnostic("TASK_START_READY","NEW_TASK_RESET");
+}
 void RecoveryRuntime::begin_recovery() {
   if (!recovery_active) {recovery_active=true; recovery_started=Steady::now(); forward_distance=0;}
 }

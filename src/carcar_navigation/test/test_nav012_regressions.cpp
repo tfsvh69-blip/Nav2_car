@@ -888,6 +888,66 @@ TEST_F(Nav012Regression, RecoverySpinIsCanceledBeforeLatestGoalTakesOver)
   tree.haltTree();exec.cancel();thread.join();
 }
 
+TEST_F(Nav012Regression, TerminalFailureDoesNotPoisonNextSingleGoalTask)
+{
+  using namespace carcar_navigation;
+  static_tf();SimInputs inputs(provider);
+  geometry_msgs::msg::PoseStamped goal;goal.header.frame_id="map";
+  goal.pose.position.x=1;goal.pose.orientation.w=1;bb->set("goal",goal);
+  auto tree=factory.createTreeFromText(
+    "<root main_tree_to_execute='Main'><BehaviorTree ID='Main'>"
+    "<RecoverySupervisor goal='{goal}'><AlwaysSuccess/><AlwaysFailure/>"
+    "</RecoverySupervisor></BehaviorTree></root>",bb);
+  auto run=[&] {
+    auto status=BT::NodeStatus::RUNNING;auto end=after(4);
+    while (status==BT::NodeStatus::RUNNING && Steady::now()<end) {
+      status=tree.tickRoot();std::this_thread::sleep_for(10ms);
+    }
+    return status;
+  };
+  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+  tree.haltTree();
+  auto runtime=RecoveryRuntime::get(configuration());
+  runtime->fail("RECOVERY_EXHAUSTED");runtime->backup_used=.4;runtime->spin_used=true;
+  runtime->observe_replans_used=1;runtime->recovery_active=true;
+  inputs.uuid=2;
+  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+  EXPECT_FALSE(runtime->fault);EXPECT_TRUE(runtime->replan_required);
+  EXPECT_DOUBLE_EQ(runtime->backup_used,0);EXPECT_FALSE(runtime->spin_used);
+  EXPECT_EQ(runtime->observe_replans_used,0u);EXPECT_FALSE(runtime->recovery_active);
+  EXPECT_EQ(runtime->goal_uuid(false).substr(0,2),"02");
+  tree.haltTree();exec.cancel();thread.join();
+}
+
+TEST_F(Nav012Regression, TerminalFailureDoesNotPoisonNextThroughPosesTask)
+{
+  using namespace carcar_navigation;
+  static_tf();SimInputs inputs(provider,true);
+  geometry_msgs::msg::PoseStamped goal;goal.header.frame_id="map";
+  goal.pose.position.x=1;goal.pose.orientation.w=1;
+  bb->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{goal});
+  auto tree=factory.createTreeFromText(
+    "<root main_tree_to_execute='Main'><BehaviorTree ID='Main'>"
+    "<RecoverySupervisor goals='{goals}' through_poses='true'><AlwaysSuccess/><AlwaysFailure/>"
+    "</RecoverySupervisor></BehaviorTree></root>",bb);
+  auto run=[&] {
+    auto status=BT::NodeStatus::RUNNING;auto end=after(4);
+    while (status==BT::NodeStatus::RUNNING && Steady::now()<end) {
+      status=tree.tickRoot();std::this_thread::sleep_for(10ms);
+    }
+    return status;
+  };
+  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+  tree.haltTree();
+  auto runtime=RecoveryRuntime::get(configuration());
+  runtime->fail("RECOVERY_TOTAL_TIMEOUT");runtime->backup_used=.4;
+  inputs.uuid=2;
+  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+  EXPECT_FALSE(runtime->fault);EXPECT_DOUBLE_EQ(runtime->backup_used,0);
+  EXPECT_EQ(runtime->goal_uuid(true).substr(0,2),"02");
+  tree.haltTree();exec.cancel();thread.join();
+}
+
 TEST_F(Nav012Regression, CancelFailureClosesGateAndPreventsNewMotion)
 {
   using namespace carcar_navigation;

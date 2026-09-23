@@ -592,7 +592,7 @@ private:
       runtime_->diagnostic("PARK_AND_OBSERVE","OBSERVE_TIMEOUT");
       return BT::NodeStatus::FAILURE;
     }
-    if (seconds(last_check_)<1) {return BT::NodeStatus::RUNNING;}
+    if (last_check_!=TimePoint{} && seconds(last_check_)<0.2) {return BT::NodeStatus::RUNNING;}
     last_check_=Steady::now();
     auto ready=runtime_->inputs_ready();
     nav_msgs::msg::Path path;geometry_msgs::msg::PoseStamped pose;
@@ -625,18 +625,25 @@ public:
   }
   BT::NodeStatus tick() override {
     if (childrenCount()!=2) {throw BT::RuntimeError("RecoverySupervisor 必须有两个子节点");}
+    const bool entered_from_idle=status()==BT::NodeStatus::IDLE;
     runtime_->note_tick();
     setStatus(BT::NodeStatus::RUNNING);
     for (auto & s : runtime_->retiring) {s->poll();}
     runtime_->retiring.erase(std::remove_if(runtime_->retiring.begin(),runtime_->retiring.end(),
       [](auto s) {return s->state().terminal;}),runtime_->retiring.end());
     if (runtime_->motion) {runtime_->motion->poll();}
+    bool through=false;getInput("through_poses",through);
+    auto uuid=runtime_->goal_uuid(through);
+    if (entered_from_idle) {
+      starting_task_=true;starting_uuid_.clear();uuid_wait_=Steady::now();
+    }
+    if (starting_task_) {
+      return start_task(uuid);
+    }
     if (runtime_->fault) {return fail(runtime_->fault_reason);}
     if (runtime_->recovery_active && seconds(runtime_->recovery_started)>=runtime_->recovery_timeout) {
       return fail("RECOVERY_TOTAL_TIMEOUT");
     }
-    bool through=false;getInput("through_poses",through);
-    auto uuid=runtime_->goal_uuid(through);
     if (!uuid.empty() && runtime_->navigation_uuid!=uuid) {
       runtime_->previous_navigation_uuid=runtime_->navigation_uuid;runtime_->navigation_uuid=uuid;
       if (!runtime_->previous_navigation_uuid.empty()) {runtime_->diagnostic("STOPPING","GOAL_REPLACED");}
@@ -701,10 +708,48 @@ public:
     runtime_->note_tick();
     runtime_->permit(false);haltChildren();
     if (runtime_->motion && !runtime_->motion->state().terminal) {runtime_->motion->cancel();}
-    initialized_=false;switching_=false;uuid_wait_=TimePoint{};
+    initialized_=false;switching_=false;starting_task_=false;starting_uuid_.clear();
+    uuid_wait_=TimePoint{};
     BT::ControlNode::halt();
   }
 private:
+  BT::NodeStatus start_task(const std::string & uuid) {
+    runtime_->permit(false);
+    if (starting_uuid_.empty()) {
+      // 回调缓存可能仍是上一任务 UUID；同一位置重发也必须等新的 Action UUID。
+      if (uuid.empty() || (!uuid_.empty() && uuid==uuid_)) {
+        runtime_->diagnostic("TASK_START_PREPARING","WAITING_NEW_UUID");
+        if (seconds(uuid_wait_)>2) {return fail("NAVIGATION_UUID_MISSING");}
+        return BT::NodeStatus::RUNNING;
+      }
+      starting_uuid_=uuid;
+      runtime_->previous_navigation_uuid=runtime_->navigation_uuid;
+      runtime_->navigation_uuid=starting_uuid_;
+      runtime_->diagnostic("TASK_START_PREPARING","STOPPING_PREVIOUS_TASK");
+      stop_then(0);
+    }
+    if (switching_) {
+      auto status=finish_stop();
+      if (status!=BT::NodeStatus::SUCCESS) {return status;}
+    }
+    auto ready=runtime_->inputs_ready();
+    if (!ready.ok) {
+      runtime_->diagnostic("TASK_START_BLOCKED",ready.code);
+      return BT::NodeStatus::RUNNING;
+    }
+    if (!runtime_->still(runtime_->still_duration)) {
+      runtime_->diagnostic("TASK_START_PREPARING","WAITING_STILLNESS");
+      stop_then(0);
+      return BT::NodeStatus::RUNNING;
+    }
+    geometry_msgs::msg::PoseStamped goal;std::vector<geometry_msgs::msg::PoseStamped> goals;
+    getInput("goal",goal);getInput("goals",goals);
+    runtime_->reset_for_new_task(starting_uuid_);
+    initialized_=true;goal_=goal;goals_=goals;uuid_=starting_uuid_;
+    replan_tried_=false;active_=0;starting_task_=false;starting_uuid_.clear();
+    uuid_wait_=TimePoint{};
+    return BT::NodeStatus::RUNNING;
+  }
   void stop_then(size_t next) {
     runtime_->permit(false);haltChildren();
     if (runtime_->motion && !runtime_->motion->state().terminal) {runtime_->motion->cancel();}
@@ -732,10 +777,10 @@ private:
     return BT::NodeStatus::FAILURE;
   }
   std::shared_ptr<RecoveryRuntime> runtime_;
-  bool initialized_{false},switching_{false},replan_tried_{false};
+  bool initialized_{false},switching_{false},replan_tried_{false},starting_task_{false};
   size_t active_{0},next_{0};
   TimePoint cancel_deadline_{},settle_started_{},uuid_wait_{};
-  std::string uuid_;
+  std::string uuid_,starting_uuid_;
   geometry_msgs::msg::PoseStamped goal_;
   std::vector<geometry_msgs::msg::PoseStamped> goals_;
 };

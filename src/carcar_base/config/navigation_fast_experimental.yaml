@@ -1,0 +1,4 @@
+rosmaster_base:
+  ros__parameters:
+    # NAV-012-R9 实验导航上限；仅由六终端实车入口显式加载，待分档验收。
+    max_linear_x: 0.30

@@ -11,7 +11,7 @@ TEST(SplitHorizon, LoadsConfiguredPluginAndPreservesBrakingHorizon)
   rclcpp::init(0, nullptr);
   {
     auto node=std::make_shared<nav2_util::LifecycleNode>("split_horizon_test");
-    node->declare_parameter("FollowPath.sim_time",1.0);
+    node->declare_parameter("FollowPath.sim_time",1.7);
     node->declare_parameter("FollowPath.rotate_sim_time",0.5);
     pluginlib::ClassLoader<dwb_core::TrajectoryGenerator> loader("dwb_core","dwb_core::TrajectoryGenerator");
     auto generator=loader.createSharedInstance("carcar_navigation/SplitHorizonTrajectoryGenerator");
@@ -25,9 +25,9 @@ TEST(SplitHorizon, LoadsConfiguredPluginAndPreservesBrakingHorizon)
       return rclcpp::Duration(result.time_offsets.back()).seconds();
     };
     EXPECT_NEAR(horizon(still,rotate),0.5,1e-8);
-    EXPECT_NEAR(horizon(forward,rotate),1.0,1e-8);
-    EXPECT_NEAR(horizon(still,forward),1.0,1e-8);
-    EXPECT_NEAR(horizon(still,still),1.0,1e-8);
+    EXPECT_NEAR(horizon(forward,rotate),1.7,1e-8);
+    EXPECT_NEAR(horizon(still,forward),1.7,1e-8);
+    EXPECT_NEAR(horizon(still,still),1.7,1e-8);
     node->set_parameter(rclcpp::Parameter("FollowPath.rotate_sim_time",-0.1));
     auto invalid=loader.createSharedInstance("carcar_navigation/SplitHorizonTrajectoryGenerator");
     EXPECT_THROW(invalid->initialize(node,"FollowPath"),std::invalid_argument);
