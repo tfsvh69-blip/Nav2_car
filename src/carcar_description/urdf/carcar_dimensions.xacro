@@ -13,8 +13,8 @@
   <xacro:property name="overall_width_conservative" value="${2 * wheel_center_y + wheel_width}"/>
   <xacro:property name="overall_height" value="0.230"/>
   <xacro:property name="ground_clearance" value="0.010"/>
-  <!-- 相机镜头面为当前最前端；据整车总长反推最后端 X=-0.105 m，待包络复测时核对。 -->
-  <xacro:property name="overall_front_x" value="${camera_x}"/>
+  <!-- 相机安装外参与车身包络解耦；标定结果变化不得改变已测整车尺寸。 -->
+  <xacro:property name="overall_front_x" value="0.130"/>
   <xacro:property name="overall_rear_x" value="${overall_front_x - overall_length}"/>
 
   <!-- ======================== 厂家机械资料，不是安装外参 ================== -->
@@ -43,11 +43,11 @@
   <xacro:property name="motor_length" value="0.050"/>
   <xacro:property name="chassis_standoff_radius" value="0.003"/>
 
-  <!-- 蓝色顶板为实测值；顶面离地 140 mm，以下换算为相对 base_link 的板中心。 -->
+  <!-- 2026-09-23 用户复核蓝色顶板顶面离地 135 mm；以下换算为板中心。 -->
   <xacro:property name="upper_deck_x" value="0.220"/>
   <xacro:property name="upper_deck_y" value="0.130"/>
   <xacro:property name="upper_deck_thickness" value="0.010"/>
-  <xacro:property name="upper_deck_top_height" value="0.140"/>
+  <xacro:property name="upper_deck_top_height" value="0.135"/>
   <xacro:property name="upper_deck_z"
     value="${upper_deck_top_height - wheel_radius - upper_deck_thickness / 2}"/>
   <xacro:property name="upper_deck_center_x"
@@ -72,12 +72,29 @@
   <xacro:property name="laser_xyz" value="-0.050 0 ${0.217 - wheel_radius}"/>
   <xacro:property name="laser_rpy" value="0 0 0"/>
 
-  <!-- RealSense 左红外中心由用户相对 base_footprint 实测；实机图像确认相机倒装。 -->
-  <xacro:property name="camera_x" value="0.130"/>
-  <xacro:property name="camera_y" value="0.033"/>
-  <xacro:property name="camera_z" value="${0.170 - wheel_radius}"/>
+  <!-- RealSense 安装外参从独立 YAML 读取；默认文件仍是尺量初值，待 TF-005 标定验收。 -->
+  <xacro:property name="camera_x" value="${camera_extrinsics['translation']['x']}"/>
+  <xacro:property name="camera_y" value="${camera_extrinsics['translation']['y']}"/>
+  <xacro:property name="camera_z" value="${camera_extrinsics['translation']['z']}"/>
   <xacro:property name="camera_xyz" value="${camera_x} ${camera_y} ${camera_z}"/>
-  <xacro:property name="camera_rpy" value="${pi} 0 0"/>
+  <xacro:property name="camera_rpy"
+    value="${camera_extrinsics['rpy']['roll']} ${camera_extrinsics['rpy']['pitch']} ${camera_extrinsics['rpy']['yaw']}"/>
+  <!-- 2026-09-23 用户复核粗量输出轴中心=(90,0,145) mm，相对 base_footprint。 -->
+  <xacro:property name="camera_tilt_pivot_x" value="0.090"/>
+  <xacro:property name="camera_tilt_pivot_y" value="0.000"/>
+  <xacro:property name="camera_tilt_pivot_z" value="${0.145 - wheel_radius}"/>
+  <xacro:property name="camera_tilt_pivot_xyz"
+    value="${camera_tilt_pivot_x} ${camera_tilt_pivot_y} ${camera_tilt_pivot_z}"/>
+  <!-- 用户粗量舵机盒质心=(82,-30,145) mm，相对 base_footprint；壳体中心暂按质心放置。 -->
+  <xacro:property name="camera_servo_center_x" value="0.082"/>
+  <xacro:property name="camera_servo_center_y" value="-0.030"/>
+  <xacro:property name="camera_servo_center_z" value="${0.145 - wheel_radius}"/>
+  <xacro:property name="camera_servo_center_in_mount_xyz"
+    value="${camera_servo_center_x - camera_tilt_pivot_x} ${camera_servo_center_y - camera_tilt_pivot_y} ${camera_servo_center_z - camera_tilt_pivot_z}"/>
+  <!-- 视觉近似：照片中的 20KG 级舵机型号和实际包络均待实测。 -->
+  <xacro:property name="camera_servo_body_x" value="0.040"/>
+  <xacro:property name="camera_servo_body_y" value="0.040"/>
+  <xacro:property name="camera_servo_body_z" value="0.020"/>
 
   <!--
     车体碰撞体到蓝色顶板顶面；传感器另有独立 collision。Nav2 footprint 使用整车

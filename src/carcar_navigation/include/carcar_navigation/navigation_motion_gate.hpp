@@ -5,6 +5,7 @@
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 class NavigationMotionGate : public rclcpp::Node {
@@ -21,6 +22,10 @@ public:
     permit_=create_subscription<std_msgs::msg::UInt64>("/navigation/motion_permit",rclcpp::QoS(1),
       [this](std_msgs::msg::UInt64::ConstSharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);gate_.permit(msg->data,now_steady());});
+    perception_allowed_=create_subscription<std_msgs::msg::Bool>(
+      "/navigation/perception_motion_allowed",rclcpp::QoS(1).reliable().transient_local(),
+      [this](std_msgs::msg::Bool::ConstSharedPtr msg) {
+        std::lock_guard<std::mutex> lock(mutex_);gate_.perception_allowed(msg->data);});
     input_=create_subscription<geometry_msgs::msg::Twist>("/cmd_vel_smoothed_raw",rclcpp::QoS(1),
       [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);gate_.command(*msg,now_steady());});
@@ -32,7 +37,8 @@ public:
       if (enabled!=last_enabled_ || now-last_diag_>=1) {
         diagnostic_msgs::msg::DiagnosticStatus s;
         s.name="NavigationMotionGate"; s.hardware_id="software_interlock";
-        s.message=enabled?"OPEN":"CLOSED"; s.level=enabled?0:1;
+        s.message=enabled?"OPEN":(gate_.perception_allowed()?"CLOSED":"PERCEPTION_SWITCH_STOP");
+        s.level=enabled?0:1;
         diag_->publish(s); last_enabled_=enabled; last_diag_=now;
       }
     });
@@ -49,6 +55,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diag_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr input_;
   rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr permit_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr perception_allowed_;
   rclcpp::TimerBase::SharedPtr timer_;
   bool last_enabled_{false}; double last_diag_{0};
 };

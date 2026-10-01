@@ -10,9 +10,9 @@
 
   <xacro:macro name="lidar_standoff" params="name x y">
     <visual name="${name}">
-      <origin xyz="${x} ${y} -0.0545" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.003" length="0.035"/></geometry>
-      <material name="plastic_white"/>
+      <origin xyz="${x} ${y} -0.060" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.003" length="0.034"/></geometry>
+      <material name="body_blue"/>
     </visual>
   </xacro:macro>
 
@@ -40,13 +40,13 @@
     </joint>
     <link name="laser_frame">
       <visual name="lidar_bottom_plate">
-        <origin xyz="0 0 -0.034" rpy="0 0 0"/>
+        <origin xyz="0 0 -0.040" rpy="0 0 0"/>
         <geometry><box size="${lidar_body_x} ${lidar_body_y} 0.006"/></geometry>
         <material name="plastic_black"/>
       </visual>
       <visual name="lidar_fixed_base">
-        <origin xyz="0 0 -0.023" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.044" length="0.016"/></geometry>
+        <origin xyz="0 0 -0.026" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.044" length="0.022"/></geometry>
         <material name="plastic_black"/>
       </visual>
       <visual name="lidar_rotor">
@@ -60,7 +60,8 @@
         <material name="lens_dark"/>
       </visual>
       <visual name="lidar_mount_plate_mesh">
-        <origin xyz="${overall_rear_x + 0.050} 0.03475 -0.07705" rpy="${pi / 2} 0 0"/>
+        <!-- STL 厚 5 mm；底面落在用户量得离地 135 mm 的蓝色顶板顶面。 -->
+        <origin xyz="${overall_rear_x + 0.050} 0.03475 -0.08205" rpy="${pi / 2} 0 0"/>
         <geometry>
           <mesh filename="package://carcar_description/meshes/vehicle/lidar_mount_plate.stl"
             scale="0.001 0.001 0.001"/>
@@ -72,76 +73,139 @@
       <xacro:lidar_standoff name="lidar_rear_left_standoff" x="-0.026" y="0.033"/>
       <xacro:lidar_standoff name="lidar_rear_right_standoff" x="-0.026" y="-0.033"/>
       <collision name="lidar_collision">
-        <origin xyz="0 0 ${overall_height - 0.217 - lidar_body_z / 2}" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.049" length="${lidar_body_z}"/></geometry>
+        <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.049" length="0.056"/></geometry>
       </collision>
       <collision name="lidar_mount_collision">
-        <origin xyz="${overall_rear_x + 0.082 + 0.050} 0 -0.0745"/>
+        <origin xyz="${overall_rear_x + 0.082 + 0.050} 0 -0.0795"/>
         <geometry><box size="0.164 0.0695 0.005"/></geometry>
       </collision>
     </link>
 
-    <!--
-      camera_link 位于左红外相机（Infra1）光学中心，是 RealSense 驱动内部 TF 树的
-      安装根。这里只发布 base_link 到 camera_link；camera_*_optical_frame 由
-      realsense-ros 唯一发布。
-    -->
-    <joint name="camera_joint" type="fixed">
+    <!-- 橙色底板锁件和舵机壳固定在车体；轴心坐标为用户粗量值。 -->
+    <joint name="camera_mount_joint" type="fixed">
       <parent link="base_link"/>
+      <child link="camera_mount_link"/>
+      <origin xyz="${camera_tilt_pivot_xyz}" rpy="0 0 0"/>
+    </joint>
+    <link name="camera_mount_link">
+      <visual name="camera_servo_case">
+        <origin xyz="${camera_servo_center_in_mount_xyz}" rpy="0 0 0"/>
+        <geometry><box size="${camera_servo_body_x} ${camera_servo_body_y} ${camera_servo_body_z}"/></geometry>
+        <material name="servo_case_pink"/>
+      </visual>
+      <visual name="camera_servo_label">
+        <origin xyz="${camera_servo_center_x - camera_tilt_pivot_x} ${camera_servo_center_y - camera_tilt_pivot_y} ${camera_servo_center_z - camera_tilt_pivot_z + camera_servo_body_z / 2 + 0.0005}" rpy="0 0 0"/>
+        <geometry><box size="0.032 0.026 0.001"/></geometry>
+        <material name="servo_label_pink"/>
+      </visual>
+      <visual name="camera_servo_horn">
+        <origin xyz="0 -0.005 0" rpy="${pi / 2} 0 0"/>
+        <geometry><cylinder radius="0.008" length="0.010"/></geometry>
+        <material name="metal_silver"/>
+      </visual>
+      <collision name="camera_servo_collision">
+        <origin xyz="${camera_servo_center_in_mount_xyz}" rpy="0 0 0"/>
+        <geometry><box size="${camera_servo_body_x} ${camera_servo_body_y} ${camera_servo_body_z}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- 两个橙色锁件固定在舵机前后端，双孔沿 Y 横排，平底贴在顶板上。 -->
+    <joint name="camera_servo_left_foot_joint" type="fixed">
+      <parent link="camera_mount_link"/>
+      <child link="camera_servo_left_foot_link"/>
+      <!-- 后端：X=52..62 mm，竖边贴近舵机盒后端 X=62 mm。 -->
+      <origin xyz="-0.038 0.015392723 -0.010" rpy="${pi / 2} 0 0"/>
+    </joint>
+    <link name="camera_servo_left_foot_link">
+      <visual name="camera_servo_left_foot">
+        <geometry><mesh filename="package://carcar_description/meshes/vehicle/camera_servo_left_foot.stl"
+          scale="0.001 0.001 0.001"/></geometry>
+        <material name="mount_orange"/>
+      </visual>
+      <collision name="camera_servo_left_foot_collision">
+        <origin xyz="0.005 0.00995 0.045392723" rpy="0 0 0"/>
+        <geometry><box size="0.010 0.0199 0.020"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="camera_servo_right_foot_joint" type="fixed">
+      <parent link="camera_mount_link"/>
+      <child link="camera_servo_right_foot_link"/>
+      <!-- 前端锁件绕自身中心的车体 Z 轴翻转 180°；外廓仍为 X=102..112、Y=-40..-20 mm。 -->
+      <origin xyz="0.012 0.015392723 -0.010" rpy="${pi / 2} 0 0"/>
+    </joint>
+    <link name="camera_servo_right_foot_link">
+      <visual name="camera_servo_right_foot">
+        <geometry><mesh filename="package://carcar_description/meshes/vehicle/camera_servo_right_foot.stl"
+          scale="0.001 0.001 0.001"/></geometry>
+        <material name="mount_orange"/>
+      </visual>
+      <collision name="camera_servo_right_foot_collision">
+        <origin xyz="0.005 0.00995 0.045392723" rpy="0 0 0"/>
+        <geometry><box size="0.010 0.0199 0.020"/></geometry>
+      </collision>
+    </link>
+
+    <!-- 正式导航固定平视；可动模式仅用于静止命令估计调试，不代表角度反馈。 -->
+    <xacro:if value="$(arg camera_tilt_dynamic)">
+      <joint name="camera_tilt_joint" type="revolute">
+        <parent link="camera_mount_link"/>
+        <child link="camera_tilt_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="${(85.0 - 140.5) * pi / 180.0}"
+          upper="${(160.0 - 140.5) * pi / 180.0}" effort="1.0" velocity="1.0"/>
+      </joint>
+    </xacro:if>
+    <xacro:unless value="$(arg camera_tilt_dynamic)">
+      <joint name="camera_tilt_joint" type="fixed">
+        <parent link="camera_mount_link"/>
+        <child link="camera_tilt_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </joint>
+    </xacro:unless>
+    <link name="camera_tilt_link">
+      <visual name="camera_tilt_bracket">
+        <!-- STL 小 X 端为舵机轴孔（约 9,35,8.5 mm），大 X 端为相机安装面。 -->
+        <origin xyz="-0.009 -0.035 -0.0085" rpy="0 0 0"/>
+        <geometry><mesh filename="package://carcar_description/meshes/vehicle/camera_tilt_bracket.stl"
+          scale="0.001 0.001 0.001"/></geometry>
+        <material name="plastic_black"/>
+      </visual>
+      <collision name="camera_tilt_bracket_collision">
+        <origin xyz="0.0115 0 0.005" rpy="0 0 0"/>
+        <geometry><box size="0.043 0.072 0.030"/></geometry>
+      </collision>
+    </link>
+
+    <!-- camera_link 是 RealSense 左红外光心；候选 YAML 保持中位时 base_link 外参语义。 -->
+    <joint name="camera_joint" type="fixed">
+      <parent link="camera_tilt_link"/>
       <child link="camera_link"/>
-      <origin xyz="${camera_xyz}" rpy="${camera_rpy}"/>
+      <origin xyz="${camera_x - camera_tilt_pivot_x} ${camera_y - camera_tilt_pivot_y} ${camera_z - camera_tilt_pivot_z}"
+        rpy="${camera_rpy}"/>
     </joint>
     <link name="camera_link">
       <visual name="camera_silver_shell">
-        <origin xyz="${-camera_body_x / 2} -0.025 0" rpy="0 0 0"/>
+        <origin xyz="${-camera_body_x / 2} -0.0175 0" rpy="0 0 0"/>
         <geometry><box size="${camera_body_x} ${camera_body_y} ${camera_body_z}"/></geometry>
         <material name="plastic_white"/>
       </visual>
       <visual name="camera_front_mask">
-        <origin xyz="-0.0005 -0.025 0" rpy="0 0 0"/>
+        <origin xyz="-0.0005 -0.0175 0" rpy="0 0 0"/>
         <geometry><box size="0.001 0.082 0.018"/></geometry>
         <material name="plastic_black"/>
       </visual>
+      <!-- 官方 D435 正面左到右：右红外、投射器、左红外、RGB。左红外为深度原点。 -->
       <xacro:camera_aperture name="camera_left_ir" y="0" radius="0.006" material="lens_dark"/>
-      <xacro:camera_aperture name="camera_projector" y="-0.017" radius="0.005" material="lens_blue"/>
-      <xacro:camera_aperture name="camera_rgb" y="-0.033" radius="0.006" material="lens_blue"/>
+      <xacro:camera_aperture name="camera_projector" y="-0.029" radius="0.008" material="lens_blue"/>
+      <xacro:camera_aperture name="camera_rgb" y="0.015" radius="0.005" material="lens_blue"/>
       <xacro:camera_aperture name="camera_right_ir" y="-0.050" radius="0.006" material="lens_dark"/>
 
       <collision name="camera_collision">
-        <origin xyz="${-camera_body_x / 2} -0.025 0" rpy="0 0 0"/>
+        <origin xyz="${-camera_body_x / 2} -0.0175 0" rpy="0 0 0"/>
         <geometry><box size="${camera_body_x} ${camera_body_y} ${camera_body_z}"/></geometry>
-      </collision>
-    </link>
-
-    <!-- 支架固定在车体上，不随 camera_link 的 180° 倒装坐标旋转。 -->
-    <joint name="camera_mount_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="camera_mount_link"/>
-      <origin xyz="${camera_xyz}" rpy="0 0 0"/>
-    </joint>
-    <link name="camera_mount_link">
-
-      <visual name="camera_lower_mount_mesh">
-        <!-- 原 X 为横向、Y 为高度、Z 为纵向；底面落在实测顶板上。 -->
-        <origin xyz="-0.105 -0.0675 -0.030" rpy="${pi / 2} 0 ${pi / 2}"/>
-        <geometry>
-          <mesh filename="package://carcar_description/meshes/vehicle/camera_lower_mount.stl"
-            scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="body_blue"/>
-      </visual>
-      <visual name="camera_direct_mount_mesh">
-        <!-- 封闭安装端朝相机后壳，长臂沿 -X 伸向底座。 -->
-        <origin xyz="-0.025 -0.066571 -0.026049" rpy="${pi / 2} 0 ${pi}"/>
-        <geometry>
-          <mesh filename="package://carcar_description/meshes/vehicle/camera_direct_mount.stl"
-            scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="body_blue"/>
-      </visual>
-      <collision name="camera_mount_collision">
-        <origin xyz="-0.0675 -0.033 0"/>
-        <geometry><box size="0.085 0.069 0.060"/></geometry>
       </collision>
     </link>
   </xacro:macro>

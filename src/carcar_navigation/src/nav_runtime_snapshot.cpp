@@ -53,12 +53,14 @@ int main(int argc, char ** argv)
   std::cout << "# This tool is read-only; UNAVAILABLE means the node/service was not active.\n";
 
   for (const auto & target : std::vector<Target>{
+      {"/rosmaster_base", {"max_linear_x", "max_linear_y", "command_timeout"}},
       {"/amcl", {"update_min_d", "update_min_a", "recovery_alpha_fast", "recovery_alpha_slow",
         "min_particles", "max_particles", "laser_max_range"}},
       {"/controller_server", {"failure_tolerance", "progress_checker_plugin",
         "progress_checker.required_movement_radius", "progress_checker.required_movement_angle",
         "progress_checker.movement_time_allowance", "FollowPath.min_vel_x", "FollowPath.max_vel_x",
-        "FollowPath.sim_time", "FollowPath.critics", "FollowPath.publish_evaluation", "odom_topic"}},
+        "FollowPath.sim_time", "FollowPath.critics", "FollowPath.publish_evaluation",
+        "FollowPath.max_speed_xy", "FollowPath.ObstacleFootprint.scale", "odom_topic"}},
       {"/planner_server", {"GridBased.plugin", "GridBased.tolerance", "GridBased.allow_unknown",
         "GridBased.max_planning_time", "GridBased.lattice_filepath",
         "GridBased.allow_reverse_expansion", "GridBased.smooth_path"}},
@@ -73,7 +75,8 @@ int main(int argc, char ** argv)
       {"/behavior_server", {"cycle_frequency", "costmap_topic", "footprint_topic", "transform_tolerance",
         "simulate_ahead_time", "max_rotational_vel", "odom_topic"}},
       {"/bt_navigator", {"bt_loop_duration", "default_server_timeout", "default_nav_to_pose_bt_xml",
-        "default_nav_through_poses_bt_xml", "plugin_lib_names", "odom_topic"}}})
+        "default_nav_through_poses_bt_xml", "plugin_lib_names", "odom_topic",
+        "recovery.max_data_age", "recovery.input_wait_timeout", "recovery.input_healthy_duration"}}})
   {
     print_target(node, target);
   }

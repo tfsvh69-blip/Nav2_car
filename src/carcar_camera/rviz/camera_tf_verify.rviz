@@ -1,0 +1,357 @@
+# 静止粗校验：地面零高度、原始点云与雷达同面；RGB 不用于证明安装 TF。
+Panels:
+- Class: rviz_common/Displays
+  Help Height: 70
+  Name: Displays
+  Property Tree Widget:
+    Expanded:
+    - /Global Options1
+    - /Raw Depth Height1
+    - /Raw Depth Height1/Topic1
+    Splitter Ratio: 0.5
+  Tree Height: 408
+- Class: rviz_common/Views
+  Expanded:
+  - /Current View1
+  Name: Views
+  Splitter Ratio: 0.5
+Visualization Manager:
+  Class: ''
+  Displays:
+  - Alpha: 0.5
+    Cell Size: 0.02
+    Class: rviz_default_plugins/Grid
+    Color: 130; 130; 135
+    Enabled: true
+    Line Style:
+      Line Width: 0.029999999329447746
+      Value: Lines
+    Name: Ground Grid
+    Normal Cell Count: 0
+    Offset:
+      X: 0
+      Y: 0
+      Z: 0
+    Plane: XY
+    Plane Cell Count: 100
+    Reference Frame: <Fixed Frame>
+    Value: true
+  - Alpha: 0.55
+    Class: rviz_default_plugins/RobotModel
+    Collision Enabled: false
+    Description File: ''
+    Description Source: Topic
+    Description Topic:
+      Depth: 5
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /robot_description
+    Enabled: true
+    Links:
+      All Links Enabled: true
+      Expand Joint Details: false
+      Expand Link Details: false
+      Expand Tree: false
+      Link Tree Style: Links in Alphabetic Order
+      base_footprint:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+      base_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      camera_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      camera_mount_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      camera_tilt_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      compute_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      front_left_wheel_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      front_right_wheel_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      imu_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      laser_frame:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      rear_left_wheel_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      rear_right_wheel_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+      upper_body_link:
+        Alpha: 1
+        Show Axes: false
+        Show Trail: false
+        Value: true
+    Mass Properties:
+      Inertia: false
+      Mass: false
+    Name: Stationary Car Model
+    TF Prefix: ''
+    Update Interval: 0
+    Value: true
+    Visual Enabled: true
+  - Class: rviz_default_plugins/TF
+    Enabled: true
+    Frame Timeout: 15
+    Frames:
+      All Enabled: false
+      base_footprint:
+        Value: true
+      base_link:
+        Value: true
+      camera_mount_link:
+        Value: true
+      camera_tilt_link:
+        Value: true
+      camera_link:
+        Value: true
+      camera_depth_optical_frame:
+        Value: true
+      camera_color_optical_frame:
+        Value: true
+      laser_frame:
+        Value: true
+    Marker Scale: 0.07
+    Name: Camera TF
+    Show Arrows: false
+    Show Axes: true
+    Show Names: false
+    Tree:
+      base_footprint:
+        base_link:
+          camera_mount_link:
+            camera_tilt_link:
+              camera_link:
+                camera_color_frame:
+                  camera_color_optical_frame: {}
+                camera_depth_frame:
+                  camera_depth_optical_frame: {}
+          compute_link: {}
+          front_left_wheel_link: {}
+          front_right_wheel_link: {}
+          imu_link: {}
+          laser_frame: {}
+          rear_left_wheel_link: {}
+          rear_right_wheel_link: {}
+          upper_body_link: {}
+    Update Interval: 0
+    Value: true
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Raw Depth Height
+    Enabled: true
+    Value: true
+    Alpha: 0.75
+    Topic:
+      Depth: 1
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Reliability Policy: Best Effort
+      Value: /camera/depth/points
+      Filter size: 5
+    Position Transformer: XYZ
+    Color Transformer: AxisColor
+    Axis: Z
+    Autocompute Value Bounds:
+      Value: false
+      Min Value: -0.05
+      Max Value: 0.35
+    Use Fixed Frame: true
+    Use rainbow: true
+    Invert Rainbow: false
+    Decay Time: 0
+    Style: Points
+    Size (Pixels): 2
+    Size (m): 0.003
+    Selectable: true
+  - Alpha: 1
+    Autocompute Intensity Bounds: true
+    Autocompute Value Bounds:
+      Max Value: 10
+      Min Value: -10
+      Value: true
+    Axis: Z
+    Channel Name: intensity
+    Class: rviz_default_plugins/LaserScan
+    Color: 255; 80; 80
+    Color Transformer: FlatColor
+    Decay Time: 0
+    Enabled: true
+    Invert Rainbow: false
+    Max Color: 255; 255; 255
+    Max Intensity: 47
+    Min Color: 0; 0; 0
+    Min Intensity: 47
+    Name: Laser Reference 0.217 m
+    Position Transformer: XYZ
+    Selectable: true
+    Size (Pixels): 3
+    Size (m): 0.006
+    Style: Flat Squares
+    Topic:
+      Depth: 5
+      Durability Policy: Volatile
+      Filter size: 10
+      History Policy: Keep Last
+      Reliability Policy: Best Effort
+      Value: /scan
+    Use Fixed Frame: true
+    Use rainbow: true
+    Value: true
+  - Class: rviz_default_plugins/Image
+    Name: RGB Scene Reference
+    Enabled: true
+    Value: true
+    Topic:
+      Depth: 1
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Reliability Policy: Best Effort
+      Value: /camera/camera/color/image_raw
+    Transport Hint: raw
+    Normalize Range: true
+    Queue Size: 2
+  Enabled: true
+  Global Options:
+    Background Color: 35; 35; 40
+    Fixed Frame: base_footprint
+    Frame Rate: 10
+  Name: root
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/Measure
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.7
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0.8
+        Y: 0
+        Z: 0.12
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.45
+      Target Frame: base_footprint
+      Value: Orbit (rviz)
+      Yaw: 3.8
+    Saved:
+    - Class: rviz_default_plugins/Orbit
+      Distance: 2.7
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0.8
+        Y: 0
+        Z: 0.12
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Top XY
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 1.5707
+      Target Frame: base_footprint
+      Value: Orbit (rviz)
+      Yaw: -1.5708
+    - Class: rviz_default_plugins/Orbit
+      Distance: 2.7
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0.8
+        Y: 0
+        Z: 0.12
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Side XZ
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0
+      Target Frame: base_footprint
+      Value: Orbit (rviz)
+      Yaw: 1.5708
+    - Class: rviz_default_plugins/Orbit
+      Distance: 2.7
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0.8
+        Y: 0
+        Z: 0.12
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Front YZ
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0
+      Target Frame: base_footprint
+      Value: Orbit (rviz)
+      Yaw: 0
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 800
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Views:
+    collapsed: false
+  Width: 1280
+  X: 30
+  Y: 30

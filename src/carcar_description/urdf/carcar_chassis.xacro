@@ -109,7 +109,7 @@
     <link name="upper_body_link">
       <visual name="upper_structure_mesh">
         <origin
-          xyz="${overall_rear_x} 0.065 ${ground_clearance - wheel_radius - upper_deck_z}"
+          xyz="${overall_rear_x} 0.065 ${upper_deck_top_height - wheel_radius - upper_deck_z - 0.130}"
           rpy="${pi / 2} 0 0"/>
         <geometry>
           <mesh filename="package://carcar_description/meshes/vehicle/carcar_upper_structure.stl"

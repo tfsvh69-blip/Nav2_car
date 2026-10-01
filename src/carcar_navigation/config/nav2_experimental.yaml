@@ -15,6 +15,9 @@ bt_navigator:
     # 停车观察期间旧路径持续受阻时，只允许一次回到规划分支生成全新路径；
     # 第二轮仍受阻则失败，避免拿旧路径直接超时，也避免无限重规划循环。
     recovery.max_observe_replans: 1
+    # 数据失效先停车等待；稳定恢复后重规划，不能自动倒车。
+    recovery.input_wait_timeout: 3.0
+    recovery.input_healthy_duration: 0.4
 
 amcl:
   ros__parameters:

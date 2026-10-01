@@ -58,6 +58,10 @@ std::vector<std::uint8_t> make_motion_command(
   double angular_z);
 std::vector<std::uint8_t> make_zero_motion_command(std::uint8_t car_type);
 std::vector<std::uint8_t> make_beep_command(std::uint16_t on_time_ms);
+std::uint8_t pwm_command_angle_from_physical(double physical_angle_degrees);
+std::uint8_t pwm_command_angle_from_physical(int physical_angle_degrees);
+std::vector<std::uint8_t> make_pwm_servo_command(
+  std::uint8_t servo_id, std::uint8_t command_angle_degrees);
 std::vector<std::uint8_t> make_rgb_command(
   std::uint8_t led_id, std::uint8_t red, std::uint8_t green,
   std::uint8_t blue);

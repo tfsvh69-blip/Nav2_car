@@ -1,0 +1,8 @@
+<launch>
+  <!-- DRV-005: S1 PWM servo; preview is the safe default. -->
+  <arg name="real_hardware" default="false"/>
+  <node pkg="carcar_hardware" exec="rosmaster_pwm_servo_sweep"
+        name="rosmaster_pwm_servo_sweep" output="screen">
+    <param name="real_hardware" value="$(var real_hardware)"/>
+  </node>
+</launch>

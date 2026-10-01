@@ -31,6 +31,7 @@ constexpr std::uint8_t kReportDevice = 0xFB;
 constexpr std::uint8_t kChecksumComplement = 5;
 constexpr std::uint8_t kFunctionAutoReport = 0x01;
 constexpr std::uint8_t kFunctionBeep = 0x02;
+constexpr std::uint8_t kFunctionPwmServo = 0x03;
 constexpr std::uint8_t kFunctionRgb = 0x05;
 constexpr std::uint8_t kFunctionRgbEffect = 0x06;
 constexpr std::uint8_t kFunctionReportMpuRaw = 0x0B;
@@ -235,6 +236,34 @@ std::vector<std::uint8_t> make_beep_command(std::uint16_t on_time_ms)
   const auto high = static_cast<std::uint8_t>((on_time_ms >> 8U) & 0xFFU);
   return finish_command(
     {kCommandHead, kCommandDevice, 0U, kFunctionBeep, low, high});
+}
+
+std::uint8_t pwm_command_angle_from_physical(double physical_angle_degrees)
+{
+  if (!std::isfinite(physical_angle_degrees)) {
+    throw std::invalid_argument("physical servo angle must be finite");
+  }
+  if (physical_angle_degrees < 0 || physical_angle_degrees > 270) {
+    throw std::out_of_range("physical servo angle must be within 0..270 degrees");
+  }
+  // This 270-degree servo uses the same pulse range as a standard 180-degree servo.
+  return static_cast<std::uint8_t>(std::lround(physical_angle_degrees * 180.0 / 270.0));
+}
+
+std::uint8_t pwm_command_angle_from_physical(int physical_angle_degrees)
+{
+  return pwm_command_angle_from_physical(static_cast<double>(physical_angle_degrees));
+}
+
+std::vector<std::uint8_t> make_pwm_servo_command(
+  std::uint8_t servo_id, std::uint8_t command_angle_degrees)
+{
+  if (servo_id < 1U || servo_id > 4U || command_angle_degrees > 180U) {
+    throw std::out_of_range("PWM servo ID or command angle is out of range");
+  }
+  return finish_command(
+    {kCommandHead, kCommandDevice, 0U, kFunctionPwmServo,
+      servo_id, command_angle_degrees});
 }
 
 std::vector<std::uint8_t> make_rgb_command(

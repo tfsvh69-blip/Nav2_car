@@ -2,6 +2,8 @@
   <!-- NAV-008 实验导航入口：稳定 navigation.launch.xml 保持不变。 -->
   <arg name="base_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
   <arg name="experiment_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
+  <arg name="sensor_params_file" default="$(var experiment_params_file)"
+    description="Optional final sensor/costmap overlay; default repeats the existing experiment file"/>
   <arg name="use_sim_time" default="false"/>
   <arg name="odom_topic" default="/wheel/odometry" description="Navigation odometry source"/>
   <arg name="planner_params_file" default="$(var experiment_params_file)" description="Optional final planner overlay"/>
@@ -25,6 +27,7 @@
     <remap from="cmd_vel" to="/cmd_vel_nav"/>
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
+    <param from="$(var sensor_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
@@ -33,6 +36,7 @@
     <remap from="cmd_vel_smoothed" to="/cmd_vel_smoothed_raw"/>
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
+    <param from="$(var sensor_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
@@ -45,6 +49,7 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param from="$(var planner_params_file)"/>
+    <param from="$(var sensor_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
   <!-- 所有恢复动作重映射到平滑器输入，避免绕过零速超时与速度限制。 -->
@@ -74,6 +79,7 @@
     <param name="base_params_file" value="$(var base_params_file)"/>
     <param name="experiment_params_file" value="$(var experiment_params_file)"/>
     <param name="planner_params_file" value="$(var planner_params_file)"/>
+    <param name="sensor_params_file" value="$(var sensor_params_file)"/>
     <param name="default_bt_xml" value="$(var default_bt_xml)"/>
     <param name="default_nav_through_poses_bt_xml" value="$(var default_nav_through_poses_bt_xml)"/>
     <param name="record_raw_bag" value="$(var record_raw_bag)"/>

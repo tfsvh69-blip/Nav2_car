@@ -4,6 +4,12 @@
     坐标遵循 REP-103：X 向车头、Y 向车体左侧、Z 向上，长度单位为 m。
     本文件只负责组装；已确认值和待实测值集中维护在 carcar_dimensions.xacro。
   -->
+  <xacro:arg name="camera_extrinsics_file"
+    default="$(find carcar_description)/config/camera_extrinsics.yaml"/>
+  <!-- 可动关节仅用于静止调试；当前 /joint_states 相机角为命令估计，无反馈。 -->
+  <xacro:arg name="camera_tilt_dynamic" default="false"/>
+  <xacro:property name="camera_extrinsics"
+    value="${xacro.load_yaml('$(arg camera_extrinsics_file)')}"/>
   <xacro:include filename="carcar_dimensions.xacro"/>
   <xacro:include filename="carcar_materials.xacro"/>
   <xacro:include filename="carcar_chassis.xacro"/>

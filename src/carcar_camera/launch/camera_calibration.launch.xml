@@ -1,0 +1,16 @@
+<launch>
+  <!-- 仅静止外参标定使用；不得与导航相机入口同时启动。 -->
+  <arg name="driver_params_file"
+    default="$(find-pkg-share carcar_camera)/config/d435_calibration.yaml"/>
+  <arg name="calibration_params_file"
+    default="$(find-pkg-share carcar_camera)/config/charuco_7x5.yaml"/>
+
+  <node pkg="realsense2_camera" exec="realsense2_camera_node"
+    namespace="camera" name="camera" output="screen" respawn="true" respawn_delay="5.0">
+    <param from="$(var driver_params_file)"/>
+  </node>
+  <node pkg="carcar_camera" exec="charuco_extrinsic_calibrator"
+    name="charuco_extrinsic_calibrator" output="screen">
+    <param from="$(var calibration_params_file)"/>
+  </node>
+</launch>

@@ -21,12 +21,19 @@ public:
     for (double value : values) {if (!std::isfinite(value)) {have_command_=false; return;}}
     command_=command; command_time_=now; have_command_=true;
   }
+  void perception_allowed(bool allowed) {
+    perception_allowed_=allowed;
+    if (!allowed) {have_command_=false;}
+  }
   geometry_msgs::msg::Twist output(double now) {
     expire(now);
-    if (token_ && have_command_ && now-command_time_<=command_age_) {return command_;}
+    if (perception_allowed_ && token_ && have_command_ && now-command_time_<=command_age_) {
+      return command_;
+    }
     return geometry_msgs::msg::Twist{};
   }
-  bool enabled(double now) {expire(now); return token_!=0;}
+  bool enabled(double now) {expire(now); return perception_allowed_ && token_!=0;}
+  bool perception_allowed() const {return perception_allowed_;}
 private:
   void expire(double now) {
     if (now-permit_time_>lease_ || now<permit_time_) {token_=0; have_command_=false;}
@@ -34,6 +41,7 @@ private:
   uint64_t token_{0};
   double permit_time_{0},command_time_{0},lease_,command_age_;
   bool have_command_{false};
+  bool perception_allowed_{true};
   geometry_msgs::msg::Twist command_;
 };
 }  // namespace carcar_navigation

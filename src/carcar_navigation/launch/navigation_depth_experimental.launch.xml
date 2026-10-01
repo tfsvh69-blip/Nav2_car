@@ -1,0 +1,25 @@
+<launch>
+  <!-- NAV-015：保留现有实验导航参数，并叠加默认关闭、健康后启用的 D435 VoxelLayer。 -->
+  <arg name="base_params_file"
+    default="$(find-pkg-share carcar_navigation)/config/nav2.yaml"/>
+  <arg name="experiment_params_file"
+    default="$(find-pkg-share carcar_navigation)/config/nav2_experimental.yaml"/>
+  <arg name="depth_params_file"
+    default="$(find-pkg-share carcar_navigation)/config/nav2_depth_experimental.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="odom_topic" default="/wheel/odometry"/>
+  <!-- 默认保持深度层关闭；固定 140.5° 外参实测通过后再显式启用。 -->
+  <arg name="start_supervisor" default="false"/>
+
+  <include file="$(find-pkg-share carcar_camera)/launch/camera_navigation.launch.xml">
+    <arg name="start_supervisor" value="$(var start_supervisor)"/>
+  </include>
+  <include file="$(find-pkg-share carcar_navigation)/launch/navigation_experimental.launch.xml">
+    <arg name="base_params_file" value="$(var base_params_file)"/>
+    <arg name="experiment_params_file" value="$(var experiment_params_file)"/>
+    <arg name="planner_params_file" value="$(var experiment_params_file)"/>
+    <arg name="sensor_params_file" value="$(var depth_params_file)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="odom_topic" value="$(var odom_topic)"/>
+  </include>
+</launch>

@@ -359,11 +359,17 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
   settle_timeout=parameter(node,"recovery.settle_timeout",1);
   still_duration=parameter(node,"recovery.still_duration",0.4);
   data_age=parameter(node,"recovery.max_data_age",0.5);
+  input_wait_timeout=parameter(node,"recovery.input_wait_timeout",3.0);
+  input_healthy_duration=parameter(node,"recovery.input_healthy_duration",0.4);
   recovery_timeout=parameter(node,"recovery.total_timeout",90);
   backup_cooldown=parameter(node,"recovery.backup_cooldown",12);
   auto observe_replans=parameter(node,"recovery.max_observe_replans",1);
-  for (double v : {response_timeout,cancel_timeout,settle_timeout,still_duration,data_age,recovery_timeout}) {
+  for (double v : {response_timeout,cancel_timeout,settle_timeout,still_duration,data_age,
+      recovery_timeout,input_wait_timeout,input_healthy_duration}) {
     if (!std::isfinite(v) || v<=0) {throw std::invalid_argument("恢复时限必须为正有限数");}
+  }
+  if (input_healthy_duration>=input_wait_timeout) {
+    throw std::invalid_argument("输入连续健康时长必须小于等待上限");
   }
   if (!std::isfinite(backup_cooldown) || backup_cooldown<0) {
     throw std::invalid_argument("倒车冷却必须为非负有限数");
@@ -479,29 +485,64 @@ bool RecoveryRuntime::pose(geometry_msgs::msg::PoseStamped & result,const std::s
   } catch (const tf2::TransformException &) {return false;}
 }
 SafetyResult RecoveryRuntime::inputs_ready() {
-  if (!healthy()) {return {false,"LOCALIZATION_UNHEALTHY","定位门控未就绪或过期"};}
-  if (!odom_fresh()) {return {false,"ODOM_EXPIRED","轮式里程计缺失或过期"};}
+  auto failure=[&](const std::string & code,const std::string & topic,
+      const std::string & detail,double stamp_age=-1,double receive_age=-1) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    failed_input_topic_=topic;failed_input_reason_=code;
+    failed_stamp_age_=stamp_age;failed_receive_age_=receive_age;
+    return SafetyResult{false,code,detail};
+  };
+  auto stale=[&](const auto & msg,TimePoint received) {
+    return !msg || !fresh_stamp(msg->header.stamp,node->now(),received,data_age);
+  };
+  auto age=[&](const auto & msg) {
+    return msg?(node->now()-rclcpp::Time(msg->header.stamp)).seconds():-1.0;
+  };
+  auto received_age=[](TimePoint received) {return received==TimePoint{}?-1.0:seconds(received);};
+  if (!healthy()) {
+    const auto health=localization_ready();
+    return failure("LOCALIZATION_UNHEALTHY","/localization_monitor/ready",
+      "定位门控未就绪或过期",-1,received_age(health.received_at));
+  }
+  nav_msgs::msg::Odometry::ConstSharedPtr odom_msg;TimePoint odom_received;
+  {std::lock_guard<std::mutex> lock(mutex_);odom_msg=odom_;odom_received=odom_received_;}
+  if (stale(odom_msg,odom_received)) {
+    return failure("ODOM_EXPIRED",odom_topic,"轮式里程计缺失或过期",
+      age(odom_msg),received_age(odom_received));
+  }
   auto d=sensors()->snapshot();
-  if (!d.scan || !d.costmap || !d.footprint) {return {false,"DATA_MISSING","恢复输入尚未齐备"};}
-  if (!fresh_stamp(d.scan->header.stamp,node->now(),d.scan_received,data_age) ||
-    !fresh_stamp(d.costmap->header.stamp,node->now(),d.costmap_received,data_age) ||
-    !fresh_stamp(d.footprint->header.stamp,node->now(),d.footprint_received,data_age)) {
-    return {false,"DATA_EXPIRED","恢复输入已过期"};
+  for (const auto & result : {
+      std::make_pair(stale(d.scan,d.scan_received),std::string("/scan")),
+      std::make_pair(stale(d.costmap,d.costmap_received),std::string("/local_costmap/costmap_raw")),
+      std::make_pair(stale(d.footprint,d.footprint_received),std::string("/local_costmap/published_footprint"))}) {
+    if (!result.first) {continue;}
+    bool missing=false;double stamp_age=-1,receive_age=-1;
+    if (result.second=="/scan") {
+      missing=!d.scan;stamp_age=age(d.scan);receive_age=received_age(d.scan_received);
+    } else if (result.second=="/local_costmap/costmap_raw") {
+      missing=!d.costmap;stamp_age=age(d.costmap);receive_age=received_age(d.costmap_received);
+    } else {
+      missing=!d.footprint;stamp_age=age(d.footprint);receive_age=received_age(d.footprint_received);
+    }
+    return failure(missing?"DATA_MISSING":"DATA_EXPIRED",result.second,
+      missing?"恢复输入尚未齐备":"恢复输入已过期",stamp_age,receive_age);
   }
   geometry_msgs::msg::PoseStamped p;
-  if (!pose(p)) {return {false,"TF_UNAVAILABLE","导航车体 TF 不可用"};}
+  if (!pose(p)) {return failure("TF_UNAVAILABLE","/tf","导航车体 TF 不可用");}
   std::vector<geometry_msgs::msg::Point> points;
   if (!scan_points_in_base(*d.scan,tf,base_frame,points) ||
     d.footprint->polygon.points.size()<3 || d.costmap->metadata.resolution<=0 ||
     size_t(d.costmap->metadata.size_x)*d.costmap->metadata.size_y!=d.costmap->data.size() ||
     d.costmap->data.empty()) {
-    return {false,"DATA_INVALID","扫描 TF、包络或地图格式无效"};
+    return failure("DATA_INVALID","/scan,/local_costmap/costmap_raw,/local_costmap/published_footprint",
+      "扫描 TF、包络或地图格式无效");
   }
   try {
     tf.lookupTransform(base_frame,d.footprint->header.frame_id,
       tf2_ros::fromRclcpp(rclcpp::Time(d.footprint->header.stamp)));
     tf.lookupTransform(d.costmap->header.frame_id,base_frame,tf2::TimePointZero);
-  } catch (const tf2::TransformException &) {return {false,"TF_UNAVAILABLE","包络或地图 TF 不可用"};}
+  } catch (const tf2::TransformException &) {return failure("TF_UNAVAILABLE","/tf","包络或地图 TF 不可用");}
+  // 保留最近一次失败输入证据，健康恢复后仍能解释本次停车。
   return {true,"NONE","定位、传感器与里程计就绪"};
 }
 void RecoveryRuntime::permit(bool allowed) {
@@ -522,6 +563,9 @@ void RecoveryRuntime::diagnostic(const std::string & phase,const std::string & r
     snap.recovery_elapsed=recovery_active?seconds(recovery_started):0;
     snap.recovery_deadline=recovery_timeout; snap.last_bt_tick=last_bt_tick_;
     snap.motion=motion;
+    snap.failed_topic=failed_input_topic_;
+    snap.failed_reason=failed_input_reason_;
+    snap.stamp_age=failed_stamp_age_;snap.receive_age=failed_receive_age_;
     diag_snapshot_=snap;
   }
   emit_recovery_status(std::move(snap));
@@ -544,6 +588,15 @@ void RecoveryRuntime::emit_recovery_status(DiagSnapshot snap) {
     diagnostic_msgs::msg::KeyValue kv; kv.key=key; kv.value=value; msg.values.push_back(kv);
   };
   add("phase",snap.phase); add("reason_code",snap.reason); add("epoch",std::to_string(snap.epoch));
+  add("failed_input_topic",snap.failed_topic);
+  add("input_trigger_reason",snap.failed_reason);
+  add("failed_stamp_age_s",std::to_string(snap.stamp_age));
+  add("failed_receive_age_s",std::to_string(snap.receive_age));
+  add("input_max_age_s",std::to_string(data_age));
+  add("input_wait_timeout_s",std::to_string(input_wait_timeout));
+  add("input_healthy_duration_s",std::to_string(input_healthy_duration));
+  add("recovery_destination",snap.phase=="INPUT_WAIT"?"WAIT_FOR_INPUT":
+    (snap.phase=="INPUT_RECOVERED"?"REPLAN":snap.phase));
   add("navigation_uuid",snap.navigation_uuid);add("previous_navigation_uuid",snap.previous_navigation_uuid);
   add("backup_reserved",std::to_string(snap.backup_used));
   add("observe_replans_used",std::to_string(snap.observe_replans_used));
@@ -569,6 +622,11 @@ void RecoveryRuntime::fail(const std::string & reason) {
 }
 void RecoveryRuntime::reset_for_new_task(const std::string & uuid) {
   permit(false);
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    failed_input_topic_.clear();failed_input_reason_.clear();
+    failed_stamp_age_=failed_receive_age_=-1;
+  }
   if (navigation_uuid!=uuid) {
     previous_navigation_uuid=navigation_uuid;
     navigation_uuid=uuid;

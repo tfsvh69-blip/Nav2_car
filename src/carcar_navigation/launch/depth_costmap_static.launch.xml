@@ -1,0 +1,18 @@
+<launch>
+  <!-- NAV-015-P2A：复用已运行相机/模型，只启动静止独立 Costmap，不启动运动服务器。 -->
+  <arg name="params_file"
+    default="$(find-pkg-share carcar_navigation)/config/depth_costmap_static.yaml"/>
+  <!-- 本项目独立入口显式使用 /costmap/costmap，与体素转换器一致。 -->
+  <node pkg="carcar_navigation" exec="depth_costmap_static" name="costmap" output="screen">
+    <param from="$(var params_file)"/>
+  </node>
+  <node pkg="nav2_costmap_2d" exec="nav2_costmap_2d_cloud"
+    name="costmap_2d_cloud" namespace="costmap" output="screen"/>
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager"
+    name="lifecycle_manager_depth_test" namespace="costmap" output="screen">
+    <param name="autostart" value="true"/>
+    <param name="node_names" value="['costmap']"/>
+    <!-- 独立 Costmap 未创建父导航服务器的 bond；静止测试只管理状态切换。 -->
+    <param name="bond_timeout" value="0.0"/>
+  </node>
+</launch>

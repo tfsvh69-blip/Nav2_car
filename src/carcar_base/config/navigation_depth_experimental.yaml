@@ -1,0 +1,4 @@
+rosmaster_base:
+  ros__parameters:
+    # NAV-015 首轮 D435 动态验收硬上限；通过停车距离和定位验收前不得提高。
+    max_linear_x: 0.10

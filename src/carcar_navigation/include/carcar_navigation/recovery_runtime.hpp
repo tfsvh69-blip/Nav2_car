@@ -255,6 +255,7 @@ public:
   bool last_backup_ok_{true};
   double response_timeout{1}, cancel_timeout{1}, settle_timeout{1}, still_duration{0.4};
   double data_age{0.5}, recovery_timeout{90}, backup_cooldown{12};
+  double input_wait_timeout{3.0}, input_healthy_duration{0.4};
   unsigned max_observe_replans{1};
 private:
   struct DiagSnapshot {
@@ -266,6 +267,8 @@ private:
     unsigned observe_replans_used{0}, max_observe_replans{0};
     TimePoint last_bt_tick{};
     std::shared_ptr<ManagedSession> motion;
+    std::string failed_topic, failed_reason;
+    double stamp_age{-1}, receive_age{-1};
   };
   void observe_uuid(const std::string & id, bool through);
   void publish_recovery_status();
@@ -290,6 +293,8 @@ private:
   TimePoint last_diag_{}, last_bt_tick_{};
   std::string last_diag_key_;
   DiagSnapshot diag_snapshot_;
+  std::string failed_input_topic_, failed_input_reason_;
+  double failed_stamp_age_{-1}, failed_receive_age_{-1};
   std::unique_ptr<nav2_util::NodeThread> thread_;
 };
 }  // namespace carcar_navigation

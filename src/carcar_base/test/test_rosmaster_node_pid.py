@@ -11,6 +11,9 @@ class _SerialStub:
 
     is_open = False
 
+    def close(self):
+        self.is_open = False
+
 
 class _RosmasterStub:
 
@@ -27,6 +30,10 @@ class _RosmasterStub:
 
     def set_car_motion(self, vx, vy, wz):
         pass
+
+    def set_pwm_servo(self, servo_id, angle):
+        self.servo_command = (servo_id, angle)
+        return True
 
     def get_motion_pid(self):
         return list(self.pid)
@@ -67,6 +74,14 @@ class RosmasterNodePidTest(unittest.TestCase):
 
     def tearDown(self):
         self.node.destroy_node()
+
+    def test_startup_sends_camera_level_command(self):
+        self.assertEqual(self.node._driver.servo_command, (1, 94))
+
+    def test_failed_camera_startup_aborts_driver(self):
+        with patch.object(_RosmasterStub, 'set_pwm_servo', return_value=False):
+            with self.assertRaisesRegex(RuntimeError, 'S1'):
+                RosmasterNode()
 
     def test_pid_is_staged_then_applied_temporarily(self):
         result = self.node.set_parameters_atomically([

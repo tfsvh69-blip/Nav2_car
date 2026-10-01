@@ -1,0 +1,23 @@
+<launch>
+  <!-- D435 深度导航实验入口；驱动退出后至少等待 5 秒再重启。 -->
+  <arg name="driver_params_file"
+    default="$(find-pkg-share carcar_camera)/config/d435_navigation.yaml"/>
+  <arg name="filter_params_file"
+    default="$(find-pkg-share carcar_camera)/config/depth_filter.yaml"/>
+  <!-- 外参尚是旧固定姿态尺量初值；须在静止验收后显式启用监督器。 -->
+  <arg name="start_supervisor" default="false"/>
+
+  <node pkg="realsense2_camera" exec="realsense2_camera_node"
+    namespace="camera" name="camera" output="screen" respawn="true" respawn_delay="5.0">
+    <param from="$(var driver_params_file)"/>
+    <remap from="/camera/camera/depth/color/points" to="/camera/depth/points"/>
+  </node>
+
+  <node pkg="carcar_camera" exec="depth_cloud_filter" name="depth_cloud_filter" output="screen">
+    <param from="$(var filter_params_file)"/>
+  </node>
+  <node pkg="carcar_camera" exec="depth_layer_supervisor" name="depth_layer_supervisor"
+    output="screen" if="$(var start_supervisor)">
+    <param from="$(var filter_params_file)"/>
+  </node>
+</launch>

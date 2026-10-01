@@ -16,6 +16,7 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <atomic>
 #include <fstream>
+#include <nlohmann/json.hpp>
 #include <filesystem>
 #include <spawn.h>
 #include <sys/wait.h>
@@ -242,6 +243,19 @@ TEST(MotionGate, RejectsNonfiniteInput)
   carcar_navigation::MotionGate gate;gate.permit(1,1);
   geometry_msgs::msg::Twist v;v.angular.z=std::numeric_limits<double>::quiet_NaN();
   gate.command(v,1.01);EXPECT_DOUBLE_EQ(gate.output(1.02).angular.z,0);
+}
+TEST(MotionGate, PerceptionSwitchForcesZeroAndRequiresFreshCommand)
+{
+  carcar_navigation::MotionGate gate;
+  geometry_msgs::msg::Twist v;v.linear.x=.1;
+  gate.permit(7,1.0);gate.command(v,1.01);
+  EXPECT_DOUBLE_EQ(gate.output(1.02).linear.x,.1);
+  gate.perception_allowed(false);
+  EXPECT_DOUBLE_EQ(gate.output(1.03).linear.x,0);
+  gate.perception_allowed(true);
+  EXPECT_DOUBLE_EQ(gate.output(1.04).linear.x,0);
+  gate.command(v,1.05);
+  EXPECT_DOUBLE_EQ(gate.output(1.06).linear.x,.1);
 }
 TEST(GoalStatusPolicy, OldTerminalCannotOwnNewTaskRegardlessOfArrayOrder)
 {
@@ -512,6 +526,8 @@ struct SimInputs {
   rclcpp::TimerBase::SharedPtr timer;
   std::atomic<uint8_t> uuid{1};
   std::atomic<bool> enabled{true},rear_obstacle{true};
+  // 1=扫描，2=代价地图，3=包络，4=里程计；用于独立验证时间戳和接收超时。
+  std::atomic<int> stale_source{0}, dropped_source{0};
   bool through;
   ~SimInputs() {std::lock_guard<std::mutex> lock(lifetime->mutex);lifetime->alive=false;timer->cancel();}
   SimInputs(rclcpp::Node::SharedPtr n,bool multiple=false):node(n),through(multiple) {
@@ -531,17 +547,24 @@ struct SimInputs {
     nav2_msgs::msg::Costmap cm;cm.header.frame_id="map";cm.header.stamp=node->now();
     cm.metadata.resolution=.05;cm.metadata.size_x=cm.metadata.size_y=60;
     cm.metadata.origin.position.x=cm.metadata.origin.position.y=-1.5;cm.metadata.origin.orientation.w=1;
-    cm.data.assign(3600,0);if (rear_obstacle) {cm.data[30*60+25]=254;}cm_pub->publish(cm);
+    cm.data.assign(3600,0);if (rear_obstacle) {cm.data[30*60+25]=254;}
+    if (stale_source==2) {cm.header.stamp=node->now()-rclcpp::Duration::from_seconds(1);}
+    if (dropped_source!=2) {cm_pub->publish(cm);}
     sensor_msgs::msg::LaserScan scan;scan.header.frame_id="base_footprint";scan.header.stamp=node->now();
     scan.angle_min=-3.14;scan.angle_increment=.01;scan.range_min=.05;scan.range_max=10;scan.ranges.assign(629,5);
-    scan_pub->publish(scan);
+    if (stale_source==1) {scan.header.stamp=node->now()-rclcpp::Duration::from_seconds(1);}
+    if (dropped_source!=1) {scan_pub->publish(scan);}
     geometry_msgs::msg::PolygonStamped fp;fp.header=scan.header;
+    fp.header.stamp=node->now();
     for (auto xy : {std::pair<float,float>{-.14F,-.13F},{-.14F,.13F},{.14F,.13F},{.14F,-.13F}}) {
       geometry_msgs::msg::Point32 p;p.x=xy.first;p.y=xy.second;fp.polygon.points.push_back(p);
     }
-    fp_pub->publish(fp);
+    if (stale_source==3) {fp.header.stamp=node->now()-rclcpp::Duration::from_seconds(1);}
+    if (dropped_source!=3) {fp_pub->publish(fp);}
     nav_msgs::msg::Odometry odom;odom.header.stamp=node->now();odom.header.frame_id="odom";
-    odom.pose.pose.orientation.w=1;odom_pub->publish(odom);
+    odom.pose.pose.orientation.w=1;
+    if (stale_source==4) {odom.header.stamp=node->now()-rclcpp::Duration::from_seconds(1);}
+    if (dropped_source!=4) {odom_pub->publish(odom);}
     std_msgs::msg::Bool health;health.data=true;health_pub->publish(health);
     if (through) {
       nav2_msgs::action::NavigateThroughPoses_FeedbackMessage msg;msg.goal_id.uuid[0]=uuid.load();goals_pub->publish(msg);
@@ -550,6 +573,221 @@ struct SimInputs {
     }
   }
 };
+
+class InputWaitRegression : public Nav012Regression, public ::testing::WithParamInterface<int> {
+protected:
+  void prepare(bool through=false) {
+    runtime=carcar_navigation::RecoveryRuntime::get(configuration());
+    static_tf();inputs=std::make_unique<SimInputs>(provider,through);inputs->rear_obstacle=false;
+    planner=std::make_unique<FakeAction<nav2_msgs::action::ComputePathToPose>>(provider,"/compute_path_to_pose");
+    planner->populate=[](auto handle,auto result) {
+      result->path.header.frame_id="map";
+      auto start=handle->get_goal()->goal;start.pose.position.x=start.pose.position.y=0;
+      result->path.poses={start,handle->get_goal()->goal};
+    };
+    through_planner=std::make_unique<FakeAction<nav2_msgs::action::ComputePathThroughPoses>>(
+      provider,"/compute_path_through_poses");
+    through_planner->populate=[](auto handle,auto result) {
+      result->path.header.frame_id="map";
+      auto start=handle->get_goal()->goals.back();start.pose.position.x=start.pose.position.y=0;
+      result->path.poses={start,handle->get_goal()->goals.back()};
+    };
+    follow=std::make_unique<FakeAction<nav2_msgs::action::FollowPath>>(provider,"/follow_path");
+    follow->drop_result=true;
+    backup=std::make_unique<FakeAction<nav2_msgs::action::BackUp>>(provider,"/backup");
+    spin=std::make_unique<FakeAction<nav2_msgs::action::Spin>>(provider,"/spin");
+    factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_pipeline_sequence_bt_node.so");
+    factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_rate_controller_bt_node.so");
+    geometry_msgs::msg::PoseStamped goal;goal.header.frame_id="map";goal.pose.position.x=1;goal.pose.orientation.w=1;
+    bb->set("goal",goal);bb->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{goal});
+    if (through) {
+      client->declare_parameter("transform_tolerance",.1);
+      bb->set("tf_buffer",std::shared_ptr<tf2_ros::Buffer>(runtime,&runtime->tf));
+      factory.registerFromPlugin("/opt/ros/humble/lib/libnav2_remove_passed_goals_action_bt_node.so");
+    }
+    tree=std::make_unique<BT::Tree>(factory.createTreeFromFile(
+      std::string(BEHAVIOR_TREES_DIR)+(through?"/navigate_through_poses_experimental_recovery.xml":
+      "/navigate_to_pose_experimental_recovery.xml"),bb));
+    diag_sub=provider->create_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
+      "/recovery/status",100,[this](diagnostic_msgs::msg::DiagnosticStatus::ConstSharedPtr msg) {
+        std::lock_guard<std::mutex> lock(diag_mutex);
+        std::map<std::string,std::string> values;
+        for (const auto & kv : msg->values) {values[kv.key]=kv.value;}
+        diagnostics.emplace_back(msg->message,std::move(values));
+      });
+    ASSERT_TRUE(until([&]{return follow->accepted>=1;},5));
+  }
+  bool until(const std::function<bool()> & predicate,double timeout) {
+    auto end=carcar_navigation::after(timeout);
+    while (carcar_navigation::Steady::now()<end) {
+      status=tree->tickRoot();
+      if (predicate()) {return true;}
+      if (status!=BT::NodeStatus::RUNNING) {return false;}
+      std::this_thread::sleep_for(10ms);
+    }
+    return predicate();
+  }
+  void pump(double duration) {until([]{return false;},duration);}
+  bool phase(const std::string & name) {
+    std::lock_guard<std::mutex> lock(diag_mutex);
+    return std::any_of(diagnostics.begin(),diagnostics.end(),[&](const auto & d){return d.first==name;});
+  }
+  void TearDown() override {
+    if (tree) {tree->haltTree();}
+    tree.reset();diag_sub.reset();
+    // 回调终止后再销毁诊断容器与模拟器。
+    exec.cancel();if (thread.joinable()) {thread.join();}
+    inputs.reset();follow.reset();backup.reset();spin.reset();planner.reset();through_planner.reset();
+    runtime.reset();Nav012Regression::TearDown();
+  }
+  std::shared_ptr<carcar_navigation::RecoveryRuntime> runtime;
+  std::unique_ptr<SimInputs> inputs;
+  std::unique_ptr<FakeAction<nav2_msgs::action::ComputePathToPose>> planner;
+  std::unique_ptr<FakeAction<nav2_msgs::action::ComputePathThroughPoses>> through_planner;
+  std::unique_ptr<FakeAction<nav2_msgs::action::FollowPath>> follow;
+  std::unique_ptr<FakeAction<nav2_msgs::action::BackUp>> backup;
+  std::unique_ptr<FakeAction<nav2_msgs::action::Spin>> spin;
+  std::unique_ptr<BT::Tree> tree;
+  BT::NodeStatus status{BT::NodeStatus::RUNNING};
+  std::mutex diag_mutex;
+  std::vector<std::pair<std::string,std::map<std::string,std::string>>> diagnostics;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diag_sub;
+};
+
+TEST_P(InputWaitRegression, EveryExpiredSourceCancelsAndReplansWithoutEscape)
+{
+  // 两次实机会话均在有效跟随时报告 DATA_EXPIRED；覆盖时间戳过期和订阅停止两种情况。
+  prepare(GetParam()>4);ASSERT_TRUE(tree);
+  const int source=(GetParam()-1)%4+1;
+  const bool dropped=GetParam()>4;
+  if (dropped) {inputs->dropped_source=source;} else {inputs->stale_source=source;}
+  ASSERT_TRUE(until([&]{return follow->canceled>=1 && phase("INPUT_WAIT");},2));
+  EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+  const int plans_before=planner->accepted+through_planner->accepted;
+  pump(.2);EXPECT_EQ(follow->accepted,1);
+  inputs->dropped_source=0;inputs->stale_source=0;
+  pump(.2);EXPECT_EQ(follow->accepted,1); // 连续健康不到 0.4 s 不得恢复。
+  ASSERT_TRUE(until([&]{return follow->accepted>=2;},2));
+  EXPECT_GT(planner->accepted+through_planner->accepted,plans_before);
+  EXPECT_TRUE(phase("INPUT_RECOVERED"));
+  EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+  const char * topics[]={"","/scan","/local_costmap/costmap_raw",
+    "/local_costmap/published_footprint","/wheel/odometry"};
+  bool identified=false;
+  {std::lock_guard<std::mutex> lock(diag_mutex);
+    for (const auto & entry : diagnostics) {
+      const auto & d=entry.second;
+      if (d.at("failed_input_topic")==topics[source]) {
+        identified=true;
+        EXPECT_DOUBLE_EQ(std::stod(d.at("input_max_age_s")),.5);
+        EXPECT_GT(std::stod(d.at(dropped?"failed_receive_age_s":"failed_stamp_age_s")),.5);
+      }
+    }
+  }
+  EXPECT_TRUE(identified);
+}
+INSTANTIATE_TEST_SUITE_P(ScanCostmapFootprintOdom,InputWaitRegression,::testing::Range(1,9));
+
+TEST_F(InputWaitRegression, PersistentOdomExpiryFailsWithinWaitDeadline)
+{
+  prepare();runtime->input_wait_timeout=1.0;inputs->stale_source=4;
+  ASSERT_TRUE(until([&]{return runtime->fault;},2));
+  EXPECT_EQ(runtime->fault_reason,"INPUT_WAIT_TIMEOUT");
+  EXPECT_EQ(status,BT::NodeStatus::FAILURE);
+  EXPECT_EQ(follow->accepted,1);EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+}
+
+TEST_F(InputWaitRegression, RepeatedExpiryAndGoalReplacementPreserveDeadlineAndBudget)
+{
+  prepare();runtime->input_wait_timeout=1.3;runtime->backup_used=.2;
+  inputs->stale_source=1;
+  ASSERT_TRUE(until([&]{return follow->canceled>=1;},1));
+  auto recovery_started=runtime->recovery_started;
+  inputs->stale_source=0;pump(.15);
+  auto goal=bb->get<geometry_msgs::msg::PoseStamped>("goal");goal.pose.position.y=.5;
+  bb->set("goal",goal);inputs->uuid=2;inputs->stale_source=2;
+  ASSERT_TRUE(until([&]{return runtime->fault;},2));
+  EXPECT_EQ(runtime->fault_reason,"INPUT_WAIT_TIMEOUT");
+  EXPECT_EQ(runtime->recovery_started,recovery_started);
+  EXPECT_DOUBLE_EQ(runtime->backup_used,.2);
+  EXPECT_EQ(follow->accepted,1);EXPECT_EQ(backup->accepted,0);
+}
+
+TEST_F(InputWaitRegression, HaltDuringInputWaitNeverResubmitsMotion)
+{
+  prepare();inputs->stale_source=3;
+  ASSERT_TRUE(until([&]{return follow->canceled>=1;},1));
+  tree->haltTree();inputs->stale_source=0;std::this_thread::sleep_for(500ms);
+  EXPECT_EQ(follow->accepted,1);EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+}
+
+TEST_F(InputWaitRegression, InputWaitCannotBypassUnconfirmedCancellation)
+{
+  prepare();follow->drop_cancel=true;inputs->stale_source=1;
+  ASSERT_TRUE(until([&]{return runtime->fault;},2));
+  EXPECT_EQ(runtime->fault_reason,"CANCEL_UNCONFIRMED");
+  EXPECT_EQ(follow->accepted,1);EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+}
+
+TEST_F(InputWaitRegression, GenuineControllerBlockStillUsesProtectedBackup)
+{
+  prepare();follow->abort_first=3;follow->drop_result=false;
+  ASSERT_TRUE(until([&]{return backup->accepted>=1;},5));
+  EXPECT_EQ(backup->accepted,1);EXPECT_FALSE(phase("INPUT_WAIT"));
+}
+
+TEST_F(Nav012Regression, RegressionProfilesMergeThroughRosParameterParser)
+{
+  for (bool candidate : {false,true}) {
+    rclcpp::NodeOptions opts;
+    opts.automatically_declare_parameters_from_overrides(true).use_global_arguments(false);
+    opts.arguments({"--ros-args","--params-file",std::string(NAV_CONFIG_DIR)+"/nav2.yaml",
+      "--params-file",std::string(NAV_CONFIG_DIR)+"/nav2_experimental.yaml",
+      "--params-file",std::string(NAV_CONFIG_DIR)+
+      (candidate?"/nav2_regression_clearance.yaml":"/nav2_regression_baseline.yaml")});
+    rclcpp::Node base("rosmaster_base",opts),controller("controller_server",opts),
+      smoother("velocity_smoother",opts),local("local_costmap","/local_costmap",opts),
+      global("global_costmap","/global_costmap",opts),planner("planner_server",opts),
+      navigator("bt_navigator",opts);
+    EXPECT_DOUBLE_EQ(base.get_parameter("max_linear_x").as_double(),.18);
+    EXPECT_DOUBLE_EQ(controller.get_parameter("FollowPath.max_vel_x").as_double(),.18);
+    EXPECT_DOUBLE_EQ(controller.get_parameter("FollowPath.max_speed_xy").as_double(),.18);
+    EXPECT_DOUBLE_EQ(smoother.get_parameter("max_velocity").as_double_array()[0],.18);
+    EXPECT_DOUBLE_EQ(controller.get_parameter("FollowPath.ObstacleFootprint.scale").as_double(),candidate?.15:.03);
+    EXPECT_DOUBLE_EQ(local.get_parameter("inflation_layer.inflation_radius").as_double(),candidate?.30:.20);
+    EXPECT_DOUBLE_EQ(global.get_parameter("inflation_layer.inflation_radius").as_double(),.30);
+    EXPECT_EQ(planner.get_parameter("GridBased.plugin").as_string(),"nav2_smac_planner/SmacPlanner2D");
+    EXPECT_EQ(local.get_parameter("footprint").as_string(),global.get_parameter("footprint").as_string());
+    EXPECT_DOUBLE_EQ(navigator.get_parameter("recovery.max_data_age").as_double(),.5);
+    EXPECT_DOUBLE_EQ(navigator.get_parameter("recovery.input_wait_timeout").as_double(),3);
+    EXPECT_DOUBLE_EQ(navigator.get_parameter("recovery.input_healthy_duration").as_double(),.4);
+  }
+}
+
+TEST(RecordedInputWaitEvidence, FirstAndLastBackupFollowInputExpiryRatherThanControllerFailure)
+{
+  std::ifstream input(NAV_R10_EVIDENCE);
+  if (!input) {GTEST_SKIP()<<"原始会话不在此开发机，合成状态机回归仍必跑";}
+  std::vector<nlohmann::json> events;std::string line;
+  while (std::getline(input,line)) {events.push_back(nlohmann::json::parse(line));}
+  for (const auto & time : {"2026-09-26 22:21:54.126","2026-09-26 22:24:00.322"}) {
+    auto trigger=std::find_if(events.begin(),events.end(),[&](const auto & e) {
+      return e.value("timestamp","")==time && e.value("event_type","")=="RECOVERY_DIAGNOSTIC";
+    });
+    ASSERT_NE(trigger,events.end());
+    EXPECT_EQ(trigger->at("recovery").at("reason_code"),"DATA_EXPIRED");
+    EXPECT_EQ(trigger->at("description"),"INPUT_WAIT");
+    const auto goal=trigger->at("goal_uuid");
+    auto backup=std::find_if(trigger,events.end(),[&](const auto & e) {
+      return e.value("event_type","")=="BACKUP_ACTION_STARTED" && e.at("goal_uuid")==goal;
+    });
+    ASSERT_NE(backup,events.end());
+    for (auto event=trigger;event!=backup;++event) {
+      EXPECT_NE(event->value("event_type",""),"CONTROL_FAILED");
+      EXPECT_NE(event->value("event_type",""),"PROGRESS_GUARD_STAGNATION");
+    }
+  }
+}
 
 TEST_F(Nav012Regression, FullSingleGoalTreeRecoversThroughRealNav2ControlNodes)
 {
@@ -1013,7 +1251,9 @@ TEST_F(Nav012Regression, LoggerProcessKeepsNewGoalStateWhenOldAbortArrives)
   std::filesystem::create_directories(directory);
   std::string executable=NAV_LOGGER_EXECUTABLE;
   std::string sessions="sessions_base_dir:="+directory.string();
-  std::vector<std::string> arguments={executable,"--ros-args","-p",sessions,"-p","record_raw_bag:=false"};
+  const std::string overlay=std::string(NAV_CONFIG_DIR)+"/nav2_regression_clearance.yaml";
+  std::vector<std::string> arguments={executable,"--ros-args","-p",sessions,
+    "-p","record_raw_bag:=false","-p","sensor_params_file:="+overlay};
   std::vector<char*> argv;for (auto & argument : arguments) {argv.push_back(argument.data());}argv.push_back(nullptr);
   posix_spawn_file_actions_t actions;posix_spawn_file_actions_init(&actions);
   posix_spawn_file_actions_addopen(&actions,STDOUT_FILENO,(directory/"console.log").c_str(),O_WRONLY|O_CREAT|O_TRUNC,0600);
@@ -1042,14 +1282,37 @@ TEST_F(Nav012Regression, LoggerProcessKeepsNewGoalStateWhenOldAbortArrives)
   };
   action_msgs::msg::GoalStatusArray message;message.status_list={old};
   ASSERT_TRUE(wait_uuid(carcar_navigation::goal_uuid_text(old.goal_info.goal_id),message));
+  bool overlay_saved=false;
+  for (const auto & entry : std::filesystem::directory_iterator(directory)) {
+    if (!entry.is_directory()) {continue;}
+    std::ifstream info_file(entry.path()/"session_info.json");
+    if (!info_file) {continue;}
+    nlohmann::json info;info_file>>info;
+    if (info.value("sensor_params_file","")!=overlay) {continue;}
+    std::ifstream copied(entry.path()/"sensor_config.yaml"),original(overlay);
+    ASSERT_TRUE(copied);ASSERT_TRUE(original);
+    EXPECT_EQ(std::string(std::istreambuf_iterator<char>(copied),{}),
+      std::string(std::istreambuf_iterator<char>(original),{}));
+    overlay_saved=true;
+  }
+  EXPECT_TRUE(overlay_saved);
   message.status_list={newer,old};
   ASSERT_TRUE(wait_uuid(carcar_navigation::goal_uuid_text(newer.goal_info.goal_id),message));
+  auto recovery_pub=provider->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/recovery/status",10);
+  diagnostic_msgs::msg::DiagnosticStatus late_wait;late_wait.name="RecoverySupervisor";late_wait.message="INPUT_WAIT";
+  for (const auto & entry : std::vector<std::pair<std::string,std::string>>{
+      {"phase","INPUT_WAIT"},{"reason_code","DATA_EXPIRED"},
+      {"navigation_uuid",carcar_navigation::goal_uuid_text(old.goal_info.goal_id)}}) {
+    diagnostic_msgs::msg::KeyValue kv;kv.key=entry.first;kv.value=entry.second;late_wait.values.push_back(kv);
+  }
+  for (int i=0;i<5;++i) {recovery_pub->publish(late_wait);std::this_thread::sleep_for(60ms);}
   old.status=6;message.status_list={newer,old};
   for (int i=0;i<12;++i) {publisher->publish(message);std::this_thread::sleep_for(60ms);}
   std::lock_guard<std::mutex> lock(observed->mutex);
   EXPECT_EQ(observed->values["full_goal_uuid"],carcar_navigation::goal_uuid_text(newer.goal_info.goal_id));
   EXPECT_NE(observed->values["stage_code"],"TASK_FAILED");
   EXPECT_NE(observed->values["stop_category"],"NAVIGATION_FAILED");
+  EXPECT_NE(observed->values["stop_category"],"DATA_TIMEOUT");
   EXPECT_NE(observed->values["task_status"],"ABORTED");
 }
 
@@ -1123,7 +1386,7 @@ TEST_F(Nav012Regression, SensorLossClosesMotionAndMissingOdometryPreventsHandove
     if (seconds(start)>.7) {EXPECT_EQ(lease->load(),0u);}
   }
   EXPECT_EQ(status,BT::NodeStatus::FAILURE);EXPECT_EQ(follow.accepted,1);EXPECT_EQ(follow.canceled,1);
-  EXPECT_EQ(RecoveryRuntime::get(configuration())->fault_reason,"STOP_NOT_CONFIRMED");
+  EXPECT_EQ(RecoveryRuntime::get(configuration())->fault_reason,"INPUT_WAIT_TIMEOUT");
   tree.haltTree();exec.cancel();thread.join();
 }
 

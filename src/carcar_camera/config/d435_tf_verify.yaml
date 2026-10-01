@@ -1,0 +1,36 @@
+# 固定平视姿态的静止 TF 粗校验专用。彩色图只作场景参照，点云不对齐到 RGB。
+# 保留车上已验证的 Pointcloud (Neon) 参数与无纹理原始深度点云。
+/**:
+  ros__parameters:
+    camera_name: camera
+    serial_no: "213222078719"
+    device_type: "d435"
+    enable_depth: true
+    enable_color: true
+    enable_infra: false
+    enable_infra1: false
+    enable_infra2: false
+    depth_module.depth_profile: "640x480x6"
+    rgb_camera.color_profile: "640x480x6"
+    depth_module.depth_format: "Z16"
+    rgb_camera.color_format: "RGB8"
+    pointcloud.enable: true
+    pointcloud.stream_filter: 0
+    pointcloud.stream_index_filter: 0
+    pointcloud.ordered_pc: false
+    pointcloud.allow_no_texture_points: true
+    pointcloud__neon_.enable: true
+    pointcloud__neon_.stream_filter: 0
+    pointcloud__neon_.stream_index_filter: 0
+    pointcloud__neon_.ordered_pc: false
+    pointcloud__neon_.allow_no_texture_points: true
+    publish_tf: true
+    tf_publish_rate: 0.0
+    diagnostics_period: 1.0
+    reconnect_timeout: 6.0
+    initial_reset: false
+    align_depth.enable: false
+    colorizer.enable: false
+    spatial_filter.enable: false
+    temporal_filter.enable: false
+    hole_filling_filter.enable: false

@@ -2,9 +2,32 @@
   <!-- 发布整车 URDF、/robot_description 与所有固定关节 TF。 -->
   <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
   <arg name="model" default="$(find-pkg-share carcar_description)/urdf/carcar.urdf.xacro" description="Carcar Xacro model path"/>
+  <arg name="camera_extrinsics_file"
+    default="$(find-pkg-share carcar_description)/config/camera_extrinsics.yaml"
+    description="D435 candidate or verified external transform YAML"/>
+  <arg name="camera_tilt_dynamic" default="false"
+    description="Stationary debug: revolute joint using SENT command estimate, not feedback"/>
+  <arg name="publish_model" default="true" description="Publish robot model unless another robot_state_publisher is already running"/>
+  <arg name="use_rviz" default="false" description="Temporarily open RViz on the Jetson desktop"/>
+  <arg name="preview_wheels" default="false" description="Publish zero wheel angles only while previewing a stationary model"/>
 
-  <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
-    <param name="robot_description" value="$(command 'xacro $(var model)')"/>
+  <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen" if="$(var publish_model)">
+    <param name="robot_description"
+      value="$(command 'xacro $(var model) camera_extrinsics_file:=$(var camera_extrinsics_file) camera_tilt_dynamic:=$(var camera_tilt_dynamic)')"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
+  <node pkg="rviz2" exec="rviz2" name="carcar_model_rviz" output="screen"
+    args="-d $(find-pkg-share carcar_description)/rviz/carcar_model.rviz" if="$(var use_rviz)"/>
+  <node pkg="joint_state_publisher" exec="joint_state_publisher" name="model_joint_state_publisher"
+    output="screen" if="$(var preview_wheels)">
+    <param name="source_list" value="['/camera/tilt_joint_states']"/>
+  </node>
+  <group if="$(var camera_tilt_dynamic)">
+    <node pkg="carcar_hardware" exec="camera_servo_state" name="camera_servo_state"
+      output="screen" unless="$(var preview_wheels)"/>
+    <node pkg="carcar_hardware" exec="camera_servo_state" name="camera_servo_state"
+      output="screen" if="$(var preview_wheels)">
+      <param name="joint_topic" value="/camera/tilt_joint_states"/>
+    </node>
+  </group>
 </launch>

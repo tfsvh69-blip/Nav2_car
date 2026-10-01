@@ -1,0 +1,20 @@
+# 2026-09-23 用户复核：D435 银色外壳左右中心线与舵机轴 Y=0 对齐。
+# 官方机械图左红外光心相对外壳中心线偏 +17.5 mm；先前 Y=+40 mm 量的是正面最左圆孔，基准识别错误。
+# 只适用于 140.5° 平视目标；不是六自由度标定结果。
+# 标定工具先输出独立候选文件；只有 TF-005 实测通过后才可把 verified 改为 true。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.125
+quaternion:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  w: 1.0
+rpy:
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0

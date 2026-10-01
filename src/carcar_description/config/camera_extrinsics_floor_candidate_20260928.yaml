@@ -1,0 +1,30 @@
+# 2026-09-28：S1 已发送板端94档且用户确认实物停稳后，重新采空地得到的独立候选。
+# 只修正随距离增长的地面高度斜率；0.7m低盒静止复测通过，
+# 多距离、左右位置和雷达共同面尚未验收。
+# 不替换默认外参；未测得实际舵机角度或车体绝对水平度。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.125
+quaternion:
+  x: 0.0
+  y: -0.05709407726344613
+  z: 0.0
+  w: 0.9983688027685138
+rpy:
+  roll: 0.0
+  pitch: -0.11425028286672366
+  yaw: 0.0
+mount_condition:
+  board_command_sent: 94
+  physical_level_confirmed_by_user: true
+  servo_position_feedback: false
+evidence:
+  source: log/depth_retest_20260928/floor_confirmed_clear
+  floor_roi: 'x=0.4..1.2m, |y|<=0.15m, depth image v=360..450'
+  floor_slopes: [-0.11428, -0.11479, -0.11518]
+  slope_mean: -0.11475
+  estimation: 'pitch=-atan(0.11475); position, roll and yaw unchanged'

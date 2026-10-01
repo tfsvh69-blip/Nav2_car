@@ -309,6 +309,7 @@ public:
     base_params_file_ = this->declare_parameter<std::string>("base_params_file", "");
     experiment_params_file_ = this->declare_parameter<std::string>("experiment_params_file", "");
     planner_params_file_ = this->declare_parameter<std::string>("planner_params_file", "");
+    sensor_params_file_ = this->declare_parameter<std::string>("sensor_params_file", "");
     default_bt_xml_ = this->declare_parameter<std::string>("default_bt_xml", "");
     default_nav_through_poses_bt_xml_ = this->declare_parameter<std::string>("default_nav_through_poses_bt_xml", "");
 
@@ -443,10 +444,22 @@ public:
       "/recovery/status", rclcpp::QoS(10),
       [this](diagnostic_msgs::msg::DiagnosticStatus::ConstSharedPtr msg) {
         std::lock_guard<std::mutex> lock(state_mutex_);
+        const auto previous_phase=recovery_fields_.value("phase","");
+        const auto previous_navigation=recovery_fields_.value("navigation_uuid","");
         recovery_fields_.clear();
         for (const auto & kv : msg->values) {recovery_fields_[kv.key] = kv.value;}
         recovery_received_ = std::chrono::steady_clock::now();
         record_event_locked("RECOVERY_DIAGNOSTIC", active_uuid_, msg->name, msg->message, recovery_fields_);
+        const bool current_task=recovery_fields_.value("navigation_uuid","")==active_uuid_;
+        if (current_task && msg->message=="INPUT_WAIT" &&
+          (previous_phase!="INPUT_WAIT" || previous_navigation!=active_uuid_)) {
+          transition_stage_locked(NavStage::RECOVERY_WAITING,"输入失效，停车等待新鲜数据");
+          check_stop_trigger_locked("INPUT_WAIT","输入失效，等待数据恢复后重规划",
+            recovery_fields_.value("reason_code","DATA_EXPIRED"));
+        } else if (current_task && msg->message=="FAILED" &&
+          recovery_fields_.value("reason_code","")=="INPUT_WAIT_TIMEOUT") {
+          check_stop_trigger_locked("INPUT_WAIT_TIMEOUT","输入恢复等待超时，保持停车","INPUT_WAIT_TIMEOUT");
+        }
         if (recovery_fields_.value("reason_code","")=="GOAL_REPLACED") {
           record_event_locked("GOAL_REPLACED",recovery_fields_.value("previous_navigation_uuid",""),
             msg->name,"监督节点观测到导航 UUID 切换，关闭许可并取消旧动作",recovery_fields_);
@@ -602,6 +615,7 @@ private:
     info["base_params_file"] = base_params_file_;
     info["experiment_params_file"] = experiment_params_file_;
     info["planner_params_file"] = planner_params_file_;
+    info["sensor_params_file"] = sensor_params_file_;
     info["default_bt_xml"] = default_bt_xml_;
     info["default_nav_through_poses_bt_xml"] = default_nav_through_poses_bt_xml_;
     info["odom_topic"] = odom_topic_;
@@ -652,6 +666,12 @@ private:
     {
       std::filesystem::copy_file(
         planner_params_file_, session_dir_ + "/planner_config.yaml",
+        std::filesystem::copy_options::overwrite_existing, ec);
+    }
+
+    if (!sensor_params_file_.empty() && std::filesystem::exists(sensor_params_file_)) {
+      std::filesystem::copy_file(
+        sensor_params_file_, session_dir_ + "/sensor_config.yaml",
         std::filesystem::copy_options::overwrite_existing, ec);
     }
 
@@ -744,9 +764,12 @@ private:
         "/trajectories",
         "/cmd_vel",
         "/cmd_vel_nav",
+        "/cmd_vel_smoothed_raw",
         "/diagnostics",
         "/behavior_tree_log",
         "/progress_guard/status",
+        "/recovery/status",
+        "/navigation/motion_permit",
         "/rear_clear/status",
         "/navigation/status",
         "/navigate_to_pose/_action/status",
@@ -1684,6 +1707,12 @@ private:
       rec.trigger_reason = "全局路径规划失败 (无通行路径)";
       rec.evidence_status = "CORRELATED";
       rec.recovery_or_terminal = "规划重试";
+    } else if (trigger_source=="INPUT_WAIT" || trigger_source=="INPUT_WAIT_TIMEOUT") {
+      rec.stop_category="DATA_TIMEOUT";
+      rec.cause_code=reason_code;
+      rec.trigger_reason=detail;
+      rec.evidence_status="CERTAIN";
+      rec.recovery_or_terminal=trigger_source=="INPUT_WAIT"?"等待输入恢复后重规划":"输入等待超时停车";
     } else if (trigger_source == "CONTROL_FAILED") {
       rec.stop_category = "NAVIGATION_FAILED";
       rec.cause_code = "CONTROL_FAILED";
@@ -2206,6 +2235,7 @@ private:
   std::string base_frame_;
   std::string base_params_file_;
   std::string experiment_params_file_;
+  std::string sensor_params_file_;
   std::string planner_params_file_;
   std::string default_bt_xml_;
   std::string default_nav_through_poses_bt_xml_;

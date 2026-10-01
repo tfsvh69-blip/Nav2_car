@@ -8,10 +8,9 @@ Panels:
         - /Carcar Mecanum Model1
         - /TF Frames1
         - /LaserScan1
-        - /LaserScan1/Status1
         - /LaserScan1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 499
+    Tree Height: 408
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
@@ -38,7 +37,7 @@ Visualization Manager:
       Plane Cell Count: 20
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 0.5
+    - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
       Description File: ""
@@ -66,6 +65,16 @@ Visualization Manager:
           Show Trail: false
           Value: true
         camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_mount_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_tilt_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -127,7 +136,19 @@ Visualization Manager:
           Value: true
         base_link:
           Value: true
+        camera_color_frame:
+          Value: true
+        camera_color_optical_frame:
+          Value: true
+        camera_depth_frame:
+          Value: true
+        camera_depth_optical_frame:
+          Value: true
         camera_link:
+          Value: true
+        camera_mount_link:
+          Value: true
+        camera_tilt_link:
           Value: true
         compute_link:
           Value: true
@@ -153,8 +174,15 @@ Visualization Manager:
       Tree:
         base_footprint:
           base_link:
-            camera_link:
-              {}
+            camera_mount_link:
+              camera_tilt_link:
+                camera_link:
+                  camera_color_frame:
+                    camera_color_optical_frame:
+                      {}
+                  camera_depth_frame:
+                    camera_depth_optical_frame:
+                      {}
             compute_link:
               {}
             front_left_wheel_link:
@@ -226,7 +254,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.166860818862915
+      Distance: 0.6857645511627197
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -249,12 +277,12 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1136
+  Height: 986
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001cb00000416fc0200000002fb000000100044006900730070006c006100790073010000003d00000276000000c900fffffffb0000000a0056006900650077007301000002b90000019a000000a400ffffff000005590000041600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001cb00000380fc0200000002fb000000100044006900730070006c006100790073010000003d0000021b000000c900fffffffb0000000a00560069006500770073010000025e0000015f000000a400ffffff000004790000038000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1834
-  X: 86
+  Width: 1610
+  X: 70
   Y: 27

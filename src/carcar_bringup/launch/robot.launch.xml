@@ -4,10 +4,15 @@
   <arg name="speed_params_file" default="$(var params_file)" description="Optional final speed-limit overlay"/>
   <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
   <arg name="use_sim_time" default="false" description="Use simulation clock if true"/>
+  <arg name="camera_extrinsics_file"
+    default="$(find-pkg-share carcar_description)/config/camera_extrinsics.yaml"/>
+  <arg name="camera_tilt_dynamic" default="false"/>
   <arg name="publish_odom_tf" default="true" description="默认轮式里程计发布 TF；外部融合接管须独立验收"/>
 
   <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml">
     <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="camera_extrinsics_file" value="$(var camera_extrinsics_file)"/>
+    <arg name="camera_tilt_dynamic" value="$(var camera_tilt_dynamic)"/>
   </include>
 
   <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">

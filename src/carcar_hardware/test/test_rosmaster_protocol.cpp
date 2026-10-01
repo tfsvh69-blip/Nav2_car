@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "carcar_hardware/rosmaster_protocol.hpp"
+#include "carcar_hardware/camera_servo_safety.hpp"
 
 namespace
 {
@@ -211,6 +212,50 @@ TEST(RosmasterProtocol, BuildsIndicatorCommands)
   EXPECT_EQ(
     effect_stop,
     (std::vector<std::uint8_t>{0xFF, 0xFC, 0x06, 0x06, 0x00, 0xFF, 0xFF, 0x0A}));
+}
+
+TEST(RosmasterProtocol, MapsPhysical270DegreeServoToBoardAngle)
+{
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(0), 0U);
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(135), 90U);
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(270), 180U);
+  EXPECT_THROW(carcar_hardware::pwm_command_angle_from_physical(-1), std::out_of_range);
+  EXPECT_THROW(carcar_hardware::pwm_command_angle_from_physical(271), std::out_of_range);
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(140.5), 94U);
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(141.5), 94U);
+  EXPECT_EQ(carcar_hardware::pwm_command_angle_from_physical(139.5), 93U);
+}
+
+TEST(RosmasterProtocol, BuildsSinglePwmServoCommand)
+{
+  EXPECT_EQ(
+    carcar_hardware::make_pwm_servo_command(1U, 0U),
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x05, 0x03, 0x01, 0x00, 0x09}));
+  EXPECT_EQ(
+    carcar_hardware::make_pwm_servo_command(1U, 90U),
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x05, 0x03, 0x01, 0x5A, 0x63}));
+  EXPECT_EQ(
+    carcar_hardware::make_pwm_servo_command(1U, 180U),
+    (std::vector<std::uint8_t>{0xFF, 0xFC, 0x05, 0x03, 0x01, 0xB4, 0xBD}));
+  EXPECT_THROW(carcar_hardware::make_pwm_servo_command(0U, 90U), std::out_of_range);
+  EXPECT_THROW(carcar_hardware::make_pwm_servo_command(5U, 90U), std::out_of_range);
+  EXPECT_THROW(carcar_hardware::make_pwm_servo_command(1U, 181U), std::out_of_range);
+}
+
+TEST(RosmasterProtocol, EnforcesMountedCameraServoLimits)
+{
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(84), 85);
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(85), 85);
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(135), 135);
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(160), 160);
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(161), 160);
+  EXPECT_EQ(carcar_hardware::clamp_camera_servo_angle(270), 160);
+  EXPECT_DOUBLE_EQ(carcar_hardware::clamp_camera_servo_angle(140.5), 140.5);
+  EXPECT_DOUBLE_EQ(carcar_hardware::camera_tilt_from_board_command(94), 0.0);
+  EXPECT_NEAR(carcar_hardware::camera_tilt_from_board_command(95), 0.0261799388, 1e-9);
+  EXPECT_NEAR(carcar_hardware::camera_tilt_from_board_command(57), -0.968657735, 1e-9);
+  EXPECT_NEAR(carcar_hardware::camera_tilt_from_board_command(107), 0.340339204, 1e-9);
+  EXPECT_DOUBLE_EQ(carcar_hardware::clamp_camera_servo_angle(160.5), 160.0);
 }
 
 }  // namespace

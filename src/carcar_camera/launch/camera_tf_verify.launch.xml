@@ -1,0 +1,33 @@
+<launch>
+  <!-- 静止查看与命令估计调角；本入口不启动底盘、舵机或导航。 -->
+  <arg name="publish_model" default="true"
+    description="Publish description only when no robot_state_publisher already exists"/>
+  <arg name="preview_wheels" default="true"
+    description="Stationary zero wheel angles; disable when a real joint state publisher exists"/>
+  <arg name="camera_tilt_dynamic" default="true"
+    description="Stationary command-estimated tilt; stop depth costmap while adjusting"/>
+  <arg name="camera_extrinsics_file"
+    default="$(find-pkg-share carcar_description)/config/camera_extrinsics.yaml"/>
+  <arg name="driver_params_file"
+    default="$(find-pkg-share carcar_camera)/config/d435_tf_verify.yaml"/>
+  <arg name="filter_params_file"
+    default="$(find-pkg-share carcar_camera)/config/depth_filter.yaml"/>
+  <arg name="use_rviz" default="false"
+    description="Temporary Jetson RViz only; normally open the saved config on Hao"/>
+
+  <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml"
+    if="$(var publish_model)">
+    <arg name="camera_extrinsics_file" value="$(var camera_extrinsics_file)"/>
+    <arg name="camera_tilt_dynamic" value="$(var camera_tilt_dynamic)"/>
+    <arg name="preview_wheels" value="$(var preview_wheels)"/>
+    <arg name="use_rviz" value="false"/>
+  </include>
+  <include file="$(find-pkg-share carcar_camera)/launch/camera_navigation.launch.xml">
+    <arg name="driver_params_file" value="$(var driver_params_file)"/>
+    <arg name="filter_params_file" value="$(var filter_params_file)"/>
+    <arg name="start_supervisor" value="false"/>
+  </include>
+  <node pkg="rviz2" exec="rviz2" name="camera_tf_verify_rviz" output="screen"
+    args="-d $(find-pkg-share carcar_camera)/rviz/camera_tf_verify.rviz"
+    if="$(var use_rviz)"/>
+</launch>

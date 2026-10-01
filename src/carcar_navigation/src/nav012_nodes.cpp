@@ -657,13 +657,41 @@ public:
       ++runtime_->epoch;replan_tried_=false;
       stop_then(0); // 仅重置任务基准；受阻预算与总时间继续保留。
     } else if (uuid_.empty() && !uuid.empty()) {uuid_=uuid;}
+    // 同一任务换目标和反复掉线均不得刷新本次输入等待期限。
+    if (input_waiting_ && seconds(input_wait_started_)>=runtime_->input_wait_timeout) {
+      return fail("INPUT_WAIT_TIMEOUT");
+    }
     if (switching_) {
       auto status=finish_stop();if (status!=BT::NodeStatus::SUCCESS) {return status;}
     }
     auto ready=runtime_->inputs_ready();
+    if (!ready.ok && ready.code!="LOCALIZATION_UNHEALTHY") {
+      if (!input_waiting_) {input_waiting_=true;input_wait_started_=Steady::now();}
+      input_healthy_since_=TimePoint{};
+      runtime_->begin_recovery();
+      stop_then(0); // 数据恢复后重新规划；缺数据不能成为倒车的理由。
+      runtime_->diagnostic("INPUT_WAIT",ready.code);
+      return BT::NodeStatus::RUNNING;
+    }
+    if (input_waiting_) {
+      runtime_->permit(false);
+      if (!ready.ok) { // 定位单独走既有定位恢复，不运行任何运动恢复。
+        input_healthy_since_=TimePoint{};stop_then(1);
+        input_waiting_=false;
+        runtime_->diagnostic("LOCALIZATION_WAIT",ready.code);
+        return BT::NodeStatus::RUNNING;
+      }
+      if (input_healthy_since_==TimePoint{}) {input_healthy_since_=Steady::now();}
+      if (seconds(input_healthy_since_)<runtime_->input_healthy_duration) {
+        runtime_->diagnostic("INPUT_WAIT","HEALTHY_STABILIZING");
+        return BT::NodeStatus::RUNNING;
+      }
+      input_waiting_=false;runtime_->replan_required=true;
+      runtime_->diagnostic("INPUT_RECOVERED","REPLAN_AFTER_INPUT_WAIT");
+    }
     if (!ready.ok && active_==0) {
       stop_then(1);runtime_->begin_recovery();
-      runtime_->diagnostic("INPUT_WAIT",ready.code);
+      runtime_->diagnostic("LOCALIZATION_WAIT",ready.code);
       return BT::NodeStatus::RUNNING;
     }
     // 无 fresh UUID 时只允许等待和规划入口准备，禁止真实运动提交。
@@ -709,6 +737,7 @@ public:
     runtime_->permit(false);haltChildren();
     if (runtime_->motion && !runtime_->motion->state().terminal) {runtime_->motion->cancel();}
     initialized_=false;switching_=false;starting_task_=false;starting_uuid_.clear();
+    input_waiting_=false;input_wait_started_=input_healthy_since_=TimePoint{};
     uuid_wait_=TimePoint{};
     BT::ControlNode::halt();
   }
@@ -745,6 +774,7 @@ private:
     geometry_msgs::msg::PoseStamped goal;std::vector<geometry_msgs::msg::PoseStamped> goals;
     getInput("goal",goal);getInput("goals",goals);
     runtime_->reset_for_new_task(starting_uuid_);
+    input_waiting_=false;input_wait_started_=input_healthy_since_=TimePoint{};
     initialized_=true;goal_=goal;goals_=goals;uuid_=starting_uuid_;
     replan_tried_=false;active_=0;starting_task_=false;starting_uuid_.clear();
     uuid_wait_=TimePoint{};
@@ -763,6 +793,12 @@ private:
       if (Steady::now()>=cancel_deadline_) {return fail("CANCEL_UNCONFIRMED");}
       return BT::NodeStatus::RUNNING;
     }
+    if (input_waiting_ && !runtime_->odom_fresh()) {
+      // 无新鲜里程计不能确认停车；等待仍受 3 s 输入期限约束。
+      settle_started_=TimePoint{};
+      runtime_->diagnostic("INPUT_WAIT","ODOM_EXPIRED");
+      return BT::NodeStatus::RUNNING;
+    }
     if (settle_started_==TimePoint{}) {settle_started_=Steady::now();runtime_->restart_stillness();}
     if (!runtime_->still(runtime_->still_duration)) {
       if (seconds(settle_started_)>=runtime_->settle_timeout) {return fail("STOP_NOT_CONFIRMED");}
@@ -778,8 +814,10 @@ private:
   }
   std::shared_ptr<RecoveryRuntime> runtime_;
   bool initialized_{false},switching_{false},replan_tried_{false},starting_task_{false};
+  bool input_waiting_{false};
   size_t active_{0},next_{0};
   TimePoint cancel_deadline_{},settle_started_{},uuid_wait_{};
+  TimePoint input_wait_started_{},input_healthy_since_{};
   std::string uuid_,starting_uuid_;
   geometry_msgs::msg::PoseStamped goal_;
   std::vector<geometry_msgs::msg::PoseStamped> goals_;

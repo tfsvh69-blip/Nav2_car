@@ -3,7 +3,7 @@ project(carcar_description)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch meshes rviz third_party urdf
+install(DIRECTORY config launch meshes rviz third_party urdf
   DESTINATION share/${PROJECT_NAME}
   PATTERN "__pycache__" EXCLUDE
 )

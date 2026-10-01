@@ -241,6 +241,10 @@ install(DIRECTORY config launch maps rviz behavior_trees
   PATTERN "__pycache__" EXCLUDE
 )
 
+add_executable(depth_costmap_static src/depth_costmap_static.cpp)
+ament_target_dependencies(depth_costmap_static rclcpp nav2_costmap_2d nav2_util pluginlib)
+install(TARGETS depth_costmap_static DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_protected_backup_execution test/test_protected_backup_execution.cpp)
@@ -261,13 +265,16 @@ if(BUILD_TESTING)
   ament_add_gtest(test_nav012_regressions test/test_nav012_regressions.cpp)
   ament_target_dependencies(test_nav012_regressions rclcpp rclcpp_action nav2_msgs nav2_behavior_tree
     nav2_util nav_msgs sensor_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs action_msgs)
-  target_link_libraries(test_nav012_regressions carcar_nav_bt_nodes BT::behaviortree_cpp_v3)
+  target_link_libraries(test_nav012_regressions carcar_nav_bt_nodes BT::behaviortree_cpp_v3
+    nlohmann_json::nlohmann_json)
   target_compile_definitions(test_nav012_regressions PRIVATE
     CARCAR_NAV_BT_PLUGIN_PATH="$<TARGET_FILE:carcar_nav_bt_nodes>"
     NAV_LOGGER_EXECUTABLE="$<TARGET_FILE:nav_event_logger>"
+    NAV_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config"
+    NAV_R10_EVIDENCE="${CMAKE_CURRENT_SOURCE_DIR}/../../log/nav_sessions/20260926_222051_8376/events.jsonl"
     BEHAVIOR_TREES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/behavior_trees")
   set_tests_properties(test_nav012_regressions PROPERTIES
-    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 90)
+    ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 180)
   ament_add_gtest(test_nav_bt_nodes test/test_nav_bt_nodes.cpp)
   ament_target_dependencies(test_nav_bt_nodes
     rclcpp

@@ -10,9 +10,9 @@ import rclpy
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from sensor_msgs.msg import BatteryState, Imu
-from std_msgs.msg import Float32MultiArray, Int32MultiArray
+from std_msgs.msg import Float32MultiArray, Int32MultiArray, Int32
 from tf2_ros import TransformBroadcaster
 
 from Rosmaster_Lib import Rosmaster
@@ -173,6 +173,20 @@ class RosmasterNode(Node):
         # Never assume the MCU was stationary before this process connected.
         for _ in range(3):
             self._driver.set_car_motion(0.0, 0.0, 0.0)
+
+        # Existing serial adapter only forwards the startup command. Angle/TF
+        # mapping belongs to the C++ camera_servo_state node. No position feedback.
+        self._camera_servo_pub = self.create_publisher(
+            Int32, '/hardware/camera_servo/board_command_sent',
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        if self._driver.set_pwm_servo(1, 94) is not True:
+            self._driver.set_car_motion(0.0, 0.0, 0.0)
+            self._driver.ser.close()
+            self.destroy_node()
+            raise RuntimeError('S1 平视命令发送失败，底盘启动中止')
+        self._camera_servo_pub.publish(Int32(data=94))
+        self.get_logger().info(
+            'S1 已发送平视目标 140.5°（板端 94°）；无实际角度反馈，启动时相机会转动')
 
         queried_pid = self._driver.get_motion_pid()
         try:

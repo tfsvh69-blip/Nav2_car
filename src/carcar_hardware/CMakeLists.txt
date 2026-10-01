@@ -10,6 +10,8 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/differential_drive.cpp
@@ -42,6 +44,21 @@ ament_target_dependencies(rosmaster_indicator_test
   rclcpp
 )
 
+add_executable(rosmaster_pwm_servo_sweep
+  src/rosmaster_pwm_servo_sweep.cpp
+)
+target_link_libraries(rosmaster_pwm_servo_sweep ${PROJECT_NAME})
+ament_target_dependencies(rosmaster_pwm_servo_sweep rclcpp)
+
+add_executable(rosmaster_pwm_servo_keyboard
+  src/rosmaster_pwm_servo_keyboard.cpp
+)
+target_link_libraries(rosmaster_pwm_servo_keyboard ${PROJECT_NAME})
+ament_target_dependencies(rosmaster_pwm_servo_keyboard rclcpp std_msgs)
+add_executable(camera_servo_state src/camera_servo_state.cpp)
+target_link_libraries(camera_servo_state ${PROJECT_NAME})
+ament_target_dependencies(camera_servo_state rclcpp sensor_msgs std_msgs)
+
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
@@ -50,7 +67,7 @@ install(
   RUNTIME DESTINATION bin
 )
 install(
-  TARGETS rosmaster_indicator_test
+  TARGETS rosmaster_indicator_test rosmaster_pwm_servo_sweep rosmaster_pwm_servo_keyboard camera_servo_state
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/ DESTINATION include)

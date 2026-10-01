@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    camera_name: camera
+    serial_no: "213222078719"
+    device_type: "d435"
+    enable_depth: true
+    enable_color: true
+    enable_infra: false
+    enable_infra1: false
+    enable_infra2: false
+    depth_module.depth_profile: "640x480x6"
+    rgb_camera.color_profile: "640x480x6"
+    depth_module.depth_format: "Z16"
+    rgb_camera.color_format: "RGB8"
+    pointcloud.enable: false
+    publish_tf: true
+    tf_publish_rate: 0.0
+    diagnostics_period: 1.0
+    reconnect_timeout: 6.0
+    initial_reset: false

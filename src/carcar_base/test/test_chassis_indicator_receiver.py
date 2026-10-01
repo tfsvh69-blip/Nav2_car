@@ -41,6 +41,9 @@ class _RosmasterStub:
     def set_car_motion(self, vx, vy, wz):
         self.motion_calls.append((vx, vy, wz))
 
+    def set_pwm_servo(self, servo_id, angle):
+        return True
+
     def get_motion_pid(self):
         return [0.8, 0.06, 0.5]
 
@@ -168,4 +171,3 @@ class ChassisIndicatorReceiverTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

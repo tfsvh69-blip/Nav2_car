@@ -1,0 +1,35 @@
+# 2026-09-27 静止低箱缺失诊断：仅为地面平面粗拟合实验候选，禁止自动替换默认外参。
+# 后续现场发现采样前未下发平视命令；本候选退出当前复测入口，保留历史证据。
+# 用户重新下发140.5°后确认平视，应使用默认零俯仰外参重新检查，不重复补偿。
+# 从原生矩形深度图+CameraInfo+实时 TF 反投影，三帧共同地面 ROI 拟合。
+# RGB 未对齐；地面平整、车体水平为假设；未完成左右/多距离/雷达复测。
+# 第一轮只改 pitch，位置、roll、yaw 保持原值；约 -9 mm 地面残差暂不调高度。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.125
+quaternion:
+  x: 0.0
+  y: -0.056608053
+  z: 0.0
+  w: 0.998396479
+rpy:
+  roll: 0.0
+  pitch: -0.113276660
+  yaw: 0.0
+mount_condition:
+  servo_target_angle_deg: 140.5
+  servo_position_feedback: false
+  measurement_quality: stationary_floor_coarse_candidate
+evidence:
+  date: '2026-09-27'
+  base_footprint_height_m: 0.155
+  expected_floor_bias_after_pitch_m: -0.009106020
+  floor_slope_x: -0.113763667
+  floor_intercept_m: 0.006900000
+  frames: 3
+  depth_image_roi_v: [360, 450]
+  source: log/depth_costmap_static现场反馈_20260927/low_box_snapshot

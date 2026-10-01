@@ -412,7 +412,7 @@ class Rosmaster(object):
             if servo_id < 1 or servo_id > 4:
                 if self.__debug:
                     print("set_pwm_servo input invalid")
-                return
+                return False
             if angle > 180:
                 angle = 180
             elif angle < 0:
@@ -421,13 +421,16 @@ class Rosmaster(object):
             cmd[2] = len(cmd) - 1
             checksum = sum(cmd, self.__COMPLEMENT) & 0xff
             cmd.append(checksum)
-            self.ser.write(cmd)
+            written = self.ser.write(cmd)
+            if written != len(cmd):
+                return False
             if self.__debug:
                 print("pwmServo:", cmd)
             time.sleep(self.__delay_time)
+            return True
         except:
             print('---set_pwm_servo error!---')
-            pass
+            return False
 
     # 同时控制四路PWM的角度，angle_sX=[0, 180]
     # At the same time control four PWM Angle, angle_sX=[0, 180]
