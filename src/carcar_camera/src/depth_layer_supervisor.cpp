@@ -12,9 +12,11 @@
 #include "rclcpp/parameter_client.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 #include "carcar_camera/depth_logic.hpp"
+#include "carcar_camera/required_stvl_health.hpp"
 
 namespace {
 using Steady = std::chrono::steady_clock;
@@ -37,7 +39,15 @@ public:
   : Node("depth_layer_supervisor")
   {
     health_timeout_s_ = declare_parameter("health_timeout_s", 0.50);
+    const auto mode=declare_parameter("mode",std::string("legacy_switch"));
+    if (mode!="legacy_switch" && mode!="required_stvl") {
+      throw std::invalid_argument("未知深度监督模式");
+    }
+    required_stvl_=mode=="required_stvl";
     recovery_stable_s_ = declare_parameter("recovery_stable_s", 3.0);
+    const auto layer_timeout=declare_parameter("layer_timeout_s",0.75);
+    required_health_=carcar_camera::RequiredStvlHealth(
+      health_timeout_s_,layer_timeout,recovery_stable_s_);
     rebuild_wait_s_ = declare_parameter("rebuild_wait_s", 1.0);
     switch_timeout_s_ = declare_parameter("switch_timeout_s", 5.0);
     layer_parameter_ = declare_parameter(
@@ -60,7 +70,39 @@ public:
       [this](std_msgs::msg::Bool::ConstSharedPtr msg) {
         raw_health_ = msg->data;
         last_health_received_ = Steady::now();
+        required_health_.camera(msg->data,now_steady());
       });
+    if (required_stvl_) {
+      required_cloud_=create_subscription<sensor_msgs::msg::PointCloud2>(
+        "/camera/navigation/obstacles",rclcpp::SensorDataQoS().keep_last(1),
+        [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) {
+          const rclcpp::Time stamp(msg->header.stamp);
+          required_health_.cloud(stamp.nanoseconds(),(now()-stamp).seconds(),now_steady());
+        });
+      const std::array<std::string,2> topics{
+        "/local_costmap/depth_stvl/diagnostics","/global_costmap/depth_stvl/diagnostics"};
+      for (size_t i=0;i<2;++i) {
+        required_layers_[i]=create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+          topics[i],rclcpp::QoS(1).reliable(),
+          [this,i](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) {
+            bool current=false; std::string seq;
+            for (const auto & s : msg->status) {
+              if (s.name!="depth_stvl") {continue;}
+              for (const auto & v : s.values) {
+                if (v.key=="source_current") {current=v.value=="true";}
+                if (v.key=="update_seq") {seq=v.value;}
+              }
+            }
+            try {
+              size_t end=0; const auto value=std::stoull(seq,&end);
+              if (end!=seq.size() || seq.empty() || seq.front()=='-') {throw std::invalid_argument("seq");}
+              required_health_.layer(i,current,value,now_steady());
+            } catch (const std::exception &) {
+              required_health_.layer(i,false,0,now_steady());
+            }
+          });
+      }
+    }
     const auto costmap_qos = rclcpp::QoS(1).reliable().transient_local();
     local_costmap_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
       "/local_costmap/costmap", costmap_qos,
@@ -83,7 +125,7 @@ public:
       "/global_costmap/clear_entirely_global_costmap");
     timer_ = create_wall_timer(
       std::chrono::milliseconds(100), std::bind(&DepthLayerSupervisor::tick, this));
-    publish_allowed(true);
+    publish_allowed(!required_stvl_);
   }
 
 private:
@@ -230,6 +272,21 @@ private:
 
   void tick()
   {
+    if (required_stvl_) {
+      const bool allowed=required_health_.allowed(now_steady());
+      publish_allowed(allowed);
+      diagnostic_msgs::msg::DiagnosticArray array;
+      array.header.stamp=now();
+      diagnostic_msgs::msg::DiagnosticStatus status;
+      status.name="D435FusionSupervisor"; status.hardware_id="nav2_costmaps";
+      status.level=allowed ? status.OK : status.WARN;
+      status.message=required_health_.reason();
+      add_value(status,"mode","required_stvl");
+      add_value(status,"motion_allowed",allowed ? "true" : "false");
+      add_value(status,"failure_reason",allowed ? "" : required_health_.reason());
+      array.status.push_back(status); status_pub_->publish(array);
+      return;
+    }
     const bool healthy = health_fresh();
     const auto now = Steady::now();
     if (healthy) {
@@ -327,6 +384,10 @@ private:
   }
 
   double health_timeout_s_{0.5};
+  bool required_stvl_{false};
+  carcar_camera::RequiredStvlHealth required_health_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr required_cloud_;
+  std::array<rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr,2> required_layers_;
   double recovery_stable_s_{3.0};
   double rebuild_wait_s_{1.0};
   double switch_timeout_s_{5.0};

@@ -1,0 +1,38 @@
+# 2026-10-07当前静止姿态独立候选；不覆盖正式外参或10月5日候选。
+# 用户确认落地、静止、轮子动力隔离、支架停稳、中央0.5～3 m平整空地。
+# 左红外光心粗量165 mm，参考base_link z=135 mm；尚未补偿高度。
+# 六帧近距0.5～1 m平面斜率平均值atan得pitch=-6.605676°。
+# 中央1～2 m无点，2～3 m稀疏且大偏差；不得用整段拟合代替近距拟合。
+# x/y暂沿用历史值，roll/yaw未独立标定；不是舵机反馈角，不用于移动导航。
+# 本轮随后向S1发送94档及逐档调角，此文件只保留调角前姿态证据。
+# 不得用于调角后的实车姿态或移动导航；各档另存独立候选。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.135
+quaternion:
+  x: 0.0
+  y: -0.05761347435741747
+  z: 0.0
+  w: 0.9983389642663795
+rpy:
+  roll: 0.0
+  pitch: -0.11529078982689335
+  yaw: 0.0
+mount_condition:
+  wheels_on_flat_ground_confirmed_by_user: true
+  stationary_current_pose_confirmed_by_user: true
+  wheel_power_isolated_confirmed_by_user: true
+  camera_bracket_settled_confirmed_by_user: true
+  central_0p5_to_3m_flat_floor_confirmed_by_user: true
+  measured_left_ir_height_m_approx: 0.165
+  physical_level_confirmed_by_user: false
+  servo_position_feedback: false
+evidence:
+  source: log/stvl_resume_20261007_01/current_reference_snapshot
+  profile: log/stvl_resume_20261007_01/current_reference_profile/near_plane.csv
+  pitch_method: '六帧近距平面slope_x平均值取atan；只修正pitch，保持粗量高度'
+  limitation: '仅当前中央近距候选；全六自由度、近距边缘、1～3m及保持重复性未验收'

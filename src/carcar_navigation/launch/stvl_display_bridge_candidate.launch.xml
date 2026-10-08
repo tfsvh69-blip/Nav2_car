@@ -1,0 +1,6 @@
+<launch>
+  <!-- 只桥接显示；不启动相机、底盘或地图，不桥接任何控制入口。 -->
+  <arg name="config_file"
+    default="$(find-pkg-share carcar_navigation)/config/stvl_display_domain_bridge_candidate.yaml"/>
+  <node pkg="domain_bridge" exec="domain_bridge" output="screen" args="$(var config_file)"/>
+</launch>

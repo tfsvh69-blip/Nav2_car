@@ -1,0 +1,35 @@
+# 本轮S1发送95档后，30帧墙前近距地面一致性候选；只用于当前静止对照。
+# 约下俯0.608°，称为近平视候选，不证明实体精确水平或命令角重复性。
+# 高度为近距平面一致性补偿；不是机械尺量。x/y及roll/yaw未重新验收。
+# 实体调角/断电/支架移动或初始化94后，必须重新测量；禁止移动导航。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.12928752641843635
+quaternion:
+  x: 0.0
+  y: 0.0053017749680160835
+  z: 0.0
+  w: 0.9999859454923297
+rpy:
+  roll: 0.0
+  pitch: 0.01060359961220274
+  yaw: 0.0
+mount_condition:
+  servo_position_feedback: false
+  command_sent_board_angle: 95
+  command_angle_repeatability_verified: false
+  physical_horizontal_confirmed_by_user: false
+  hardware_conditions_reused_user_report_unchanged: true
+  floor_consistency_height_m: 0.15928752641843635
+  height_source: '近距地面一致性补偿，不是机械高度实测'
+evidence:
+  snapshot: 'log/stvl_servo_auto_20261007_01/level95_snapshot'
+  profile: 'log/stvl_servo_auto_20261007_01/level95_profile'
+  frames: 30
+  measured_pitch_deg: 0.6075415054257735
+  near_rms_m: 0.000952036
+  limitation: '当前中央近距；全部六自由度、边缘、2 cm实物、舵机重复性及保持均待验'

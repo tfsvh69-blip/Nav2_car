@@ -1,0 +1,37 @@
+# 2026-10-07 S1回退发送98档后的30帧近距地面候选；不是稳定档位标定。
+# 相同98档首次约4.863°，回退后约7.106°，重复性未通过，串口已正常退出。
+# 高度为近距地面一致性补偿，不是可靠尺量；x/y、roll/yaw未重新验收。
+# 禁止用于移动导航、正式默认或下一次98档姿态；用户确认当前正常，回退方向没看清。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.12136651203265911
+quaternion:
+  x: 0.0
+  y: 0.0619716098370594
+  z: 0.0
+  w: 0.9980779125770709
+rpy:
+  roll: 0.0
+  pitch: 0.12402269067879436
+  yaw: 0.0
+mount_condition:
+  wheel_power_isolated_confirmed_by_user: true
+  physical_current_pose_settled_confirmed_by_user: false
+  servo_position_feedback: false
+  command_sent_board_angle: 98
+  command_angle_repeatability_verified: false
+  manually_measured_left_ir_height_m_approx_before_motion: 0.165
+  floor_consistency_height_m: 0.1513665120326591
+  height_source: '近距地面补偿；不是机械高度实测'
+evidence:
+  snapshot: 'log/stvl_resume_20261007_01/servo_board98_return_reference_snapshot'
+  profile: 'log/stvl_resume_20261007_01/servo_board98_return_reference_profile'
+  frame_count: 30
+  measured_pitch_deg: 7.105976739751411
+  observed_pitch_min_deg: 7.035460
+  observed_pitch_max_deg: 7.165525
+  limitation: '中央0.5～约1 m；远距及左右边缘、实物目标、回差/保持、全部六自由度未验收'

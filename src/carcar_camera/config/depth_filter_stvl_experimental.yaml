@@ -1,0 +1,25 @@
+# STVL 近低/普通障碍实验输入；标障保持原始光学坐标与时间，时间确认关闭。
+depth_cloud_filter:
+  ros__parameters:
+    base_frame: base_footprint
+    input_topic: /camera/depth/points
+    min_range: 0.3
+    max_range: 2.0
+    max_clearing_range: 2.0
+    min_obstacle_height: 0.015
+    max_obstacle_height: 0.26
+    self_min_x: -0.14
+    self_max_x: 0.14
+    self_min_y: -0.13
+    self_max_y: 0.13
+    self_min_z: 0.0
+    self_max_z: 0.26
+    max_stamp_age_s: 0.5
+    transform_timeout_s: 0.1
+    temporal_confirm_enable: false
+depth_layer_supervisor:
+  ros__parameters:
+    mode: required_stvl
+    health_timeout_s: 0.5
+    layer_timeout_s: 0.75
+    recovery_stable_s: 3.0

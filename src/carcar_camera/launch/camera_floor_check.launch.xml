@@ -1,0 +1,25 @@
+<launch>
+  <!-- 固定当前姿态，只读地面外参检查；不启动底盘、舵机、导航或清障监督器。 -->
+  <arg name="camera_extrinsics_file"
+    default="$(find-pkg-share carcar_description)/config/camera_extrinsics.yaml"/>
+  <arg name="use_rviz" default="false"/>
+  <arg name="filter_params_file"
+    default="$(find-pkg-share carcar_camera)/config/depth_filter.yaml"/>
+  <arg name="driver_params_file"
+    default="$(find-pkg-share carcar_camera)/config/d435_navigation.yaml"/>
+  <include file="$(find-pkg-share carcar_camera)/launch/camera_tf_verify.launch.xml">
+    <arg name="camera_tilt_dynamic" value="false"/>
+    <arg name="camera_extrinsics_file" value="$(var camera_extrinsics_file)"/>
+    <arg name="filter_params_file" value="$(var filter_params_file)"/>
+    <arg name="driver_params_file"
+      value="$(var driver_params_file)"/>
+    <arg name="use_rviz" value="false"/>
+  </include>
+  <node pkg="carcar_camera" exec="depth_cloud_preview" name="depth_cloud_preview" output="screen">
+    <param name="max_points" value="8000"/>
+    <param name="max_fps" value="1.0"/>
+  </node>
+  <node pkg="rviz2" exec="rviz2" name="camera_floor_check_rviz" output="screen"
+    args="-d $(find-pkg-share carcar_camera)/rviz/camera_floor_check.rviz"
+    if="$(var use_rviz)"/>
+</launch>

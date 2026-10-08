@@ -1,0 +1,42 @@
+# NAV-015-P2 实验候选：只把 librealsense 官方 temporal filter 打开，其余与 d435_navigation.yaml 完全一致。
+# 目的：验证“真实物体轮廓处深度像素在物体/背景之间跳变（mixed pixel）”是否是黄点闪烁的来源。
+# 不得作为正式默认；未完成多场景与移动验收前只用于离线对照。
+/**:
+  ros__parameters:
+    camera_name: camera
+    serial_no: "213222078719"
+    device_type: "d435"
+    enable_depth: true
+    enable_color: false
+    enable_infra: false
+    enable_infra1: false
+    enable_infra2: false
+    depth_module.depth_profile: "640x480x6"
+    depth_module.depth_format: "Z16"
+    pointcloud.enable: true
+    pointcloud.stream_filter: 0
+    pointcloud.stream_index_filter: 0
+    pointcloud.ordered_pc: false
+    pointcloud.allow_no_texture_points: true
+    # 当前 librealsense 的 pointcloud 滤波器内部名为 "Pointcloud (Neon)"，
+    # rs2_to_ros + create_graph_resource_name 转为 pointcloud__neon_.*
+    pointcloud__neon_.enable: true
+    pointcloud__neon_.stream_filter: 0
+    pointcloud__neon_.stream_index_filter: 0
+    pointcloud__neon_.ordered_pc: false
+    pointcloud__neon_.allow_no_texture_points: true
+    # 唯一变量：官方时域滤波。alpha 越大越平滑、延迟越高；delta 是判定“同一表面”的阈值。
+    temporal_filter.enable: true
+    temporal_filter.filter_smooth_alpha: 0.4
+    temporal_filter.filter_smooth_delta: 20
+    # 保持 0：不做空洞填补，避免在无效深度处凭空造出点。
+    temporal_filter.holes_fill: 0
+    publish_tf: true
+    tf_publish_rate: 0.0
+    diagnostics_period: 1.0
+    reconnect_timeout: 6.0
+    initial_reset: false
+    align_depth.enable: false
+    colorizer.enable: false
+    spatial_filter.enable: false
+    hole_filling_filter.enable: false

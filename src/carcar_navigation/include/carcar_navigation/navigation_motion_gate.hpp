@@ -10,14 +10,18 @@
 
 class NavigationMotionGate : public rclcpp::Node {
 public:
-  NavigationMotionGate() : Node("navigation_motion_gate") {
+  explicit NavigationMotionGate(const rclcpp::NodeOptions & options=rclcpp::NodeOptions())
+  : Node("navigation_motion_gate",options) {
     const double lease=declare_parameter("permit_timeout",0.20);
     const double command_age=declare_parameter("command_timeout",0.30);
+    const bool require_perception=declare_parameter("require_perception_health",false);
+    const double perception_timeout=declare_parameter("perception_timeout",0.30);
     if (!std::isfinite(lease) || lease<=0 || lease>0.20 ||
-      !std::isfinite(command_age) || command_age<=0 || command_age>0.30) {
+      !std::isfinite(command_age) || command_age<=0 || command_age>0.30 ||
+      !std::isfinite(perception_timeout) || perception_timeout<=0 || perception_timeout>0.30) {
       throw std::invalid_argument("联锁超时必须为正且不超过 0.20/0.30 秒");
     }
-    gate_=carcar_navigation::MotionGate(lease,command_age);
+    gate_=carcar_navigation::MotionGate(lease,command_age,require_perception,perception_timeout);
     output_=create_publisher<geometry_msgs::msg::Twist>("/cmd_vel",rclcpp::QoS(1));
     permit_=create_subscription<std_msgs::msg::UInt64>("/navigation/motion_permit",rclcpp::QoS(1),
       [this](std_msgs::msg::UInt64::ConstSharedPtr msg) {
@@ -25,7 +29,7 @@ public:
     perception_allowed_=create_subscription<std_msgs::msg::Bool>(
       "/navigation/perception_motion_allowed",rclcpp::QoS(1).reliable().transient_local(),
       [this](std_msgs::msg::Bool::ConstSharedPtr msg) {
-        std::lock_guard<std::mutex> lock(mutex_);gate_.perception_allowed(msg->data);});
+        std::lock_guard<std::mutex> lock(mutex_);gate_.perception_heartbeat(msg->data,now_steady());});
     input_=create_subscription<geometry_msgs::msg::Twist>("/cmd_vel_smoothed_raw",rclcpp::QoS(1),
       [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);gate_.command(*msg,now_steady());});

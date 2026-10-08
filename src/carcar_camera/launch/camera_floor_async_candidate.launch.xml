@@ -1,0 +1,14 @@
+<launch>
+  <!-- 已停用，保留失败测试资产：2026-10-07异步候选出现44.47秒接收间隔。 -->
+  <!-- 结果见NAV-016-R2；恢复同步使用camera_floor_check.launch.xml，门槛仍按30.17。 -->
+  <arg name="camera_extrinsics_file"
+    default="$(find-pkg-share carcar_description)/config/camera_extrinsics.yaml"/>
+  <arg name="filter_params_file"
+    default="$(find-pkg-share carcar_camera)/config/depth_filter_stvl_experimental.yaml"/>
+  <set_env name="RMW_FASTRTPS_PUBLICATION_MODE" value="ASYNCHRONOUS"/>
+  <include file="$(find-pkg-share carcar_camera)/launch/camera_floor_check.launch.xml">
+    <arg name="camera_extrinsics_file" value="$(var camera_extrinsics_file)"/>
+    <arg name="filter_params_file" value="$(var filter_params_file)"/>
+    <arg name="use_rviz" value="false"/>
+  </include>
+</launch>

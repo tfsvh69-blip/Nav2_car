@@ -641,9 +641,6 @@ public:
       return start_task(uuid);
     }
     if (runtime_->fault) {return fail(runtime_->fault_reason);}
-    if (runtime_->recovery_active && seconds(runtime_->recovery_started)>=runtime_->recovery_timeout) {
-      return fail("RECOVERY_TOTAL_TIMEOUT");
-    }
     if (!uuid.empty() && runtime_->navigation_uuid!=uuid) {
       runtime_->previous_navigation_uuid=runtime_->navigation_uuid;runtime_->navigation_uuid=uuid;
       if (!runtime_->previous_navigation_uuid.empty()) {runtime_->diagnostic("STOPPING","GOAL_REPLACED");}
@@ -657,6 +654,30 @@ public:
       ++runtime_->epoch;replan_tried_=false;
       stop_then(0); // 仅重置任务基准；受阻预算与总时间继续保留。
     } else if (uuid_.empty() && !uuid.empty()) {uuid_=uuid;}
+    // 感知故障有独立的停止/等待状态，不消耗运动恢复或普通输入等待预算。
+    // 停止确认仍受取消与停稳时限约束，失败会锁停；导航任务取消会 halt 此节点。
+    if (!runtime_->perception_ready()) {
+      if (perception_wait_started_==TimePoint{}) {
+        perception_wait_started_=Steady::now();stop_then(0);
+      }
+      runtime_->permit(false);
+      if (switching_) {
+        auto stopped=finish_stop();if (stopped!=BT::NodeStatus::SUCCESS) {return stopped;}
+      }
+      runtime_->diagnostic("PERCEPTION_WAIT","WAITING_HEALTHY_DEPTH");
+      return BT::NodeStatus::RUNNING;
+    }
+    if (perception_wait_started_!=TimePoint{}) {
+      const auto paused=Steady::now()-perception_wait_started_;
+      if (runtime_->recovery_active) {runtime_->recovery_started+=paused;}
+      if (input_waiting_) {input_wait_started_+=paused;}
+      perception_wait_started_=TimePoint{};runtime_->replan_required=true;
+      stop_then(0);
+      runtime_->diagnostic("PERCEPTION_RECOVERED","REPLAN_WITH_FRESH_AUTHORIZATION");
+    }
+    if (runtime_->recovery_active && seconds(runtime_->recovery_started)>=runtime_->recovery_timeout) {
+      return fail("RECOVERY_TOTAL_TIMEOUT");
+    }
     // 同一任务换目标和反复掉线均不得刷新本次输入等待期限。
     if (input_waiting_ && seconds(input_wait_started_)>=runtime_->input_wait_timeout) {
       return fail("INPUT_WAIT_TIMEOUT");
@@ -738,6 +759,7 @@ public:
     if (runtime_->motion && !runtime_->motion->state().terminal) {runtime_->motion->cancel();}
     initialized_=false;switching_=false;starting_task_=false;starting_uuid_.clear();
     input_waiting_=false;input_wait_started_=input_healthy_since_=TimePoint{};
+    perception_wait_started_=TimePoint{};
     uuid_wait_=TimePoint{};
     BT::ControlNode::halt();
   }
@@ -817,7 +839,7 @@ private:
   bool input_waiting_{false};
   size_t active_{0},next_{0};
   TimePoint cancel_deadline_{},settle_started_{},uuid_wait_{};
-  TimePoint input_wait_started_{},input_healthy_since_{};
+  TimePoint input_wait_started_{},input_healthy_since_{},perception_wait_started_{};
   std::string uuid_,starting_uuid_;
   geometry_msgs::msg::PoseStamped goal_;
   std::vector<geometry_msgs::msg::PoseStamped> goals_;

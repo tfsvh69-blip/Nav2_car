@@ -1,0 +1,35 @@
+# 2026-10-07 13:44手动重启后固定姿态的30帧近距地面一致性候选。
+# 没有发送舵机命令；不以历史94档或命令估计证明当前位置。
+# 高度由近距平面旋转/平移一致性求得，不是机械尺量。
+# 只适用于本次静止姿态；调角/断电/支架移动后重新测量。
+# x/y、roll/yaw沿用计算参考，不证明完整六自由度外参；禁止移动导航。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.13582303213056265
+quaternion:
+  x: 0.0
+  y: -0.05633727011621485
+  z: 0.0
+  w: 0.9984117948000477
+rpy:
+  roll: 0.0
+  pitch: -0.11273422824977869
+  yaw: 0.0
+mount_condition:
+  servo_position_feedback: false
+  current_board_position_known: false
+  physical_conditions_reconfirmed_after_reboot: false
+  measured_left_ir_height_m_approx_before_motion: 0.165
+  floor_consistency_height_m: 0.16582303213056265
+  height_source: '墙前近距地面一致性补偿，不是机械高度实测'
+evidence:
+  snapshot: 'log/stvl_manual_reboot_20261007_01/current_snapshot'
+  profile: 'log/stvl_manual_reboot_20261007_01/current_profile'
+  frames: 30
+  measured_pitch_deg: -6.459195485376816
+  mean_near_rms_m: 0.000983413738
+  limitation: '墙前中央近距；全外参、实体保持、0.3～0.5 m和左右边缘、2 cm实物及STVL待验'

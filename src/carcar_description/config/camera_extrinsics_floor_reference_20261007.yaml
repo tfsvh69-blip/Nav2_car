@@ -1,0 +1,34 @@
+# 2026-10-07当前姿态测量的零旋转参考，不是已标定外参。
+# 用户确认落地、静止、动力隔离、支架停稳、中央0.5～3 m平整空地。
+# 左红外光心离地粗量165 mm；用户随后说明手量不稳定，仅作计算参考。
+# base_footprint→base_link为30 mm，故参考z=135 mm；不是各档实测机械高度。
+# x/y暂沿用历史尺量，当前未复量；零roll/pitch/yaw仅为计算参考。
+# 不覆盖正式外参或10月5日候选，不用于移动导航。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.135
+quaternion:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  w: 1.0
+rpy:
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+mount_condition:
+  wheels_on_flat_ground_confirmed_by_user: true
+  stationary_current_pose_confirmed_by_user: true
+  wheel_power_isolated_confirmed_by_user: true
+  camera_bracket_settled_confirmed_by_user: true
+  central_0p5_to_3m_flat_floor_confirmed_by_user: true
+  measured_left_ir_height_m_approx: 0.165
+  physical_level_confirmed_by_user: false
+  servo_position_feedback: false
+evidence:
+  source: '2026-10-07本轮用户现场反馈：是，165mm'
+  limitation: '仅测量参考；当前旋转、x/y、近距/边缘覆盖、保持重复性均未验收'

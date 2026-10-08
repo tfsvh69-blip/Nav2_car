@@ -6,18 +6,22 @@
     default="$(find-pkg-share carcar_camera)/config/depth_filter.yaml"/>
   <!-- 外参尚是旧固定姿态尺量初值；须在静止验收后显式启用监督器。 -->
   <arg name="start_supervisor" default="false"/>
+  <arg name="use_sim_time" default="false"/>
 
   <node pkg="realsense2_camera" exec="realsense2_camera_node"
     namespace="camera" name="camera" output="screen" respawn="true" respawn_delay="5.0">
     <param from="$(var driver_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
     <remap from="/camera/camera/depth/color/points" to="/camera/depth/points"/>
   </node>
 
   <node pkg="carcar_camera" exec="depth_cloud_filter" name="depth_cloud_filter" output="screen">
     <param from="$(var filter_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
   <node pkg="carcar_camera" exec="depth_layer_supervisor" name="depth_layer_supervisor"
     output="screen" if="$(var start_supervisor)">
     <param from="$(var filter_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 </launch>

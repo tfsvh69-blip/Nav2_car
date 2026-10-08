@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 沿用手册19.4单播发现；域31，车上Jetson地址192.168.5.11。只影响加载它的进程。 -->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <participant profile_name="stvl_rviz_wifi_peer" is_default_profile="true">
+    <rtps>
+      <builtin>
+        <initialPeersList>
+          <locator>
+            <udpv4>
+              <address>192.168.5.11</address>
+              <port>15150</port>
+            </udpv4>
+          </locator>
+        </initialPeersList>
+      </builtin>
+    </rtps>
+  </participant>
+</profiles>

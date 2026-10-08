@@ -1,0 +1,19 @@
+<launch>
+  <!-- STVL 主线实验；依赖已运行的底盘、TF、地图和定位，默认不启动 RViz。 -->
+  <arg name="driver_params_file" default="$(find-pkg-share carcar_camera)/config/d435_navigation.yaml"/>
+  <arg name="filter_params_file" default="$(find-pkg-share carcar_camera)/config/depth_filter_stvl_experimental.yaml"/>
+  <arg name="depth_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_depth_stvl_experimental.yaml"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="odom_topic" default="/wheel/odometry"/>
+  <include file="$(find-pkg-share carcar_camera)/launch/camera_navigation.launch.xml">
+    <arg name="driver_params_file" value="$(var driver_params_file)"/>
+    <arg name="filter_params_file" value="$(var filter_params_file)"/>
+    <arg name="start_supervisor" value="true"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+  </include>
+  <include file="$(find-pkg-share carcar_navigation)/launch/navigation_experimental.launch.xml">
+    <arg name="sensor_params_file" value="$(var depth_params_file)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="odom_topic" value="$(var odom_topic)"/>
+  </include>
+</launch>

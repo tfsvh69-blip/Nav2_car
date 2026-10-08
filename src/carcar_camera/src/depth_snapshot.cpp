@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -26,6 +27,22 @@ public:
   {
     output_ = declare_parameter("output_dir", std::string("/tmp/depth_snapshot"));
     require_color_ = declare_parameter("require_color", true);
+    central_max_x_ = declare_parameter("central_max_x", 1.2);
+    // 默认保持旧中央窗口；边缘取证可显式扩大，不改变相机或过滤配置。
+    central_half_width_ = declare_parameter("central_half_width", 0.15);
+    floor_min_row_ = declare_parameter("floor_min_row", 360);
+    floor_max_row_ = declare_parameter("floor_max_row", 450);
+    target_frames_ = declare_parameter("sample_frames", 3);
+    sample_interval_ms_ = declare_parameter("sample_interval_ms", 0);
+    if (!std::isfinite(central_max_x_) || central_max_x_ <= 0.4 ||
+      !std::isfinite(central_half_width_) || central_half_width_ <= 0.0 ||
+      central_half_width_ > 2.0 ||
+      floor_min_row_ < 0 || floor_max_row_ < floor_min_row_ ||
+      target_frames_ < 1 || target_frames_ > 60 ||
+      sample_interval_ms_ < 0 || sample_interval_ms_ > 5000)
+    {
+      throw std::invalid_argument("Invalid central/floor diagnostic ROI");
+    }
     std::filesystem::create_directories(output_);
     info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
       "/camera/camera/depth/camera_info", rclcpp::SensorDataQoS(),
@@ -64,7 +81,8 @@ public:
               continue;
             }
             const auto p = transform * tf2::Vector3(*x, *y, *z);
-            if (p.x() < 0.3 || p.x() > 1.2 || std::abs(p.y()) > 0.15) {continue;}
+            if (p.x() < 0.3 || p.x() > central_max_x_ ||
+              std::abs(p.y()) > central_half_width_) {continue;}
             ++count;
             highest = std::max(highest, p.z());
             if (p.z() >= 0.03 && p.z() <= 0.26) {++obstacles;}
@@ -81,7 +99,8 @@ public:
           rclcpp::shutdown();
         }
       });
-    timeout_ = create_wall_timer(std::chrono::seconds(15), [this]() {
+    timeout_ = create_wall_timer(std::chrono::milliseconds(
+        15000 + target_frames_ * sample_interval_ms_), [this]() {
       RCLCPP_ERROR(get_logger(), "采样超时：深度帧=%d，彩色=%d", frames_, color_saved_);
       failed_ = true;
       rclcpp::shutdown();
@@ -93,10 +112,13 @@ public:
 private:
   void capture(const sensor_msgs::msg::Image & msg)
   {
-    if (frames_ >= 3) {
+    if (frames_ >= target_frames_) {
       if ((!require_color_ || color_saved_) && cloud_saved_) {rclcpp::shutdown();}
       return;
     }
+    const auto now = std::chrono::steady_clock::now();
+    if (frames_ > 0 && now - last_capture_ <
+      std::chrono::milliseconds(sample_interval_ms_)) {return;}
     if (!info_ || msg.encoding != "16UC1" || msg.is_bigendian ||
       info_->width != msg.width || info_->height != msg.height ||
       info_->header.frame_id != msg.header.frame_id || info_->k[0] <= 0 || info_->k[4] <= 0 ||
@@ -111,7 +133,13 @@ private:
       RCLCPP_WARN(get_logger(), "等待 TF：%s", error.what());
       return;
     }
+    last_capture_ = now;
     const std::string prefix = output_ + "/sample_" + std::to_string(++frames_);
+    std::ofstream timestamps(output_ + "/frames.csv", std::ios::app);
+    if (frames_ == 1) {timestamps << "frame,stamp_sec,stamp_nanosec\n";}
+    timestamps << frames_ << ',' << msg.header.stamp.sec << ','
+               << msg.header.stamp.nanosec << '\n';
+    if (!timestamps.good()) {failed_ = true;}
     if (frames_ == 1) {
       std::ofstream pose(output_ + "/base_from_depth.txt");
       const auto & t = base_from_depth.getOrigin();
@@ -144,14 +172,17 @@ private:
         invalid.at<uint8_t>(v, u) = 0;
         depth_value.at<uint8_t>(v, u) = cv::saturate_cast<uint8_t>(depth * 255 / 2.0);
         height_value.at<uint8_t>(v, u) = cv::saturate_cast<uint8_t>((p.z() + 0.1) * 255 / 0.5);
-        if (p.x() >= 0.3 && p.x() <= 1.2 && std::abs(p.y()) <= 0.15) {
+        if (p.x() >= 0.3 && p.x() <= central_max_x_ &&
+          std::abs(p.y()) <= central_half_width_) {
           ++central;
           if (p.z() >= 0.03 && p.z() <= 0.26) {++low;}
           else if (p.z() < 0.03) {++ground;}
           else {++high;}
           points << u << ',' << v << ',' << depth << ',' << p.x() << ',' << p.y()
                  << ',' << p.z() << '\n';
-          if (v >= 360 && v <= 450 && p.x() >= 0.4) {
+          if (static_cast<int>(v) >= floor_min_row_ &&
+            static_cast<int>(v) <= floor_max_row_ && p.x() >= 0.4)
+          {
             ++fit_count;
             sum_x += p.x();
             sum_z += p.z();
@@ -182,8 +213,10 @@ private:
         2 * intercept * sum_z + 2 * slope * intercept * sum_x;
       const double rms = std::sqrt(std::max(0.0, squared_error / fit_count));
       std::ofstream fit(prefix + "_floor_fit.txt");
-      fit << "ROI: x=0.4..1.2m, |y|<=0.15m, image v=360..450; "
-             "only interpret as floor after checking the scene\n"
+      fit << "ROI: x=0.4.." << central_max_x_ << "m, |y|<=" << central_half_width_
+          << "m, image v="
+          << floor_min_row_ << ".." << floor_max_row_
+          << "; only interpret as floor after checking the scene\n"
           << "count=" << fit_count << " slope=" << slope <<
         " intercept_m=" << intercept << " rms_m=" << rms << '\n';
       if (!fit.good()) {failed_ = true;}
@@ -196,6 +229,11 @@ private:
   std::string output_;
   bool color_saved_{false}, cloud_saved_{false}, failed_{false};
   bool require_color_{true};
+  double central_max_x_{1.2};
+  double central_half_width_{0.15};
+  int floor_min_row_{360}, floor_max_row_{450};
+  int target_frames_{3}, sample_interval_ms_{0};
+  std::chrono::steady_clock::time_point last_capture_;
   int frames_{0};
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
@@ -209,9 +247,15 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<DepthSnapshot>();
-  rclcpp::spin(node);
-  const bool failed = node->failed();
+  bool failed = false;
+  try {
+    auto node = std::make_shared<DepthSnapshot>();
+    rclcpp::spin(node);
+    failed = node->failed();
+  } catch (const std::exception & error) {
+    RCLCPP_ERROR(rclcpp::get_logger("depth_snapshot"), "%s", error.what());
+    failed = true;
+  }
   rclcpp::shutdown();
   return failed ? 1 : 0;
 }

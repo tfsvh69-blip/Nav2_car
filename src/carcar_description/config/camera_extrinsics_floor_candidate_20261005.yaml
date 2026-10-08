@@ -1,0 +1,35 @@
+# 2026-10-05：用户确认落地、静止、动力隔离、充电线断开、中央空地无遮挡。
+# 相机保持当前姿态，未驱动舵机；实际角度与平视状态没有反馈确认。
+# 零俯仰参考下六帧地面斜率平均值求 atan，得到 pitch=-6.429763°。
+# 单独俯仰复测后六帧截距求均值，得到 z 补偿 +7.030 mm。
+# 此 z 是当前地面测量的临时补偿，不是尺量安装高度；不替换正式默认。
+# 近距地面支持候选；1.5～2 m中央地面点稀少且有异常帧，远距未验收。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.13203014833333332
+quaternion:
+  x: 0.0
+  y: -0.056080828896561227
+  z: 0.0
+  w: 0.99842623194218738
+rpy:
+  roll: 0.0
+  pitch: -0.11222053366902754
+  yaw: 0.0
+mount_condition:
+  wheels_on_flat_ground_confirmed_by_user: true
+  stationary_current_pose_confirmed_by_user: true
+  physical_level_confirmed_by_user: false
+  servo_position_feedback: false
+  current_pose_retained_confirmed_by_user: true
+  mechanically_locked_confirmed_by_user: false
+  measured_left_ir_height_m_approx: 0.163
+evidence:
+  source: log/camera_floor_check_20261005_200424
+  pitch_method: '六帧原始地面斜率平均值的 atan；先只修正 pitch'
+  height_method: '修正 pitch 后六帧截距平均值取负；再单独补偿 z'
+  limitation: '仅当前固定姿态；未验收全外参、远距离、真实低障碍或移动导航'

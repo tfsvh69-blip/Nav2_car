@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 独立显示域32，单播发现同局域网Jetson；不影响车上域31。 -->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <participant profile_name="stvl_display_domain32" is_default_profile="true">
+    <rtps>
+      <builtin>
+        <initialPeersList>
+          <locator><udpv4><address>192.168.5.11</address></udpv4></locator>
+        </initialPeersList>
+      </builtin>
+    </rtps>
+  </participant>
+</profiles>

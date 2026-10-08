@@ -1,0 +1,30 @@
+# 空场往返后98档30帧候选；仅适用于本次保持姿态。
+# 高度是地面一致性补偿，不是机械尺量；实体改变后重新测量。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.150
+  y: 0.0175
+  z: 0.124821350267
+quaternion:
+  x: 0.0
+  y: 0.041193078185
+  z: 0.0
+  w: 0.999151204928
+rpy:
+  roll: 0.0
+  pitch: 0.082409473941
+  yaw: 0.0
+mount_condition:
+  servo_position_feedback: false
+  command_sent_board_angle: 98
+  command_angle_repeatability_verified: false
+  floor_consistency_height_m: 0.154821350267
+  height_source: 近距地面一致性补偿
+evidence:
+  snapshot: log/stvl_ground_angle_20261007_01/reapproach98_30_snapshot
+  profile: log/stvl_ground_angle_20261007_01/reapproach98_30_profile
+  frames: 30
+  measured_pitch_deg: 4.721715049
+  limitation: 中央近距空场；全外参、边缘、实物及多次重复性待验

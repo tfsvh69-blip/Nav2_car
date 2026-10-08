@@ -1,0 +1,36 @@
+# NAV-015-P2 实验候选：在清障候选基础上只增加“标障点云时间确认”。
+# 与 depth_filter_clearing_candidate.yaml 的唯一差别是 temporal_confirm_* 四项。
+# 目的：单帧深度跳变不再直接标黄，从而消除射线永远清不掉的永久残留体素。
+# 清障点云不做确认，保持全密度。未完成现场对照前不得作为正式默认。
+depth_cloud_filter:
+  ros__parameters:
+    base_frame: base_footprint
+    input_topic: /camera/depth/points
+    min_range: 0.30
+    max_range: 2.00
+    max_clearing_range: 4.00
+    min_obstacle_height: 0.03
+    max_obstacle_height: 0.26
+    self_min_x: -0.14
+    self_max_x: 0.14
+    self_min_y: -0.13
+    self_max_y: 0.13
+    self_min_z: 0.00
+    self_max_z: 0.26
+    max_stamp_age_s: 0.50
+    transform_timeout_s: 0.10
+    # 唯一变量：标障点云必须在最近 3 帧内被命中至少 2 次才允许发布。
+    # 代价是真实新障碍晚 1 帧（约 0.17 s）出现；按 0.15~0.18 m/s 折算约 3 cm 行程。
+    temporal_confirm_enable: true
+    temporal_confirm_resolution: 0.02
+    temporal_confirm_window_frames: 3
+    temporal_confirm_min_hits: 2
+
+depth_layer_supervisor:
+  ros__parameters:
+    health_timeout_s: 0.50
+    recovery_stable_s: 3.0
+    rebuild_wait_s: 1.0
+    switch_timeout_s: 5.0
+    layer_parameter: depth_voxel_layer.enabled
+    status_frame: base_link

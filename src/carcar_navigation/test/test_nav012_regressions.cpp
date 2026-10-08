@@ -576,6 +576,14 @@ struct SimInputs {
 
 class InputWaitRegression : public Nav012Regression, public ::testing::WithParamInterface<int> {
 protected:
+  void require_perception() {
+    client->declare_parameter("recovery.require_perception_health",true);
+    perception_pub=provider->create_publisher<std_msgs::msg::Bool>(
+      "/navigation/perception_motion_allowed",rclcpp::QoS(1).reliable().transient_local());
+    perception_timer=provider->create_wall_timer(50ms,[this] {
+      std_msgs::msg::Bool msg;msg.data=perception_good.load();perception_pub->publish(msg);
+    });
+  }
   void prepare(bool through=false) {
     runtime=carcar_navigation::RecoveryRuntime::get(configuration());
     static_tf();inputs=std::make_unique<SimInputs>(provider,through);inputs->rear_obstacle=false;
@@ -637,9 +645,13 @@ protected:
     tree.reset();diag_sub.reset();
     // 回调终止后再销毁诊断容器与模拟器。
     exec.cancel();if (thread.joinable()) {thread.join();}
+    perception_timer.reset();perception_pub.reset();
     inputs.reset();follow.reset();backup.reset();spin.reset();planner.reset();through_planner.reset();
     runtime.reset();Nav012Regression::TearDown();
   }
+  std::atomic<bool> perception_good{true};
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr perception_pub;
+  rclcpp::TimerBase::SharedPtr perception_timer;
   std::shared_ptr<carcar_navigation::RecoveryRuntime> runtime;
   std::unique_ptr<SimInputs> inputs;
   std::unique_ptr<FakeAction<nav2_msgs::action::ComputePathToPose>> planner;
@@ -687,6 +699,35 @@ TEST_P(InputWaitRegression, EveryExpiredSourceCancelsAndReplansWithoutEscape)
   EXPECT_TRUE(identified);
 }
 INSTANTIATE_TEST_SUITE_P(ScanCostmapFootprintOdom,InputWaitRegression,::testing::Range(1,9));
+
+TEST_F(InputWaitRegression, PerceptionFaultWaitsWithoutEscapeThenReplansSameTask) {
+  require_perception();prepare();ASSERT_TRUE(tree);
+  const auto uuid=runtime->navigation_uuid;
+  runtime->input_wait_timeout=0.5;
+  perception_good=false;
+  ASSERT_TRUE(until([&]{return follow->canceled>=1 && phase("PERCEPTION_WAIT");},2));
+  pump(1.2); // 超过普通输入等待期限，感知等待仍须保留有效任务。
+  EXPECT_EQ(status,BT::NodeStatus::RUNNING);
+  EXPECT_FALSE(runtime->fault);EXPECT_EQ(follow->accepted,1);
+  EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+  perception_good=true;
+  ASSERT_TRUE(until([&]{return follow->accepted>=2;},2));
+  EXPECT_TRUE(phase("PERCEPTION_RECOVERED"));
+  EXPECT_EQ(runtime->navigation_uuid,uuid);
+  EXPECT_GT(planner->accepted,1);
+  perception_timer->cancel(); // 监督器退出导致的心跳失联走同一停止路径。
+  ASSERT_TRUE(until([&]{return follow->canceled>=2;},1));
+  EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+}
+TEST_F(InputWaitRegression, HaltDuringPerceptionWaitNeverResumesCanceledTask) {
+  require_perception();prepare();ASSERT_TRUE(tree);
+  perception_good=false;
+  ASSERT_TRUE(until([&]{return follow->canceled>=1 && phase("PERCEPTION_WAIT");},2));
+  tree->haltTree();perception_good=true;
+  std::this_thread::sleep_for(500ms);
+  EXPECT_EQ(follow->accepted,1);
+  EXPECT_EQ(backup->accepted,0);EXPECT_EQ(spin->accepted,0);
+}
 
 TEST_F(InputWaitRegression, PersistentOdomExpiryFailsWithinWaitDeadline)
 {

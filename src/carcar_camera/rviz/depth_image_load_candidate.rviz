@@ -1,0 +1,41 @@
+# 仅用于跨机深度图负载定位：不订阅原始/过滤点云或Costmap。
+# 不作为日常导航配置；必须单独记录相机健康，不能凭图像可见判通过。
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+Visualization Manager:
+  Class: ''
+  Displays:
+  - Class: rviz_default_plugins/Image
+    Name: Depth Image Load Probe
+    Enabled: true
+    Value: true
+    Topic:
+      Depth: 1
+      Durability Policy: Volatile
+      History Policy: Keep Last
+      Reliability Policy: Best Effort
+      Value: /camera/camera/depth/image_rect_raw
+    Transport Hint: raw
+    Normalize Range: true
+    Queue Size: 1
+  Enabled: true
+  Global Options:
+    Background Color: 35; 35; 40
+    Fixed Frame: camera_depth_optical_frame
+    Frame Rate: 6
+  Name: root
+  Value: true
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2
+      Target Frame: camera_depth_optical_frame
+      Value: Orbit (rviz)
+Window Geometry:
+  Width: 900
+  Height: 650
+  X: 30
+  Y: 30

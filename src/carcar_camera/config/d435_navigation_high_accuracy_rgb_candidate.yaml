@@ -1,0 +1,40 @@
+# NAV-016-R2 独立静止候选：相对RGB参照候选仅将测距预设设为High Accuracy=3。
+# librealsense 2.58.4 / realsense-ros 4.58.3，Apache-2.0；不叠加SDK空间/时域/补洞。
+# 提高双目匹配置信度，可能降低有效深度覆盖；不是将未观测区域判空闲。
+# 当前双盒/左边缘空瓷砖对照有效；2cm、遮挡、完整外参和移动验收仍待。
+# 改预设前必须先保存原Custom高级配置；仅设回0不等于恢复原配置。
+/**:
+  ros__parameters:
+    camera_name: camera
+    serial_no: "213222078719"
+    device_type: "d435"
+    enable_depth: true
+    enable_color: true
+    rgb_camera.color_profile: "640x480x6"
+    rgb_camera.color_format: "RGB8"
+    enable_infra: false
+    enable_infra1: false
+    enable_infra2: false
+    depth_module.depth_profile: "640x480x6"
+    depth_module.depth_format: "Z16"
+    depth_module.visual_preset: 3
+    pointcloud.enable: true
+    pointcloud.stream_filter: 0
+    pointcloud.stream_index_filter: 0
+    pointcloud.ordered_pc: false
+    pointcloud.allow_no_texture_points: true
+    pointcloud__neon_.enable: true
+    pointcloud__neon_.stream_filter: 0
+    pointcloud__neon_.stream_index_filter: 0
+    pointcloud__neon_.ordered_pc: false
+    pointcloud__neon_.allow_no_texture_points: true
+    publish_tf: true
+    tf_publish_rate: 0.0
+    diagnostics_period: 1.0
+    reconnect_timeout: 6.0
+    initial_reset: false
+    align_depth.enable: false
+    colorizer.enable: false
+    spatial_filter.enable: false
+    temporal_filter.enable: false
+    hole_filling_filter.enable: false

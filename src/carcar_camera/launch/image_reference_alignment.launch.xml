@@ -1,0 +1,27 @@
+<launch>
+  <!-- 显示专用配准：复用depth_image_proc 3.0.9 C++节点，不改变相机SDK或导航点云。 -->
+  <arg name="max_width" default="320"/>
+  <arg name="max_fps" default="1.0"/>
+  <node pkg="carcar_camera" exec="reference_camera_info" name="reference_camera_info" output="screen">
+    <param name="max_width" value="$(var max_width)"/>
+  </node>
+  <node pkg="depth_image_proc" exec="register_node" name="depth_rgb_reference_registration"
+    output="screen">
+    <param name="queue_size" value="5"/>
+    <param name="fill_upsampling_holes" value="false"/>
+    <param name="use_rgb_timestamp" value="false"/>
+    <remap from="depth/image_rect" to="/camera/camera/depth/image_rect_raw"/>
+    <remap from="depth/camera_info" to="/camera/camera/depth/camera_info"/>
+    <remap from="rgb/camera_info" to="/camera/debug/rgb_reference/camera_info"/>
+    <remap from="depth_registered/image_rect" to="/camera/debug/depth_rgb_registered/image_rect"/>
+    <remap from="depth_registered/camera_info" to="/camera/debug/depth_rgb_registered/camera_info"/>
+  </node>
+  <node pkg="carcar_camera" exec="image_reference_preview" name="aligned_depth_image_reference_preview"
+    output="screen">
+    <param name="depth" value="true"/>
+    <param name="input_topic" value="/camera/debug/depth_rgb_registered/image_rect"/>
+    <param name="output_topic" value="/camera/debug/depth_rgb_reference/compressed"/>
+    <param name="max_width" value="$(var max_width)"/>
+    <param name="max_fps" value="$(var max_fps)"/>
+  </node>
+</launch>

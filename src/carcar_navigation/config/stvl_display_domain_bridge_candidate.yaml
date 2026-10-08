@@ -1,0 +1,37 @@
+# 仅显示的单向候选；domain_bridge 0.5.0，Apache-2.0。
+# 来源：https://github.com/ros2/domain_bridge/tree/0.5.0
+# 车上域31不变，桌面域32；不桥接原始深度、速度、目标、参数或动作服务。
+name: stvl_display_bridge
+from_domain: 31
+to_domain: 32
+topics:
+  /costmap/debug/stvl_voxels:
+    type: sensor_msgs/msg/PointCloud2
+    qos:
+      reliability: best_effort
+      durability: volatile
+      depth: 1
+  /costmap/costmap:
+    type: nav_msgs/msg/OccupancyGrid
+    qos:
+      reliability: best_effort
+      durability: volatile
+      depth: 1
+  /tf:
+    type: tf2_msgs/msg/TFMessage
+    qos:
+      reliability: reliable
+      durability: volatile
+      depth: 10
+  /tf_static:
+    type: tf2_msgs/msg/TFMessage
+    qos:
+      reliability: reliable
+      durability: transient_local
+      depth: 10
+  /robot_description:
+    type: std_msgs/msg/String
+    qos:
+      reliability: reliable
+      durability: transient_local
+      depth: 1

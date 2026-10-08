@@ -210,6 +210,7 @@ public:
     const std::string & costmap = "/local_costmap/costmap_raw",
     const std::string & footprint = "/local_costmap/published_footprint");
   bool healthy() const;
+  bool perception_ready() const;
   HealthSample localization_ready() const;
   HealthSample recovery_allowed() const;
   void note_tick();
@@ -277,13 +278,15 @@ private:
   std::map<std::string,std::shared_ptr<SensorCache>> caches_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
   TimePoint odom_received_{}, still_since_{};
-  HealthSample ready_{}, recovery_allowed_{};
+  HealthSample ready_{}, recovery_allowed_{}, perception_{};
+  bool require_perception_{false};
   std::string pose_uuid_, through_uuid_;
   std::vector<std::string> retired_ids_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
   std::unique_ptr<tf2_ros::TransformListener> listener_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr health_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr perception_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr recovery_allowed_sub_;
   rclcpp::Subscription<nav2_msgs::action::NavigateToPose_FeedbackMessage>::SharedPtr pose_feedback_;
   rclcpp::Subscription<nav2_msgs::action::NavigateThroughPoses_FeedbackMessage>::SharedPtr through_feedback_;

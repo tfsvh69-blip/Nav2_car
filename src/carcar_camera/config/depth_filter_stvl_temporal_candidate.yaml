@@ -1,0 +1,30 @@
+# NAV-016-R2 静止候选：相对depth_filter_stvl_experimental.yaml，仅启用时间确认。
+# 2 cm格子最近3帧至少命中2帧；不提高高度、不减少清障点、不改变TF/TTL/健康门槛。
+# 未完成普通盒/2 cm/边缘/遮挡与运动延迟验收，不写入正式默认。
+depth_cloud_filter:
+  ros__parameters:
+    base_frame: base_footprint
+    input_topic: /camera/depth/points
+    min_range: 0.3
+    max_range: 2.0
+    max_clearing_range: 2.0
+    min_obstacle_height: 0.015
+    max_obstacle_height: 0.26
+    self_min_x: -0.14
+    self_max_x: 0.14
+    self_min_y: -0.13
+    self_max_y: 0.13
+    self_min_z: 0.0
+    self_max_z: 0.26
+    max_stamp_age_s: 0.5
+    transform_timeout_s: 0.1
+    temporal_confirm_enable: true
+    temporal_confirm_resolution: 0.02
+    temporal_confirm_window_frames: 3
+    temporal_confirm_min_hits: 2
+depth_layer_supervisor:
+  ros__parameters:
+    mode: required_stvl
+    health_timeout_s: 0.5
+    layer_timeout_s: 0.75
+    recovery_stable_s: 3.0

@@ -1,0 +1,23 @@
+<launch>
+  <!-- 仅显示：相机由独立入口启动；不启动RGB采集、不控制硬件或导航。 -->
+  <arg name="enable_depth_reference" default="true"/>
+  <arg name="enable_rgb_reference" default="true"/>
+  <arg name="max_width" default="320"/>
+  <arg name="max_fps" default="1.0"/>
+  <node pkg="carcar_camera" exec="image_reference_preview" name="depth_image_reference_preview"
+    output="screen" if="$(var enable_depth_reference)">
+    <param name="depth" value="true"/>
+    <param name="input_topic" value="/camera/camera/depth/image_rect_raw"/>
+    <param name="output_topic" value="/camera/debug/depth_reference/compressed"/>
+    <param name="max_width" value="$(var max_width)"/>
+    <param name="max_fps" value="$(var max_fps)"/>
+  </node>
+  <node pkg="carcar_camera" exec="image_reference_preview" name="rgb_image_reference_preview"
+    output="screen" if="$(var enable_rgb_reference)">
+    <param name="depth" value="false"/>
+    <param name="input_topic" value="/camera/camera/color/image_raw"/>
+    <param name="output_topic" value="/camera/debug/rgb_reference/compressed"/>
+    <param name="max_width" value="$(var max_width)"/>
+    <param name="max_fps" value="$(var max_fps)"/>
+  </node>
+</launch>

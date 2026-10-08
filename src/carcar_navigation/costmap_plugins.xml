@@ -1,0 +1,6 @@
+<library path="carcar_monitored_stvl">
+  <class name="carcar_navigation::MonitoredStvlLayer"
+    type="carcar_navigation::MonitoredStvlLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>复用 STVL 2.3.4 算法并发布本轮输入与地图更新诊断。</description>
+  </class>
+</library>

@@ -19,6 +19,7 @@
 #include "tf2_ros/transform_listener.h"
 
 #include "carcar_camera/depth_logic.hpp"
+#include "carcar_camera/temporal_confirmation.hpp"
 
 namespace {
 using Steady = std::chrono::steady_clock;
@@ -86,8 +87,15 @@ public:
     limits_.self_max_z = declare_parameter("self_max_z", 0.26);
     max_stamp_age_s_ = declare_parameter("max_stamp_age_s", 0.50);
     transform_timeout_s_ = declare_parameter("transform_timeout_s", 0.10);
+    // 时间确认默认关闭，保证加入本功能前后行为完全一致；开启后才生效。
+    temporal_enabled_ = declare_parameter("temporal_confirm_enable", false);
+    const auto confirm_resolution = declare_parameter("temporal_confirm_resolution", 0.02);
+    const auto confirm_window = declare_parameter("temporal_confirm_window_frames", 3);
+    const auto confirm_min_hits = declare_parameter("temporal_confirm_min_hits", 2);
+    confirmation_ = carcar_camera::TemporalConfirmation(
+      confirm_resolution, confirm_window, confirm_min_hits);
     if (!carcar_camera::valid_limits(limits_) || max_stamp_age_s_ <= 0.0 ||
-      transform_timeout_s_ <= 0.0) {
+      transform_timeout_s_ <= 0.0 || (temporal_enabled_ && !confirmation_.valid())) {
       throw std::invalid_argument("D435 点云筛选参数无效");
     }
 
@@ -157,6 +165,8 @@ private:
     std::vector<Xyz> obstacles;
     std::vector<Xyz> clearing;
     size_t valid_measurements = 0;
+    size_t rejected_by_confirmation = 0;
+    if (temporal_enabled_) {confirmation_.begin_frame(++frame_index_);}
     obstacles.reserve(raw_points_ / 8);
     clearing.reserve(raw_points_);
     try {
@@ -175,7 +185,15 @@ private:
           clearing.push_back({*x, *y, *z});
         }
         if (decision.obstacle) {
-          obstacles.push_back({*x, *y, *z});
+          // 清障点云保持全密度；只有标障点云需要时间确认，避免单帧跳变
+          // 在物体表面之内留下射线永远清不掉的永久黄色体素。
+          if (temporal_enabled_ &&
+            !confirmation_.accept(base.x(), base.y(), base.z(), frame_index_))
+          {
+            ++rejected_by_confirmation;
+          } else {
+            obstacles.push_back({*x, *y, *z});
+          }
         }
       }
     } catch (const std::runtime_error & error) {
@@ -187,6 +205,8 @@ private:
     obstacle_points_ = obstacles.size();
     clearing_points_ = clearing.size();
     valid_measurements_ = valid_measurements;
+    rejected_points_ = rejected_by_confirmation;
+    tracked_voxels_ = temporal_enabled_ ? confirmation_.tracked_voxels() : 0;
     healthy_ = valid_measurements > 0;
     if (healthy_) {
       last_valid_received_ = received;
@@ -238,6 +258,9 @@ private:
     add_value(status, "valid_measurements", std::to_string(valid_measurements_));
     add_value(status, "obstacle_points", std::to_string(obstacle_points_));
     add_value(status, "clearing_points", std::to_string(clearing_points_));
+    add_value(status, "temporal_confirm_enable", temporal_enabled_ ? "true" : "false");
+    add_value(status, "temporal_rejected_points", std::to_string(rejected_points_));
+    add_value(status, "temporal_tracked_voxels", std::to_string(tracked_voxels_));
     add_value(status, "reason_code", effective ? "NONE" :
       (last_error_.empty() ? "POINTCLOUD_TIMEOUT" : last_error_));
     array.status.push_back(status);
@@ -260,6 +283,11 @@ private:
   size_t valid_measurements_{0};
   size_t obstacle_points_{0};
   size_t clearing_points_{0};
+  size_t rejected_points_{0};
+  size_t tracked_voxels_{0};
+  bool temporal_enabled_{false};
+  int64_t frame_index_{0};
+  carcar_camera::TemporalConfirmation confirmation_{0.02, 3, 2};
   std::string last_frame_;
   std::string last_error_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_;

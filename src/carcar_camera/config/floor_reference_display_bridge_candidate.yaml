@@ -1,0 +1,31 @@
+# 水平参考检查的只读显示桥；domain_bridge 0.5.0，Apache-2.0。
+# 来源：https://github.com/ros2/domain_bridge/tree/0.5.0
+# 只桥接限流原生点云、TF和车模，不桥接控制、导航地图或全量点云。
+name: floor_reference_display_bridge
+from_domain: 31
+to_domain: 32
+topics:
+  /camera/debug/points:
+    type: sensor_msgs/msg/PointCloud2
+    qos:
+      reliability: best_effort
+      durability: volatile
+      depth: 1
+  /tf:
+    type: tf2_msgs/msg/TFMessage
+    qos:
+      reliability: reliable
+      durability: volatile
+      depth: 10
+  /tf_static:
+    type: tf2_msgs/msg/TFMessage
+    qos:
+      reliability: reliable
+      durability: transient_local
+      depth: 10
+  /robot_description:
+    type: std_msgs/msg/String
+    qos:
+      reliability: reliable
+      durability: transient_local
+      depth: 1

@@ -44,8 +44,10 @@ int main(int argc, char ** argv)
   // 让插件库活到整个 ROS 节点/context 清理结束，而不是随 Costmap 成员提前卸载。
   pluginlib::ClassLoader<nav2_costmap_2d::Layer> layer_lifetime(
     "nav2_costmap_2d", "nav2_costmap_2d::Layer");
-  layer_lifetime.loadLibraryForClass("nav2_costmap_2d::VoxelLayer");
   auto node = std::make_shared<StaticDepthCostmap>();
+  const auto lifetime_plugins=node->declare_parameter("lifetime_plugins",
+    std::vector<std::string>{"nav2_costmap_2d::VoxelLayer"});
+  for (const auto & plugin : lifetime_plugins) {layer_lifetime.loadLibraryForClass(plugin);}
   {
     rclcpp::executors::SingleThreadedExecutor executor;
     executor.add_node(node->get_node_base_interface());

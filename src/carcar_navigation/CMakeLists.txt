@@ -31,6 +31,15 @@ find_package(nav2_core REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(nav2_behavior_tree REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
+find_package(spatio_temporal_voxel_layer 2.3.4 EXACT REQUIRED)
+find_library(STVL_CORE_LIBRARY NAMES spatio_temporal_voxel_layer_core
+  HINTS "${spatio_temporal_voxel_layer_DIR}/../../../lib" REQUIRED)
+find_package(TBB REQUIRED CONFIG)
+find_package(openvdb_vendor REQUIRED)
+find_package(laser_geometry REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
+find_package(PCL REQUIRED COMPONENTS filters)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(carcar_interfaces REQUIRED)
@@ -39,6 +48,22 @@ find_package(dwb_core REQUIRED)
 find_package(dwb_plugins REQUIRED)
 find_package(dwb_msgs REQUIRED)
 find_package(nav_2d_msgs REQUIRED)
+
+add_library(carcar_monitored_stvl SHARED src/monitored_stvl_layer.cpp)
+target_compile_features(carcar_monitored_stvl PUBLIC cxx_std_17)
+target_include_directories(carcar_monitored_stvl PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/stvl_2_3_4/include>
+  $<INSTALL_INTERFACE:include> ${PCL_INCLUDE_DIRS})
+ament_target_dependencies(carcar_monitored_stvl rclcpp rclcpp_lifecycle diagnostic_msgs
+  nav2_costmap_2d pluginlib spatio_temporal_voxel_layer laser_geometry pcl_conversions tf2_sensor_msgs)
+target_link_libraries(carcar_monitored_stvl OpenVDB::openvdb "${STVL_CORE_LIBRARY}")
+set_property(TARGET carcar_monitored_stvl APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--no-undefined")
+pluginlib_export_plugin_description_file(nav2_costmap_2d costmap_plugins.xml)
+install(TARGETS carcar_monitored_stvl LIBRARY DESTINATION lib)
+install(DIRECTORY vendor/stvl_2_3_4/include/ DESTINATION include)
+install(FILES vendor/stvl_2_3_4/LICENSE vendor/stvl_2_3_4/来源.md
+  DESTINATION share/${PROJECT_NAME}/vendor/stvl_2_3_4)
 
 # NAV-003/NAV-004: C++ 地图重载与格式验证工具（支持 expected_map_yaml 参数）
 add_executable(check_map_reload src/check_map_reload.cpp)
@@ -246,7 +271,24 @@ ament_target_dependencies(depth_costmap_static rclcpp nav2_costmap_2d nav2_util 
 install(TARGETS depth_costmap_static DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  find_package(carcar_camera REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_stvl_motion_gate test/test_stvl_motion_gate.cpp)
+  target_include_directories(test_stvl_motion_gate PRIVATE include)
+  ament_target_dependencies(test_stvl_motion_gate geometry_msgs)
+  ament_add_gtest(test_stvl_supervisor_ros test/test_stvl_supervisor_ros.cpp)
+  target_include_directories(test_stvl_supervisor_ros PRIVATE include)
+  ament_target_dependencies(test_stvl_supervisor_ros rclcpp geometry_msgs sensor_msgs
+    std_msgs diagnostic_msgs)
+  target_compile_definitions(test_stvl_supervisor_ros PRIVATE
+    SUPERVISOR_EXECUTABLE="${carcar_camera_DIR}/../../../lib/carcar_camera/depth_layer_supervisor")
+  set_tests_properties(test_stvl_supervisor_ros PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=213;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 60)
+  ament_add_gtest(test_stvl_integration test/test_stvl_integration.cpp)
+  ament_target_dependencies(test_stvl_integration rclcpp nav2_costmap_2d nav2_util
+    pluginlib sensor_msgs nav_msgs tf2_ros diagnostic_msgs)
+  set_tests_properties(test_stvl_integration PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=212;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 150)
   ament_add_gtest(test_protected_backup_execution test/test_protected_backup_execution.cpp)
   target_include_directories(test_protected_backup_execution PRIVATE include)
   ament_target_dependencies(test_protected_backup_execution rclcpp rclcpp_lifecycle
@@ -275,6 +317,17 @@ if(BUILD_TESTING)
     BEHAVIOR_TREES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/behavior_trees")
   set_tests_properties(test_nav012_regressions PROPERTIES
     ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 180)
+  # 复用真实生命周期用例，连续构造/销毁200轮，捕获线程启动/取消竞争。
+  set(stress_result "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recovery_runtime_lifecycle_stress.gtest.xml")
+  ament_add_test(test_recovery_runtime_lifecycle_stress
+    COMMAND $<TARGET_FILE:test_nav012_regressions>
+      --gtest_filter=Nav012Regression.PartialBackupFailureChargesMeasuredTravelAndUnknownRetainsReservation
+      --gtest_repeat=200 --gtest_output=xml:${stress_result}
+    RESULT_FILE "${stress_result}"
+    OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_recovery_runtime_lifecycle_stress.txt"
+    TIMEOUT 30)
+  set_tests_properties(test_recovery_runtime_lifecycle_stress PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=215;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE LABELS "gtest")
   ament_add_gtest(test_nav_bt_nodes test/test_nav_bt_nodes.cpp)
   ament_target_dependencies(test_nav_bt_nodes
     rclcpp

@@ -1,0 +1,16 @@
+<launch>
+  <!-- 只启动静止代价地图；相机和模型复用手册中的独立入口，不发布速度。 -->
+  <arg name="params_file" default="$(find-pkg-share carcar_navigation)/config/depth_costmap_stvl_static.yaml"/>
+  <arg name="use_rviz" default="false"/>
+  <node pkg="carcar_navigation" exec="depth_costmap_static" name="costmap" output="screen">
+    <param from="$(var params_file)"/>
+  </node>
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_stvl_test"
+    namespace="costmap" output="screen">
+    <param name="autostart" value="true"/>
+    <param name="node_names" value="['costmap']"/>
+    <param name="bond_timeout" value="0.0"/>
+  </node>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" if="$(var use_rviz)"
+    args="-d $(find-pkg-share carcar_navigation)/rviz/depth_costmap_stvl_static.rviz"/>
+</launch>

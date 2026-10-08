@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <utility>
+#include <thread>
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <nav2_costmap_2d/costmap_2d.hpp>
@@ -354,6 +355,10 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
   node->get_parameter_or("robot_base_frame",base_frame,base_frame);
   node->get_parameter_or("global_frame",global_frame,global_frame);
   node->get_parameter_or("odom_topic",odom_topic,odom_topic);
+  if (!node->has_parameter("recovery.require_perception_health")) {
+    node->declare_parameter("recovery.require_perception_health",false);
+  }
+  node->get_parameter_or("recovery.require_perception_health",require_perception_,false);
   response_timeout=parameter(node,"recovery.response_timeout",1);
   cancel_timeout=parameter(node,"recovery.cancel_timeout",1);
   settle_timeout=parameter(node,"recovery.settle_timeout",1);
@@ -389,6 +394,12 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
       std::lock_guard<std::mutex> lock(mutex_);
       ready_.received=true; ready_.value=msg->data; ready_.received_at=Steady::now();
     },options);
+  perception_sub_=node->create_subscription<std_msgs::msg::Bool>(
+    "/navigation/perception_motion_allowed",rclcpp::QoS(1).reliable().transient_local(),
+    [this](std_msgs::msg::Bool::ConstSharedPtr msg) {
+      std::lock_guard<std::mutex> lock(mutex_);
+      perception_.received=true;perception_.value=msg->data;perception_.received_at=Steady::now();
+    },options);
   recovery_allowed_sub_=node->create_subscription<std_msgs::msg::Bool>("/localization_monitor/recovery_allowed",
     rclcpp::QoS(1).reliable().transient_local(),[this](std_msgs::msg::Bool::ConstSharedPtr msg) {
       std::lock_guard<std::mutex> lock(mutex_);
@@ -420,6 +431,12 @@ RecoveryRuntime::RecoveryRuntime(rclcpp::Node::SharedPtr n) : node(n),tf(n->get_
     publish_recovery_status();
   },group);
   thread_=std::make_unique<nav2_util::NodeThread>(executor_);
+  // Humble NodeThread 的 cancel 可能先于 spin()；后启动的 spin 会重新置
+  // spinning=true，使立即析构的 join 永久等待。构造完成前确认执行器已进入运行。
+  while (rclcpp::ok(node->get_node_base_interface()->get_context()) &&
+    !executor_->is_spinning()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
 }
 RecoveryRuntime::~RecoveryRuntime() {
   permit(false);
@@ -484,6 +501,10 @@ bool RecoveryRuntime::pose(geometry_msgs::msg::PoseStamped & result,const std::s
     return true;
   } catch (const tf2::TransformException &) {return false;}
 }
+bool RecoveryRuntime::perception_ready() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return !require_perception_ || (perception_.fresh(0.30) && perception_.value);
+}
 SafetyResult RecoveryRuntime::inputs_ready() {
   auto failure=[&](const std::string & code,const std::string & topic,
       const std::string & detail,double stamp_age=-1,double receive_age=-1) {
@@ -499,6 +520,10 @@ SafetyResult RecoveryRuntime::inputs_ready() {
     return msg?(node->now()-rclcpp::Time(msg->header.stamp)).seconds():-1.0;
   };
   auto received_age=[](TimePoint received) {return received==TimePoint{}?-1.0:seconds(received);};
+  if (!perception_ready()) {
+    return failure("PERCEPTION_UNHEALTHY","/navigation/perception_motion_allowed",
+      "深度感知未就绪或心跳过期");
+  }
   if (!healthy()) {
     const auto health=localization_ready();
     return failure("LOCALIZATION_UNHEALTHY","/localization_monitor/ready",

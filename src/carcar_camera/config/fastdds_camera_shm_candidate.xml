@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fast DDS 2.6.12候选：大点云需大于单消息的共享内存段。
+     仅通过本轮进程FASTRTPS_DEFAULT_PROFILES_FILE显式加载，不改系统默认。
+     保留UDP跨机发现/通信，16 MiB SHM用于同机；不覆盖话题QoS。
+     来源：https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/transport/shared_memory/shared_memory.html -->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>camera_udp</transport_id>
+      <type>UDPv4</type>
+    </transport_descriptor>
+    <transport_descriptor>
+      <transport_id>camera_shm_16m</transport_id>
+      <type>SHM</type>
+      <segment_size>16777216</segment_size>
+    </transport_descriptor>
+  </transport_descriptors>
+  <participant profile_name="camera_large_cloud" is_default_profile="true">
+    <rtps>
+      <userTransports>
+        <transport_id>camera_udp</transport_id>
+        <transport_id>camera_shm_16m</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+    </rtps>
+  </participant>
+</profiles>

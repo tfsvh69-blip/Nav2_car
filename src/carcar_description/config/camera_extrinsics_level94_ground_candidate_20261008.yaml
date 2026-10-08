@@ -1,0 +1,30 @@
+# 2026-10-08：94档近平视30帧中央近场地面一致性候选。
+# 未完整标定：高度为地面补偿，x/y/yaw未复量；不作为正式移动默认。
+parent_frame: base_link
+child_frame: camera_link
+verified: false
+translation:
+  x: 0.15
+  y: 0.0175
+  z: 0.128830166013
+quaternion:
+  x: 0.00254282025254
+  y: 0.000817446157816
+  z: -2.07862606009e-06
+  w: 0.999996432915
+rpy:
+  roll: 0.00508564768483
+  pitch: 0.00163489778329
+  yaw: 0.0
+mount_condition:
+  servo_position_feedback: false
+  keyboard_target_deg: 140.5
+  command_sent_board_angle: 94
+  command_angle_repeatability_verified: false
+  floor_consistency_height_m: 0.158830166013
+  height_source: 中央近距地面一致性补偿，非机械尺量
+evidence:
+  profile: log/stvl_level_recheck_20261008_01/servo_steps/step01_board94_hold30/profile
+  snapshot: log/stvl_level_recheck_20261008_01/servo_steps/step01_board94_hold30/snapshot
+  frames: 30
+  limitation: 中央近距、当前固定94姿态；完整外参、边缘、小物体与重启重复性待验
