@@ -1,0 +1,18 @@
+<launch>
+  <!-- 默认只启动网页和数据存储，不启动/控制执行器。 -->
+  <arg name="bind_address" default="127.0.0.1"/>
+  <arg name="port" default="8081"/>
+  <arg name="data_root" default="/home/jetson/.local/share/carcar_inspection"/>
+  <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps"/>
+  <arg name="enable_hardware" default="false"/>
+  <arg name="enable_navigation" default="false"/>
+  <node pkg="carcar_inspection" exec="inspection_console" name="inspection_console" output="screen">
+    <param from="$(find-pkg-share carcar_inspection)/config/console.yaml"/>
+    <param name="bind_address" value="$(var bind_address)"/>
+    <param name="port" value="$(var port)"/>
+    <param name="data_root" value="$(var data_root)"/>
+    <param name="map_root" value="$(var map_root)"/>
+    <param name="enable_hardware" value="$(var enable_hardware)"/>
+    <param name="enable_navigation" value="$(var enable_navigation)"/>
+  </node>
+</launch>

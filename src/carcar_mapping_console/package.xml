@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carcar_mapping_console</name><version>0.1.0</version>
+  <description>平板离线建图、受控遥控与工程保存</description>
+  <maintainer email="maintainer@example.com">carcar maintainers</maintainer><license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend><depend>ament_index_cpp</depend><depend>std_msgs</depend>
+  <depend>geometry_msgs</depend><depend>sensor_msgs</depend><depend>nav_msgs</depend>
+  <depend>rcl_interfaces</depend><depend>tf2</depend><depend>tf2_ros</depend>
+  <depend>slam_toolbox</depend><depend>nav2_map_server</depend><depend>nlohmann-json-dev</depend>
+  <depend>boost</depend><depend>libopencv-dev</depend><depend>libssl-dev</depend>
+  <depend>libglib-dev</depend><build_depend>pkg-config</build_depend>
+  <exec_depend>carcar_base</exec_depend><exec_depend>carcar_bringup</exec_depend>
+  <exec_depend>carcar_camera</exec_depend><exec_depend>carcar_lidar</exec_depend>
+  <exec_depend>carcar_navigation</exec_depend><exec_depend>launch_ros</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>nodejs</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

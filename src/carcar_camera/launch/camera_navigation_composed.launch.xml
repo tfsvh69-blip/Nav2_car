@@ -1,0 +1,35 @@
+<launch>
+  <!-- CAM-005：相机与筛选共享进程；原独立进程入口保留。唯一相机所有者。 -->
+  <arg name="driver_params_file"
+    default="$(find-pkg-share carcar_camera)/config/d435_navigation.yaml"/>
+  <arg name="filter_params_file"
+    default="$(find-pkg-share carcar_camera)/config/depth_filter_stvl_temporal_candidate.yaml"/>
+  <arg name="use_intra_process_comms" default="true"/>
+  <arg name="voxel_grid_enable" default="true"/>
+  <arg name="voxel_leaf_size" default="0.01"/>
+  <arg name="start_supervisor" default="false"/>
+  <arg name="use_sim_time" default="false"/>
+  <node_container pkg="rclcpp_components" exec="component_container_mt"
+    name="d435_container" namespace="" output="screen">
+    <composable_node pkg="realsense2_camera"
+      plugin="realsense2_camera::RealSenseNodeFactory" namespace="camera" name="camera">
+      <param from="$(var driver_params_file)"/>
+      <param name="use_sim_time" value="$(var use_sim_time)"/>
+      <remap from="/camera/camera/depth/color/points" to="/camera/depth/points"/>
+      <extra_arg name="use_intra_process_comms" value="$(var use_intra_process_comms)"/>
+    </composable_node>
+    <composable_node pkg="carcar_camera" plugin="carcar_camera::DepthCloudFilter"
+      name="depth_cloud_filter">
+      <param from="$(var filter_params_file)"/>
+      <param name="use_sim_time" value="$(var use_sim_time)"/>
+      <param name="voxel_grid_enable" value="$(var voxel_grid_enable)"/>
+      <param name="voxel_leaf_size" value="$(var voxel_leaf_size)"/>
+      <extra_arg name="use_intra_process_comms" value="$(var use_intra_process_comms)"/>
+    </composable_node>
+  </node_container>
+  <node pkg="carcar_camera" exec="depth_layer_supervisor" name="depth_layer_supervisor"
+    output="screen" if="$(var start_supervisor)">
+    <param from="$(var filter_params_file)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>

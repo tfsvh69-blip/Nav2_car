@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="color-scheme" content="light" />
+    <title>巡检 · 随行建图</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- 项目自绘图标；本地SVG，无外部图标字体依赖。 -->
+    <svg
+      class="icon-defs"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="i-map" viewBox="0 0 24 24">
+          <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15m6-12v15" />
+        </symbol>
+        <symbol id="i-points" viewBox="0 0 24 24">
+          <path
+            d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0ZM9.5 10a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0"
+          />
+        </symbol>
+        <symbol id="i-stop" viewBox="0 0 24 24">
+          <path d="M7 3h10l4 4v10l-4 4H7l-4-4V7ZM9 9h6v6H9Z" />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+          <path d="m8 4 12 8-12 8Z" />
+        </symbol>
+        <symbol id="i-center" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="7" />
+          <path d="M12 2v5m0 10v5M2 12h5m10 0h5" />
+        </symbol>
+        <symbol id="i-fit" viewBox="0 0 24 24">
+          <path d="M9 3H3v6m12-6h6v6M3 15v6h6m6 0h6v-6" />
+        </symbol>
+        <symbol id="i-save" viewBox="0 0 24 24">
+          <path d="M4 3h13l4 4v14H3V3Zm4 0v6h8V3M7 21v-8h10v8" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24">
+          <path d="M20 10a8 8 0 1 0-1 7M20 4v6h-6" />
+        </symbol>
+        <symbol id="i-drive" viewBox="0 0 24 24">
+          <path
+            d="M7 12 4 18v3m13-9 3 6v3M4 18h16M6 12l2-7h8l2 7ZM7 16h.01M17 16h.01"
+          />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Zm-4 9 3 3 5-6" />
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M12 19V5m-6 6 6-6 6 6" />
+        </symbol>
+        <symbol id="i-left" viewBox="0 0 24 24">
+          <path d="M9 4 4 9l5 5M4 9h9a7 7 0 0 1 7 7v4" />
+        </symbol>
+        <symbol id="i-right" viewBox="0 0 24 24">
+          <path d="m15 4 5 5-5 5m5-5h-9a7 7 0 0 0-7 7v4" />
+        </symbol>
+      </defs>
+    </svg>
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="巡检首页"
+          ><span class="brand-mark"
+            ><svg class="icon"><use href="#i-drive" /></svg></span
+          ><span>巡检<small>小车工作空间</small></span></a
+        >
+        <p class="aside-label">工作空间</p>
+        <nav class="modes" aria-label="工作空间">
+          <a href="/" aria-current="page"
+            ><svg class="icon"><use href="#i-map" /></svg>随行建图<svg
+              class="nav-chevron"
+              viewBox="0 0 24 24"
+            >
+              <path d="m9 5 7 7-7 7" /></svg
+          ></a>
+          <a href="/inspect/"
+            ><svg class="icon"><use href="#i-points" /></svg>巡检工作台</a
+          >
+        </nav>
+        <div class="sidebar-note">
+          <svg class="icon"><use href="#i-shield" /></svg
+          ><strong>随行，目视，慢行。</strong>
+          <p>地图随探索逐步生成。<br />行驶时请始终目视小车。</p>
+        </div>
+        <div class="aside-foot">
+          <span class="local-dot"></span>本地工作空间<small
+            >地图与工程保存在车端</small
+          >
+        </div>
+      </aside>
+      <div class="workspace-body">
+        <header class="page-header">
+          <div class="page-title">
+            <p class="eyebrow">探索空间 · 构建地图</p>
+            <h1>随行建图<span class="section-badge">MAPPING</span></h1>
+            <p id="task-summary">网页待命</p>
+          </div>
+          <div class="header-actions">
+            <button id="enable" class="enable" disabled>
+              <svg class="icon"><use href="#i-play" /></svg>启用遥控</button
+            ><button id="stop" class="stop">
+              <svg class="icon"><use href="#i-stop" /></svg>停车并锁定
+            </button>
+          </div>
+        </header>
+        <div class="status-strip" role="status">
+          <span id="connection">正在连接</span><span id="phase">等待数据</span
+          ><span class="status-caption">保持目视 · 松手停车</span>
+        </div>
+        <section id="task-panel" class="task-panel" aria-label="建图工程">
+          <div class="task-heading">
+            <span class="tile-icon"
+              ><svg class="icon"><use href="#i-map" /></svg
+            ></span>
+            <div>
+              <strong>开始一次探索</strong
+              ><span>新建地图，或接着上次的工程继续</span>
+            </div>
+          </div>
+          <div class="task-controls">
+            <label class="sr-only" for="mode">工程类型</label
+            ><select id="mode">
+              <option value="new">新建地图</option>
+              <option value="resume">继续已有工程</option></select
+            ><select id="bundle" aria-label="续建工程" hidden></select
+            ><button
+              id="refresh-bundles"
+              class="icon-button"
+              aria-label="刷新工程"
+              title="刷新工程"
+            >
+              <svg class="icon"><use href="#i-refresh" /></svg></button
+            ><button id="start" class="primary">
+              <svg class="icon"><use href="#i-play" /></svg>检查并启动硬件
+            </button>
+          </div>
+          <span id="task-info">网页待命，硬件未启动</span>
+        </section>
+        <main>
+          <section class="map-panel" aria-label="建图视图">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">空间视图</span>
+                <h2>建图画布</h2>
+              </div>
+              <span class="subtle-badge">俯视 · map 坐标系</span>
+            </div>
+            <div class="toolbar map-tools">
+              <button id="fit">
+                <svg class="icon"><use href="#i-fit" /></svg>查看全图</button
+              ><button id="center">
+                <svg class="icon"><use href="#i-center" /></svg>车辆居中</button
+              ><button id="hint">选择续建位置与朝向</button
+              ><button id="try">试匹配</button
+              ><button id="confirm">墙体与朝向已对齐</button>
+            </div>
+            <div class="map-view">
+              <canvas
+                id="map"
+                aria-label="激光与轮式里程计生成的俯视地图"
+              ></canvas>
+              <div id="map-empty" class="map-empty">
+                <div class="empty-map-icon">
+                  <svg class="icon"><use href="#i-map" /></svg>
+                </div>
+                <h3>让空间，慢慢清晰。</h3>
+                <p>新建或载入工程后，地图将在这里呈现。</p>
+                <span>激光扫描 + 轮式里程计</span>
+              </div>
+              <div id="video-panel" hidden>
+                <canvas id="video" width="640" height="480"></canvas>
+                <div id="video-status">辅助视频</div>
+              </div>
+            </div>
+            <div class="map-status">
+              <span id="health">等待传感器数据</span
+              ><span class="map-key"
+                ><i></i>激光<span><i></i>估计车位</span></span
+              >
+            </div>
+            <p id="hint-info"></p>
+            <details class="legend">
+              <summary>读懂地图与图像</summary>
+              <p id="legend">
+                激光与轮式里程计生成俯视地图，使用 map
+                坐标系：黑色为占用、白色为空闲、灰色为未知；红点为当前激光，蓝色为估计车位示意（非车身外廓），黄色为人工初始位置。默认
+                5 厘米/格；缩放只改变显示比例，地图约 3
+                秒更新。白色不保证各高度均无障碍。RGB 是前方透视辅助图，640 ×
+                480 为像素数；窗口大小不改变镜头视场，不能与俯视地图逐像素比较。
+              </p>
+            </details>
+          </section>
+          <aside class="operate" aria-label="遥控与保存">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">车辆控制</span>
+                <h2>从容掌控</h2>
+              </div>
+              <span class="control-symbol"
+                ><svg class="icon"><use href="#i-drive" /></svg
+              ></span>
+            </div>
+            <label class="field-label" for="gear"
+              >行驶档位<span>命令上限</span></label
+            >
+            <select id="gear" aria-label="速度档位">
+              <option value="slow">慢速 · 0.05 m/s · 0.10 rad/s</option>
+              <option value="normal">常速 · 0.10 m/s · 0.20 rad/s</option>
+              <option id="fast-option" value="fast" disabled>
+                快速 · 0.18 m/s · 0.36 rad/s
+              </option>
+            </select>
+            <div class="joystick-area">
+              <div
+                id="joystick"
+                class="disabled"
+                role="application"
+                aria-label="按住摇杆：向上前进，向下后退，向左左转，向右右转"
+              >
+                <span class="stick-north"
+                  ><svg class="icon"><use href="#i-arrow" /></svg>前进</span
+                ><span class="stick-south"
+                  >后退<svg class="icon"><use href="#i-arrow" /></svg></span
+                ><span class="stick-west"
+                  ><svg class="icon"><use href="#i-left" /></svg></span
+                ><span class="stick-east"
+                  ><svg class="icon"><use href="#i-right" /></svg
+                ></span>
+                <div id="stick"><span></span></div>
+              </div>
+              <p class="gesture-help">按住行驶 <span>·</span> 松手停车</p>
+            </div>
+            <p id="motion" aria-live="polite">尚未启用遥控</p>
+            <p id="fault-summary"></p>
+            <div class="save-actions">
+              <button id="save" class="primary">
+                <svg class="icon"><use href="#i-save" /></svg>停车并保存</button
+              ><button id="finish">
+                <svg class="icon"><use href="#i-check" /></svg>保存并结束
+              </button>
+            </div>
+            <p id="save-age"></p>
+            <p id="result" aria-live="polite"></p>
+            <details class="more">
+              <summary>辅助工具与诊断</summary>
+              <label class="field-label" for="transport">控制通道</label
+              ><select id="transport">
+                <option value="websocket" selected>WebSocket 可靠控制</option>
+                <option value="webrtc">WebRTC 对照</option>
+              </select>
+              <div class="toolbar">
+                <button id="video-toggle">开启辅助视频</button
+                ><button id="diagnose">查看诊断</button
+                ><button id="export-diagnostics">导出诊断</button
+                ><button id="reconnect">重新连接</button
+                ><button id="restart">重启建图任务</button
+                ><button id="end">放弃未保存进度并结束</button>
+              </div>
+              <pre id="diagnostics" hidden></pre>
+            </details>
+          </aside>
+        </main>
+        <footer>
+          <svg class="icon"><use href="#i-shield" /></svg
+          ><span
+            >遥控无自动避障。速度为命令上限，实物是否停稳须目视确认；紧急时切断轮动力。</span
+          ><span class="footer-end">随行建图 / 巡检</span>
+        </footer>
+      </div>
+    </div>
+    <script src="/rtc_control.js" defer></script>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

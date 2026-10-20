@@ -1,0 +1,27 @@
+map_pixels=342x299
+Load From File src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/graph.posegraph 
+Mapper <- Module
+Mapper <- m_pSequentialScanMatcher
+Mapper <- m_pGraph
+MapperGraph <- Graph; Graph <- m_Edges; Graph <- m_Vertices
+MapperGraph <- m_pMapper; MapperGraph <- m_pLoopScanMatcher; MapperGraph <- m_pTraversal
+Mapper <- m_pMapperSensorManager
+MapperSensorManager <- m_ScanManagers; MapperSensorManager <- m_Scans
+Mapper <- m_Listeners
+**Finished serializing Mapper**
+Load From File
+**Serializing Dataset**
+Dataset <- m_SensorNameLookup
+Dataset <- m_Data
+Dataset <- m_Lasers
+Dataset <- m_pDatasetInfo
+**Finished serializing Dataset**
+laser_threshold_m=3 declared_max_m=12
+scans=637 first=1792419506.40866 last=1792420459.29041 duration_s=952.881750822067
+valid_beams=407149 within3=277397 within6=368886
+near3_min/p10/median=130/229/464
+near6_min/p10/median=457/492/599
+odom/corrected_signed_turn_deg=-96.697501581366/-299.915439747154
+odom/corrected_abs_turn_deg=4262.82887441001/4436.95961805582
+odom/corrected_distance_m=100.136184156138/97.8688457783889
+max_heading_correction_step_deg=8.6983587667786 at_id=630

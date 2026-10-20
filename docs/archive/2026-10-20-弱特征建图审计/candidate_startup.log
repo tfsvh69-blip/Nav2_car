@@ -1,0 +1,2 @@
+Calculated port number is too high. Probably the domainId is over 232 or portBase is too high.
+[37;1m2026-10-20 16:55:28.203 [31;1m[[37;1mRTPS[31;1m Error] [37mCalculated port number is too high. Probably the domainId is over 232 or portBase is too high.[34;1m -> Function [36mgetMulticastPort[m

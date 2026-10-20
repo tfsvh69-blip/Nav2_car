@@ -1,0 +1,9 @@
+Carcar inspection console runtime dependencies
+
+Vue 3.5.44 and its @vue runtime modules
+Source: https://github.com/vuejs/core/tree/v3.5.44
+License: MIT; full notice: VUE-LICENSE.txt
+
+Application source is licensed under Apache-2.0; full text: CARCAR-LICENSE.txt.
+Vite, Vitest and playwright-core are development/build/test tools, not browser runtime services.
+Exact dependency versions and integrity hashes are recorded in ../package-lock.json in the source tree.

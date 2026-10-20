@@ -76,10 +76,10 @@ IMU 轴向、相机精确 pitch/yaw、Jetson 外壳细节和质量/惯量仍待�
 
 ## 构建与查看
 
-完整构建、启动、观察和停止命令统一维护在[操作手册第 24 节](../../docs/操作手册.md#24-新舵机相机结构模型与-tf-离线检查)。
+完整构建、启动、观察和停止命令统一维护在[操作手册第 24 节](../../docs/archive/操作专题原文_20261014.md#24-新舵机相机结构模型与-tf-离线检查)。
 Windows 系统临时查看车模时，可在 Jetson 桌面通过 `description.launch.xml` 的
 `use_rviz:=true` 显式打开模型配置；已有 `robot_state_publisher` 时同时设置
-`publish_model:=false`，避免重复发布。完整步骤见[操作手册第 24.2 节](../../docs/操作手册.md#242-windows-系统下临时在-jetson-桌面看车模)。
+`publish_model:=false`，避免重复发布。完整步骤见[操作手册第 24.2 节](../../docs/archive/操作专题原文_20261014.md#242-windows-系统下临时在-jetson-桌面看车模)。
 纯车模预览还可设 `preview_wheels:=true`，临时发布四轮零角度以补齐轮关节 TF；
 车体或其他节点发布真实 `/joint_states` 时不得使用这个预览值。雷达蓝色底板按
 顶板顶面离地 135 mm 放置；用户实测雷达黑色下底板底面高于顶板 39 mm，扣除蓝色底板

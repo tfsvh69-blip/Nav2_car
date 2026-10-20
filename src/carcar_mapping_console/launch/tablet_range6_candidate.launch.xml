@@ -1,0 +1,10 @@
+<launch>
+  <!-- NAV-017-R16：只增加激光使用范围；网页待命不启动硬件，原入口及3m基线保留。 -->
+  <arg name="port" default="8080"/>
+  <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_range6_candidate_sessions"/>
+  <include file="$(find-pkg-share carcar_mapping_console)/launch/tablet.launch.xml">
+    <arg name="port" value="$(var port)"/>
+    <arg name="map_root" value="$(var map_root)"/>
+    <arg name="slam_params_file" value="$(find-pkg-share carcar_mapping_console)/config/slam_range6_candidate.yaml"/>
+  </include>
+</launch>

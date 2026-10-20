@@ -1,0 +1,43 @@
+{
+  "base_frame": "base_footprint",
+  "complete": true,
+  "created": "20261014_162415_b8950284",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "879e3d3b77e71c973dc13c5cd75404d3cb836a2d91390a0c16af90758da74038",
+    "graph.posegraph": "2533c2277dfaeff432274963456c19cdd446442f41d49a75b079aa75da03fbc5",
+    "map.pgm": "fdf44efaedba6550619fed37110f4311dd2a8ff7f871174b9208cf0c0997a569",
+    "map.yaml": "61274feb09d0c36ee8a4d6c6c8654dcbcc179daeccd73496b1d13bb0b2a47a7f"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

@@ -35,7 +35,10 @@ public:
     diag_file_.open(output_ + "/diagnostics.csv");
     rate_file_.open(output_ + "/rates.csv");
     raw_file_ << "phase,receive_wall_s,stamp_sec,stamp_ns,stamp_age_s,gap_s,points\n";
-    diag_file_ << "phase,receive_wall_s,stamp_sec,stamp_ns,level,reason,raw_age_s\n";
+    diag_file_ << "phase,receive_wall_s,stamp_sec,stamp_ns,level,reason,raw_age_s,"
+               << "processed_frames,processing_ms,voxel_filter_ms,obstacle_points_before_voxel,"
+               << "obstacle_points,clearing_points,intra_process_comms,process_id,"
+               << "intra_process_frames,inter_process_frames\n";
     rate_file_ << "elapsed_s,period_s,frames,hz\n";
     raw_file_ << std::setprecision(12); diag_file_ << std::setprecision(12);
     rate_file_ << std::setprecision(12);
@@ -66,6 +69,12 @@ public:
         for (const auto & status : msg->status) {
           if (status.name != "D435DepthFilter") {continue;}
           std::string reason = status.message, raw_age;
+          const auto metric = [&status](const std::string & key) -> std::string {
+              for (const auto & value : status.values) {
+                if (value.key == key) {return value.value;}
+              }
+              return "";
+            };
           for (const auto & value : status.values) {
             if (value.key == "reason_code") {reason = value.value;}
             if (value.key == "raw_age_s") {raw_age = value.value;}
@@ -73,7 +82,13 @@ public:
           diag_file_ << (armed_ ? "RUN" : "WARMUP") << ',' << this->now().seconds()
                      << ',' << msg->header.stamp.sec << ',' << msg->header.stamp.nanosec
                      << ',' << static_cast<int>(status.level) << ',' << reason
-                     << ',' << raw_age << '\n';
+                     << ',' << raw_age << ',' << metric("processed_frames")
+                     << ',' << metric("processing_ms") << ',' << metric("voxel_filter_ms")
+                     << ',' << metric("obstacle_points_before_voxel")
+                     << ',' << metric("obstacle_points") << ',' << metric("clearing_points")
+                     << ',' << metric("intra_process_comms") << ',' << metric("process_id")
+                     << ',' << metric("intra_process_frames") << ',' << metric("inter_process_frames")
+                     << '\n';
           healthy_ = status.level == 0 && reason == "NONE";
           diag_seen_ = true; last_diag_ = Clock::now();
           if (armed_) {

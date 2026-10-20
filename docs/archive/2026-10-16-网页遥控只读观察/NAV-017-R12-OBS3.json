@@ -1,0 +1,579 @@
+{
+  "test": "NAV-017-R12-OBS3",
+  "timezone": "Asia/Shanghai",
+  "read_only": true,
+  "samples": [
+    {
+      "at": "2026-10-16T00:07:32.654Z",
+      "local_http_ms": 82,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.017651390997343697,
+      "scan_age": 0.03310296600102447
+    },
+    {
+      "at": "2026-10-16T00:07:34.664Z",
+      "local_http_ms": 9,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.018083403003402054,
+      "scan_age": 0.0658521879959153
+    },
+    {
+      "at": "2026-10-16T00:07:36.673Z",
+      "local_http_ms": 10,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.01793981400260236,
+      "scan_age": 0.009627095991163515
+    },
+    {
+      "at": "2026-10-16T00:07:38.682Z",
+      "local_http_ms": 9,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.01789754000492394,
+      "scan_age": 0.041983760995208286
+    },
+    {
+      "at": "2026-10-16T00:07:40.692Z",
+      "local_http_ms": 10,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.01802499999757856,
+      "scan_age": 0.07424883599742316
+    },
+    {
+      "at": "2026-10-16T00:07:42.704Z",
+      "local_http_ms": 11,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03815611400932539,
+      "scan_age": 0.021602715001790784
+    },
+    {
+      "at": "2026-10-16T00:07:44.714Z",
+      "local_http_ms": 9,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.038056140998378396,
+      "scan_age": 0.06249331399158109
+    },
+    {
+      "at": "2026-10-16T00:07:46.723Z",
+      "local_http_ms": 8,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03805271600140259,
+      "scan_age": 0.0957592500053579
+    },
+    {
+      "at": "2026-10-16T00:07:48.740Z",
+      "local_http_ms": 16,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.038081770995631814,
+      "scan_age": 0.03265945200109854
+    },
+    {
+      "at": "2026-10-16T00:07:50.748Z",
+      "local_http_ms": 9,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03809559400542639,
+      "scan_age": 0.07363491399155464
+    },
+    {
+      "at": "2026-10-16T00:07:52.756Z",
+      "local_http_ms": 7,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.037669562007067725,
+      "scan_age": 0.010952896001981571
+    },
+    {
+      "at": "2026-10-16T00:07:54.762Z",
+      "local_http_ms": 6,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03796739500830881,
+      "scan_age": 0.05183830400346778
+    },
+    {
+      "at": "2026-10-16T00:07:56.769Z",
+      "local_http_ms": 7,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03796204899845179,
+      "scan_age": 0.08465663499373477
+    },
+    {
+      "at": "2026-10-16T00:07:58.776Z",
+      "local_http_ms": 7,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.03759953999542631,
+      "scan_age": 0.021070402988698334
+    },
+    {
+      "at": "2026-10-16T00:08:00.783Z",
+      "local_http_ms": 7,
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": true,
+      "reason": "已使能，按住摇杆行驶",
+      "accepted_sequence": 0,
+      "pressed": false,
+      "x": 0,
+      "yaw": 0,
+      "video_requested": false,
+      "odom_age": 0.037534481001785025,
+      "scan_age": 0.05523184699995909
+    }
+  ],
+  "today_events": [
+    {
+      "detail": {},
+      "event": "controller_connected",
+      "server_steady": 127353.673457677,
+      "server_unix_ms": 1792109017552
+    },
+    {
+      "detail": {
+        "accepted_sequence": 0,
+        "ack_sequence": 0,
+        "armed": false,
+        "control_epoch": "5bbb49f957882ac9aa6ab72ec2657f00",
+        "control_lease_ms": 300,
+        "control_protocol": 2,
+        "control_revision": 1091596,
+        "gear": "slow",
+        "health": "",
+        "idle_heartbeat_required": false,
+        "issued_steady_ms": 127353687.084059,
+        "last_stop": {
+          "action": "tick",
+          "armed": false,
+          "event": "permission_revoked",
+          "gear": "fast",
+          "health": "",
+          "reason": "操纵授权超时",
+          "server_steady": 80001.266373808,
+          "source": "guard",
+          "timing": {
+            "accepted_sequence": 36,
+            "challenge_age_ms": 291.78228400996886,
+            "gateway_age_ms": 97.40318599506281,
+            "lease_remaining_ms": -0.024505003239028156,
+            "odom_age_ms": 8.13508199644275,
+            "presence_remaining_ms": -0.024505003239028156,
+            "pressed": false,
+            "rejected_requests": 0,
+            "request_gap_ms": 61.70493100944441,
+            "request_result": "drive_accepted",
+            "scan_age_ms": 43.509903000085615,
+            "timer_gap_ms": 20.001645985757932
+          }
+        },
+        "reason": "已连接，请使能",
+        "require_video": false,
+        "supported_gears": [
+          "slow",
+          "normal",
+          "fast"
+        ],
+        "timing": {
+          "accepted_sequence": 0,
+          "challenge_age_ms": -1,
+          "gateway_age_ms": 77.32631500402931,
+          "lease_remaining_ms": -47352420.734756,
+          "odom_age_ms": 29.325580995646305,
+          "presence_remaining_ms": -47352420.734756,
+          "pressed": false,
+          "rejected_requests": 0,
+          "request_gap_ms": -1,
+          "request_result": "none",
+          "scan_age_ms": 75.98187899566256,
+          "timer_gap_ms": 19.982244004495442
+        },
+        "x": 0,
+        "yaw": 0
+      },
+      "event": "guard_state",
+      "server_steady": 127353.687694003,
+      "server_unix_ms": 1792109017566
+    },
+    {
+      "detail": {},
+      "event": "client_ui_r12",
+      "server_steady": 127353.935968585,
+      "server_unix_ms": 1792109017814
+    },
+    {
+      "detail": {
+        "accepted_sequence": 0,
+        "ack_sequence": 0,
+        "armed": false,
+        "control_epoch": "5bbb49f957882ac9aa6ab72ec2657f00",
+        "control_lease_ms": 300,
+        "control_protocol": 2,
+        "control_revision": 1091602,
+        "gear": "slow",
+        "health": "",
+        "idle_heartbeat_required": false,
+        "issued_steady_ms": 127354047.131503,
+        "last_stop": {
+          "action": "tick",
+          "armed": false,
+          "event": "permission_revoked",
+          "gear": "fast",
+          "health": "",
+          "reason": "操纵授权超时",
+          "server_steady": 80001.266373808,
+          "source": "guard",
+          "timing": {
+            "accepted_sequence": 36,
+            "challenge_age_ms": 291.78228400996886,
+            "gateway_age_ms": 97.40318599506281,
+            "lease_remaining_ms": -0.024505003239028156,
+            "odom_age_ms": 8.13508199644275,
+            "presence_remaining_ms": -0.024505003239028156,
+            "pressed": false,
+            "rejected_requests": 0,
+            "request_gap_ms": 61.70493100944441,
+            "request_result": "drive_accepted",
+            "scan_age_ms": 43.509903000085615,
+            "timer_gap_ms": 20.001645985757932
+          }
+        },
+        "reason": "网页请求停车: transport_switch",
+        "require_video": false,
+        "supported_gears": [
+          "slow",
+          "normal",
+          "fast"
+        ],
+        "timing": {
+          "accepted_sequence": 0,
+          "challenge_age_ms": -1,
+          "gateway_age_ms": 37.33686600753572,
+          "lease_remaining_ms": -47352780.7822,
+          "odom_age_ms": 29.207144005340524,
+          "presence_remaining_ms": -47352780.7822,
+          "pressed": false,
+          "rejected_requests": 0,
+          "request_gap_ms": -1,
+          "request_result": "none",
+          "scan_age_ms": 65.2780420059571,
+          "timer_gap_ms": 20.0119729997823
+        },
+        "x": 0,
+        "yaw": 0
+      },
+      "event": "guard_state",
+      "server_steady": 127354.04793483,
+      "server_unix_ms": 1792109017926
+    },
+    {
+      "detail": {
+        "control_gap_ms": 0
+      },
+      "event": "client_guard_stop",
+      "server_steady": 127354.170498282,
+      "server_unix_ms": 1792109018049
+    },
+    {
+      "detail": {
+        "http_gap_ms": 156
+      },
+      "event": "client_rtc_connected",
+      "server_steady": 127354.420718756,
+      "server_unix_ms": 1792109018299
+    },
+    {
+      "detail": {
+        "accepted_sequence": 0,
+        "ack_sequence": 0,
+        "armed": true,
+        "control_epoch": "5bbb49f957882ac9aa6ab72ec2657f00",
+        "control_lease_ms": 300,
+        "control_protocol": 2,
+        "control_revision": 1091623,
+        "gear": "slow",
+        "health": "",
+        "idle_heartbeat_required": false,
+        "issued_steady_ms": 127355307.167522,
+        "last_stop": {
+          "action": "tick",
+          "armed": false,
+          "event": "permission_revoked",
+          "gear": "fast",
+          "health": "",
+          "reason": "操纵授权超时",
+          "server_steady": 80001.266373808,
+          "source": "guard",
+          "timing": {
+            "accepted_sequence": 36,
+            "challenge_age_ms": 291.78228400996886,
+            "gateway_age_ms": 97.40318599506281,
+            "lease_remaining_ms": -0.024505003239028156,
+            "odom_age_ms": 8.13508199644275,
+            "presence_remaining_ms": -0.024505003239028156,
+            "pressed": false,
+            "rejected_requests": 0,
+            "request_gap_ms": 61.70493100944441,
+            "request_result": "drive_accepted",
+            "scan_age_ms": 43.509903000085615,
+            "timer_gap_ms": 20.001645985757932
+          }
+        },
+        "reason": "已使能，按住摇杆行驶",
+        "require_video": false,
+        "supported_gears": [
+          "slow",
+          "normal",
+          "fast"
+        ],
+        "timing": {
+          "accepted_sequence": 0,
+          "challenge_age_ms": -1,
+          "gateway_age_ms": 97.34455400030129,
+          "lease_remaining_ms": -47354040.818219,
+          "odom_age_ms": 9.360616997582838,
+          "presence_remaining_ms": 269.2414060002193,
+          "pressed": false,
+          "rejected_requests": 0,
+          "request_gap_ms": -1,
+          "request_result": "none",
+          "scan_age_ms": 19.109920991468243,
+          "timer_gap_ms": 20.010371998068877
+        },
+        "x": 0,
+        "yaw": 0
+      },
+      "event": "guard_state",
+      "server_steady": 127355.308047108,
+      "server_unix_ms": 1792109019186
+    },
+    {
+      "detail": {
+        "control_gap_ms": 24,
+        "http_gap_ms": 120
+      },
+      "event": "client_enable",
+      "server_steady": 127355.419173025,
+      "server_unix_ms": 1792109019297
+    },
+    {
+      "detail": {
+        "control_gap_ms": 35,
+        "http_gap_ms": 1753
+      },
+      "event": "client_http_poll_timeout",
+      "server_steady": 127379.922101051,
+      "server_unix_ms": 1792109043800
+    },
+    {
+      "detail": {
+        "control_gap_ms": 25,
+        "http_gap_ms": 1754
+      },
+      "event": "client_http_poll_timeout",
+      "server_steady": 127383.428100842,
+      "server_unix_ms": 1792109047306
+    },
+    {
+      "detail": {
+        "control_gap_ms": 39,
+        "http_gap_ms": 1753
+      },
+      "event": "client_http_poll_timeout",
+      "server_steady": 127388.919973048,
+      "server_unix_ms": 1792109052798
+    },
+    {
+      "detail": {
+        "control_gap_ms": 336,
+        "http_gap_ms": 11
+      },
+      "event": "client_control_gap",
+      "server_steady": 127395.721863532,
+      "server_unix_ms": 1792109059600
+    },
+    {
+      "detail": {
+        "control_gap_ms": 346,
+        "http_gap_ms": 232
+      },
+      "event": "client_control_gap",
+      "server_steady": 127402.420120571,
+      "server_unix_ms": 1792109066298
+    }
+  ],
+  "transport": {
+    "broadcast_replaced": 0,
+    "compact_profile": true,
+    "connected": true,
+    "connection_generation": 9,
+    "control_last_rx_gap_ms": 0,
+    "control_transport": "webrtc_udp",
+    "disconnects": 8,
+    "last_control_revision": 1096016,
+    "last_disconnect": {
+      "connection_generation": 8,
+      "error_category": "boost.beast.websocket",
+      "error_message": "The WebSocket stream was gracefully closed at both endpoints",
+      "error_value": 1,
+      "peer_close_code": 0,
+      "reason": "peer_close",
+      "rtc_was_active": false,
+      "server_steady": 80240.419441431,
+      "stage": "read",
+      "ws_last_rx_age_ms": 2.0420490036485717,
+      "ws_pings_received": 0,
+      "ws_pongs_received": 0
+    },
+    "last_queue_wait_ms": 0.1733170065563172,
+    "last_rx_gap_ms": 6698.389589000726,
+    "last_write_bytes": 45,
+    "last_write_ms": 0.13245300215203315,
+    "max_queue_wait_ms": 32.72448599454947,
+    "max_write_ms": 692.2734129911987,
+    "pending_replaced": 42,
+    "rtc": {
+      "active": true,
+      "available": true,
+      "backpressure_dropped": 0,
+      "buffered_bytes": 0,
+      "buffered_sends": 0,
+      "local_candidate": "<REDACTED>",
+      "reason": "webrtc_udp",
+      "received": 0,
+      "remote_candidate": "<REDACTED>",
+      "sent": 4413
+    },
+    "session_idle_timeout_ms": 10000,
+    "states_expired_before_write": 0,
+    "tcp_nodelay": true,
+    "tcp_notsent_bytes": 0,
+    "tcp_retransmits": 3,
+    "tcp_rtt_ms": 4.701,
+    "tcp_sample_valid": true,
+    "tcp_send_queue_bytes": 0,
+    "tcp_unacked": 0,
+    "writes": 48811,
+    "ws_last_rx_age_ms": 1399.044645993854,
+    "ws_pings_received": 0,
+    "ws_pongs_received": 50
+  },
+  "source_notes": [
+    "网页诊断事件环形缓存上限128条，按server_unix_ms筛选10月16日",
+    "系统journal按_SYSTEMD_USER_UNIT=mapping-tablet.service读取，今天13行；用户journal无条目",
+    "既有任务日志按ROS时间戳筛选，今天仅connect／transport_switch stop／enable三条",
+    "历史last_stop仍为10月15日18:54:25，本次未出现新的撤权"
+  ],
+  "limitations": [
+    "当前连接accepted_sequence=0且RTC received=0，没有代理可见运动请求",
+    "约28秒静止采样不证明实车遥控／停车通过",
+    "视频关闭同时减少视频传输及编码负载，不能独立归因带宽",
+    "未发送任何控制命令、未修改参数／代码／系统"
+  ]
+}

@@ -1,0 +1,18 @@
+# NAV-017 只作现场RGB参照，不接入深度避障。640×480/6 Hz为试验目标。
+/**:
+  ros__parameters:
+    camera_name: camera
+    serial_no: "213222078719"
+    device_type: "d435"
+    enable_color: true
+    rgb_camera.color_profile: "640x480x6"
+    rgb_camera.color_format: "RGB8"
+    enable_depth: false
+    enable_infra: false
+    enable_infra1: false
+    enable_infra2: false
+    pointcloud.enable: false
+    pointcloud__neon_.enable: false
+    align_depth.enable: false
+    colorizer.enable: false
+    publish_tf: false

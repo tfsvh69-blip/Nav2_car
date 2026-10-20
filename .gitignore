@@ -12,3 +12,5 @@ __pycache__/
 CMakeFiles/
 CMakeCache.txt
 src/vendor/
+/*.log
+/symlink_install_manifest.txt

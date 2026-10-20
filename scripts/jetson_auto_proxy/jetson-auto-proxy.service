@@ -1,0 +1,17 @@
+[Unit]
+Description=Jetson verified adaptive LAN HTTP proxy (C++)
+
+[Service]
+Type=simple
+ExecStart=/home/jetson/.local/bin/jetson-auto-proxy --config /home/jetson/.config/jetson-auto-proxy.conf
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=8
+NoNewPrivileges=true
+TasksMax=128
+MemoryMax=256M
+StandardOutput=append:/home/jetson/.local/state/jetson-auto-proxy/service.log
+StandardError=inherit
+
+[Install]
+WantedBy=default.target

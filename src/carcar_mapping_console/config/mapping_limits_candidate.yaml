@@ -1,0 +1,8 @@
+# NAV-017 独立试验上限，不修改正式底盘默认；实测速率、慢档起步与停车距离待现场验收。
+rosmaster_base:
+  ros__parameters:
+    max_linear_x: 0.18
+    max_linear_y: 0.0
+    max_angular_z: 0.36
+    holonomic: false
+    command_timeout: 0.30

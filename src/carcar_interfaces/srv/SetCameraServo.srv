@@ -1,0 +1,12 @@
+# APP-001：只允许已取得停车保持的调用方逐档调整S1。
+string owner_token
+string driver_epoch
+string command_id
+int32 expected_board_command
+int32 board_command
+int64 deadline_steady_ns
+---
+bool sent
+string reason
+string driver_epoch
+int32 board_command

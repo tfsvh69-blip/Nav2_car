@@ -1,0 +1,128 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+Note: Google Test filter = ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ConsoleTest
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+页面状态： {
+  hidden: false,
+  text: '巡·见\n' +
+    '小车巡检\n' +
+    '\n' +
+    '工作空间\n' +
+    '\n' +
+    '车辆概览\n' +
+    '点位示教\n' +
+    '巡检任务\n' +
+    '正在巡检\n' +
+    '巡检记录\n' +
+    '操作者已连接\n' +
+    '任务与照片保存在车端\n' +
+    '\n' +
+    '室内巡检工作台\n' +
+    '\n' +
+    '点位示教\n' +
+    '停车\n' +
+    '定位就绪\n' +
+    '地图一致待就绪\n' +
+    '轮式反馈就绪\n' +
+    '雷达就绪\n' +
+    '相机就绪\n' +
+    '角度接口就绪\n' +
+    '场地地图\n' +
+    '请选择\n' +
+    'testmap\n' +
+    '载入地图\n' +
+    '新增点位\n' +
+    '设为车辆当前位置\n' +
+    '当前图 未选择\n' +
+    '观察停车位\n' +
+    '地图坐标 · 米\n' +
+    '\n' +
+    '选择一张已保存地图，开始规划观察位置。\n' +
+    '\n' +
+    '白：空闲　黑：占用　灰：未知　蓝：定位估计　粉：当前编辑位置。箭头为车头朝向。\n' +
+    '\n' +
+    '点击位置并拖动确定朝向。地图缩放不改变坐标；访问顺序与实际规划路径分别处理。\n' +
+    '\n' +
+    '巡检点设置\n' +
+    '点位名称\n' +
+    'X / 米\n' +
+    'Y / 米\n' +
+    '朝向 / °\n' +
+    '使用车辆当前位置\n' +
+    '草稿 S1 进行目标 / °\n' +
+    '保存草稿\n' +
+    '\n' +
+    '草稿需实车试拍确认，才能加入自动巡检执行。\n' +
+    '\n' +
+    '相机实时画面\n' +
+    '当前源帧有效\n' +
+    '\n' +
+    'RGB原始流预览；窗口大小不改变镜头视场。图像时间戳：08:42:42。参考照片是历史画面。\n' +
+    '\n' +
+    '一步一步确认角度\n' +
+    '保持停车并等待轮式反馈停稳\n' +
+    '每次调整目标1°，等待发送结果和新画面\n' +
+    '确认画面合适，保存固定角度与参考照片\n' +
+    '\n' +
+    '尚未开始\n' +
+    '\n' +
+    '1. 开始角度调整\n' +
+    '140.5°\n' +
+    'S1进行目标　板端 94 档\n' +
+    '目标 −1°\n' +
+    '目标 +1°\n' +
+    '下发当前目标\n' +
+    '\n' +
+    '历史方向为目标减小抬头、增大低头，首次使用以实物验证。板端整数档会量化；没有实际位置反馈。每步人工点击，不连续扫角。\n' +
+    '\n' +
+    '3. 确认此画面，保存巡检点确认当前为导航参考姿态（94档）\n' +
+    '\n' +
+    '保存后继续保持停车。回位也逐步调整；恢复到导航参考并确认后才允许行驶。支架异常时立即断开执行器电源。\n' +
+    '\n' +
+    '示教遥控\n' +
+    '\n' +
+    '低速、按住行驶，松手停车；遥控不提供自动避障。调角期间禁止行驶。\n' +
+    '\n' +
+    '遥控使能已连接，请使能\n' +
+    '↑\n' +
+    '↶\n' +
+    '停\n' +
+    '↷\n' +
+    '↓\n' +
+    '每点一个固定角度、一张照片 · 车端保存 · 地图与点位按版本关联'
+}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByText('操作者已连接', { exact: true }) to be visible[22m
+
+    at /home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/test/browser.mjs:26:94 {
+  log: [
+    "  - waiting for getByText('操作者已连接', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2
+/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/test/test_console.cpp:166: Failure
+Expected equality of these values:
+  (((status) & 0xff00) >> 8)
+    Which is: 1
+  0
+测试证据保留："/tmp/carcar-inspection-console-zOFJ1q"
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (10450 ms)
+[----------] 1 test from ConsoleTest (10450 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (10450 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+ 1 FAILED TEST

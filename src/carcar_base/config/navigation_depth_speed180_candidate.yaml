@@ -1,0 +1,7 @@
+# 2026-10-12用户要求：当前深度导航行驶速度限值乘1.8；仅本轮实验使用。
+# 相对navigation_depth_experimental.yaml合并base.yaml后的限值：x 0.10→0.18，yaw 0.80→1.44。
+# 导航最终转向另由速度平滑器限为0.81 rad/s；不表示实测速度/停车距离已通过。
+rosmaster_base:
+  ros__parameters:
+    max_linear_x: 0.18
+    max_angular_z: 1.44

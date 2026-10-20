@@ -1,0 +1,42 @@
+<launch>
+  <set_env name="ROS_LOCALHOST_ONLY" value="1"/>
+  <!-- 推荐由mapping_prepare预检后进入。默认只运行软件，绝不隐式启动执行器。 -->
+  <arg name="start_hardware" default="false"/>
+  <arg name="mode" default="new"/>
+  <arg name="bundle_id" default=""/>
+  <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions"/>
+  <arg name="serial_port" default="/dev/myserial"/>
+  <arg name="lidar_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
+  <arg name="port" default="8080"/>
+  <arg name="start_gateway" default="true"/>
+  <arg name="start_camera" default="true"/>
+  <arg name="require_video" default="true"/>
+  <arg name="slam_params_file" default="$(find-pkg-share carcar_navigation)/config/slam_toolbox.yaml"/>
+  <group if="$(var start_hardware)">
+    <group scoped="true">
+      <set_remap from="/cmd_vel" to="/mapping/cmd_vel"/>
+      <include file="$(find-pkg-share carcar_bringup)/launch/robot.launch.xml">
+        <arg name="serial_port" value="$(var serial_port)"/>
+        <arg name="speed_params_file" value="$(find-pkg-share carcar_mapping_console)/config/mapping_limits_candidate.yaml"/>
+      </include>
+    </group>
+    <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml">
+      <arg name="serial_port" value="$(var lidar_port)"/>
+    </include>
+    <include if="$(var start_camera)" file="$(find-pkg-share carcar_camera)/launch/camera_mapping_rgb.launch.xml"/>
+  </group>
+  <node pkg="slam_toolbox" exec="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+    <param from="$(var slam_params_file)"/>
+    <param name="scan_topic" value="/mapping/slam_scan"/>
+    <param name="use_map_saver" value="false"/>
+  </node>
+  <node pkg="carcar_mapping_console" exec="mapping_teleop_guard" name="mapping_teleop_guard" output="screen">
+    <param name="require_video" value="$(var require_video)"/>
+  </node>
+  <node if="$(var start_gateway)" pkg="carcar_mapping_console" exec="mapping_web_gateway" name="mapping_web_gateway" output="screen">
+    <param name="mode" value="$(var mode)" type="str"/>
+    <param name="bundle_id" value="$(var bundle_id)" type="str"/>
+    <param name="map_root" value="$(var map_root)" type="str"/>
+    <param name="port" value="$(var port)"/>
+  </node>
+</launch>

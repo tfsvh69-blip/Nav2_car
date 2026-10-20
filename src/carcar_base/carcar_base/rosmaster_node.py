@@ -1,7 +1,12 @@
 """ROS 2 adapter for the Yahboom Rosmaster control board."""
 
+import fcntl
 import math
+import secrets
+import subprocess
+import termios
 import threading
+import time
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import TransformStamped, Twist
@@ -37,6 +42,8 @@ class RosmasterNode(Node):
         super().__init__('rosmaster_base')
 
         self.declare_parameter('serial_port', '/dev/myserial')
+        # APP-001：2026-10-15用户授权的既有Python串口适配修改；默认不启用。
+        self.declare_parameter('enable_inspection_interface', False)
         self.declare_parameter('car_type', 1)
         self.declare_parameter('drive_mode', 'board_motion_pid')
         self.declare_parameter('holonomic', True)
@@ -163,19 +170,38 @@ class RosmasterNode(Node):
         )
 
         self._io_lock = threading.Lock()
+        inspection_interface = bool(
+            self.get_parameter('enable_inspection_interface').value)
+        if inspection_interface:
+            try:
+                check = subprocess.run(
+                    ['fuser', '--', self._serial_port],
+                    capture_output=True, text=True, timeout=1.0, check=False)
+            except (OSError, subprocess.SubprocessError) as exc:
+                raise RuntimeError('巡检串口占用检查失败，拒绝启动') from exc
+            if (check.returncode != 1 or check.stdout.strip() or
+                    check.stderr.strip()):
+                raise RuntimeError('巡检控制板串口已占用或检查异常；先停止其他驱动')
         self._driver = Rosmaster(
             car_type=self._car_type,
             com=self._serial_port,
             debug=bool(self.get_parameter('debug_serial').value),
         )
+        if inspection_interface:
+            try:
+                # 只影响本次打开的设备；关闭最后一个FD后解除，不修改udev/系统配置。
+                fcntl.ioctl(self._driver.ser.fileno(), termios.TIOCEXCL)
+            except OSError as exc:
+                self._driver.ser.close()
+                raise RuntimeError('巡检串口内核独占失败，拒绝继续启动') from exc
         self._driver.create_receive_threading()
         self._driver.set_auto_report_state(True, forever=False)
         # Never assume the MCU was stationary before this process connected.
         for _ in range(3):
             self._driver.set_car_motion(0.0, 0.0, 0.0)
 
-        # Existing serial adapter only forwards the startup command. Angle/TF
-        # mapping belongs to the C++ camera_servo_state node. No position feedback.
+        # Keep the startup command and the same serial owner for inspection.
+        # Angle/TF mapping remains in C++; there is no position feedback.
         self._camera_servo_pub = self.create_publisher(
             Int32, '/hardware/camera_servo/board_command_sent',
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
@@ -232,6 +258,11 @@ class RosmasterNode(Node):
         self._last_command_ns = now_ns
         self._last_update_ns = now_ns
         self._watchdog_stopped = True
+        self._inspection_hold_owner = ''
+        self._inspection_driver_epoch = secrets.token_hex(16)
+        self._inspection_board_command = 94
+        self._inspection_command_cache = {}
+        self._inspection_released_owner = ''
         self._previous_encoders = None
         self._previous_encoder_ns = None
         self._previous_odom_encoders = None
@@ -265,6 +296,15 @@ class RosmasterNode(Node):
             )
             self._indicator_sub = None
 
+        if bool(self.get_parameter('enable_inspection_interface').value):
+            from carcar_interfaces.srv import SetCameraServo, SetMotionHold
+            self._inspection_hold_service = self.create_service(
+                SetMotionHold, '/hardware/inspection/motion_hold',
+                self._on_inspection_hold)
+            self._inspection_servo_service = self.create_service(
+                SetCameraServo, '/hardware/inspection/camera_servo',
+                self._on_inspection_servo)
+
         self._timer = self.create_timer(1.0 / self._publish_rate, self._update)
         self.add_on_set_parameters_callback(self._on_parameters)
         self.get_logger().info(
@@ -274,6 +314,105 @@ class RosmasterNode(Node):
             f'drive_mode={self._drive_mode}, '
             f'wheel_odometry_enabled={self._wheel_odometry_enabled}'
         )
+
+    def _on_inspection_hold(self, request, response):
+        """Latch zero output until the same serial owner releases it."""
+        response.driver_epoch = self._inspection_driver_epoch
+        response.board_command = self._inspection_board_command
+        response.held = bool(self._inspection_hold_owner)
+        owner = request.owner_token
+        if not 16 <= len(owner) <= 100:
+            response.reason = '停车保持所有者无效'
+            return response
+        if (request.driver_epoch and
+                request.driver_epoch != response.driver_epoch):
+            response.reason = '底盘驱动已经重启，请重新建立调整流程'
+            return response
+        if request.hold:
+            if self._inspection_hold_owner not in ('', owner):
+                response.reason = '停车保持被其他调用方占用'
+                return response
+            with self._io_lock:
+                self._inspection_hold_owner = owner
+                self._driver.set_car_motion(0.0, 0.0, 0.0)
+                self._watchdog_stopped = True
+            response.accepted = True
+            response.held = True
+            response.reason = '已保持零输出，仍须检查轮式停稳反馈'
+            return response
+        if request.driver_epoch != response.driver_epoch:
+            response.reason = '释放停车保持必须指定当前驱动代次'
+            return response
+        if (self._inspection_hold_owner == '' and
+                owner == self._inspection_released_owner):
+            response.accepted = True
+            response.held = False
+            response.reason = '停车保持已释放，不重放旧运动'
+            return response
+        if (self._inspection_hold_owner != owner or
+                self._inspection_board_command != 94):
+            response.reason = '所有者不一致或相机尚未回到导航板端94档'
+            return response
+        with self._io_lock:
+            self._driver.set_car_motion(0.0, 0.0, 0.0)
+            self._watchdog_stopped = True
+            self._inspection_hold_owner = ''
+            self._inspection_released_owner = owner
+        response.accepted = True
+        response.held = False
+        response.reason = '已释放保持；必须收到新的速度命令才会运动'
+        return response
+
+    def _on_inspection_servo(self, request, response):
+        """Forward one bounded S1 step; success only means a complete write."""
+        response.driver_epoch = self._inspection_driver_epoch
+        response.board_command = self._inspection_board_command
+        if (request.driver_epoch != response.driver_epoch or
+                not self._inspection_hold_owner or
+                request.owner_token != self._inspection_hold_owner):
+            response.reason = '须先取得当前驱动的停车保持'
+            return response
+        payload = (request.expected_board_command, request.board_command)
+        cached = self._inspection_command_cache.get(request.command_id)
+        if cached is not None:
+            if cached[0] != payload:
+                response.reason = '命令编号不能用于不同角度'
+                return response
+            response.sent, response.reason, response.board_command = cached[1:]
+            return response
+        remaining_ns = request.deadline_steady_ns - time.monotonic_ns()
+        if not 0 < remaining_ns <= 500_000_000:
+            response.reason = '本次舵机命令已过期或期限无效'
+            return response
+        if not 16 <= len(request.command_id) <= 100:
+            response.reason = '命令编号无效'
+            return response
+        if (not 57 <= request.board_command <= 106 or
+                abs(request.board_command -
+                    self._inspection_board_command) > 1 or
+                request.expected_board_command !=
+                self._inspection_board_command):
+            response.reason = '角度超限、跨越多档或上次发送状态已变化'
+            return response
+        with self._io_lock:
+            if not self._watchdog_stopped:
+                response.reason = '底盘零输出状态尚未确认'
+                return response
+            response.sent = self._driver.set_pwm_servo(
+                1, request.board_command) is True
+            if response.sent:
+                self._inspection_board_command = request.board_command
+                self._camera_servo_pub.publish(
+                    Int32(data=request.board_command))
+        response.board_command = self._inspection_board_command
+        response.reason = (
+            '命令已完整写入，无实际位置反馈' if response.sent else '舵机串口写入失败')
+        self._inspection_command_cache[request.command_id] = (
+            payload, response.sent, response.reason, response.board_command)
+        if len(self._inspection_command_cache) > 64:
+            oldest = next(iter(self._inspection_command_cache))
+            del self._inspection_command_cache[oldest]
+        return response
 
     def _on_indicator_cmd(self, msg) -> None:
         """Handle incoming sound and light indicator command safely."""
@@ -379,6 +518,8 @@ class RosmasterNode(Node):
             msg.angular.z, -self._max_angular_z, self._max_angular_z
         )
         with self._io_lock:
+            if self._inspection_hold_owner:
+                velocity_x = velocity_y = angular_z = 0.0
             self._driver.set_car_motion(velocity_x, velocity_y, angular_z)
         self._last_command_ns = self.get_clock().now().nanoseconds
         self._watchdog_stopped = is_zero_motion_command(

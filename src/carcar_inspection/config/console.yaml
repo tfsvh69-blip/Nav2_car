@@ -1,0 +1,11 @@
+inspection_console:
+  ros__parameters:
+    # APP-001离线验证的候选值；不是实机精度、稳定时间或刹停验收结论。
+    settle_seconds: 0.75
+    stop_seconds: 0.5
+    frame_age_seconds: 1.0
+    operation_timeout_seconds: 30.0
+    navigation_timeout_seconds: 180.0
+    # 空字符串只在本地保存。配置后按 HTTPS POST 照片，对端回显编号和 sha256 才标已上传。
+    upload_url: ""
+    rgb_topic: /camera/camera/color/image_raw

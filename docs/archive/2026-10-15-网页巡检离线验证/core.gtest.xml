@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="14" failures="0" disabled="0" errors="0" time="0.052" timestamp="2026-10-15T17:11:32" name="AllTests">
+  <testsuite name="Domain" tests="3" failures="0" disabled="0" errors="0" time="0.001" timestamp="2026-10-15T17:11:32">
+    <testcase name="ServoBoundsDoNotQuantizeBeyondCollisionLimit" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Domain" />
+    <testcase name="OneAngleAndExplicitFinalParkingAreRequired" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Domain" />
+    <testcase name="RepeatedPointsAndTraversalAreRejected" status="run" result="completed" time="0.001" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Domain" />
+  </testsuite>
+  <testsuite name="Store" tests="3" failures="0" disabled="0" errors="0" time="0.049" timestamp="2026-10-15T17:11:32">
+    <testcase name="RevisionConflictDoesNotOverwriteConfirmedPoint" status="run" result="completed" time="0.015" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Store" />
+    <testcase name="TaskOrderAndPhotoReferencesSurviveRestart" status="run" result="completed" time="0.016" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Store" />
+    <testcase name="RestartMarksOldExecutionInterruptedWithoutReplay" status="run" result="completed" time="0.018" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Store" />
+  </testsuite>
+  <testsuite name="Teaching" tests="4" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-15T17:11:32">
+    <testcase name="CannotStepBeforeStopOrSkipManyDegrees" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Teaching" />
+    <testcase name="OldRevisionAndPreCommandFrameCannotConfirm" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Teaching" />
+    <testcase name="ANewStepInvalidatesThePreviousRenderedConfirmation" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Teaching" />
+    <testcase name="FailedWriteAndDisconnectedSessionCannotConfirm" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Teaching" />
+  </testsuite>
+  <testsuite name="Executor" tests="4" failures="0" disabled="0" errors="0" time="0.002" timestamp="2026-10-15T17:11:32">
+    <testcase name="LastPhotoDoesNotCompleteBeforeFinalParking" status="run" result="completed" time="0.001" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Executor" />
+    <testcase name="CancelHaltsInFlightActionAndCannotAdvance" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Executor" />
+    <testcase name="PauseAndResumeKeepCurrentPoint" status="run" result="completed" time="0.001" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Executor" />
+    <testcase name="NavigationFailurePreventsPhotographyAndParking" status="run" result="completed" time="0" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.Executor" />
+  </testsuite>
+</testsuites>

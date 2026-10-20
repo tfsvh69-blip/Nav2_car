@@ -1,0 +1,115 @@
+Start testing: Oct 15 17:11 CST
+----------------------------------------------------------
+1/2 Testing: test_inspection_core
+1/2 Test: test_inspection_core
+Command: "/usr/bin/python3" "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml" "--package-name" "carcar_inspection" "--output-file" "/tmp/carcar_app001_build/carcar_inspection/ament_cmake_gtest/test_inspection_core.txt" "--command" "/tmp/carcar_app001_build/carcar_inspection/test_inspection_core" "--gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml"
+Directory: /tmp/carcar_app001_build/carcar_inspection
+"test_inspection_core" start time: Oct 15 17:11 CST
+Output:
+----------------------------------------------------------
+-- run_test.py: invoking following command in '/tmp/carcar_app001_build/carcar_inspection':
+ - /tmp/carcar_app001_build/carcar_inspection/test_inspection_core --gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 14 tests from 4 test suites.
+[----------] Global test environment set-up.
+[----------] 3 tests from Domain
+[ RUN      ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit
+[       OK ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit (0 ms)
+[ RUN      ] Domain.OneAngleAndExplicitFinalParkingAreRequired
+[       OK ] Domain.OneAngleAndExplicitFinalParkingAreRequired (0 ms)
+[ RUN      ] Domain.RepeatedPointsAndTraversalAreRejected
+[       OK ] Domain.RepeatedPointsAndTraversalAreRejected (1 ms)
+[----------] 3 tests from Domain (1 ms total)
+
+[----------] 3 tests from Store
+[ RUN      ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint
+[       OK ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint (15 ms)
+[ RUN      ] Store.TaskOrderAndPhotoReferencesSurviveRestart
+[       OK ] Store.TaskOrderAndPhotoReferencesSurviveRestart (16 ms)
+[ RUN      ] Store.RestartMarksOldExecutionInterruptedWithoutReplay
+[       OK ] Store.RestartMarksOldExecutionInterruptedWithoutReplay (18 ms)
+[----------] 3 tests from Store (49 ms total)
+
+[----------] 4 tests from Teaching
+[ RUN      ] Teaching.CannotStepBeforeStopOrSkipManyDegrees
+[       OK ] Teaching.CannotStepBeforeStopOrSkipManyDegrees (0 ms)
+[ RUN      ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm
+[       OK ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm (0 ms)
+[ RUN      ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation
+[       OK ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation (0 ms)
+[ RUN      ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm
+[       OK ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm (0 ms)
+[----------] 4 tests from Teaching (0 ms total)
+
+[----------] 4 tests from Executor
+[ RUN      ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking
+[       OK ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking (1 ms)
+[ RUN      ] Executor.CancelHaltsInFlightActionAndCannotAdvance
+[       OK ] Executor.CancelHaltsInFlightActionAndCannotAdvance (0 ms)
+[ RUN      ] Executor.PauseAndResumeKeepCurrentPoint
+[       OK ] Executor.PauseAndResumeKeepCurrentPoint (1 ms)
+[ RUN      ] Executor.NavigationFailurePreventsPhotographyAndParking
+[       OK ] Executor.NavigationFailurePreventsPhotographyAndParking (0 ms)
+[----------] 4 tests from Executor (2 ms total)
+
+[----------] Global test environment tear-down
+[==========] 14 tests from 4 test suites ran. (52 ms total)
+[  PASSED  ] 14 tests.
+-- run_test.py: return code 0
+-- run_test.py: inject classname prefix into gtest result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+-- run_test.py: verify result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+<end of output>
+Test time =   0.23 sec
+----------------------------------------------------------
+Test Passed.
+"test_inspection_core" end time: Oct 15 17:11 CST
+"test_inspection_core" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: test_inspection_console
+2/2 Test: test_inspection_console
+Command: "/usr/bin/python3" "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml" "--package-name" "carcar_inspection" "--output-file" "/tmp/carcar_app001_build/carcar_inspection/ament_cmake_gtest/test_inspection_console.txt" "--command" "/tmp/carcar_app001_build/carcar_inspection/test_inspection_console" "--gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml"
+Directory: /tmp/carcar_app001_build/carcar_inspection
+"test_inspection_console" start time: Oct 15 17:11 CST
+Output:
+----------------------------------------------------------
+-- run_test.py: invoking following command in '/tmp/carcar_app001_build/carcar_inspection':
+ - /tmp/carcar_app001_build/carcar_inspection/test_inspection_console --gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 6 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 6 tests from ConsoleTest
+[ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+[       OK ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (427 ms)
+[ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+[       OK ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (5456 ms)
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+真实浏览器完成停车→下发目标→新画面→人工确认保存；平板与手机截图已保存
+[       OK ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (6075 ms)
+[ RUN      ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation
+[       OK ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation (2787 ms)
+[ RUN      ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+[       OK ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow (5431 ms)
+[ RUN      ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow
+[       OK ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow (5435 ms)
+[----------] 6 tests from ConsoleTest (25612 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 1 test suite ran. (25612 ms total)
+[  PASSED  ] 6 tests.
+-- run_test.py: return code 0
+-- run_test.py: inject classname prefix into gtest result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+-- run_test.py: verify result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+<end of output>
+Test time =  25.91 sec
+----------------------------------------------------------
+Test Passed.
+"test_inspection_console" end time: Oct 15 17:11 CST
+"test_inspection_console" time elapsed: 00:00:25
+----------------------------------------------------------
+
+End testing: Oct 15 17:11 CST
+
+gtest =  26.14 sec*proc
+

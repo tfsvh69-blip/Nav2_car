@@ -1,0 +1,133 @@
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'start_hardware':
+        no description given
+        (default: 'false')
+
+    'mode':
+        no description given
+        (default: 'new')
+
+    'bundle_id':
+        no description given
+        (default: '')
+
+    'map_root':
+        no description given
+        (default: '/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions')
+
+    'serial_port':
+        no description given
+        (default: '/dev/myserial')
+
+    'lidar_port':
+        no description given
+        (default: '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0')
+
+    'port':
+        no description given
+        (default: '8080')
+
+    'start_gateway':
+        no description given
+        (default: 'true')
+
+    'start_camera':
+        no description given
+        (default: 'true')
+
+    'require_video':
+        no description given
+        (default: 'true')
+
+    'slam_params_file':
+        no description given
+        (default: FindPackageShare(pkg='carcar_navigation') + '/config/slam_toolbox.yaml')
+
+    'params_file':
+        Rosmaster base driver parameters
+        (default: FindPackageShare(pkg='carcar_base') + '/config/base.yaml')
+
+    'speed_params_file':
+        Optional final speed-limit overlay
+        (default: LaunchConfig('params_file'))
+
+    'use_sim_time':
+        Use simulation clock if true
+        (default: 'false')
+
+    'camera_extrinsics_file':
+        no description given
+        (default: FindPackageShare(pkg='carcar_description') + '/config/camera_extrinsics.yaml')
+
+    'camera_tilt_dynamic':
+        no description given
+        (default: 'false')
+
+    'publish_odom_tf':
+        默认轮式里程计发布 TF；外部融合接管须独立验收
+        (default: 'true')
+
+    'model':
+        Carcar Xacro model path
+        (default: FindPackageShare(pkg='carcar_description') + '/urdf/carcar.urdf.xacro')
+
+    'publish_model':
+        Publish robot model unless another robot_state_publisher is already running
+        (default: 'true')
+
+    'use_rviz':
+        Temporarily open RViz on the Jetson desktop
+        (default: 'false')
+
+    'preview_wheels':
+        Publish zero wheel angles only while previewing a stationary model
+        (default: 'false')
+
+    'enable_inspection_interface':
+        显式启用APP-001停车保持与逐档舵机接口；默认保留原入口行为
+        (default: 'false')
+
+    'config_file':
+        RPLIDAR A1 configuration file
+        (default: FindPackageShare(pkg='carcar_lidar') + '/config/rplidar_a1.yaml')
+
+    'serial_baudrate':
+        RPLIDAR A1 serial baudrate
+        (default: '115200')
+
+    'frame_id':
+        Frame ID for laser scans
+        (default: 'laser_frame')
+
+    'inverted':
+        Invert scan direction
+        (default: 'false')
+
+    'angle_compensate':
+        Enable angle compensation
+        (default: 'true')
+
+    'scan_mode':
+        Scan mode (Express or Standard)
+        (default: 'Express')
+
+    'scan_frequency':
+        Target scan frequency
+        (default: '10.0')
+
+    'enable_depth_reference':
+        no description given
+        (default: 'true')
+
+    'enable_rgb_reference':
+        no description given
+        (default: 'true')
+
+    'max_width':
+        no description given
+        (default: '320')
+
+    'max_fps':
+        no description given
+        (default: '1.0')

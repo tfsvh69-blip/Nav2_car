@@ -5,11 +5,13 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "diagnostic_msgs/msg/key_value.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_components/register_node_macro.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/point_cloud2_iterator.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -19,16 +21,14 @@
 #include "tf2_ros/transform_listener.h"
 
 #include "carcar_camera/depth_logic.hpp"
+#include "carcar_camera/depth_cloud_filter_factory.hpp"
+#include "carcar_camera/obstacle_voxel_grid.hpp"
 #include "carcar_camera/temporal_confirmation.hpp"
 
 namespace {
 using Steady = std::chrono::steady_clock;
 
-struct Xyz {
-  float x;
-  float y;
-  float z;
-};
+using Xyz = carcar_camera::DepthPoint;
 
 void add_value(
   diagnostic_msgs::msg::DiagnosticStatus & status,
@@ -66,11 +66,12 @@ sensor_msgs::msg::PointCloud2 make_cloud(
 }
 }  // namespace
 
+namespace carcar_camera {
 class DepthCloudFilter : public rclcpp::Node
 {
 public:
-  DepthCloudFilter()
-  : Node("depth_cloud_filter"), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
+  explicit DepthCloudFilter(const rclcpp::NodeOptions & options)
+  : Node("depth_cloud_filter", options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
   {
     base_frame_ = declare_parameter("base_frame", std::string("base_footprint"));
     input_topic_ = declare_parameter("input_topic", std::string("/camera/depth/points"));
@@ -87,6 +88,8 @@ public:
     limits_.self_max_z = declare_parameter("self_max_z", 0.26);
     max_stamp_age_s_ = declare_parameter("max_stamp_age_s", 0.50);
     transform_timeout_s_ = declare_parameter("transform_timeout_s", 0.10);
+    voxel_enabled_ = declare_parameter("voxel_grid_enable", false);
+    voxel_leaf_size_ = declare_parameter("voxel_leaf_size", 0.01);
     // 时间确认默认关闭，保证加入本功能前后行为完全一致；开启后才生效。
     temporal_enabled_ = declare_parameter("temporal_confirm_enable", false);
     const auto confirm_resolution = declare_parameter("temporal_confirm_resolution", 0.02);
@@ -95,7 +98,8 @@ public:
     confirmation_ = carcar_camera::TemporalConfirmation(
       confirm_resolution, confirm_window, confirm_min_hits);
     if (!carcar_camera::valid_limits(limits_) || max_stamp_age_s_ <= 0.0 ||
-      transform_timeout_s_ <= 0.0 || (temporal_enabled_ && !confirmation_.valid())) {
+      transform_timeout_s_ <= 0.0 || !valid_voxel_leaf_size(voxel_leaf_size_) ||
+      (temporal_enabled_ && !confirmation_.valid())) {
       throw std::invalid_argument("D435 点云筛选参数无效");
     }
 
@@ -104,23 +108,34 @@ public:
       "/camera/navigation/obstacles", qos);
     clearing_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
       "/camera/navigation/clearing", qos);
+    // Humble 的进程内通信不支持 Transient Local；保留停车联锁的持久健康状态。
+    rclcpp::PublisherOptions health_options;
+    health_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
     healthy_pub_ = create_publisher<std_msgs::msg::Bool>(
-      "/camera/navigation/healthy", rclcpp::QoS(1).reliable().transient_local());
+      "/camera/navigation/healthy", rclcpp::QoS(1).reliable().transient_local(), health_options);
     diagnostics_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
       "/camera/navigation/diagnostics", 10);
     cloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       input_topic_, qos,
-      std::bind(&DepthCloudFilter::on_cloud, this, std::placeholders::_1));
+      [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr msg, const rclcpp::MessageInfo & info) {
+        on_cloud(msg, info);
+      });
     timer_ = create_wall_timer(
       std::chrono::milliseconds(200), std::bind(&DepthCloudFilter::publish_health, this));
     publish_bool(false);
+    RCLCPP_INFO(get_logger(), "IPC=%s, obstacle VoxelGrid=%s, leaf=%.3fm (CPU PCL)",
+      options.use_intra_process_comms() ? "true" : "false",
+      voxel_enabled_ ? "true" : "false", voxel_leaf_size_);
   }
 
 private:
-  void on_cloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+  void on_cloud(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg, const rclcpp::MessageInfo & info)
   {
     const auto received = Steady::now();
     std::lock_guard<std::mutex> lock(mutex_);
+    if (info.get_rmw_message_info().from_intra_process) {++intra_process_frames_;}
+    else {++inter_process_frames_;}
     last_raw_received_ = received;
     last_frame_ = msg->header.frame_id;
     raw_points_ = static_cast<size_t>(msg->width) * msg->height;
@@ -202,6 +217,11 @@ private:
       return;
     }
 
+    obstacle_points_before_voxel_ = obstacles.size();
+    const auto voxel_started = Steady::now();
+    if (voxel_enabled_) {obstacles = downsample_obstacles(obstacles, voxel_leaf_size_);}
+    voxel_filter_ms_ = std::chrono::duration<double, std::milli>(
+      Steady::now() - voxel_started).count();
     obstacle_points_ = obstacles.size();
     clearing_points_ = clearing.size();
     valid_measurements_ = valid_measurements;
@@ -213,8 +233,17 @@ private:
     } else {
       last_error_ = "POINTCLOUD_NO_VALID_DEPTH";
     }
-    obstacle_pub_->publish(make_cloud(msg->header, obstacles));
-    clearing_pub_->publish(make_cloud(msg->header, clearing));
+    obstacle_pub_->publish(
+      std::make_unique<sensor_msgs::msg::PointCloud2>(make_cloud(msg->header, obstacles)));
+    // STVL 当前不订阅清障点云时，避免白白构建大缓冲；计数和筛选仍照常执行。
+    if (clearing_pub_->get_subscription_count() > 0 ||
+      clearing_pub_->get_intra_process_subscription_count() > 0)
+    {
+      clearing_pub_->publish(
+        std::make_unique<sensor_msgs::msg::PointCloud2>(make_cloud(msg->header, clearing)));
+    }
+    processing_ms_ = std::chrono::duration<double, std::milli>(Steady::now() - received).count();
+    ++processed_frames_;
   }
 
   static double age(const Steady::time_point & point)
@@ -257,6 +286,18 @@ private:
     add_value(status, "raw_points", std::to_string(raw_points_));
     add_value(status, "valid_measurements", std::to_string(valid_measurements_));
     add_value(status, "obstacle_points", std::to_string(obstacle_points_));
+    add_value(status, "obstacle_points_before_voxel", std::to_string(obstacle_points_before_voxel_));
+    add_value(status, "voxel_grid_enable", voxel_enabled_ ? "true" : "false");
+    add_value(status, "voxel_leaf_size", std::to_string(voxel_leaf_size_));
+    add_value(status, "voxel_filter_ms", std::to_string(voxel_filter_ms_));
+    add_value(status, "processing_ms", std::to_string(processing_ms_));
+    add_value(status, "processed_frames", std::to_string(processed_frames_));
+    add_value(status, "intra_process_comms",
+      get_node_options().use_intra_process_comms() ? "true" : "false");
+    add_value(status, "process_id", std::to_string(getpid()));
+    add_value(status, "intra_process_frames", std::to_string(intra_process_frames_));
+    add_value(status, "inter_process_frames", std::to_string(inter_process_frames_));
+    add_value(status, "compute_backend", "CPU_PCL");
     add_value(status, "clearing_points", std::to_string(clearing_points_));
     add_value(status, "temporal_confirm_enable", temporal_enabled_ ? "true" : "false");
     add_value(status, "temporal_rejected_points", std::to_string(rejected_points_));
@@ -282,6 +323,14 @@ private:
   size_t raw_points_{0};
   size_t valid_measurements_{0};
   size_t obstacle_points_{0};
+  size_t obstacle_points_before_voxel_{0};
+  size_t processed_frames_{0};
+  size_t intra_process_frames_{0};
+  size_t inter_process_frames_{0};
+  bool voxel_enabled_{false};
+  double voxel_leaf_size_{0.01};
+  double voxel_filter_ms_{0.0};
+  double processing_ms_{0.0};
   size_t clearing_points_{0};
   size_t rejected_points_{0};
   size_t tracked_voxels_{0};
@@ -298,10 +347,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char ** argv)
+rclcpp::Node::SharedPtr make_depth_cloud_filter(const rclcpp::NodeOptions & options)
 {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<DepthCloudFilter>());
-  rclcpp::shutdown();
-  return 0;
+  return std::make_shared<DepthCloudFilter>(options);
 }
+}  // namespace carcar_camera
+
+RCLCPP_COMPONENTS_REGISTER_NODE(carcar_camera::DepthCloudFilter)

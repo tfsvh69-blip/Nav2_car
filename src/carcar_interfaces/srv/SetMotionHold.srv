@@ -1,0 +1,10 @@
+# APP-001：由现有串口所有者保持停车；不会打开第二个串口。
+string owner_token
+string driver_epoch
+bool hold
+---
+bool accepted
+string reason
+string driver_epoch
+int32 board_command
+bool held

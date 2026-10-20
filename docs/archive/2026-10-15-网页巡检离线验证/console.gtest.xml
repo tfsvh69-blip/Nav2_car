@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="6" failures="0" disabled="0" errors="0" time="25.612" timestamp="2026-10-15T17:11:32" name="AllTests">
+  <testsuite name="ConsoleTest" tests="6" failures="0" disabled="0" errors="0" time="25.612" timestamp="2026-10-15T17:11:32">
+    <testcase name="ConfigurationModeNeverRequestsActuatorCommands" status="run" result="completed" time="0.427" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast" status="run" result="completed" time="5.456" timestamp="2026-10-15T17:11:32" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="RealBrowserCompletesStepwiseTeachingOnTabletAndPhone" status="run" result="completed" time="6.075" timestamp="2026-10-15T17:11:38" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation" status="run" result="completed" time="2.787" timestamp="2026-10-15T17:11:44" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow" status="run" result="completed" time="5.431" timestamp="2026-10-15T17:11:47" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow" status="run" result="completed" time="5.435" timestamp="2026-10-15T17:11:52" classname="carcar_inspection.ConsoleTest" />
+  </testsuite>
+</testsuites>

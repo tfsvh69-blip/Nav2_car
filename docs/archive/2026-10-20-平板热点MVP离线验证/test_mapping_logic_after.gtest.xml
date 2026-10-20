@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="28" failures="0" disabled="0" errors="0" time="0.004" timestamp="2026-10-20T10:52:20" name="AllTests">
+  <testsuite name="Safety" tests="25" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-20T10:52:20">
+    <testcase name="StartupZero" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="StationaryReadyDoesNotRequireBrowserHeartbeats" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="RetriedSameConnectionCannotRevokeOrResetTheActiveOperator" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="RecordedTabletLatencyDoesNotRevokeContinuousJoystick" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="CompatibilityHeartbeatExpiresWithoutRevokingStationaryReady" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="ForwardAndRotateNeverStrafe" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="BothGearsAndGearChangeStop" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="FastGearRequiresReenableAndKeepsShortLease" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="StopReasonsDistinguishExpiredLeaseAndExpiredSensors" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="LeaseDeadlineIsIssueTimeNotReceiveTime" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="BufferedCommandsWithIncreasingSequenceCannotExtendIssuedDeadline" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="DuplicateAndOutOfOrderCannotRenew" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="ReleaseInvalidatesQueuedCommands" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="ReconnectDoesNotMove" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="SourceVideoCannotRefreshByRepeatingTimestamp" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="FreshSourceDoesNotHideFrozenBrowser" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="GatewayStallStopsIndependentOfVideo" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="SavingPermissionImmediatelyStops" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="TopologyAndSensorFailuresLatchStop" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="UnknownSessionAndDirectionRejected" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="HeadlessJoystickReleaseAndRepressPreservePermissionWithSequenceBarrier" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="HeadlessModeStillRequiresSensorsGatewayAndShortLease" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="JoystickRejectsInvalidNumbersAndNormalizesCombinedDemand" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="IdleHeartbeatCompatibilityCannotCreateMotion" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+    <testcase name="ExpiredHeartbeatIsObservableAndNeverExtendsPresence" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Safety" />
+  </testsuite>
+  <testsuite name="Coordinates" tests="1" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-20T10:52:20">
+    <testcase name="OriginRotationAndScreenY" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Coordinates" />
+  </testsuite>
+  <testsuite name="Bundle" tests="2" failures="0" disabled="0" errors="0" time="0.004" timestamp="2026-10-20T10:52:20">
+    <testcase name="RequiresAllFourFilesAndRejectsTamperingTraversalAndLinks" status="run" result="completed" time="0.004" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Bundle" />
+    <testcase name="IncompleteCannotResume" status="run" result="completed" time="0" timestamp="2026-10-20T10:52:20" classname="carcar_mapping_console.Bundle" />
+  </testsuite>
+</testsuites>

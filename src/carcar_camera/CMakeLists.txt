@@ -14,6 +14,7 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -30,10 +31,21 @@ add_executable(depth_device_settings src/depth_device_settings.cpp)
 target_compile_features(depth_device_settings PRIVATE cxx_std_17)
 target_link_libraries(depth_device_settings realsense2::realsense2)
 
-add_executable(depth_cloud_filter src/depth_cloud_filter.cpp)
+add_executable(depth_compute_probe src/depth_compute_probe.cpp)
+target_compile_features(depth_compute_probe PRIVATE cxx_std_17)
+target_link_libraries(depth_compute_probe realsense2::realsense2 ${CMAKE_DL_LIBS})
+
+add_library(depth_cloud_filter_component SHARED src/depth_cloud_filter.cpp)
+target_compile_features(depth_cloud_filter_component PUBLIC cxx_std_17)
+target_include_directories(depth_cloud_filter_component PRIVATE include ${PCL_INCLUDE_DIRS})
+ament_target_dependencies(depth_cloud_filter_component
+  diagnostic_msgs rclcpp rclcpp_components sensor_msgs std_msgs tf2 tf2_geometry_msgs tf2_ros)
+target_link_libraries(depth_cloud_filter_component ${PCL_LIBRARIES})
+rclcpp_components_register_nodes(depth_cloud_filter_component "carcar_camera::DepthCloudFilter")
+add_executable(depth_cloud_filter src/depth_cloud_filter_main.cpp)
 target_include_directories(depth_cloud_filter PRIVATE include)
-ament_target_dependencies(depth_cloud_filter
-  diagnostic_msgs rclcpp sensor_msgs std_msgs tf2 tf2_geometry_msgs tf2_ros)
+ament_target_dependencies(depth_cloud_filter rclcpp)
+target_link_libraries(depth_cloud_filter depth_cloud_filter_component)
 
 add_executable(depth_ror_shadow src/depth_ror_shadow.cpp)
 target_include_directories(depth_ror_shadow PRIVATE include ${PCL_INCLUDE_DIRS})
@@ -124,15 +136,26 @@ add_executable(reference_camera_info src/reference_camera_info.cpp)
 target_include_directories(reference_camera_info PRIVATE include)
 ament_target_dependencies(reference_camera_info rclcpp sensor_msgs)
 
-install(TARGETS reference_camera_info depth_device_settings image_reference_preview depth_cloud_filter depth_cloud_preview depth_floor_profile depth_health_window depth_target_window depth_ror_shadow depth_layer_supervisor charuco_extrinsic_calibrator depth_snapshot
+install(TARGETS reference_camera_info depth_device_settings depth_compute_probe image_reference_preview depth_cloud_filter depth_cloud_preview depth_floor_profile depth_health_window depth_target_window depth_ror_shadow depth_layer_supervisor charuco_extrinsic_calibrator depth_snapshot
   depth_costmap_audit depth_map_audit depth_stvl_audit depth_temporal_audit depth_flicker_audit depth_ror_sweep depth_clearing_coverage
   DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch rviz DESTINATION share/${PROJECT_NAME})
+install(TARGETS depth_cloud_filter_component LIBRARY DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
 install(FILES README.md DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_obstacle_voxel_grid test/test_obstacle_voxel_grid.cpp)
+  target_include_directories(test_obstacle_voxel_grid PRIVATE include ${PCL_INCLUDE_DIRS})
+  target_link_libraries(test_obstacle_voxel_grid ${PCL_LIBRARIES})
+  ament_add_gtest(test_depth_filter_component test/test_depth_filter_component.cpp TIMEOUT 25)
+  target_include_directories(test_depth_filter_component PRIVATE include)
+  ament_target_dependencies(test_depth_filter_component
+    diagnostic_msgs rclcpp sensor_msgs std_msgs tf2_ros)
+  target_link_libraries(test_depth_filter_component depth_cloud_filter_component)
+  set_tests_properties(test_depth_filter_component PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=86;ROS_LOCALHOST_ONLY=1")
   find_program(REGISTER_EXECUTABLE register_node PATHS /opt/ros/humble/lib/depth_image_proc REQUIRED)
   ament_add_gtest(test_reference_camera_info test/test_reference_camera_info.cpp)
   target_include_directories(test_reference_camera_info PRIVATE include)

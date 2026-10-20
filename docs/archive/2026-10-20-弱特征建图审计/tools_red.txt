@@ -1,0 +1,21 @@
+Note: Google Test filter = MappingTools.CandidateSlamConfigReachesLaunchWithoutHardwareAndRequiresNewMap
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from MappingTools
+[ RUN      ] MappingTools.CandidateSlamConfigReachesLaunchWithoutHardwareAndRequiresNewMap
+未知参数 --slam-params
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/test/test_tools.cpp:71: Failure
+Expected equality of these values:
+  run({"/home/jetson/luhao/my_nav_carcar/build/carcar_mapping_console/mapping_prepare", "--slam-params", config.string()}, capture)
+    Which is: 1
+  0
+[  FAILED  ] MappingTools.CandidateSlamConfigReachesLaunchWithoutHardwareAndRequiresNewMap (11 ms)
+[----------] 1 test from MappingTools (11 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (11 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] MappingTools.CandidateSlamConfigReachesLaunchWithoutHardwareAndRequiresNewMap
+
+ 1 FAILED TEST

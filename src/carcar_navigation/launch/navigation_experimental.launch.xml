@@ -58,6 +58,7 @@
     <remap from="cmd_vel" to="/cmd_vel_nav"/>
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
+    <param from="$(var sensor_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="odom_topic" value="$(var odom_topic)"/>
   </node>

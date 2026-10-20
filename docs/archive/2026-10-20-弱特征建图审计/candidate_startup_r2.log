@@ -1,0 +1,2 @@
+[INFO] [1792486599.205387402] [mapping_web_gateway]: 离线建图页面 http://127.0.0.1:18094；无自动避障，初始零运动
+[INFO] [1792486602.797936871] [rclcpp]: signal_handler(SIGINT/SIGTERM)

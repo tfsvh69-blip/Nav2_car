@@ -1,0 +1,21 @@
+[Unit]
+Description=Carcar tablet mapping standby console
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/jetson/luhao/my_nav_carcar
+Environment=ROS_DOMAIN_ID=31
+Environment=ROS_LOCALHOST_ONLY=1
+Environment=RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+Environment=TZ=Asia/Shanghai
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && source /home/jetson/luhao/my_nav_carcar/install/setup.bash && exec /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_web_gateway --ros-args -p mode:=standby'
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=45
+UMask=0077
+
+[Install]
+WantedBy=default.target

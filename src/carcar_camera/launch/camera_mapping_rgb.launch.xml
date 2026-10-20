@@ -1,0 +1,12 @@
+<launch>
+  <!-- NAV-017 唯一RGB采集入口；退出至少等待5秒，禁止与其他RealSense入口并行。 -->
+  <node pkg="realsense2_camera" exec="realsense2_camera_node" namespace="camera" name="camera" output="screen">
+    <param from="$(find-pkg-share carcar_camera)/config/d435_mapping_rgb_candidate.yaml"/>
+  </node>
+  <include file="$(find-pkg-share carcar_camera)/launch/image_reference_preview.launch.xml">
+    <arg name="enable_depth_reference" value="false"/>
+    <arg name="enable_rgb_reference" value="true"/>
+    <arg name="max_width" value="640"/>
+    <arg name="max_fps" value="6.0"/>
+  </include>
+</launch>

@@ -1,0 +1,1206 @@
+{
+  "screens": [
+    "mapping-desktop.png",
+    "mapping-map-fixture.png",
+    "mapping-tablet.png",
+    "mapping-phone.png",
+    "inspection-desktop.png",
+    "inspection-map-fixture.png",
+    "inspection-tablet.png",
+    "inspection-phone.png"
+  ],
+  "layouts": [
+    {
+      "label": "建图待命电脑",
+      "width": 1440,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "停车并锁定",
+          "height": 52
+        },
+        {
+          "text": "刷新工程",
+          "height": 52
+        },
+        {
+          "text": "检查并启动硬件",
+          "height": 52
+        },
+        {
+          "text": "查看全图",
+          "height": 46
+        },
+        {
+          "text": "车辆居中",
+          "height": 46
+        },
+        {
+          "text": "停车并保存",
+          "height": 52
+        },
+        {
+          "text": "保存并结束",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 1238,
+          "y": 51.5,
+          "width": 172,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "建图加载地图",
+      "width": 1440,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "停车并锁定",
+          "height": 52
+        },
+        {
+          "text": "查看全图",
+          "height": 46
+        },
+        {
+          "text": "车辆居中",
+          "height": 46
+        },
+        {
+          "text": "停车并保存",
+          "height": 52
+        },
+        {
+          "text": "保存并结束",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 68
+        },
+        {
+          "text": null,
+          "height": 68
+        }
+      ],
+      "stop": [
+        {
+          "x": 1238,
+          "y": 51.5,
+          "width": 172,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "建图横屏平板",
+      "width": 1024,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "停车并锁定",
+          "height": 52
+        },
+        {
+          "text": "查看全图",
+          "height": 46
+        },
+        {
+          "text": "车辆居中",
+          "height": 46
+        },
+        {
+          "text": "停车并保存",
+          "height": 52
+        },
+        {
+          "text": "保存并结束",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 68
+        },
+        {
+          "text": null,
+          "height": 68
+        }
+      ],
+      "stop": [
+        {
+          "x": 817,
+          "y": 123,
+          "width": 172,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "建图手机",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "启用遥控",
+          "height": 48
+        },
+        {
+          "text": "停车并锁定",
+          "height": 48
+        },
+        {
+          "text": "查看全图",
+          "height": 46
+        },
+        {
+          "text": "车辆居中",
+          "height": 46
+        },
+        {
+          "text": "停车并保存",
+          "height": 52
+        },
+        {
+          "text": "保存并结束",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 68
+        },
+        {
+          "text": null,
+          "height": 68
+        }
+      ],
+      "stop": [
+        {
+          "x": 238,
+          "y": 93,
+          "width": 125,
+          "height": 48
+        }
+      ]
+    },
+    {
+      "label": "巡检待命电脑",
+      "width": 1440,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 52
+        },
+        {
+          "text": "点位示教",
+          "height": 52
+        },
+        {
+          "text": "规划草图",
+          "height": 52
+        },
+        {
+          "text": "巡检任务",
+          "height": 52
+        },
+        {
+          "text": "正在巡检",
+          "height": 52
+        },
+        {
+          "text": "巡检记录",
+          "height": 52
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新增点位",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择巡检位置",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": "记录小车当前位置与朝向",
+          "height": 52
+        },
+        {
+          "text": "保存巡检点草稿",
+          "height": 52
+        },
+        {
+          "text": "1. 开始角度调整",
+          "height": 52
+        },
+        {
+          "text": "目标 −1°",
+          "height": 52
+        },
+        {
+          "text": "目标 +1°",
+          "height": 52
+        },
+        {
+          "text": "下发当前目标",
+          "height": 52
+        },
+        {
+          "text": "3. 确认此画面，保存巡检点",
+          "height": 52
+        },
+        {
+          "text": "把当前位置存为备选停车位",
+          "height": 52
+        },
+        {
+          "text": "确认当前为导航参考姿态（94档）",
+          "height": 52
+        },
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "手动停车",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        }
+      ],
+      "stop": [
+        {
+          "x": 1275,
+          "y": 55.53125,
+          "width": 120,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "巡检加载地图",
+      "width": 1440,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 52
+        },
+        {
+          "text": "点位示教",
+          "height": 52
+        },
+        {
+          "text": "规划草图",
+          "height": 52
+        },
+        {
+          "text": "巡检任务",
+          "height": 52
+        },
+        {
+          "text": "正在巡检",
+          "height": 52
+        },
+        {
+          "text": "巡检记录",
+          "height": 52
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新增点位",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择巡检位置",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": "记录小车当前位置与朝向",
+          "height": 52
+        },
+        {
+          "text": "保存巡检点草稿",
+          "height": 52
+        },
+        {
+          "text": "入口仪表\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "走廊配电箱\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "设备观察区\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "1. 开始角度调整",
+          "height": 52
+        },
+        {
+          "text": "目标 −1°",
+          "height": 52
+        },
+        {
+          "text": "目标 +1°",
+          "height": 52
+        },
+        {
+          "text": "下发当前目标",
+          "height": 52
+        },
+        {
+          "text": "3. 确认此画面，保存巡检点",
+          "height": 52
+        },
+        {
+          "text": "把当前位置存为备选停车位",
+          "height": 52
+        },
+        {
+          "text": "确认当前为导航参考姿态（94档）",
+          "height": 52
+        },
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "手动停车",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        }
+      ],
+      "stop": [
+        {
+          "x": 1275,
+          "y": 55.53125,
+          "width": 120,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "巡检横屏平板",
+      "width": 1024,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 52
+        },
+        {
+          "text": "点位示教",
+          "height": 52
+        },
+        {
+          "text": "规划草图",
+          "height": 52
+        },
+        {
+          "text": "巡检任务",
+          "height": 52
+        },
+        {
+          "text": "正在巡检",
+          "height": 52
+        },
+        {
+          "text": "巡检记录",
+          "height": 52
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新增点位",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择巡检位置",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": "记录小车当前位置与朝向",
+          "height": 52
+        },
+        {
+          "text": "保存巡检点草稿",
+          "height": 52
+        },
+        {
+          "text": "入口仪表\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "走廊配电箱\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "设备观察区\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "1. 开始角度调整",
+          "height": 52
+        },
+        {
+          "text": "目标 −1°",
+          "height": 52
+        },
+        {
+          "text": "目标 +1°",
+          "height": 52
+        },
+        {
+          "text": "下发当前目标",
+          "height": 52
+        },
+        {
+          "text": "3. 确认此画面，保存巡检点",
+          "height": 52
+        },
+        {
+          "text": "把当前位置存为备选停车位",
+          "height": 52
+        },
+        {
+          "text": "确认当前为导航参考姿态（94档）",
+          "height": 52
+        },
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "手动停车",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        }
+      ],
+      "stop": [
+        {
+          "x": 867,
+          "y": 47.03125,
+          "width": 120,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "巡检手机",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新增点位",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择巡检位置",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": "记录小车当前位置与朝向",
+          "height": 52
+        },
+        {
+          "text": "保存巡检点草稿",
+          "height": 52
+        },
+        {
+          "text": "入口仪表\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "走廊配电箱\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "设备观察区\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "1. 开始角度调整",
+          "height": 52
+        },
+        {
+          "text": "目标 −1°",
+          "height": 52
+        },
+        {
+          "text": "目标 +1°",
+          "height": 52
+        },
+        {
+          "text": "下发当前目标",
+          "height": 52
+        },
+        {
+          "text": "3. 确认此画面，保存巡检点",
+          "height": 52
+        },
+        {
+          "text": "把当前位置存为备选停车位",
+          "height": 52
+        },
+        {
+          "text": "确认当前为导航参考姿态（94档）",
+          "height": 52
+        },
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "手动停车",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 车辆概览",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "选择巡检任务",
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 巡检任务",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新建任务",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择最终停车位置",
+          "height": 52
+        },
+        {
+          "text": "使用车辆当前位置",
+          "height": 52
+        },
+        {
+          "text": "保存巡检任务",
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 正在巡检",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 巡检记录",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 规划草图",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "1. 入口仪表\n还没到现场。规划位置已有，等你把车开过去",
+          "height": 87
+        },
+        {
+          "text": "2. 走廊配电箱\n还没到现场。规划位置已有，等你把车开过去",
+          "height": 87
+        },
+        {
+          "text": "3. 设备观察区\n还没到现场。规划位置已有，等你把车开过去",
+          "height": 87
+        },
+        {
+          "text": "再加一个观测点",
+          "height": 52
+        },
+        {
+          "text": "去掉当前这个点",
+          "height": 52
+        },
+        {
+          "text": "清空后重新选数量",
+          "height": 52
+        },
+        {
+          "text": "先在图上摆好；等小车定位好了再来记。",
+          "height": 77
+        },
+        {
+          "text": null,
+          "height": 58
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    },
+    {
+      "label": "手机页面 点位示教",
+      "width": 390,
+      "overflow": false,
+      "buttons": [
+        {
+          "text": "车辆概览",
+          "height": 48
+        },
+        {
+          "text": "点位示教",
+          "height": 48
+        },
+        {
+          "text": "规划草图",
+          "height": 48
+        },
+        {
+          "text": "巡检任务",
+          "height": 48
+        },
+        {
+          "text": "正在巡检",
+          "height": 48
+        },
+        {
+          "text": "巡检记录",
+          "height": 48
+        },
+        {
+          "text": "停车",
+          "height": 52
+        },
+        {
+          "text": "载入地图",
+          "height": 52
+        },
+        {
+          "text": "新增点位",
+          "height": 52
+        },
+        {
+          "text": "在地图上选择巡检位置",
+          "height": 52
+        },
+        {
+          "text": null,
+          "height": 52
+        },
+        {
+          "text": "记录小车当前位置与朝向",
+          "height": 52
+        },
+        {
+          "text": "保存巡检点草稿",
+          "height": 52
+        },
+        {
+          "text": "入口仪表\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "走廊配电箱\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "设备观察区\n待现场确认 · 1个停车位 · 140.5°目标",
+          "height": 77
+        },
+        {
+          "text": "1. 开始角度调整",
+          "height": 52
+        },
+        {
+          "text": "目标 −1°",
+          "height": 52
+        },
+        {
+          "text": "目标 +1°",
+          "height": 52
+        },
+        {
+          "text": "下发当前目标",
+          "height": 52
+        },
+        {
+          "text": "3. 确认此画面，保存巡检点",
+          "height": 52
+        },
+        {
+          "text": "把当前位置存为备选停车位",
+          "height": 52
+        },
+        {
+          "text": "确认当前为导航参考姿态（94档）",
+          "height": 52
+        },
+        {
+          "text": "启用遥控",
+          "height": 52
+        },
+        {
+          "text": "前进",
+          "height": 58
+        },
+        {
+          "text": "左转",
+          "height": 58
+        },
+        {
+          "text": "手动停车",
+          "height": 58
+        },
+        {
+          "text": "右转",
+          "height": 58
+        },
+        {
+          "text": "后退",
+          "height": 58
+        }
+      ],
+      "stop": [
+        {
+          "x": 277,
+          "y": 273.515625,
+          "width": 84,
+          "height": 52
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "reducedMotion": true
+}

@@ -171,7 +171,8 @@ target_include_directories(carcar_dwb_plugins PUBLIC
 ament_target_dependencies(carcar_dwb_plugins
   rclcpp nav2_util dwb_core dwb_plugins dwb_msgs nav_2d_msgs pluginlib)
 
-# 旧 escape_controller / 自写 EKF 草稿保留但停用；恢复统一走受保护 Action。
+# 旧 escape_controller / 自写 EKF 草稿已归档到 docs/archive/停用代码/2026-10-10/。
+# 不构建、不启动；配套头文件及 test_nav_escape_logic 留原位，恢复统一走受保护 Action。
 pluginlib_export_plugin_description_file(dwb_core controller_plugins.xml)
 
 # NAV-008/NAV-011: 导航事件监控、终端状态摘要与多维度会话录包节点

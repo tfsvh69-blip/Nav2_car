@@ -4,11 +4,13 @@
   <arg name="speed_params_file" default="$(var params_file)" description="Optional final speed-limit overlay"/>
   <arg name="serial_port" default="/dev/myserial" description="Serial device path"/>
   <arg name="publish_odom_tf" default="true" description="底盘发布 odom TF；仅在已验收的外部融合器接管时关闭"/>
+  <arg name="enable_inspection_interface" default="false" description="显式启用APP-001停车保持与逐档舵机接口；默认保留原入口行为"/>
 
   <node pkg="carcar_base" exec="rosmaster_node" name="rosmaster_base" output="screen">
     <param from="$(var params_file)"/>
     <param from="$(var speed_params_file)"/>
     <param name="serial_port" value="$(var serial_port)"/>
     <param name="publish_odom_tf" value="$(var publish_odom_tf)"/>
+    <param name="enable_inspection_interface" value="$(var enable_inspection_interface)"/>
   </node>
 </launch>

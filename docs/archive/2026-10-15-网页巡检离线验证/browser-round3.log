@@ -1,0 +1,65 @@
+Internal ctest changing into directory: /tmp/carcar_app001_build/carcar_inspection
+Test project /tmp/carcar_app001_build/carcar_inspection
+    Start 1: test_inspection_core
+1/2 Test #1: test_inspection_core .............   Passed    0.24 sec
+    Start 2: test_inspection_console
+2/2 Test #2: test_inspection_console ..........***Failed   16.68 sec
+-- run_test.py: invoking following command in '/tmp/carcar_app001_build/carcar_inspection':
+ - /tmp/carcar_app001_build/carcar_inspection/test_inspection_console --gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from ConsoleTest
+[ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+[       OK ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (408 ms)
+[ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+[       OK ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (5696 ms)
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByText('操作者已连接', { exact: true }) to be visible[22m
+
+    at /home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/test/browser.mjs:25:94 {
+  log: [
+    "  - waiting for getByText('操作者已连接', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2
+/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/test/test_console.cpp:166: Failure
+Expected equality of these values:
+  (((status) & 0xff00) >> 8)
+    Which is: 1
+  0
+测试证据保留："/tmp/carcar-inspection-console-oNSQGj"
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (10283 ms)
+[----------] 3 tests from ConsoleTest (16387 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (16387 ms total)
+[  PASSED  ] 2 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+ 1 FAILED TEST
+-- run_test.py: return code 1
+-- run_test.py: inject classname prefix into gtest result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+-- run_test.py: verify result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+
+
+50% tests passed, 1 tests failed out of 2
+
+Label Time Summary:
+gtest    =  16.92 sec*proc (2 tests)
+
+Total Test time (real) =  16.92 sec
+
+The following tests FAILED:
+	  2 - test_inspection_console (Failed)
+Errors while running CTest

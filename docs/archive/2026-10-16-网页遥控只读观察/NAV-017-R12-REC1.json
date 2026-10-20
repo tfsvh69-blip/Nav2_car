@@ -1,0 +1,315 @@
+{
+  "test": "NAV-017-R12-REC1",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "authorized_by": "用户要求重启相关程序节点",
+  "before": {
+    "phase": "FAILED",
+    "task_state": "FAULT",
+    "error": "建图任务退出或启动超时。查看诊断后可在平板重启；未保存进度可能丢失。",
+    "armed": false,
+    "odom_age": 1707.157520556997,
+    "scan_age": 1709.2529346749943,
+    "map_age": 1709.5672148879967
+  },
+  "backup": {
+    "directory": "log/mapping_restart_20261016_2030",
+    "serialize_result": 0,
+    "grid": {
+      "width": 107,
+      "height": 69,
+      "resolution": 0.05
+    },
+    "sha256": {
+      "graph.posegraph": "2e86947fde03af9797baa37630e0d9b26625323bc8d06efc368dd1417a54529c",
+      "graph.data": "2ffbe5f0c5347342f0d4182429a3cf68133da61233039e6d6b81a59d4d3028c3",
+      "map.yaml": "c217b22426f761d62afb42723580c7d8280d9d00a0b5162f6ccce3717913727c",
+      "map.pgm": "c222cde4303e20b98b315146af0dbe731ecb9643366c261ee55200373db27fdb"
+    },
+    "formal_bundle": false
+  },
+  "restart": {
+    "at": "2026-10-16T12:33:18.762Z",
+    "operation": "authorized_restart",
+    "backup": "log/mapping_restart_20261016_2030",
+    "observations": [
+      {
+        "at": "2026-10-16T12:33:20.355Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172336.4534278,
+        "scan_age": 1000172336.4534264,
+        "map_age": 1000172336.453428
+      },
+      {
+        "at": "2026-10-16T12:33:20.862Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172336.9534225,
+        "scan_age": 1000172336.9534215,
+        "map_age": 1000172336.9534228
+      },
+      {
+        "at": "2026-10-16T12:33:21.369Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172337.4535227,
+        "scan_age": 1000172337.4535205,
+        "map_age": 1000172337.4535228
+      },
+      {
+        "at": "2026-10-16T12:33:21.876Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172337.9535156,
+        "scan_age": 1000172337.9535145,
+        "map_age": 1000172337.9535161
+      },
+      {
+        "at": "2026-10-16T12:33:22.382Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172338.4535048,
+        "scan_age": 1000172338.4535034,
+        "map_age": 1000172338.4535052
+      },
+      {
+        "at": "2026-10-16T12:33:22.889Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172338.9536045,
+        "scan_age": 1000172338.9536024,
+        "map_age": 1000172338.9536047
+      },
+      {
+        "at": "2026-10-16T12:33:23.394Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172339.453642,
+        "scan_age": 1000172339.4536419,
+        "map_age": 1000172339.453643
+      },
+      {
+        "at": "2026-10-16T12:33:23.899Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 1000172339.953664,
+        "scan_age": 1000172339.9536637,
+        "map_age": 1000172339.9536642
+      },
+      {
+        "at": "2026-10-16T12:33:24.403Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 0.03266961398185231,
+        "scan_age": 0.08302462100982666,
+        "map_age": 1000172340.4537239
+      },
+      {
+        "at": "2026-10-16T12:33:24.911Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 0.012530990003142506,
+        "scan_age": 0.01823507499648258,
+        "map_age": 1000172340.9537874
+      },
+      {
+        "at": "2026-10-16T12:33:25.417Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 0.032913364993873984,
+        "scan_age": 0.051076822011964396,
+        "map_age": 1000172341.4537848
+      },
+      {
+        "at": "2026-10-16T12:33:25.923Z",
+        "phase": "WAITING",
+        "task_state": "STARTING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 0.012878328998340294,
+        "scan_age": 0.08358579000923783,
+        "map_age": 1000172341.9537483
+      },
+      {
+        "at": "2026-10-16T12:33:26.429Z",
+        "phase": "CURRENT",
+        "task_state": "RUNNING",
+        "error": "",
+        "armed": false,
+        "x": 0,
+        "yaw": 0,
+        "video_requested": false,
+        "video_running": false,
+        "odom_age": 0.03295787799288519,
+        "scan_age": 0.019070237001869828,
+        "map_age": 0.36398247099714354
+      }
+    ],
+    "success": true
+  },
+  "after": [
+    {
+      "at": "2026-10-16T12:34:26.886Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.014483020000625402,
+      "scan_age": 0.010363016976043582,
+      "map_age": 0.8661610089766327
+    },
+    {
+      "at": "2026-10-16T12:34:28.898Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.014728787005878985,
+      "scan_age": 0.04308252001646906,
+      "map_age": 2.8661908869980834
+    },
+    {
+      "at": "2026-10-16T12:34:30.907Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.014894744992488995,
+      "scan_age": 0.06811374699464068,
+      "map_age": 1.8662216609809548
+    },
+    {
+      "at": "2026-10-16T12:34:32.917Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.014946042996598408,
+      "scan_age": 0.004158244002610445,
+      "map_age": 0.866229746985482
+    },
+    {
+      "at": "2026-10-16T12:34:34.927Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.014972283010138199,
+      "scan_age": 0.029182398022385314,
+      "map_age": 2.8663667640066706
+    },
+    {
+      "at": "2026-10-16T12:34:36.938Z",
+      "phase": "CURRENT",
+      "task_state": "RUNNING",
+      "armed": false,
+      "x": 0,
+      "yaw": 0,
+      "error": "",
+      "video_requested": false,
+      "video_running": false,
+      "odom_age": 0.015122016018722206,
+      "scan_age": 0.054092181992018595,
+      "map_age": 1.8662149090087041
+    }
+  ],
+  "processes": {
+    "gateway": 76661,
+    "launch": 76711,
+    "base": 76728,
+    "lidar": 76730,
+    "slam": 76732,
+    "guard": 76734
+  },
+  "serial_owners": {
+    "/dev/ttyUSB0": [
+      76728
+    ],
+    "/dev/ttyUSB1": [
+      76730
+    ]
+  },
+  "hardware_effects": [
+    "重启既有底盘初始化路径会发送零运动和S1=94命令，未实测实体角度",
+    "未发送使能或非零速度，未启动摄像头"
+  ],
+  "limitations": [
+    "恢复运行状态不代表失效根因已修复",
+    "按原new模式启动，旧地图只备份未自动续建",
+    "没有进行移动或停车距离验收",
+    "未修改源码／参数／系统配置"
+  ]
+}

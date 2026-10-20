@@ -1,0 +1,115 @@
+Internal ctest changing into directory: /tmp/carcar_app001_build/carcar_inspection
+Test project /tmp/carcar_app001_build/carcar_inspection
+    Start 1: test_inspection_core
+1/2 Test #1: test_inspection_core .............***Failed    0.26 sec
+-- run_test.py: invoking following command in '/tmp/carcar_app001_build/carcar_inspection':
+ - /tmp/carcar_app001_build/carcar_inspection/test_inspection_core --gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 14 tests from 4 test suites.
+[----------] Global test environment set-up.
+[----------] 3 tests from Domain
+[ RUN      ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit
+[       OK ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit (0 ms)
+[ RUN      ] Domain.OneAngleAndExplicitFinalParkingAreRequired
+[       OK ] Domain.OneAngleAndExplicitFinalParkingAreRequired (1 ms)
+[ RUN      ] Domain.RepeatedPointsAndTraversalAreRejected
+[       OK ] Domain.RepeatedPointsAndTraversalAreRejected (0 ms)
+[----------] 3 tests from Domain (1 ms total)
+
+[----------] 3 tests from Store
+[ RUN      ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint
+unknown file: Failure
+C++ exception with description "NOT NULL constraint failed: records.body" thrown in the test body.
+[  FAILED  ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint (16 ms)
+[ RUN      ] Store.TaskOrderAndPhotoReferencesSurviveRestart
+unknown file: Failure
+C++ exception with description "NOT NULL constraint failed: records.body" thrown in the test body.
+[  FAILED  ] Store.TaskOrderAndPhotoReferencesSurviveRestart (32 ms)
+[ RUN      ] Store.RestartMarksOldExecutionInterruptedWithoutReplay
+unknown file: Failure
+C++ exception with description "NOT NULL constraint failed: records.body" thrown in the test body.
+[  FAILED  ] Store.RestartMarksOldExecutionInterruptedWithoutReplay (13 ms)
+[----------] 3 tests from Store (61 ms total)
+
+[----------] 4 tests from Teaching
+[ RUN      ] Teaching.CannotStepBeforeStopOrSkipManyDegrees
+[       OK ] Teaching.CannotStepBeforeStopOrSkipManyDegrees (0 ms)
+[ RUN      ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm
+[       OK ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm (0 ms)
+[ RUN      ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation
+[       OK ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation (0 ms)
+[ RUN      ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm
+[       OK ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm (0 ms)
+[----------] 4 tests from Teaching (0 ms total)
+
+[----------] 4 tests from Executor
+[ RUN      ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking
+[       OK ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking (2 ms)
+[ RUN      ] Executor.CancelHaltsInFlightActionAndCannotAdvance
+[       OK ] Executor.CancelHaltsInFlightActionAndCannotAdvance (0 ms)
+[ RUN      ] Executor.PauseAndResumeKeepCurrentPoint
+[       OK ] Executor.PauseAndResumeKeepCurrentPoint (1 ms)
+[ RUN      ] Executor.NavigationFailurePreventsPhotographyAndParking
+[       OK ] Executor.NavigationFailurePreventsPhotographyAndParking (0 ms)
+[----------] 4 tests from Executor (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 14 tests from 4 test suites ran. (65 ms total)
+[  PASSED  ] 11 tests.
+[  FAILED  ] 3 tests, listed below:
+[  FAILED  ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint
+[  FAILED  ] Store.TaskOrderAndPhotoReferencesSurviveRestart
+[  FAILED  ] Store.RestartMarksOldExecutionInterruptedWithoutReplay
+
+ 3 FAILED TESTS
+-- run_test.py: return code 1
+-- run_test.py: inject classname prefix into gtest result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+-- run_test.py: verify result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+
+    Start 2: test_inspection_console
+2/2 Test #2: test_inspection_console ..........***Failed    0.19 sec
+-- run_test.py: invoking following command in '/tmp/carcar_app001_build/carcar_inspection':
+ - /tmp/carcar_app001_build/carcar_inspection/test_inspection_console --gtest_output=xml:/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from ConsoleTest
+[ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+unknown file: Failure
+C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+[  FAILED  ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (12 ms)
+[ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+unknown file: Failure
+C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+[  FAILED  ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (0 ms)
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+unknown file: Failure
+C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (0 ms)
+[----------] 3 tests from ConsoleTest (12 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (12 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 3 tests, listed below:
+[  FAILED  ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+[  FAILED  ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+ 3 FAILED TESTS
+-- run_test.py: return code 1
+-- run_test.py: inject classname prefix into gtest result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+-- run_test.py: verify result file '/tmp/carcar_app001_build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+
+
+0% tests passed, 2 tests failed out of 2
+
+Label Time Summary:
+gtest    =   0.45 sec*proc (2 tests)
+
+Total Test time (real) =   0.46 sec
+
+The following tests FAILED:
+	  1 - test_inspection_core (Failed)
+	  2 - test_inspection_console (Failed)
+Errors while running CTest
