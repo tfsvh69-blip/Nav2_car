@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="12" failures="0" disabled="0" errors="0" time="14.571" timestamp="2026-10-20T17:52:09" name="AllTests">
+  <testsuite name="HttpTransport" tests="12" failures="0" disabled="0" errors="0" time="14.571" timestamp="2026-10-20T17:52:09">
+    <testcase name="WebRtcCapabilityRetainsExistingControllerSession" status="run" result="completed" time="0.002" timestamp="2026-10-20T17:52:09" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="RealUdpChannelSharesOwnerAndDropsOldTcpMotionAfterSwitch" status="run" result="completed" time="0.113" timestamp="2026-10-20T17:52:09" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="ReliableOrderedChannelCannotSilentlyReplaceRealtimeProfile" status="run" result="completed" time="0.509" timestamp="2026-10-20T17:52:09" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="BriefTcpSilenceDoesNotTearDownHealthyUdpController" status="run" result="completed" time="3.523" timestamp="2026-10-20T17:52:10" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="SlowHttpHandlerDoesNotDelayStop" status="run" result="completed" time="0.402" timestamp="2026-10-20T17:52:13" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="BrowserCanReuseHttpConnection" status="run" result="completed" time="0.001" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="CompactControlKeepsStopAndDropsExpiredPendingState" status="run" result="completed" time="0.004" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="SlowMapReadersDoNotBlockControlChannel" status="run" result="completed" time="0.008" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="SecondControllerCannotTakeOver" status="run" result="completed" time="0.002" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="InspectPrefixReachesUpstreamAndMissingUpstreamIsVisible" status="run" result="completed" time="0.002" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="CrossOriginWriteIsDenied" status="run" result="completed" time="0" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+    <testcase name="SilentOldControllerReleasesOwnershipForReconnect" status="run" result="completed" time="10.005" timestamp="2026-10-20T17:52:14" classname="carcar_mapping_console.HttpTransport" />
+  </testsuite>
+</testsuites>

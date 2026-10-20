@@ -1,0 +1,5 @@
+[INFO] [1792489843.623601316] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
+[INFO] [1792489843.624333398] [slam_toolbox]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489843.624461625] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+[WARN] [1792489846.720823776] [rclcpp]: Failed to get parameters: max_laser_range
+[INFO] [1792489846.965393235] [rclcpp]: signal_handler(SIGINT/SIGTERM)

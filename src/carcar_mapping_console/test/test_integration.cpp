@@ -84,6 +84,7 @@ protected:
     node=std::make_shared<rclcpp::Node>(real_slam()?"offline_mapping_driver":"slam_toolbox");
     for(auto name:{"resolution","max_laser_range","min_laser_range","map_update_interval"})node->declare_parameter(name,.05);
     for(auto name:{"scan_topic","map_frame","base_frame","odom_frame"})node->declare_parameter(name,std::string("test"));
+    node->declare_parameter("ceres_loss_function", std::string("CauchyLoss"));
     scan=node->create_publisher<sensor_msgs::msg::LaserScan>("/scan",rclcpp::SensorDataQoS());image=node->create_publisher<sensor_msgs::msg::CompressedImage>("/camera/debug/rgb_reference/compressed",rclcpp::SensorDataQoS());
     odom=node->create_publisher<nav_msgs::msg::Odometry>("/wheel/odometry",1);
     if(!real_slam()) {map=node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).transient_local());pose=node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose",1);}
@@ -186,7 +187,12 @@ TEST_F(Integration, SaveFreezesMotionAndProducesVerifiedBundle){
   EXPECT_EQ(request("/api/save",json::object())["http_status"],202);
   ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&s.value("result","").find("保存完整")!=std::string::npos;},12));
   EXPECT_EQ(nonzero.load(),0);bool complete=false;
-  for(const auto&item:std::filesystem::directory_iterator(root)){EXPECT_NO_THROW(validate_bundle(root,item.path().filename().string()));complete=true;}
+  for(const auto&item:std::filesystem::directory_iterator(root)){
+    EXPECT_NO_THROW(validate_bundle(root,item.path().filename().string()));
+    const auto manifest = json::parse(read_file(item.path()/"manifest.json"));
+    EXPECT_EQ(manifest.at("runtime_parameters").value("ceres_loss_function", "missing"), "CauchyLoss");
+    complete=true;
+  }
   EXPECT_TRUE(complete);
 }
 TEST_F(Integration, SustainedFastJoystickAndStopDiagnosticsRemainObservable) {

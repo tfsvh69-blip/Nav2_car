@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="carcar_mapping_console" tests="1" failures="0" time="0.708" errors="0" skipped="0">
+  <testcase classname="carcar_mapping_console" name="test_mapping_loss_benchmark.missing_result" time="0.708">
+    
+  </testcase>
+</testsuite>

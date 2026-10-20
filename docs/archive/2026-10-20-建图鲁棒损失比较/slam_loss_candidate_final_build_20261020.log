@@ -1,0 +1,142 @@
+[0.851s] colcon.colcon_core.package_selection WARNING Some selected packages are already built in one or more underlay workspaces:
+	'carcar_mapping_console' is in: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console
+If a package in a merged underlay workspace is overridden and it installs headers, then all packages in the overlay must sort their include directories by workspace order. Failure to do so may result in build failures or undefined behavior at run time.
+If the overridden package is used by another package in any underlay, then the overriding package in the overlay must be API and ABI compatible or undefined behavior at run time may occur.
+
+If you understand the risks and want to override a package anyways, add the following to the command line:
+	--allow-overriding carcar_mapping_console
+
+This may be promoted to an error in a future release of colcon-override-check.
+Starting >>> carcar_mapping_console
+--- output: carcar_mapping_console
+Consolidate compiler generated dependencies of target mapping_slam_loss_benchmark
+[  3%] Built target mapping_tablet_wifi_trial
+[  3%] Built target mapping_teleop_guard
+[ 26%] Built target usrsctp
+[ 34%] Built target juice-static
+[ 34%] Built target mapping_prepare
+[ 36%] Built target mapping_hotspot
+[ 39%] Built target mapping_http_plain
+[ 41%] Building CXX object CMakeFiles/mapping_slam_loss_benchmark.dir/src/slam_loss_benchmark.cpp.o
+[ 44%] Built target gtest_main
+[ 44%] Built target mapping_test_chromium
+[ 44%] Built target gtest
+[ 46%] Built target test_mapping_logic
+[ 50%] Built target test_tablet_wifi_trial
+[ 92%] Built target datachannel-static
+[ 93%] Built target mapping_rtc
+[ 95%] Built target mapping_http
+Consolidate compiler generated dependencies of target mapping_web_gateway
+[ 96%] Built target test_mapping_http
+[ 98%] Built target mapping_web_gateway
+[100%] Built target test_mapping_tools
+[100%] Built target test_mapping_integration
+[100%] Linking CXX executable mapping_slam_loss_benchmark
+[100%] Built target mapping_slam_loss_benchmark
+-- Install configuration: "Release"
+-- Execute custom install script
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/libusrsctp.a
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/usrsctp.h
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/pkgconfig/usrsctp.pc
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/juice/juice.h
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/cmake/LibJuice/LibJuiceConfig.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/cmake/LibJuice/LibJuiceConfigVersion.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/candidate.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/channel.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/configuration.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/datachannel.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/dependencydescriptor.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/description.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/iceudpmuxlistener.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/mediahandler.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtcpreceivingsession.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/common.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/global.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/message.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/frameinfo.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/peerconnection.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/reliability.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtc.h
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtc.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtp.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/track.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/websocket.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/websocketserver.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtppacketizationconfig.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtcpsrreporter.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtppacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtpdepacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/h264rtppacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/h264rtpdepacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/nalunit.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/h265rtppacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/h265rtpdepacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/h265nalunit.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/av1rtppacketizer.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rtcpnackresponder.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/utils.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/plihandler.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/pacinghandler.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/rembhandler.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/rtc/version.h
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/cmake/LibDataChannel/LibDataChannelConfig.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/cmake/LibDataChannel/LibDataChannelConfigVersion.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/licenses/libdatachannel-MPL-2.0.txt
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/licenses/libjuice-MPL-2.0.txt
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/licenses/usrsctp-BSD-3-Clause.txt
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/licenses/plog-MIT.txt
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/libmapping_http_plain.so
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/common.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/data_flow.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/http_server.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/profile_backup.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/rtc_control.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/safety.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/serial_preflight.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/tablet_wifi_trial.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/task_process.hpp
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/library_path.sh
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/library_path.dsv
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/libmapping_rtc.a
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/libmapping_http.a
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_teleop_guard
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_web_gateway
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_prepare
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_hotspot
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_tablet_wifi_trial
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_slam_loss_benchmark
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/launch/mapping.launch.xml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/launch/tablet.launch.xml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/launch/tablet_cauchy_candidate.launch.xml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/launch/tablet_range6_candidate.launch.xml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/config/mapping-tablet.service
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/config/mapping_limits_candidate.yaml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/config/slam_cauchy_candidate.yaml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/config/slam_range6_candidate.yaml
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/web/app.js
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/web/index.html
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/web/rtc_control.js
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/web/style.css
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/README.md
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/ament_index/resource_index/package_run_dependencies/carcar_mapping_console
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/ament_index/resource_index/parent_prefix_path/carcar_mapping_console
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/path.sh
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/environment/path.dsv
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/local_setup.bash
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/local_setup.sh
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/local_setup.zsh
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/local_setup.dsv
+-- Symlinking: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/package.dsv
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/ament_index/resource_index/packages/carcar_mapping_console
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/cmake/ament_cmake_export_libraries-extras.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/cmake/carcar_mapping_consoleConfig.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/cmake/carcar_mapping_consoleConfig-version.cmake
+-- Up-to-date symlink: /home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/share/carcar_mapping_console/package.xml
+---
+Finished <<< carcar_mapping_console [40.2s]
+
+Summary: 1 package finished [40.9s]

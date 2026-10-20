@@ -1,0 +1,15 @@
+[100%] Building CXX object CMakeFiles/mapping_slam_loss_benchmark.dir/src/slam_loss_benchmark.cpp.o
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/src/slam_loss_benchmark.cpp: In function ‘{anonymous}::json {anonymous}::graph_consistency(const {anonymous}::Solution&, const std::vector<karto::Vertex<karto::LocalizedRangeScan>*>&, const std::vector<karto::Edge<karto::LocalizedRangeScan>*, std::allocator<karto::Edge<karto::LocalizedRangeScan>*> >&)’:
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/src/slam_loss_benchmark.cpp:178:52: error: invalid use of incomplete type ‘const class Eigen::LDLT<Eigen::Matrix<double, 3, 3>, 1>’
+  178 |     const double squared = residual.dot(matrix.ldlt().solve(residual));
+      |                                         ~~~~~~~~~~~^~
+In file included from /usr/include/eigen3/Eigen/Core:163,
+                 from /opt/ros/humble/include/karto_sdk/Mapper.h:34,
+                 from /home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/src/slam_loss_benchmark.cpp:2:
+/usr/include/eigen3/Eigen/src/Core/util/ForwardDeclarations.h:281:55: note: declaration of ‘class Eigen::LDLT<Eigen::Matrix<double, 3, 3>, 1>’
+  281 | template<typename MatrixType, int UpLo = Lower> class LDLT;
+      |                                                       ^~~~
+gmake[3]: *** [CMakeFiles/mapping_slam_loss_benchmark.dir/build.make:76：CMakeFiles/mapping_slam_loss_benchmark.dir/src/slam_loss_benchmark.cpp.o] 错误 1
+gmake[2]: *** [CMakeFiles/Makefile2:264：CMakeFiles/mapping_slam_loss_benchmark.dir/all] 错误 2
+gmake[1]: *** [CMakeFiles/Makefile2:271：CMakeFiles/mapping_slam_loss_benchmark.dir/rule] 错误 2
+gmake: *** [Makefile:205：mapping_slam_loss_benchmark] 错误 2

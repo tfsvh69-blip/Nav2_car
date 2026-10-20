@@ -643,7 +643,7 @@ private:
       }
       // 保存当次 SLAM 实际参数，而不是把候选配置当成读回。
       auto parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "slam_toolbox");
-      auto future = parameters_client->get_parameters({"resolution", "max_laser_range", "min_laser_range", "map_update_interval", "scan_topic", "map_frame", "base_frame", "odom_frame"});
+      auto future = parameters_client->get_parameters({"resolution", "max_laser_range", "min_laser_range", "map_update_interval", "scan_topic", "map_frame", "base_frame", "odom_frame", "ceres_loss_function"});
       if (future.wait_for(std::chrono::seconds(3)) != std::future_status::ready) throw std::runtime_error("SLAM 参数读回超时，工程暂不标记完整");
       for (const auto & parameter : future.get()) manifest["runtime_parameters"][parameter.get_name()] = parameter.value_to_string();
       manifest["complete"] = true; write_manifest();

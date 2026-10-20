@@ -2,6 +2,8 @@
 
 NAV-017：独立的离线网页建图入口。车端 C++、XML Launch；用户于2026-10-13明确同意仅网页交互使用必要的 JavaScript。所有网页资源本地提供，无 CDN。
 
+2026-10-20 NAV-017-R17：V2.5上位机/UI基线已推送后，新增 `mapping_slam_loss_benchmark`，直接加载本机2.6.10的Ceres插件比较None/Huber/Cauchy；只运行合成图及可信保存图，不启动硬件或发布速度。合成筛选结果为Cauchy，因此只增加 `tablet_cauchy_candidate.launch.xml`，仍用原3m范围及其他基线参数，候选工程单独保存，日常默认未切换。保存清单补当次 `ceres_loss_function` 读回，便于追溯。合成收益不能视为实机精度，当前尚未验证复发改善；[报告](../../docs/archive/2026-10-20-建图鲁棒损失比较/README.md)、[完整操作与恢复](../../docs/操作手册.md#slam-loss-candidate)。
+
 2026-10-20 NAV-017-R16新增独立 `tablet_range6_candidate.launch.xml`，仅新建地图对照，将SLAM使用范围由3m改为6m，原默认与旧工程保留。车端配置路径由启动参数经网关/预检固定argv传入SLAM，不接受网页传文件路径；旧图及保存后隐式续建在候选入口拒绝，避免把序列化原阈值冒充新配置。候选单独保存，网页待命不自动启动硬件。本轮只离线验证，尚不能宣称走廊变形已修复或弱特征已受保护；完整操作、安全与回退见[手册33.20](../../docs/操作手册.md#weak-feature-mapping)，输入证据见[审计](../../docs/archive/2026-10-20-弱特征建图审计/README.md)。
 
 2026-10-20新增 `mapping_tablet_wifi_trial`：平板连接原WiFi并提供热点，Jetson与电脑都作热点客户端。该独立C++入口只提供只读状态、隐藏密码准备、固定180秒试验和提前恢复；不修改旧热点入口、不启动硬件、不修改代理。试验配置仅存NetworkManager内存，禁用自动连接，使用DHCP；回滚由NetworkManager独立计时，后台观察进程不依赖SSH终端，记录新地址和原连接恢复情况。当前仅离线验证，真实热点与客户端互访待验；完整命令、风险及恢复见[手册33.19](../../docs/操作手册.md#tablet-wifi-mvp)，结果见测试记录NET-001。接口复用本机NetworkManager 1.36.6的 `AddConnectionUnsaved`、`CheckpointCreate`、`CheckpointRollback`，不用新发行版功能；原理见[NetworkManager官方接口](https://networkmanager.dev/docs/api/1.36.0/gdbus-org.freedesktop.NetworkManager.html)及[Android并发说明](https://source.android.com/docs/core/connect/wifi-sta-ap-concurrency?hl=zh-cn)。

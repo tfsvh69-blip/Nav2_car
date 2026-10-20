@@ -1,0 +1,288 @@
+[INFO] [1792489815.075929184] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+W1020 17:50:15.076962 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.088131593] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.088711 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.100834142] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.101449 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.118624367] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.119197 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.132790184] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.133400 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.148625513] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.149250 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.159217099] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.159826 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.170400859] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.171067 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.179477848] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.180073 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.188399377] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.189013 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.196943297] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.197687 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.205766776] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.206401 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.214025825] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.214614 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.224078614] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.224759 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.234191308] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.234902 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.243811830] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.244525 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.253604324] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.254241 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.262716066] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.263334 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.272506416] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.273099 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.281536332] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.282172 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.291008051] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.291620 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.298870322] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.299548 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.308727778] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.309334 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.316971114] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.317629 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.326039367] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.326759 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.335232807] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.335358986] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.335909 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.344093342] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.344222434] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.344838 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.352992535] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.353132602] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.353742 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.361779917] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.361903408] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.362460 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.372335726] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.372431632] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.372984 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.380098891] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.380203885] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.380752 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.389826488] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.389939226] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.390462 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.398832083] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.399004215] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.399581 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.408407708] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.408507678] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.409015 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.416669733] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.416760679] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.417353 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.424853516] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.424946542] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.425489 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.432750700] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.432854703] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.433435 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.441883530] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.441981869] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.442548 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.450128659] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.450238134] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.450775 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.459004331] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.459122702] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.459637 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.467932484] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.468033319] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.468573 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.476755291] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.476852669] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.477507 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.485420622] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.485511536] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.486028 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.493220620] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.493308846] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.493831 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.501276112] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.501370162] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.501904 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.510610547] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.510758935] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.511320 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.518865244] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.518991423] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.519538 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.528363139] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.528511239] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.529204 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.538184498] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.538313333] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.538878 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.547279984] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.547400594] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.548003 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.555276690] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.555403285] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.555980 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.564663991] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.564786298] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.565460 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.574802957] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.574957745] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.575531 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.584149233] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.584276116] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.584822 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.593782555] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.593911230] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.594591 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.603931410] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.604058037] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.604650 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.613512923] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.613632478] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.614226 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.624886064] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.624975634] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.625579 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.634038191] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.634130065] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.634698 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.643567767] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.643674810] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.644266 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.653912019] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.654009301] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.654537 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.661941974] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.662024568] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.662570 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.670067292] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.670164286] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.670707 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.678046142] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.678150145] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.678695 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.686929750] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.687049785] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.687638 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.696126742] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.696238841] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.696830 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.705527611] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.705638142] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.706281 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.714914175] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.715009762] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.715540 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.722792031] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.722885217] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.723419 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.730393880] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.730490074] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.731024 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.737931055] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.738024434] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.738538 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.745174304] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.745274690] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.745793 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.752791449] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.752935069] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.753506 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.760458548] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.760555510] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.761307 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.768624986] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.768735197] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.769311 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.892743463] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.895884 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.920845555] [mapping_loss_benchmark]: CeresSolver: Using HuberLoss loss function.
+[INFO] [1792489815.920981590] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.923825 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+[INFO] [1792489815.966271141] [mapping_loss_benchmark]: CeresSolver: Using CauchyLoss loss function.
+[INFO] [1792489815.966413672] [mapping_loss_benchmark]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+W1020 17:50:15.969139 30749 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 8.  Bounding to maximum number available.
+Load From File src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/graph.posegraph 
+Mapper <- Module
+Mapper <- m_pSequentialScanMatcher
+Mapper <- m_pGraph
+MapperGraph <- Graph; Graph <- m_Edges; Graph <- m_Vertices
+MapperGraph <- m_pMapper; MapperGraph <- m_pLoopScanMatcher; MapperGraph <- m_pTraversal
+Mapper <- m_pMapperSensorManager
+MapperSensorManager <- m_ScanManagers; MapperSensorManager <- m_Scans
+Mapper <- m_Listeners
+**Finished serializing Mapper**
+{
+  "CauchyLoss": {
+    "clean_far_initial": {
+      "worst_position_rmse_m": 0.0007131866432589976,
+      "worst_yaw_error_deg": 0.0035458844316078276
+    },
+    "clean_near_initial": {
+      "worst_position_rmse_m": 0.00101653926242256,
+      "worst_yaw_error_deg": 0.01239704698953938
+    },
+    "clean_noisy_constraints": {
+      "worst_position_rmse_m": 0.06950078990523466,
+      "worst_yaw_error_deg": 1.6079114386336024
+    },
+    "coherent_wrong_turn": {
+      "worst_position_rmse_m": 1.108196943376633,
+      "worst_yaw_error_deg": 29.999999999999993
+    },
+    "one_bad_link": {
+      "worst_position_rmse_m": 0.004986327443996168,
+      "worst_yaw_error_deg": 0.1030430963767896
+    }
+  },
+  "HuberLoss": {
+    "clean_far_initial": {
+      "worst_position_rmse_m": 3.338295670486487e-05,
+      "worst_yaw_error_deg": 0.0002946622570108532
+    },
+    "clean_near_initial": {
+      "worst_position_rmse_m": 0.0009813757907636217,
+      "worst_yaw_error_deg": 0.012726044219470286
+    },
+    "clean_noisy_constraints": {
+      "worst_position_rmse_m": 0.06838966144374113,
+      "worst_yaw_error_deg": 1.5382654808656482
+    },
+    "coherent_wrong_turn": {
+      "worst_position_rmse_m": 1.108196943376633,
+      "worst_yaw_error_deg": 29.999999999999993
+    },
+    "one_bad_link": {
+      "worst_position_rmse_m": 0.06673854596713118,
+      "worst_yaw_error_deg": 1.1585558194800816
+    }
+  },
+  "None": {
+    "clean_far_initial": {
+      "worst_position_rmse_m": 9.660180029616145e-05,
+      "worst_yaw_error_deg": 0.0017559938084238224
+    },
+    "clean_near_initial": {
+      "worst_position_rmse_m": 0.0009996332721938029,
+      "worst_yaw_error_deg": 0.013271578763443368
+    },
+    "clean_noisy_constraints": {
+      "worst_position_rmse_m": 0.07120409788586171,
+      "worst_yaw_error_deg": 1.4932387000114868
+    },
+    "coherent_wrong_turn": {
+      "worst_position_rmse_m": 1.108196943376633,
+      "worst_yaw_error_deg": 29.999999999999993
+    },
+    "one_bad_link": {
+      "worst_position_rmse_m": 0.5676162058252551,
+      "worst_yaw_error_deg": 12.412347944684441
+    }
+  }
+}
+selected_synthetic_candidate="CauchyLoss"
