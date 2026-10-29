@@ -1,0 +1,5 @@
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-17-09-44-732881-xiaozhu-4821
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosmaster_node-1]: process started with pid [4915]
+[rosmaster_node-1] [INFO] [1792573786.179074361] [rosmaster_base]: S1 已发送平视目标 140.5°（板端 94°）；无实际角度反馈，启动时相机会转动
+[rosmaster_node-1] [INFO] [1792573786.254433416] [rosmaster_base]: Rosmaster connected on /dev/myserial; car_type=1, holonomic=False, drive_mode=board_motion_pid, wheel_odometry_enabled=True

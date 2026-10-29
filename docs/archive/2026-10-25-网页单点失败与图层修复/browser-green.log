@@ -1,0 +1,16 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+Note: Google Test filter = ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ConsoleTest
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+主录入地图已验证两张代价图、两条路径及开关隐藏
+地图选择位置与朝向→保存草稿→刷新读回→手机选择最终停车位通过；无硬件请求
+真实浏览器完成导航到点→修改坐标再导航→调角新画面→按实车位置保存；平板与手机截图已保存
+[       OK ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (12784 ms)
+[----------] 1 test from ConsoleTest (12784 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (12784 ms total)
+[  PASSED  ] 1 test.

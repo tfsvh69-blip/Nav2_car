@@ -34,6 +34,7 @@ protected:
   virtual bool real_slam() const {return false;}
   virtual bool managed_backend() const {return false;}
   virtual bool strict_video() const {return true;}
+  virtual bool autonomy_profile() const {return false;}
   std::atomic<double> output{0};std::atomic<bool> video{true}, save_fails{false}, emit_pose{true},emit_scan{true};std::atomic<int> nonzero{0},relay_count{0};std::string session;
   std::atomic<int> accepted_poses{0};std::mutex truth_mutex;std::array<double,6> truth{};
   void set_truth(std::array<double,6> value){std::lock_guard<std::mutex> lock(truth_mutex);truth=value;}
@@ -41,6 +42,7 @@ protected:
   std::unique_ptr<tf2_ros::TransformBroadcaster> dynamic_broadcaster;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr observed_poses;
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scan;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr filtered;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr image;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map;
@@ -74,6 +76,7 @@ protected:
   void connect_control(){ws=std::make_unique<websocket::stream<tcp::socket>>(io);ws->next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));ws->handshake("127.0.0.1:"+std::to_string(port),"/ws/control");auto welcome=read_ws();session=welcome.at("session");}
   void start_gateway(std::string mode="new",std::string bundle=""){
     std::vector<std::string> args{GATEWAY_EXE,"--ros-args","-p","bind_address:=127.0.0.1","-p","port:="+std::to_string(port),"-p","web_root:=" WEB_ROOT,"-p","map_root:="+root.string(),"-p","mode:="+mode};
+    if(autonomy_profile())args.insert(args.end(),{"-p","autonomy_enabled:=true","-p","task_id:=offline-autonomy"});
     if(!bundle.empty()){args.push_back("-p");args.push_back("bundle_id:="+bundle);}
     if(mode=="standby") {args.insert(args.end(),{"-p","backend_hardware:=false","-p","log_root:="+(root/"logs").string()});}
     gateway=spawn(args);
@@ -86,8 +89,9 @@ protected:
     for(auto name:{"scan_topic","map_frame","base_frame","odom_frame"})node->declare_parameter(name,std::string("test"));
     node->declare_parameter("ceres_loss_function", std::string("CauchyLoss"));
     scan=node->create_publisher<sensor_msgs::msg::LaserScan>("/scan",rclcpp::SensorDataQoS());image=node->create_publisher<sensor_msgs::msg::CompressedImage>("/camera/debug/rgb_reference/compressed",rclcpp::SensorDataQoS());
+    if(autonomy_profile())filtered=node->create_publisher<sensor_msgs::msg::LaserScan>("/scan/filtered",rclcpp::SensorDataQoS());
     odom=node->create_publisher<nav_msgs::msg::Odometry>("/wheel/odometry",1);
-    if(!real_slam()) {map=node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).transient_local());pose=node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose",1);}
+    if(!real_slam()) {map=node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).transient_local());pose=node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose",autonomy_profile()?rclcpp::QoS(1).transient_local():rclcpp::QoS(1));}
     commands=node->create_subscription<geometry_msgs::msg::Twist>("/mapping/cmd_vel",1,[this](const geometry_msgs::msg::Twist&v){output=v.linear.x;if(std::abs(v.linear.x)>.001||std::abs(v.angular.z)>.001)nonzero++;});
     observed_poses=node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose",1,[this](geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr){++accepted_poses;});
     relayed=node->create_subscription<sensor_msgs::msg::LaserScan>("/mapping/slam_scan",rclcpp::SensorDataQoS(),[this](sensor_msgs::msg::LaserScan::ConstSharedPtr s){relay_count++;if(real_slam()||!emit_pose)return;geometry_msgs::msg::PoseWithCovarianceStamped p;p.header=s->header;p.header.frame_id="map";p.pose.pose.orientation.w=1;pose->publish(p);});
@@ -103,6 +107,7 @@ protected:
       std::array<double,6> t;{std::lock_guard<std::mutex> lock(truth_mutex);t=truth;}
       if(real_slam())for(size_t i=0;i<s.ranges.size();++i){double a=t[2]+s.angle_min+i*s.angle_increment,dx=std::cos(a),dy=std::sin(a);s.ranges[i]=std::min(std::abs(dx)>1e-8?((dx>0?1.5:-1.5)-t[0])/dx:1e9,std::abs(dy)>1e-8?((dy>0?2.0:-2.0)-t[1])/dy:1e9);}
       if(emit_scan)scan->publish(s);
+      if(emit_scan&&filtered)filtered->publish(s);
       nav_msgs::msg::Odometry o;o.header.stamp=stamp;o.header.frame_id="odom";o.child_frame_id="base_footprint";o.pose.pose.position.x=t[3];o.pose.pose.position.y=t[4];o.pose.pose.orientation.w=std::cos(t[5]/2);o.pose.pose.orientation.z=std::sin(t[5]/2);odom->publish(o);
       if(real_slam()){geometry_msgs::msg::TransformStamped transform;transform.header=o.header;transform.child_frame_id=o.child_frame_id;transform.transform.translation.x=t[3];transform.transform.translation.y=t[4];transform.transform.rotation=o.pose.pose.orientation;dynamic_broadcaster->sendTransform(transform);}
       if(!real_slam()){nav_msgs::msg::OccupancyGrid m;m.header.stamp=stamp;m.header.frame_id="map";m.info.resolution=.05;m.info.width=m.info.height=80;m.info.origin.position.x=m.info.origin.position.y=-2;m.info.origin.orientation.w=1;m.data.assign(6400,0);map->publish(m);}
@@ -119,6 +124,40 @@ protected:
   }
 };
 class BrowserIntegration:public Integration {bool strict_video()const override{return false;}};
+class AutonomyGateway:public BrowserIntegration {bool autonomy_profile()const override{return true;}};
+TEST_F(AutonomyGateway, RepeatedFaultHeartbeatDoesNotInterruptFrozenDiagnosticSave) {
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  std_msgs::msg::String fault;fault.data=json{{"task_id","offline-autonomy"},{"phase","FAULT"},{"control_mode","automatic"},
+    {"quality_fault","隔离注入：地图质量故障"},{"reason","隔离注入：停车冻结并保存诊断"},{"save_required",true},{"navigation_terminal",true},{"still",true}}.dump();
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[publisher,fault]{publisher->publish(fault);});
+  ASSERT_TRUE(wait([&]{return !request("/api/status").value("last_saved_bundle",std::string()).empty();},10));
+  const auto status=request("/api/status");
+  const auto directory=root/status.at("last_saved_bundle").get<std::string>();
+  const auto manifest=json::parse(read_file(directory/"manifest.json"));
+  EXPECT_TRUE(manifest["complete"]);EXPECT_TRUE(manifest["diagnostic_only"]);EXPECT_TRUE(manifest["review_required"]);
+  EXPECT_EQ(json::parse(read_file(directory/"publication.json"))["status"],"diagnostic");
+  EXPECT_EQ(status["phase"],"FAILED");const auto count=relay_count.load();usleep(200000);
+  EXPECT_EQ(relay_count,count);EXPECT_DOUBLE_EQ(output,0);
+}
+TEST_F(AutonomyGateway, FailedDiagnosticSaveRetriesWithoutResumingScanWrite) {
+  save_fails=true;start_gateway();connect_control();
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  std_msgs::msg::String fault;fault.data=json{{"task_id","offline-autonomy"},{"phase","FAULT"},{"control_mode","automatic"},
+    {"quality_fault","隔离注入：保存失败后重试"},{"reason","隔离注入：停车冻结并保存诊断"},{"save_required",true},{"navigation_terminal",true},{"still",true}}.dump();
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[publisher,fault]{publisher->publish(fault);});
+  ASSERT_TRUE(wait([&]{const auto status=request("/api/status");return status.value("save_failed",false)&&status.value("error","").find("保存未完成")!=std::string::npos;},12))<<request("/api/status").dump();
+  const auto frozen=relay_count.load();usleep(250000);
+  EXPECT_EQ(relay_count.load(),frozen);
+  save_fails=false;
+  ASSERT_TRUE(wait([&]{return !request("/api/status").value("last_saved_bundle",std::string()).empty();},16));
+  const auto status=request("/api/status");
+  EXPECT_EQ(status.value("phase",""),"FAILED");EXPECT_FALSE(status.value("save_failed",true));
+  EXPECT_TRUE(json::parse(read_file(root/status.at("last_saved_bundle").get<std::string>()/"manifest.json")).value("diagnostic_only",false));
+  const auto after=relay_count.load();usleep(250000);
+  EXPECT_EQ(relay_count.load(),after);
+}
 TEST_F(BrowserIntegration, LightweightStatusAndVersionedScanPreserveLegacyAndFreshness) {
   start_gateway();ASSERT_TRUE(wait([&]{return request("/api/state").value("phase","")=="CURRENT";}));
   // 任务CURRENT先于下一次投影/TF发现；等真实预览就绪后比较同种负载。

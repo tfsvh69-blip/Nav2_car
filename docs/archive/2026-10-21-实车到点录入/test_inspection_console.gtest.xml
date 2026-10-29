@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="12" failures="0" disabled="0" errors="0" time="43.573" timestamp="2026-10-21T17:50:16" name="AllTests">
+  <testsuite name="ConsoleTest" tests="12" failures="0" disabled="0" errors="0" time="43.573" timestamp="2026-10-21T17:50:16">
+    <testcase name="ConfigurationModeNeverRequestsActuatorCommands" status="run" result="completed" time="0.609" timestamp="2026-10-21T17:50:16" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast" status="run" result="completed" time="5.518" timestamp="2026-10-21T17:50:17" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="RealBrowserCompletesStepwiseTeachingOnTabletAndPhone" status="run" result="completed" time="12.527" timestamp="2026-10-21T17:50:22" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation" status="run" result="completed" time="2.81" timestamp="2026-10-21T17:50:35" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow" status="run" result="completed" time="5.931" timestamp="2026-10-21T17:50:37" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="PlanningSketchDoesNotSeedPointsOrStartNavigation" status="run" result="completed" time="0.528" timestamp="2026-10-21T17:50:43" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow" status="run" result="completed" time="5.436" timestamp="2026-10-21T17:50:44" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose" status="run" result="completed" time="2.624" timestamp="2026-10-21T17:50:49" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="SingleGoalCancelThenRefineAndNavigateAgain" status="run" result="completed" time="2.416" timestamp="2026-10-21T17:50:52" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="SingleGoalDisconnectCancelsAndHolds" status="run" result="completed" time="1.737" timestamp="2026-10-21T17:50:54" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation" status="run" result="completed" time="1.309" timestamp="2026-10-21T17:50:56" classname="carcar_inspection.ConsoleTest" />
+    <testcase name="SingleGoalRequiresFreshRebuiltLayersBeforeDriving" status="run" result="completed" time="2.128" timestamp="2026-10-21T17:50:57" classname="carcar_inspection.ConsoleTest" />
+  </testsuite>
+</testsuites>

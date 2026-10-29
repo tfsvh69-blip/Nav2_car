@@ -1,0 +1,6 @@
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-19-30-58-754517-xiaozhu-14128
+[INFO] [launch]: Default logging verbosity is set to INFO
+{"suppressed_processes": 20, "ports": {"rosmaster_node": "/dev/myserial", "sllidar_node": "/dev/myserial"}, "launch_result": 0}
+Traceback (most recent call last):
+  File "<stdin>", line 34, in <module>
+AssertionError: 底盘与雷达错误共用同一串口

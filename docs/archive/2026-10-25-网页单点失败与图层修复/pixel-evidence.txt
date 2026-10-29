@@ -1,0 +1,3 @@
+global visible_pixels=37111 total=102258
+local visible_pixels=529 total=3600
+estimated_pose grid=(97,174) static_gray=0 global_BGRA=[55, 45, 225, 210]

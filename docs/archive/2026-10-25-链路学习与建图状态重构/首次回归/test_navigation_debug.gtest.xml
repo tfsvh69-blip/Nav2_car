@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="0" disabled="0" errors="0" time="0.062" timestamp="2026-10-25T12:59:52" name="AllTests">
+  <testsuite name="NavigationDebugTest" tests="4" failures="0" disabled="0" errors="0" time="0.062" timestamp="2026-10-25T12:59:52">
+    <testcase name="RotatesLocalGridAndPairsImageGeometryWithPixels" status="run" result="completed" time="0.015" timestamp="2026-10-25T12:59:52" classname="carcar_inspection.NavigationDebugTest" />
+    <testcase name="MissingTransformNeverPresentsOdomAsMap" status="run" result="completed" time="0.002" timestamp="2026-10-25T12:59:52" classname="carcar_inspection.NavigationDebugTest" />
+    <testcase name="LargeGridReturnsBeforeEncodingFinishes" status="run" result="completed" time="0.042" timestamp="2026-10-25T12:59:52" classname="carcar_inspection.NavigationDebugTest" />
+    <testcase name="ConvertsPathEndpointsWithoutInventingMissingPaths" status="run" result="completed" time="0.002" timestamp="2026-10-25T12:59:52" classname="carcar_inspection.NavigationDebugTest" />
+  </testsuite>
+</testsuites>

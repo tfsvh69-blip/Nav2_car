@@ -1,5 +1,6 @@
 <script setup>
 import ConsoleIcon from "./ConsoleIcon.vue";
+import { createServoSlider } from "./servo-slider.js";
 import {
   ref,
   reactive,
@@ -23,6 +24,8 @@ import {
   tiltPhrase,
   confirmReason,
   sitePath,
+  trialLabel,
+  trialMatchesTarget,
 } from "./workflow.js";
 function site(path) {
   return sitePath(path, import.meta.env.BASE_URL);
@@ -71,17 +74,78 @@ const route = reactive({
   y: 0,
   yaw: 0,
 });
+const initialPose = reactive({ x: 0, y: 0, yaw: 0 });
+const sliderTarget = ref(null), sliderDirty = ref(false), sliderRunning = ref(false);
+const initialPoseChosen = ref(false);
+const editTarget = computed(() =>
+  page.value === "overview"
+    ? initialPose
+    : page.value === "tasks"
+      ? route
+      : draft,
+);
+const trial = computed(() => state.value.navigation_trial || { phase: "IDLE" });
+const trialArrived = computed(
+  () => draftPoseChosen.value && trialMatchesTarget(trial.value, poseOf(draft)),
+);
+const trialActive = computed(() => !!trial.value.active);
+const goalReason = computed(
+  () =>
+    state.value.goal_navigation_block_reason ||
+    (!state.value.goal_navigation_enabled
+      ? "当前是静止测试，尚未启用单点导航"
+      : ""),
+);
+const navigationRequest = reactive({ phase: "IDLE", message: "" });
+const navigationLayers = reactive({ global_costmap: true, local_costmap: true, global_path: true, local_path: true });
+const navigationLayerNames = {global_costmap:"全局障碍与膨胀（紫）",local_costmap:"局部障碍与膨胀（橙）",global_path:"全局路径（青）",local_path:"局部路径（亮黄）"};
+const navigationImages = {};
+const navigationDownloads = new Set();
+const navigateReason = computed(() => !connected.value ? "请等待控制连接建立" : !draftPoseChosen.value ? "请先在地图上选择停车位置与车头方向，或填写候选坐标" : trialActive.value ? "已有导航正在执行，请等待或取消" : goalReason.value);
+function navigationLayerStatus(layer) {
+  const info=state.value.navigation_debug?.[layer];
+  if (!info?.available) return info?.error || "尚未收到数据";
+  const seconds=Math.max(0,info.source_age_seconds||0);
+  return `${info.source_frame}→map · ${seconds.toFixed(1)}秒前${seconds>2?" · 历史数据":""}${layer.endsWith("path")?` · ${info.points?.length||0}个显示点`:""}`;
+}
+async function loadNavigationImages(value) {
+  for (const key of ["global_costmap","local_costmap"]) {
+    const meta=value.navigation_debug?.[key];
+    if (!navigationLayers[key]||!meta?.available||navigationDownloads.has(key)||navigationImages[key]?.meta.sequence===meta.sequence) continue;
+    navigationDownloads.add(key);
+    try {
+      const response=await fetch(site(`/api/navigation/${key.replaceAll("_","-")}.png`));
+      if (!response.ok) continue;
+      const paired=JSON.parse(response.headers.get("X-Navigation-Layer")||"{}");
+      const url=URL.createObjectURL(await response.blob());
+      const image=new Image();
+      image.onload=()=>{navigationImages[key]={image,meta:paired};URL.revokeObjectURL(url);draw();};
+      image.onerror=()=>URL.revokeObjectURL(url);image.src=url;
+    } catch { /* 状态栏保留实际消息更新时间；不伪造空闲栅格。 */ }
+    finally { navigationDownloads.delete(key); }
+  }
+}
+const pointSaved = computed(
+  () => !!draft.id && points.value.some((p) => p.id === draft.id && p.verified),
+);
+const pointCanConfirm = computed(
+  () =>
+    confirmable.value &&
+    !sliderRunning.value && !sliderDirty.value &&
+    trialArrived.value &&
+    state.value.health.localization &&
+    state.value.health.map_matches,
+);
 const navItems = [
-  ["overview", "车辆概览"],
-  ["points", "点位示教"],
-  ["sketch", "规划草图"],
-  ["tasks", "巡检任务"],
-  ["running", "正在巡检"],
-  ["records", "巡检记录"],
+  ["overview", "准备车辆"],
+  ["points", "录入巡检点"],
+  ["tasks", "安排巡检"],
+  ["running", "任务进度"],
+  ["records", "照片与记录"],
 ];
 const pageDescriptions = {
-  overview: "车辆、点位和任务，一目了然。",
-  points: "标记停车位置，确认相机视角。",
+  overview: "先确认车在地图中的位置。行驶时镜头固定为 140.5°，不用再确认。",
+  points: "先导航到候选停车位，再以实车停靠结果调整位置和拍摄角度。",
   sketch: "先把想法放在图上，再到现场确认。",
   tasks: "安排巡检顺序，设定最终停车位置。",
   running: "跟随任务进度，查看采集结果。",
@@ -94,11 +158,47 @@ const teaching = computed(() => state.value.teaching),
       state.value.health.still &&
       state.value.health.rgb,
   );
+const servoSlider = createServoSlider({
+  read: () => ({ connected: connected.value, visible: !document.hidden,
+    allowed: !stopped && page.value === "points" && trialArrived.value && !trialActive.value,
+    held: state.value.motion_held, still: state.value.health.still, rgb: state.value.health.rgb,
+    teaching: teaching.value }),
+  send: async (target, revision) => {
+    rendered.sequence = 0;
+    await post("/api/teach/step", { revision, target_degrees: target });
+  },
+  onRunning: (value) => { sliderRunning.value = value; },
+});
+function cancelSlider() {
+  servoSlider.stop();
+  sliderTarget.value = null; sliderDirty.value = false;
+  if (sliderRunning.value) notice.value = "已停止追加调角命令；已发送的一小步可能完成，停车保持继续生效。";
+}
+function previewSlider(event) {
+  sliderTarget.value = Number(event.target.value);
+  sliderDirty.value = true;
+}
+async function commitSlider() {
+  const target = Number(sliderTarget.value ?? teaching.value.target_degrees);
+  sliderDirty.value = true; rendered.sequence = 0;
+  notice.value = "正在按滑块目标逐步调角；可改目标或停止，完成前不能保存旧画面。";
+  try {
+    const result = await servoSlider.start(target);
+    if (result.completed && Number(sliderTarget.value) === result.target) {
+      sliderTarget.value = null; sliderDirty.value = false;
+      notice.value = "滑块调角已完成，请检查本次新画面后确认保存。";
+    }
+  } catch (error) { notice.value = error.message; }
+}
 const points = computed(() =>
   state.value.points.filter((p) => p.map_id === state.value.map?.id),
 );
 const editPoseChosen = computed(() =>
-  page.value === "tasks" ? routePoseChosen.value : draftPoseChosen.value,
+  page.value === "overview"
+    ? initialPoseChosen.value
+    : page.value === "tasks"
+      ? routePoseChosen.value
+      : draftPoseChosen.value,
 );
 const healthNames = {
   localization: "定位",
@@ -183,6 +283,7 @@ let socket = null,
   intent = { x: 0, yaw: 0 },
   pressed = false,
   sourceStamp = ref("");
+let restoreArrivalOnLoad = true;
 async function post(path, body = {}) {
   if (!session.value) throw new Error("请等待操作者连接建立");
   const response = await fetch(site(path), {
@@ -236,6 +337,7 @@ function connect() {
     socket = null;
     session.value = "";
     connected.value = false;
+    cancelSlider();
     pressed = false;
     intent = { x: 0, yaw: 0 };
     rendered.sequence = 0;
@@ -264,11 +366,13 @@ function release() {
   send({ action: "release", sequence: ++sequence });
 }
 function stopManual() {
+  cancelSlider();
   release();
   send({ action: "stop" });
 }
 function visibility() {
   if (document.hidden) {
+    cancelSlider();
     release();
     socket?.close();
   } else connect();
@@ -285,6 +389,17 @@ async function poll() {
       rendered.revision = -1;
     }
     state.value = { ...value, manual: state.value.manual };
+    // 刷新只恢复当前实车已到达的候选编辑值，不重发目标或角度。
+    if (restoreArrivalOnLoad) {
+      restoreArrivalOnLoad = false;
+      if (!draftPoseChosen.value && page.value === "points" && value.navigation_trial?.phase === "ARRIVED" &&
+          value.navigation_trial.map_id === value.map?.id && value.navigation_trial.target) {
+        const target = value.navigation_trial.target;
+        Object.assign(draft, { x: target.x, y: target.y, yaw: target.yaw * 180 / Math.PI });
+        draftPoseChosen.value = true;
+      }
+    }
+    void loadNavigationImages(value);
     if (
       page.value === "sketch" &&
       !floorPoints.value.some((item) => item.id === selectedId.value)
@@ -390,7 +505,8 @@ async function chooseMap() {
       : "地图已载入，点击“在地图上选择巡检位置”开始标点。";
 }
 function poseEdited(target) {
-  if (target === route) routePoseChosen.value = true;
+  if (target === initialPose) initialPoseChosen.value = true;
+  else if (target === route) routePoseChosen.value = true;
   else draftPoseChosen.value = true;
   draw();
 }
@@ -428,11 +544,49 @@ async function saveDraft() {
   notice.value = "草稿已保存，现场试拍确认后可用于巡检。";
 }
 async function begin() {
+  cancelSlider();
   await post("/api/teach/begin");
   rendered.sequence = 0;
   notice.value = "已请求停车保持；等待轮式反馈停稳后，再点击一步调整。";
 }
+async function startTrialCapture() {
+  if (["IDLE", "FAULT", "CONFIRMED"].includes(teaching.value.phase))
+    await begin();
+  await nextTick();
+  document
+    .querySelector(".workspace.teaching")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+async function navigateDraft() {
+  if (navigateReason.value) {
+    navigationRequest.phase="REJECTED";navigationRequest.message=navigateReason.value;
+    throw new Error(navigateReason.value);
+  }
+  if (
+    !window.confirm(
+      `让小车前往候选停车位：X ${Number(draft.x).toFixed(2)}米、Y ${Number(draft.y).toFixed(2)}米、朝向 ${Number(draft.yaw).toFixed(1)}°。请确认行驶区域安全，并在旁看护。`,
+    )
+  ) { navigationRequest.phase="CANCELED";navigationRequest.message="已取消确认，尚未向车端发送目标";return; }
+  navigationRequest.phase="SUBMITTING";navigationRequest.message="正在向车端提交目标……";
+  try {
+    await post("/api/teach/navigate", { request_id: requestId(), pose: poseOf(draft) });
+    navigationRequest.phase="ACCEPTED";navigationRequest.message="车端已接受目标，正在准备导航；请查看下面的实时阶段";
+  } catch (error) { navigationRequest.phase="REJECTED";navigationRequest.message=`目标未被接受：${error.message}`;throw error; }
+  notice.value = "目标已提交。到达并停稳后，核对实际位置，再开始调整相机。";
+}
+function nudgeCoordinate(key, delta) {
+  draft[key] = Math.round((Number(draft[key]) + delta) * 100) / 100;
+  poseEdited(draft);
+  notice.value = "只修改了候选目标；请重新下发导航，让实车验证这次调整。";
+}
+async function stopEverything() {
+  stopManual();
+  if (trialActive.value) await post("/api/teach/cancel-navigation");
+  else if (["RUNNING", "PAUSED"].includes(state.value.run?.status))
+    await post("/api/run/cancel");
+}
 async function step(delta) {
+  cancelSlider();
   await post("/api/teach/step", {
     revision: teaching.value.revision,
     target_degrees: stepTarget(teaching.value.target_degrees, delta),
@@ -448,6 +602,8 @@ async function confirm(purpose = "point") {
     expected_revision: draft.revision,
   };
   if (draft.id) payload.id = draft.id;
+  if (purpose !== "navigation" && trialArrived.value)
+    payload.trial_id = trial.value.request_id;
   if (purpose === "approach") payload.point_id = draft.id;
   const p = await post("/api/teach/confirm", payload);
   if (purpose === "point" || purpose === "approach") {
@@ -491,7 +647,7 @@ function newPoint() {
   });
   draftPoseChosen.value = false;
   mapSelecting.value = false;
-  notice.value = "新点位：先载入地图，再选择巡检位置或记录小车当前位置。";
+  notice.value = "先选择候选停车位和车头朝向，再点击“下发目标，让小车前往”。";
   draw();
 }
 function newTask() {
@@ -514,7 +670,7 @@ async function localize() {
       "确认实物车辆就在地图编辑箭头的位置与朝向。将提交定位初值，车体须保持停车。",
     )
   )
-    await post("/api/localize", { pose: poseOf(draft) });
+    await post("/api/localize", { pose: poseOf(initialPose) });
 }
 function addPoint(id) {
   if (!route.point_ids.includes(id)) route.point_ids.push(id);
@@ -559,6 +715,34 @@ async function startTask(t) {
   await post("/api/run/start", { task_id: t.id, request_id: requestId() });
   page.value = "running";
 }
+function drawNavigationLayers(ctx, map, density, scale) {
+  for (const key of ["global_costmap", "local_costmap"]) {
+    const layer = navigationImages[key];
+    if (!navigationLayers[key] || !layer?.meta.available || !state.value.navigation_debug?.[key]?.available) continue;
+    const meta = layer.meta, origin = mapToPixel(meta.origin, map), ratio = meta.resolution / map.resolution;
+    ctx.save();
+    ctx.translate(origin.u, origin.v);
+    ctx.rotate(-(meta.origin.yaw - map.origin.yaw));
+    ctx.drawImage(layer.image, 0, -meta.height * ratio, meta.width * ratio, meta.height * ratio);
+    ctx.restore();
+  }
+  for (const [key, color] of [["global_path", "#00a8bd"], ["local_path", "#ffe000"]]) {
+    const layer = state.value.navigation_debug?.[key];
+    if (!navigationLayers[key] || !layer?.available || !layer.points?.length) continue;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = (key === "local_path" ? 4 : 3) * density / scale;
+    if (layer.source_age_seconds > 2) ctx.setLineDash([6 * density / scale, 4 * density / scale]);
+    ctx.beginPath();
+    layer.points.forEach(([x, y], index) => {
+      const p = mapToPixel({ x, y }, map);
+      if (index) ctx.lineTo(p.u, p.v);
+      else ctx.moveTo(p.u, p.v);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 function draw() {
   const element = canvas.value,
     m = state.value.map;
@@ -578,6 +762,7 @@ function draw() {
   ctx.scale(scale, scale);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(mapImage, 0, 0, m.width, m.height);
+  drawNavigationLayers(ctx, m, density, scale);
   const mark = (p, color, label) => {
     const q = mapToPixel(p, m),
       radius = (5 * density) / scale;
@@ -603,9 +788,13 @@ function draw() {
   if (state.value.pose) mark(state.value.pose, "#2878d4", "车");
   if (editPoseChosen.value)
     mark(
-      poseOf(page.value === "tasks" ? route : draft),
+      poseOf(editTarget.value),
       "#c24c72",
-      page.value === "tasks" ? "终点" : "编辑",
+      page.value === "overview"
+        ? "定位初值"
+        : page.value === "tasks"
+          ? "最终停车"
+          : "候选目标",
     );
 }
 let mapPointer = null;
@@ -617,8 +806,8 @@ function mapDown(event) {
     v = ((event.clientY - rect.top) * m.height) / rect.height;
   mapPointer = { u, v };
   const p = pixelToMap(u, v, m);
-  Object.assign(page.value === "tasks" ? route : draft, p);
-  poseEdited(page.value === "tasks" ? route : draft);
+  Object.assign(editTarget.value, p);
+  poseEdited(editTarget.value);
   canvas.value.setPointerCapture(event.pointerId);
   draw();
 }
@@ -632,8 +821,7 @@ function mapMove(event) {
     const angle =
       ((Math.atan2(mapPointer.v - v, u - mapPointer.u) + m.origin.yaw) * 180) /
       Math.PI;
-    (page.value === "tasks" ? route : draft).yaw =
-      ((((angle + 180) % 360) + 360) % 360) - 180;
+    editTarget.value.yaw = ((((angle + 180) % 360) + 360) % 360) - 180;
   }
   draw();
 }
@@ -641,9 +829,11 @@ function mapUp() {
   if (mapPointer) {
     mapSelecting.value = false;
     notice.value =
-      page.value === "tasks"
-        ? "最终停车位置与车头朝向已选好，安排巡检顺序后保存任务。选点不会让小车移动。"
-        : "位置与车头朝向已选好，填写名称后保存草稿。选点不会让小车移动。";
+      page.value === "overview"
+        ? "初始定位候选已标出。请核对这就是实物车当前的位置与朝向，再提交初值。"
+        : page.value === "tasks"
+          ? "最终停车位置与车头朝向已选好，安排巡检顺序后保存任务。选点不会让小车移动。"
+          : "候选停车位与车头朝向已选好。点击“下发目标，让小车前往”才会开始行驶。";
   }
   mapPointer = null;
 }
@@ -677,6 +867,7 @@ function planDraw() {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(mapImage, 0, 0, map.width, map.height);
+  drawNavigationLayers(ctx, map, density, scale);
   ctx.strokeStyle = "rgba(11,118,102,0.18)";
   ctx.lineWidth = 1 / (scale / density);
   const step = 1 / map.resolution;
@@ -964,10 +1155,12 @@ onMounted(() => {
   pollTimer = setInterval(poll, 250);
   document.addEventListener("visibilitychange", visibility);
   window.addEventListener("blur", release);
+  window.addEventListener("blur", cancelSlider);
   window.addEventListener("pagehide", stopManual);
 });
 onBeforeUnmount(() => {
   stopped = true;
+  cancelSlider();
   clearInterval(pollTimer);
   clearTimeout(retryTimer);
   release();
@@ -975,6 +1168,7 @@ onBeforeUnmount(() => {
   if (videoUrl.value) URL.revokeObjectURL(videoUrl.value);
   document.removeEventListener("visibilitychange", visibility);
   window.removeEventListener("blur", release);
+  window.removeEventListener("blur", cancelSlider);
   window.removeEventListener("pagehide", stopManual);
 });
 </script>
@@ -1019,21 +1213,14 @@ onBeforeUnmount(() => {
       <header>
         <div>
           <p class="eyebrow">室内巡检工作台</p>
-          <h1>{{ navItems.find((i) => i[0] === page)?.[1] }}</h1>
+          <h1>
+            {{ navItems.find((i) => i[0] === page)?.[1] || "高级规划草图" }}
+          </h1>
           <p class="page-description">{{ pageDescriptions[page] }}</p>
         </div>
-        <button
-          class="stop"
-          @click="
-            action(() =>
-              state.run?.status === 'RUNNING'
-                ? post('/api/run/cancel')
-                : Promise.resolve(stopManual()),
-            )
-          "
-        >
+        <button class="stop" @click="action(stopEverything)">
           <ConsoleIcon name="stop" />
-          停车{{ state.run?.status === "RUNNING" ? "并取消任务" : "" }}
+          停车并取消当前行驶
         </button>
       </header>
       <div v-if="notice || state.error" class="notice" role="status">
@@ -1059,9 +1246,11 @@ onBeforeUnmount(() => {
       <section v-if="page === 'overview'" class="grid">
         <article class="card">
           <h2>下一次巡检</h2>
-          <p>选好地图、完成点位试拍，再启动已保存的巡检任务。</p>
+          <p>
+            先确认当前定位，再到“录入巡检点”下发单点导航。行驶时镜头固定为 140.5°（板端 94 档）。所有点位实车试拍确认后，才安排整轮巡检。
+          </p>
           <button class="primary" @click="setPage('tasks')">
-            选择巡检任务
+            安排整轮巡检
           </button>
           <div class="stat">
             <strong>{{ state.points.length }}</strong> 个巡检点
@@ -1072,10 +1261,12 @@ onBeforeUnmount(() => {
           <h2>车辆状态</h2>
           <p>{{ state.motion_held ? "停车保持中" : "等待新的运动请求" }}</p>
           <p>自动任务下发后，关闭网页或断网仍继续。手动遥控失联停车。</p>
-          <p>已保存照片与最终停车、上传结果分别记录。</p>
+          <p>点位参考照片与正式巡检照片分开标明，均可在网页查看、下载。</p>
         </article>
       </section>
-      <template v-if="page === 'points' || page === 'tasks'">
+      <template
+        v-if="page === 'points' || page === 'tasks' || page === 'overview'"
+      >
         <div class="toolbar">
           <label
             >场地地图<select v-model="selectedMap">
@@ -1089,41 +1280,91 @@ onBeforeUnmount(() => {
             @click="action(chooseMap)"
           >
             <ConsoleIcon name="folder" />载入地图</button
-          ><button v-if="page === 'points'" @click="newPoint">
+          ><button
+            v-if="page === 'points'"
+            :disabled="trialActive"
+            @click="newPoint"
+          >
             <ConsoleIcon name="plus" />新增点位</button
-          ><button v-else @click="newTask">
+          ><button v-else-if="page === 'tasks'" @click="newTask">
             <ConsoleIcon name="plus" />新建任务</button
           ><span>当前图 {{ state.map?.id || "未选择" }}</span>
         </div>
+        <section v-if="state.navigation_speed?.enabled" class="card speed-controls" aria-label="导航速度档位">
+          <h2>导航速度</h2>
+          <div class="speed-options">
+            <button
+              v-for="option in state.navigation_speed.options"
+              :key="option.mps"
+              :aria-pressed="state.navigation_speed.applied_mps === option.mps"
+              :class="{ primary: state.navigation_speed.applied_mps === option.mps }"
+              :disabled="busy || !connected || trialActive || !state.health.still || state.navigation_speed.pending || ['RUNNING','PAUSED'].includes(state.run?.status)"
+              @click="action(() => post('/api/navigation/speed', { max_linear_mps: option.mps }))"
+            >{{ option.label }}</button>
+          </div>
+          <p role="status" :class="state.navigation_speed.ready ? 'status-good' : 'status-wait'">{{ state.navigation_speed.message }}</p>
+          <p class="caption">前进上限 {{ state.navigation_speed.applied_mps?.toFixed(2) ?? '待确认' }} m/s · 当前下发 {{ state.motion?.command_linear_mps?.toFixed(2) ?? '—' }} m/s · 轮式反馈 {{ state.motion?.wheel_linear_mps?.toFixed(2) ?? '—' }} m/s</p>
+          <p class="caption">停车后点击切档，确认后用于下一次导航。上限不是匀速命令；转向、避障会减速。3、4档供现场实验，注意观察抖动和停车距离。</p>
+        </section>
         <p class="position-guide">
           {{
             page === "points"
-              ? "① 载入地图 → ② 选择巡检位置并拖出车头方向 → ③ 命名、保存草稿 → ④ 实车调角与试拍确认"
-              : "① 添加巡检点并排序 → ② 选择最终停车位置与朝向 → ③ 保存巡检任务"
+              ? "选候选目标 → 下发导航到点 → 实车坐标与相机微调 → 试拍确认并保存"
+              : page === "overview"
+                ? "本页只准备车辆：确定当前所在位置。行驶镜头固定为 140.5°，下一页再设置巡检目标。"
+                : "选择已确认的巡检点 → 排列顺序 → 设置独立最终停车位 → 保存任务"
           }}
         </p>
+        <ol
+          v-if="page === 'points'"
+          class="workflow-track"
+          aria-label="巡检点录入步骤"
+        >
+          <li :class="{ current: !draftPoseChosen }">
+            <strong>1</strong>选候选目标
+          </li>
+          <li
+            :class="{
+              current: draftPoseChosen && !trialArrived && !pointSaved,
+            }"
+          >
+            <strong>2</strong>导航到点
+          </li>
+          <li :class="{ current: trialArrived && !pointSaved }">
+            <strong>3</strong>实车微调与试拍
+          </li>
+          <li :class="{ current: pointSaved }">
+            <strong>4</strong>保存确认结果
+          </li>
+        </ol>
         <div class="workspace">
           <article class="card map-card">
             <div class="card-title">
               <h2>
                 <ConsoleIcon :name="page === 'tasks' ? 'tasks' : 'points'" />{{
-                  page === "tasks" ? "巡检顺序与最终停车" : "巡检停车位"
+                  page === "overview"
+                    ? "小车当前所在位置"
+                    : page === "tasks"
+                      ? "巡检顺序与最终停车"
+                      : "1. 选择候选停车位"
                 }}
               </h2>
               <span>地图坐标 · 米</span>
             </div>
             <button
               class="primary map-pick"
-              :disabled="!state.map || busy"
+              :disabled="!state.map || busy || trialActive"
               :aria-pressed="mapSelecting"
               @click="mapSelecting = !mapSelecting"
             >
               {{
                 mapSelecting
                   ? "取消地图选点"
-                  : page === "tasks"
-                    ? "在地图上选择最终停车位置"
-                    : "在地图上选择巡检位置"
+                  : page === "overview"
+                    ? "标出小车当前真实位置与朝向"
+                    : page === "tasks"
+                      ? "在地图上选择最终停车位置"
+                      : "在地图上选择巡检位置"
               }}
             </button>
             <p class="pick-help" role="status">
@@ -1161,97 +1402,184 @@ onBeforeUnmount(() => {
             <p class="caption">
               地图按原比例显示，屏幕大小不改变米制坐标。请在白色区域选停车位，并现场核对车身空间；保存地图不代表当前障碍状态。
             </p>
-            <details v-if="page === 'points'" class="localization-tools">
-              <summary>小车初始定位（停车后使用）</summary>
-              <p class="caption">
-                仅当定位估计与实物不符时使用：先在地图选出小车实际所在位置和车头方向，再提交初值，随后核对定位结果。
-              </p>
-              <button
-                :disabled="
-                  busy ||
-                  !connected ||
-                  !state.hardware_enabled ||
-                  !state.health.still ||
-                  !draftPoseChosen
-                "
-                @click="action(localize)"
-              >
-                提交小车初始定位
-              </button>
-              <p v-if="!state.hardware_enabled" class="caption">
-                配置模式未接入实车，初始定位功能暂不可用。
-              </p>
+            <details class="navigation-debug" open>
+              <summary>导航调试图层与数据状态</summary>
+              <p class="caption">来自车端真实话题；全局／局部代价图包含障碍与膨胀安全余量，红色为高代价障碍，透明部分不表示已确认安全。局部数据按当前TF转换到map；显示刷新最多2Hz，路径仅抽样显示，不修改规划。旧路径用虚线。</p>
+              <label v-for="(name,key) in navigationLayerNames" :key="key" class="navigation-layer-option">
+                <input type="checkbox" v-model="navigationLayers[key]" @change="draw" />
+                <span>{{ name }}<small>{{ navigationLayerStatus(key) }}</small></span>
+              </label>
+              <p :class="state.health.perception?'status-good':'status-wait'">深度避障：{{ state.health.perception?'当前有效':'当前未放行；下发后仍会检查新点云与图层重建' }}</p>
             </details>
           </article>
           <article v-if="page === 'points'" class="card editor">
-            <h2><ConsoleIcon name="points" />巡检点设置</h2>
+            <h2>2. 下发目标，让小车前往</h2>
             <label
               >点位名称<input
                 v-model="draft.name"
                 placeholder="例如：走廊仪表"
                 maxlength="60"
+                :disabled="trialActive"
             /></label>
+            <p class="caption">
+              下面是候选导航目标。修改数字不会立即移动车辆，点击下发后才行驶。
+            </p>
             <div class="form-row">
               <label
                 >X / 米<input
                   v-model.number="draft.x"
                   type="number"
-                  step="0.01"
-                  @input="poseEdited(draft)" /></label
-              ><label
+                  step="0.05"
+                  :disabled="trialActive"
+                  @input="poseEdited(draft)"
+              /></label>
+              <label
                 >Y / 米<input
                   v-model.number="draft.y"
                   type="number"
-                  step="0.01"
-                  @input="poseEdited(draft)" /></label
-              ><label
-                >朝向 / °<input
+                  step="0.05"
+                  :disabled="trialActive"
+                  @input="poseEdited(draft)"
+              /></label>
+              <label
+                >车头朝向 / °<input
                   v-model.number="draft.yaw"
                   type="number"
-                  min="-180"
-                  max="180"
                   step="1"
+                  :disabled="trialActive"
                   @input="poseEdited(draft)"
               /></label>
             </div>
-            <button
-              :disabled="!state.pose"
-              @click="
-                usePose(draft);
-                draw();
-              "
-            >
-              记录小车当前位置与朝向
-            </button>
-            <p v-if="!state.pose" class="caption">
-              尚无小车定位数据，可先在地图上选点保存草稿。接入实车并完成定位后，才能记录当前位置。
+            <details class="extra-tools">
+              <summary>微调候选坐标与方向</summary>
+              <div class="coordinate-nudges">
+                <button
+                  v-for="[key, delta, text] in [
+                    ['x', -0.05, 'X −5cm'],
+                    ['x', 0.05, 'X +5cm'],
+                    ['y', -0.05, 'Y −5cm'],
+                    ['y', 0.05, 'Y +5cm'],
+                    ['yaw', -1, '朝向 −1°'],
+                    ['yaw', 1, '朝向 +1°'],
+                  ]"
+                  :key="text"
+                  :disabled="trialActive"
+                  @click="nudgeCoordinate(key, delta)"
+                >
+                  {{ text }}
+                </button>
+              </div>
+              <p class="caption">
+                X/Y沿地图坐标轴调整；改好后再次下发导航验证。导航有允许误差，修改5cm不保证实车移动5cm，以实车反馈和现场观察确认。
+              </p>
+            </details>
+            <p v-if="goalReason" class="status-wait">
+              {{ goalReason }}。<button
+                class="quiet"
+                @click="setPage('overview')"
+              >
+                去准备车辆
+              </button>
             </p>
-            <label
-              >草稿俯仰目标 / °<input
-                v-model.number="draft.target_degrees"
-                type="number"
-                min="85"
-                max="160"
-                step="1" /></label
-            ><button
-              class="primary"
+            <button
+              class="primary big"
               :disabled="
                 busy ||
-                !connected ||
-                !draft.name.trim() ||
-                !state.map ||
-                !draftPoseChosen
+                trialActive
               "
-              @click="action(saveDraft)"
+              @click="action(navigateDraft)"
             >
-              保存巡检点草稿
+              {{
+                trialArrived ? "按调整后的目标重新导航" : "下发目标，让小车前往"
+              }}
             </button>
-            <p class="caption">草稿需实车试拍确认，才能加入自动巡检执行。</p>
+            <p v-if="navigateReason && !trialActive" class="status-wait" role="status">尚未下发：{{ navigateReason }}</p>
+            <p v-if="navigationRequest.message && (trialActive || navigationRequest.phase !== 'ACCEPTED')" :class="navigationRequest.phase==='ACCEPTED'?'status-good':'status-wait'" role="status">{{ navigationRequest.message }}</p>
+            <p class="phase" role="status">{{ trialLabel(trial.phase) }}</p>
+            <p v-if="trial.error" class="status-wait">{{ trial.error }}</p>
+            <p v-if="trial.nav2_result" class="caption">导航器结果：{{ trial.nav2_result }}。到达后还需停车、核对实物位置并试拍确认。</p>
+            <p v-if="trial.arrival_error" class="caption">停车时与候选目标的定位估计差：{{ (trial.arrival_error.distance_m * 100).toFixed(1) }}厘米／{{ (trial.arrival_error.yaw_rad * 180 / Math.PI).toFixed(1) }}°。此数值用于对照，保存的是确认时的实际定位估计。</p>
+            <button
+              v-if="trialActive"
+              class="stop"
+              :disabled="busy"
+              @click="action(() => post('/api/teach/cancel-navigation'))"
+            >
+              取消本次导航并停车
+            </button>
+            <table class="pose-comparison">
+              <caption>
+                候选目标与实车定位估计（map坐标）
+              </caption>
+              <thead>
+                <tr>
+                  <th>来源</th>
+                  <th>X / 米</th>
+                  <th>Y / 米</th>
+                  <th>朝向 / °</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>候选目标</th>
+                  <td>{{ Number(draft.x).toFixed(2) }}</td>
+                  <td>{{ Number(draft.y).toFixed(2) }}</td>
+                  <td>{{ Number(draft.yaw).toFixed(1) }}</td>
+                </tr>
+                <tr>
+                  <th>实车当前估计</th>
+                  <td>{{ state.pose?.x.toFixed(2) ?? "—" }}</td>
+                  <td>{{ state.pose?.y.toFixed(2) ?? "—" }}</td>
+                  <td>
+                    {{
+                      state.pose
+                        ? ((state.pose.yaw * 180) / Math.PI).toFixed(1)
+                        : "—"
+                    }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-if="pointSaved" class="status-good">
+              此点已保存实车确认结果和参考照片，可到“安排巡检”添加进任务。继续修改时须重新导航、调角并确认。
+            </p>
+            <p v-else-if="trialArrived" class="status-good">
+              导航器已确认到达并停稳，请核对实物停车位置。位置或朝向不合适就修改候选坐标、再导航一次；合适后到下方调整镜头并试拍，保存当前实车定位估计。
+            </p>
+            <button
+              v-if="trialArrived && !pointSaved"
+              class="primary"
+              :disabled="busy"
+              @click="action(startTrialCapture)"
+            >
+              下一步：调镜头并试拍
+            </button>
+            <p class="caption">
+              最终确认保存的是实车当时的定位估计、舵机命令和新照片；候选坐标保留作对照，不当作实际到达值。
+            </p>
+            <details class="extra-tools">
+              <summary>仅保存计划草稿（尚未实车确认）</summary>
+              <button
+                :disabled="
+                  busy ||
+                  !connected ||
+                  !draft.name.trim() ||
+                  !state.map ||
+                  !draftPoseChosen ||
+                  trialActive
+                "
+                @click="action(saveDraft)"
+              >
+                保存巡检点草稿
+              </button>
+            </details>
+            <h3>已保存点位</h3>
             <div class="point-list">
               <button
                 v-for="p in points"
                 :key="p.id"
                 :class="{ selected: draft.id === p.id }"
+                :disabled="trialActive"
                 @click="
                   usePoint(p);
                   draw();
@@ -1259,12 +1587,76 @@ onBeforeUnmount(() => {
               >
                 <strong>{{ p.name }}</strong
                 ><span
-                  >{{ p.verified ? "已试拍确认" : "待现场确认" }} ·
-                  {{ approachCount(p) }}个停车位 ·
-                  {{ p.target_degrees }}°目标</span
+                  >{{ p.verified ? "实车已确认" : "计划草稿，待导航验证" }} ·
+                  {{ approachCount(p) }}个停车位</span
                 >
               </button>
             </div>
+            <button
+              v-if="points.find((p) => p.id === draft.id)?.reference"
+              @click="setPage('records')"
+            >
+              查看此点参考照片
+            </button>
+          </article>
+          <article v-else-if="page === 'overview'" class="card editor">
+            <h2>告诉系统：小车现在在哪里</h2>
+            <p>
+              只在定位尚未就绪或蓝色车标与实物不符时操作。这里填写当前实物位置，不是让车去的目标。
+            </p>
+            <div class="form-row">
+              <label
+                >当前 X / 米<input
+                  v-model.number="initialPose.x"
+                  type="number"
+                  step="0.01"
+                  @input="poseEdited(initialPose)"
+              /></label>
+              <label
+                >当前 Y / 米<input
+                  v-model.number="initialPose.y"
+                  type="number"
+                  step="0.01"
+                  @input="poseEdited(initialPose)"
+              /></label>
+              <label
+                >当前车头 / °<input
+                  v-model.number="initialPose.yaw"
+                  type="number"
+                  step="1"
+                  @input="poseEdited(initialPose)"
+              /></label>
+            </div>
+            <button
+              :disabled="
+                busy ||
+                !connected ||
+                !state.hardware_enabled ||
+                !state.health.still ||
+                !initialPoseChosen ||
+                trialActive
+              "
+              @click="action(localize)"
+            >
+              提交小车初始定位
+            </button>
+            <p
+              :class="state.health.localization ? 'status-good' : 'status-wait'"
+            >
+              {{
+                state.health.localization
+                  ? "定位已就绪，请对照实物检查蓝色车标。"
+                  : "定位待就绪；先标出真实位置并提交初值。"
+              }}
+            </p>
+            <button class="primary" @click="setPage('points')">
+              下一步：录入巡检点
+            </button>
+            <details class="extra-tools">
+              <summary>高级：规划草图</summary>
+              <p>只用于预排想法，不能导航；实际点位在实测地图上录入。</p>
+              <button @click="setPage('sketch')">打开规划草图</button>
+            </details>
           </article>
           <article v-else class="card editor">
             <h2>安排任务</h2>
@@ -1572,7 +1964,10 @@ onBeforeUnmount(() => {
           </button>
         </details>
       </section>
-      <section v-if="page === 'points'" class="workspace teaching">
+      <section
+        v-if="page === 'points' || page === 'overview'"
+        class="workspace teaching"
+      >
         <article class="card">
           <div class="card-title">
             <h2><ConsoleIcon name="camera" />相机实时画面</h2>
@@ -1593,9 +1988,15 @@ onBeforeUnmount(() => {
               sourceStamp || "尚无"
             }}。参考照片是历史画面。
           </p>
+          <p v-if="page === 'overview'" class="caption">
+            行驶时镜头固定为 140.5°（板端 94 档）。启动时已经下发，不用再点确认。到点后如果要改拍摄角度，再到「录入巡检点」里调。
+          </p>
         </article>
-        <article class="card">
-          <h2>一步一步确认角度</h2>
+        <article v-if="page === 'points'" class="card">
+          <h2>3. 实车到点后，调整镜头并试拍</h2>
+          <p v-if="!trialArrived" class="status-wait">
+            请先完成上方单点导航并停稳。修改候选坐标后，需要重新导航验证，才能确认保存。
+          </p>
           <ol class="steps">
             <li :class="{ done: state.motion_held }">
               保持停车并等待轮式反馈停稳
@@ -1609,7 +2010,7 @@ onBeforeUnmount(() => {
                 ].includes(teaching.phase),
               }"
             >
-              每次调整目标1°，等待发送结果和新画面
+              拖动滑块选角度，松手后自动小步调整并等待新画面
             </li>
             <li :class="{ done: teaching.phase === 'CONFIRMED' }">
               确认画面合适，保存固定角度与参考照片
@@ -1622,24 +2023,35 @@ onBeforeUnmount(() => {
               busy ||
               !connected ||
               !state.hardware_enabled ||
+              trialActive ||
+              (page === 'points' && !trialArrived) ||
               !['IDLE', 'FAULT', 'CONFIRMED'].includes(teaching.phase)
             "
             @click="action(begin)"
           >
-            1. 开始角度调整
+            开始停车调角
           </button>
           <div class="angle-readout">
             <strong
-              >{{ teaching.target_degrees?.toFixed(1) }}<small>°</small></strong
+              >{{ (sliderTarget ?? teaching.target_degrees)?.toFixed(1) }}<small>°</small></strong
             ><span
-              >S1 俯仰目标 · 板端命令
+              >{{ sliderDirty || sliderRunning ? '滑块目标' : 'S1俯仰目标' }} · 已下发目标 {{ teaching.target_degrees?.toFixed(1) }}° · 板端命令
               {{ teaching.board_command ?? "—" }} 档</span
             >
           </div>
+          <label class="servo-slider-label" for="servo-angle-slider">相机俯仰目标</label>
+          <input id="servo-angle-slider" class="servo-angle-slider" type="range" min="85" max="160" step="0.5"
+            :value="sliderTarget ?? teaching.target_degrees"
+            :disabled="busy || !connected || !trialArrived || !state.motion_held || !state.health.still || !['READY','SENDING','WAITING_FRAME','AWAITING_CONFIRMATION'].includes(teaching.phase)"
+            @input="previewSlider" @change="commitSlider" @pointercancel="cancelSlider" @keydown.esc.prevent="cancelSlider" />
+          <div class="servo-slider-scale"><span>85° 抬头方向</span><span>140.5° 平视参考</span><span>160° 低头方向</span></div>
+          <button :disabled="!sliderRunning && !sliderDirty" @click="cancelSlider">停止滑块调角</button>
+          <p v-if="sliderRunning" class="status-wait" role="status">正在逐步调到滑块目标；可拖动改目标。等待本次发送及新画面，完成前不能保存。</p>
+          <p v-else-if="sliderDirty" class="status-wait" role="status">滑块目标尚未完成；松手提交，或停止调角后按当前画面重新确认。</p>
           <div class="step-buttons">
             <button
               :disabled="
-                busy ||
+                busy || sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(-1))"
@@ -1647,7 +2059,7 @@ onBeforeUnmount(() => {
               目标 −1°</button
             ><button
               :disabled="
-                busy ||
+                busy || sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(1))"
@@ -1655,7 +2067,7 @@ onBeforeUnmount(() => {
               目标 +1°</button
             ><button
               :disabled="
-                busy ||
+                busy || sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(0))"
@@ -1664,33 +2076,31 @@ onBeforeUnmount(() => {
             </button>
           </div>
           <p class="caption">
-            历史方向为目标减小抬头、增大低头，首次使用以实物验证。板端整数档会量化；没有实际位置反馈。每步人工点击，不连续扫角。
+            拖动只预览目标，松手后自动分成最多1°的小步，每步等待车端结果与新画面；停止、断连或离开页面后不再追加，已发送的一小步可能完成。±1°按钮保留作微调。目标减小为抬头、增大为低头，以实物核对；板端整数档会量化，没有实际角度反馈。
           </p>
           <button
             class="primary"
-            :disabled="busy || !confirmable || !draft.name"
+            :disabled="busy || !pointCanConfirm || !draft.name.trim()"
+            v-if="page === 'points'"
             @click="action(() => confirm('point'))"
           >
-            3. 确认此画面，保存巡检点</button
+            4. 确认实车位置与画面，保存巡检点</button
           ><button
-            :disabled="busy || !confirmable || !draft.id"
+            v-if="draft.id"
+            :disabled="busy || !pointCanConfirm || !draft.id"
             @click="action(() => confirm('approach'))"
           >
             把当前位置存为备选停车位</button
-          ><button
-            :disabled="busy || !confirmable || teaching.board_command !== 94"
-            @click="action(() => confirm('navigation'))"
           >
-            确认当前为导航参考姿态（94档）
-          </button>
           <p class="caption">
             每个拍摄目标最多3个停车位，各自保存朝向和俯仰。某一位到不了就试下一位；三位都失败则记为未拍并继续后面的目标。保存后继续保持停车。支架异常时立即断开执行器电源。
           </p>
         </article>
       </section>
-      <section v-if="page === 'points'" class="card remote">
+      <details v-if="page === 'points'" class="card remote">
+        <summary>高级：手动遥控（首次录入优先使用单点导航）</summary>
         <div>
-          <h2>示教遥控</h2>
+          <h2>手动遥控</h2>
           <p class="caption">
             低速、按住行驶，松手停车；遥控不提供自动避障。调角期间禁止行驶。
           </p>
@@ -1738,7 +2148,7 @@ onBeforeUnmount(() => {
             <ConsoleIcon name="arrow" class="rotate-down" />
           </button>
         </div>
-      </section>
+      </details>
       <section v-if="page === 'tasks'" class="task-cards">
         <article v-for="t in state.tasks" :key="t.id" class="card">
           <h2>{{ t.name }}</h2>
@@ -1823,13 +2233,33 @@ onBeforeUnmount(() => {
                   state.points.find((p) => p.id === photo.point_id)?.name ||
                   photo.point_id
                 }}
-                · {{ uploadLabel(photo.upload_status) }}
+                · 已保存到小车
               </figcaption>
             </figure>
           </div></template
         >
       </section>
       <section v-if="page === 'records'" class="record-list">
+        <article
+          v-for="point in state.points.filter((p) => p.reference)"
+          :key="'reference-' + point.id"
+          class="card"
+        >
+          <h2>{{ point.name }} · 点位参考照片</h2>
+          <p class="caption">
+            人工录入点位时保存的历史画面，不计入正式巡检采集。坐标来自当时实车定位估计。
+          </p>
+          <div class="photos">
+            <figure>
+              <a :href="site('/api/media/' + point.reference.id)" download
+                ><img
+                  :src="site('/api/media/' + point.reference.id)"
+                  alt="点位试拍参考照片"
+              /></a>
+              <figcaption>已保存到小车 · 点击照片下载</figcaption>
+            </figure>
+          </div>
+        </article>
         <article
           v-for="run in [...state.runs].reverse()"
           :key="run.id"
@@ -1851,10 +2281,7 @@ onBeforeUnmount(() => {
             }}
           </p>
           <p class="caption">
-            {{
-              run.error ||
-              "照片先保存在车端。未配置上传地址时保持待配置；上传失败不会重拍或重新开车。"
-            }}
+            {{ run.error || "照片已保存在小车，可直接在此查看和下载。" }}
           </p>
           <div class="photos">
             <figure v-for="photo in run.captures" :key="photo.id">
@@ -1865,20 +2292,26 @@ onBeforeUnmount(() => {
                 {{
                   run.snapshot.points.find((p) => p.id === photo.point_id)?.name
                 }}
-                · {{ uploadLabel(uploadState(run, photo)) }} · 点击下载
+                · 已保存到小车 · 点击下载
               </figcaption>
+              <details>
+                <summary>外部上传状态（可选）</summary>
+                {{ uploadLabel(uploadState(run, photo)) }}
+              </details>
             </figure>
           </div>
         </article>
-        <p v-if="!state.runs.length" class="empty">
+        <p
+          v-if="!state.runs.length && !state.points.some((p) => p.reference)"
+          class="empty"
+        >
           <ConsoleIcon name="records" />
-          完成第一轮巡检后，照片和结果会显示在这里。
+          实车到点试拍后，参考照片会显示在这里；启动正式巡检后再追加每轮采集记录。
         </p>
       </section>
       <footer>
         <ConsoleIcon name="shield" />
-        每个目标最多三个停车位、成功后一张照片 · 车端保存后排队上传 ·
-        地图与点位按版本关联
+        实车确认点位 · 照片保存在小车，可网页查看和下载 · 地图与点位按版本关联
       </footer>
     </main>
   </div>

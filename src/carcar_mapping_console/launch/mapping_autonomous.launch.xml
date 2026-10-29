@@ -1,0 +1,61 @@
+<launch>
+  <!-- NAV-018独立组合；默认不启硬件。不与旧建图或AMCL巡检组合并开。 -->
+  <set_env name="ROS_LOCALHOST_ONLY" value="1"/>
+  <set_env name="LD_LIBRARY_PATH" value="$(find-pkg-prefix carcar_tf2_compat)/lib/carcar_tf2_compat:$(env LD_LIBRARY_PATH)"/>
+  <arg name="start_hardware" default="false"/><arg name="mode" default="new"/>
+  <arg name="explore_seconds" default="2400.0"/>
+  <arg name="control_mode" default="manual"/><arg name="task_id" default=""/>
+  <arg name="bundle_id" default=""/><arg name="start_gateway" default="true"/>
+  <arg name="start_camera" default="false"/><arg name="require_video" default="false"/>
+  <arg name="serial_port" default="/dev/myserial"/>
+  <arg name="lidar_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
+  <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions"/>
+  <arg name="slam_params_file" default="$(find-pkg-share carcar_navigation)/config/slam_toolbox.yaml"/>
+  <arg name="controller_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/controller_rpp.yaml"/>
+  <arg name="port" default="8080"/>
+  <arg name="web_root" default="$(find-pkg-share carcar_mapping_console)/web"/>
+  <arg name="record_raw_bag" default="true"/>
+  <group if="$(var start_hardware)">
+    <group scoped="true">
+      <set_remap from="/cmd_vel" to="/mapping/cmd_vel"/>
+      <include file="$(find-pkg-share carcar_bringup)/launch/robot.launch.xml">
+        <arg name="serial_port" value="$(var serial_port)"/>
+        <arg name="speed_params_file" value="$(find-pkg-share carcar_mapping_console)/config/mapping_limits_candidate.yaml"/>
+      </include>
+    </group>
+    <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml"><arg name="serial_port" value="$(var lidar_port)"/></include>
+    <include if="$(var start_camera)" file="$(find-pkg-share carcar_camera)/launch/camera_mapping_rgb.launch.xml"/>
+  </group>
+  <node pkg="laser_filters" exec="scan_to_scan_filter_chain" name="scan_to_scan_filter_chain" output="screen">
+    <param from="$(find-pkg-share carcar_mapping_autonomy)/config/laser_distance.yaml"/>
+    <remap from="scan" to="/scan"/><remap from="scan_filtered" to="/scan/filtered"/>
+  </node>
+  <node pkg="carcar_mapping_autonomy" exec="mapping_slam" name="slam_toolbox" output="screen">
+    <param from="$(var slam_params_file)"/><param name="scan_topic" value="/mapping/slam_scan"/><param name="use_map_saver" value="false"/>
+  </node>
+  <node pkg="carcar_mapping_console" exec="mapping_teleop_guard" name="mapping_teleop_guard" output="screen">
+    <param name="require_video" value="false"/><remap from="/mapping/cmd_vel" to="/mapping/manual_cmd_vel"/>
+  </node>
+  <include file="$(find-pkg-share carcar_mapping_autonomy)/launch/navigation.launch.xml">
+    <arg name="controller_params" value="$(var controller_params)"/>
+  </include>
+  <node pkg="carcar_mapping_autonomy" exec="mapping_autonomy" name="mapping_autonomy" output="screen">
+    <param name="control_mode" value="$(var control_mode)"/><param name="task_id" value="$(var task_id)" type="str"/>
+    <param name="explore_seconds" value="$(var explore_seconds)"/>
+  </node>
+  <node pkg="explore_lite" exec="explore" name="explore_node" output="screen">
+    <param from="$(find-pkg-share carcar_mapping_autonomy)/config/explore.yaml"/>
+  </node>
+  <node if="$(var record_raw_bag)" pkg="carcar_navigation" exec="nav_event_logger" name="nav_event_logger" output="screen">
+    <param name="record_raw_bag" value="true"/><param name="raw_bag_max_duration_s" value="3000.0"/>
+    <param name="raw_bag_max_bytes" value="1073741824"/><param name="raw_bag_split_bytes" value="268435456"/>
+    <param name="raw_bag_min_free_bytes" value="2147483648"/>
+  </node>
+  <node if="$(var start_gateway)" pkg="carcar_mapping_console" exec="mapping_web_gateway" name="mapping_web_gateway" output="screen">
+    <param name="web_root" value="$(var web_root)"/>
+    <param name="mode" value="$(var mode)"/><param name="bundle_id" value="$(var bundle_id)" type="str"/>
+    <param name="map_root" value="$(var map_root)"/><param name="port" value="$(var port)"/>
+    <param name="autonomy_enabled" value="true"/>
+    <param name="task_id" value="$(var task_id)" type="str"/><param name="control_mode" value="$(var control_mode)"/>
+  </node>
+</launch>

@@ -1,0 +1,152 @@
+{
+  "autonomy": {
+    "acceptance_wheel_ready": true,
+    "accepted_sequence": 57,
+    "accepted_wheel_position": [
+      -0.04796796264894755,
+      -3.196889435325446
+    ],
+    "active_request_id": "nav018-r9-finish-return",
+    "anchored": true,
+    "auto_start_pending": false,
+    "automatic_start_ready": true,
+    "automatic_start_reason": "",
+    "control_mode": "automatic",
+    "covariance_xy": 0.0063187627020139725,
+    "direction_ratio": 0.5744572440896117,
+    "elapsed_seconds": 182.71487953899486,
+    "end_reason": "操作者结束探索，尝试返回起点",
+    "error": "",
+    "experimental": true,
+    "exploration_note": "",
+    "explore_seconds": 2400.0,
+    "frontier_goal": null,
+    "generation": 4,
+    "goal": null,
+    "goal_change_reason": "failed：导航规划或控制执行中止；检查该目标编号对应的 Nav2 日志",
+    "goal_id": "",
+    "goal_request_id": "",
+    "goal_revalidating": false,
+    "goal_seconds": 0.0,
+    "health_reason": "建图会话未就绪；检查首帧确认、保存或故障状态",
+    "healthy": false,
+    "loop_generation": 0,
+    "loop_waiting_map": false,
+    "map_revision": 25,
+    "map_sequence": 136,
+    "motion_note": "导航已经给出速度，但发给轮子的速度仍是零。最近激光在右侧 0.80 米，位于车身停车框外。请看全局和局部代价是否把路堵住，或碰撞监视器是否因扫描超时停车。",
+    "nav_goal_id": "",
+    "navigation_attempt": 0,
+    "navigation_attempt_seconds": 0.0,
+    "navigation_detail": "导航规划或控制执行中止；检查该目标编号对应的 Nav2 日志",
+    "navigation_progress_m": 0.0,
+    "navigation_remaining_m": -1.0,
+    "navigation_terminal": true,
+    "near_field": {
+      "count": 0,
+      "inside": false,
+      "range": 0.8019999861717224,
+      "side": "右侧",
+      "valid": true,
+      "x": 0.29096763869411274,
+      "y": -0.7259098065068442
+    },
+    "observation_goal": null,
+    "origin": [
+      -0.010004871960877914,
+      -0.000697977328994776,
+      -0.013959999999999946
+    ],
+    "outcome": "operator_finished",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "SAVE_PENDING",
+    "pose_correction_pending": false,
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "操作者结束探索，尝试返回起点；返程未完成：导航规划或控制执行中止；检查该目标编号对应的 Nav2 日志；停车保存候选",
+    "remaining_seconds": 2217.285120461005,
+    "request_id": "nav018-r9-finish-return",
+    "request_result": "accepted",
+    "return_remaining_seconds": 569.9482998219974,
+    "return_result": "failed",
+    "return_seconds": 600.0,
+    "save_required": true,
+    "seconds_since_acceptance": 214.3532944050021,
+    "seconds_waiting_expected_acceptance": 0.0,
+    "slam": {
+      "accepted": false,
+      "accepted_stamp_ns": 1793191340833588679,
+      "admission_retries": 40,
+      "attempts": 101,
+      "loop_active": false,
+      "loop_generation": 0,
+      "note": "接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流",
+      "sequence": 57,
+      "startup_closed": true,
+      "startup_extras": 3
+    },
+    "still": true,
+    "task_id": "835dd1bdba4b1235ab9f69c2e0952b3a",
+    "tf_map_odom_age": -0.003243171,
+    "tf_odom_base_age": 0.014508985,
+    "travel_since_acceptance": 0.043848347637941515,
+    "wheel_position": [
+      -0.05015013961840793,
+      -3.2406834496910157
+    ]
+  },
+  "base_frame": "base_footprint",
+  "complete": true,
+  "control_mode": "automatic",
+  "created": "20261028_204555_e0fccab7",
+  "diagnostic_only": false,
+  "explore_commit": "326cf8a0b487c34246bb8f3326afbcd69576dc60",
+  "filter": "laser_filters 2.0.10 Speckle Distance",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "fast": [
+      0.18,
+      0.36
+    ],
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "review_required": true,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "ceres_loss_function": "None",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "94ffea54d660a48a07641c2dfcdc75e13a1e5a7dc4eda3e6267f1066dbda01eb",
+    "graph.posegraph": "649ad9bfcc9e5df74a8160d11027f734e92f40049d273ec9a6380e58fd27e69d",
+    "map.pgm": "d47cd6905500cf2ad2ec56a453776980a0ab8c89e21be5c15ca29d1aa9a2dfa1",
+    "map.yaml": "399ab0a8ba9e8f9f0d7aa8089f297db0f2d21f47eaa61e396ba401a65b830d48"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

@@ -1,0 +1,5 @@
+stamp:
+  sec: 1792582606
+  nanosec: 134032959
+frame_id: camera_depth_optical_frame
+---

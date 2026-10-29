@@ -1220,3 +1220,87 @@ main > .workspace {
     color: #41464f;
   }
 }
+
+/* 实车点位录入：候选目标、导航、现场确认沿同一流程展示。 */
+.workflow-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+}
+.workflow-track li {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: white;
+  color: var(--muted);
+}
+.workflow-track li.current {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.workflow-track strong {
+  display: block;
+  font-size: 1.4rem;
+}
+.coordinate-nudges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pose-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.82rem;
+  table-layout: fixed;
+}
+.pose-comparison caption {
+  text-align: left;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.pose-comparison th,
+.pose-comparison td {
+  padding: 8px 3px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.saved-reference {
+  margin: 16px 0 0;
+}
+.saved-reference img {
+  width: 100%;
+  border-radius: 12px;
+}
+.saved-reference figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.remote > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 760px) {
+  .workflow-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .workflow-track li {
+    padding: 10px;
+  }
+}
+.navigation-debug { margin-top: 16px; }
+.navigation-layer-option { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.navigation-layer-option input { width: auto; }
+.navigation-layer-option small { display: block; color: var(--muted, #657b76); font-weight: normal; }
+.speed-controls { margin: 12px 0; }
+.speed-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.servo-slider-label { display: block; margin: 16px 0 8px; font-weight: 600; }
+.servo-angle-slider { width: 100%; min-height: 44px; padding: 0; cursor: pointer; touch-action: pan-y; accent-color: #007aff; }
+.servo-slider-scale { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 14px; font-size: 12px; color: #73777d; }

@@ -3,9 +3,11 @@
   <!-- 常驻网页待命；硬件只由网页经过预检后显式启动。 -->
   <arg name="port" default="8080"/>
   <arg name="slam_params_file" default=""/>
+  <arg name="autonomy_enabled" default="true"/>
   <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions"/>
   <node pkg="carcar_mapping_console" exec="mapping_web_gateway" name="mapping_web_gateway" output="screen">
     <param name="mode" value="standby"/>
+    <param name="autonomy_enabled" value="$(var autonomy_enabled)"/>
     <param name="port" value="$(var port)"/>
     <param name="map_root" value="$(var map_root)"/>
     <param name="slam_params_file" value="$(var slam_params_file)" type="str"/>

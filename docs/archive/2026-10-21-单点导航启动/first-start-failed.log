@@ -1,0 +1,551 @@
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-19-25-34-736243-xiaozhu-13016
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosmaster_node-1]: process started with pid [13040]
+[INFO] [robot_state_publisher-2]: process started with pid [13042]
+[INFO] [sllidar_node-3]: process started with pid [13044]
+[INFO] [map_server-4]: process started with pid [13046]
+[INFO] [amcl-5]: process started with pid [13048]
+[INFO] [localization_monitor-6]: process started with pid [13050]
+[INFO] [lifecycle_manager-7]: process started with pid [13052]
+[INFO] [joint_state_publisher-8]: process started with pid [13058]
+[INFO] [realsense2_camera_node-9]: process started with pid [13107]
+[INFO] [depth_cloud_filter-10]: process started with pid [13116]
+[INFO] [depth_layer_supervisor-11]: process started with pid [13131]
+[INFO] [controller_server-12]: process started with pid [13134]
+[INFO] [velocity_smoother-13]: process started with pid [13136]
+[INFO] [navigation_motion_gate-14]: process started with pid [13138]
+[INFO] [planner_server-15]: process started with pid [13142]
+[INFO] [behavior_server-16]: process started with pid [13160]
+[INFO] [bt_navigator-17]: process started with pid [13196]
+[INFO] [lifecycle_manager-18]: process started with pid [13217]
+[INFO] [nav_event_logger-19]: process started with pid [13219]
+[INFO] [inspection_console-20]: process started with pid [13243]
+[robot_state_publisher-2] [INFO] [1792581936.028986519] [robot_state_publisher]: got segment base_footprint
+[robot_state_publisher-2] [INFO] [1792581936.029301540] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-2] [INFO] [1792581936.029362150] [robot_state_publisher]: got segment camera_link
+[robot_state_publisher-2] [INFO] [1792581936.029419017] [robot_state_publisher]: got segment camera_mount_link
+[robot_state_publisher-2] [INFO] [1792581936.029472171] [robot_state_publisher]: got segment camera_servo_left_foot_link
+[robot_state_publisher-2] [INFO] [1792581936.029527853] [robot_state_publisher]: got segment camera_servo_right_foot_link
+[robot_state_publisher-2] [INFO] [1792581936.029580015] [robot_state_publisher]: got segment camera_tilt_link
+[robot_state_publisher-2] [INFO] [1792581936.029618257] [robot_state_publisher]: got segment compute_link
+[robot_state_publisher-2] [INFO] [1792581936.029654002] [robot_state_publisher]: got segment front_left_wheel_link
+[robot_state_publisher-2] [INFO] [1792581936.029687475] [robot_state_publisher]: got segment front_right_wheel_link
+[robot_state_publisher-2] [INFO] [1792581936.029719605] [robot_state_publisher]: got segment imu_link
+[robot_state_publisher-2] [INFO] [1792581936.029752758] [robot_state_publisher]: got segment laser_frame
+[robot_state_publisher-2] [INFO] [1792581936.029786103] [robot_state_publisher]: got segment rear_left_wheel_link
+[robot_state_publisher-2] [INFO] [1792581936.029819737] [robot_state_publisher]: got segment rear_right_wheel_link
+[robot_state_publisher-2] [INFO] [1792581936.029852186] [robot_state_publisher]: got segment upper_body_link
+[sllidar_node-3] [INFO] [1792581935.978675476] [sllidar_node]: SLLidar running on ROS2 package SLLidar.ROS2 SDK Version:1.0.1, SLLIDAR SDK Version:2.1.0
+[map_server-4] [INFO] [1792581936.014325249] [map_server]: 
+[map_server-4] 	map_server lifecycle node launched. 
+[map_server-4] 	Waiting on external lifecycle transitions to activate
+[map_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-4] [INFO] [1792581936.016178061] [map_server]: Creating
+[map_server-4] [INFO] [1792581936.238868481] [map_server]: Configuring
+[map_server-4] [INFO] [1792581936.239056681] [map_io]: Loading yaml file: /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.yaml
+[map_server-4] [INFO] [1792581936.239506299] [map_io]: resolution: 0.05
+[map_server-4] [INFO] [1792581936.239522940] [map_io]: origin[0]: -6.12
+[map_server-4] [INFO] [1792581936.239529916] [map_io]: origin[1]: -8.84
+[map_server-4] [INFO] [1792581936.239534876] [map_io]: origin[2]: 0
+[map_server-4] [INFO] [1792581936.239539932] [map_io]: free_thresh: 0.25
+[map_server-4] [INFO] [1792581936.239544797] [map_io]: occupied_thresh: 0.65
+[map_server-4] [INFO] [1792581936.239550941] [map_io]: mode: trinary
+[map_server-4] [INFO] [1792581936.239557533] [map_io]: negate: 0
+[map_server-4] [INFO] [1792581936.239861834] [map_io]: Loading image_file: /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.pgm
+[map_server-4] [INFO] [1792581936.266139737] [map_io]: Read map /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.pgm: 342 X 299 map @ 0.05 m/cell
+[amcl-5] [INFO] [1792581936.024758283] [amcl]: 
+[amcl-5] 	amcl lifecycle node launched. 
+[amcl-5] 	Waiting on external lifecycle transitions to activate
+[amcl-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-5] [INFO] [1792581936.026190021] [amcl]: Creating
+[localization_monitor-6] [INFO] [1792581936.067602397] [localization_monitor]: NAV-007 定位健康监控已启动：扫描新鲜度 <= 0.50s，端点命中率 >= 0.30，连续 5 次才放行
+[lifecycle_manager-7] [INFO] [1792581935.998392728] [lifecycle_manager_localization]: Creating
+[lifecycle_manager-7] [INFO] [1792581936.003128441] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-7] [INFO] [1792581936.094247931] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-7] [INFO] [1792581936.094551047] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[controller_server-12] [INFO] [1792581936.316280372] [controller_server]: 
+[controller_server-12] 	controller_server lifecycle node launched. 
+[controller_server-12] 	Waiting on external lifecycle transitions to activate
+[controller_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[velocity_smoother-13] [INFO] [1792581936.144832392] [velocity_smoother]: 
+[velocity_smoother-13] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-13] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-15] [INFO] [1792581936.277868279] [planner_server]: 
+[planner_server-15] 	planner_server lifecycle node launched. 
+[planner_server-15] 	Waiting on external lifecycle transitions to activate
+[planner_server-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-15] [INFO] [1792581936.316345399] [planner_server]: Creating
+[realsense2_camera_node-9] [INFO] [1792581936.353923026] [camera.camera]: RealSense ROS v4.58.3
+[realsense2_camera_node-9] [INFO] [1792581936.358785305] [camera.camera]: Built with LibRealSense v2.58.4
+[realsense2_camera_node-9] [INFO] [1792581936.358875964] [camera.camera]: Running with LibRealSense v2.58.4
+[depth_cloud_filter-10] [INFO] [1792581936.384886528] [depth_cloud_filter]: IPC=false, obstacle VoxelGrid=false, leaf=0.010m (CPU PCL)
+[lifecycle_manager-7] [INFO] [1792581936.393301239] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[amcl-5] [INFO] [1792581936.393879567] [amcl]: Configuring
+[amcl-5] [INFO] [1792581936.394100696] [amcl]: initTransforms
+[amcl-5] [INFO] [1792581936.410221609] [amcl]: initPubSub
+[lifecycle_manager-18] [INFO] [1792581936.413769914] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-18] [INFO] [1792581936.429514843] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[behavior_server-16] [INFO] [1792581936.458505785] [behavior_server]: 
+[behavior_server-16] 	behavior_server lifecycle node launched. 
+[behavior_server-16] 	Waiting on external lifecycle transitions to activate
+[behavior_server-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-12] [INFO] [1792581936.527277580] [controller_server]: Creating controller server
+[amcl-5] [INFO] [1792581936.535767622] [amcl]: Subscribed to map topic.
+[planner_server-15] [INFO] [1792581936.561495646] [global_costmap.global_costmap]: 
+[planner_server-15] 	global_costmap lifecycle node launched. 
+[planner_server-15] 	Waiting on external lifecycle transitions to activate
+[planner_server-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-7] [INFO] [1792581936.570553648] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[map_server-4] [INFO] [1792581936.571180969] [map_server]: Activating
+[map_server-4] [INFO] [1792581936.571692030] [map_server]: Creating bond (map_server) to lifecycle manager.
+[bt_navigator-17] [INFO] [1792581936.618281033] [bt_navigator]: 
+[bt_navigator-17] 	bt_navigator lifecycle node launched. 
+[bt_navigator-17] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-17] [INFO] [1792581936.618626487] [bt_navigator]: Creating
+[planner_server-15] [INFO] [1792581936.644899366] [global_costmap.global_costmap]: Creating Costmap
+[amcl-5] [INFO] [1792581936.676944480] [amcl]: Received a 342 X 299 map @ 0.050 m/pix
+[lifecycle_manager-7] [INFO] [1792581936.708053716] [lifecycle_manager_localization]: Server map_server connected with bond.
+[lifecycle_manager-7] [INFO] [1792581936.710925705] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[amcl-5] [INFO] [1792581936.711360955] [amcl]: Activating
+[amcl-5] [INFO] [1792581936.711467455] [amcl]: Creating bond (amcl) to lifecycle manager.
+[controller_server-12] [INFO] [1792581936.732944362] [local_costmap.local_costmap]: 
+[controller_server-12] 	local_costmap lifecycle node launched. 
+[controller_server-12] 	Waiting on external lifecycle transitions to activate
+[controller_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-12] [INFO] [1792581936.746345196] [local_costmap.local_costmap]: Creating Costmap
+[realsense2_camera_node-9] [INFO] [1792581936.746792767] [camera.camera]: Device with serial number 213222078719 was found.
+[realsense2_camera_node-9] 
+[realsense2_camera_node-9] [INFO] [1792581936.747130220] [camera.camera]: Device with physical ID /sys/devices/platform/bus@0/3610000.usb/usb2/2-1/2-1.1/2-1.1:1.0/video4linux/video0 was found.
+[realsense2_camera_node-9] [INFO] [1792581936.747192079] [camera.camera]: Device with name RealSense D435 was found.
+[realsense2_camera_node-9] [INFO] [1792581936.747487963] [camera.camera]: Device with port number 2-1.1 was found.
+[realsense2_camera_node-9] [INFO] [1792581936.747534429] [camera.camera]: Device USB type: 3.2
+[realsense2_camera_node-9] [INFO] [1792581936.747651746] [camera.camera]: getParameters...
+[realsense2_camera_node-9] [INFO] [1792581936.751837676] [camera.camera]: Publish diagnostics every 1 seconds.
+[realsense2_camera_node-9] [INFO] [1792581936.757502067] [camera.camera]: JSON file is not provided
+[realsense2_camera_node-9] [INFO] [1792581936.759341310] [camera.camera]: Device Name: RealSense D435
+[realsense2_camera_node-9] [INFO] [1792581936.759383040] [camera.camera]: Device Serial No: 213222078719
+[realsense2_camera_node-9] [INFO] [1792581936.759402273] [camera.camera]: Device physical port: /sys/devices/platform/bus@0/3610000.usb/usb2/2-1/2-1.1/2-1.1:1.0/video4linux/video0
+[realsense2_camera_node-9] [INFO] [1792581936.759418241] [camera.camera]: Device FW version: 5.12.7.150
+[realsense2_camera_node-9] [INFO] [1792581936.759432930] [camera.camera]: Device Product ID: 0x0B07
+[realsense2_camera_node-9] [INFO] [1792581936.759446658] [camera.camera]: Sync Mode: Off
+[realsense2_camera_node-9] [WARN] [1792581936.874385455] [camera.camera]: re-enable the stream for the change to take effect.
+[realsense2_camera_node-9] [WARN] [1792581936.930265972] [camera.camera]: Could not set param: rgb_camera.power_line_frequency with 3 Range: [0, 2]: parameter 'rgb_camera.power_line_frequency' could not be set: Parameter {rgb_camera.power_line_frequency} doesn't comply with integer range.
+[nav_event_logger-19] [INFO] [1792581936.932780859] [nav_event_logger]: 【轻量日志模式】record_raw_bag=false，不创建原始 rosbag，专注记录事件、状态摘要与停车证据窗口。
+[nav_event_logger-19] [INFO] [1792581936.933196684] [nav_event_logger]: NAV-013 导航事件监控与会话录包系统已就绪: 会话目录=/home/jetson/luhao/my_nav_carcar/log/nav_sessions/20261021_192536_13219
+[realsense2_camera_node-9] [WARN] [1792581936.969869123] [camera.camera]: re-enable the stream for the change to take effect.
+[lifecycle_manager-7] [INFO] [1792581937.055871763] [lifecycle_manager_localization]: Server amcl connected with bond.
+[lifecycle_manager-7] [INFO] [1792581937.056047131] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-7] [INFO] [1792581937.056094396] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m
+[realsense2_camera_node-9] [INFO] [1792581937.317729026] [camera.camera]: Stopping Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792581937.321110764] [camera.camera]: Stopping Sensor: RGB Camera
+[inspection_console-20] [INFO] [1792581937.335775169] [inspection_console]: APP-001 网页 http://127.0.0.1:8081，硬件控制=启用，自动导航=关闭；不自动启动硬件
+[realsense2_camera_node-9] [INFO] [1792581937.485495766] [camera.camera]: Starting Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792581937.502019288] [camera.camera]: Open profile: stream_type: Depth(0), Format: Z16, Width: 640, Height: 480, FPS: 6
+[lifecycle_manager-18] [INFO] [1792581937.571717584] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-18] [INFO] [1792581937.572407564] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-12] [INFO] [1792581937.577447929] [controller_server]: Configuring controller interface
+[controller_server-12] [INFO] [1792581937.577896844] [controller_server]: getting goal checker plugins..
+[controller_server-12] [INFO] [1792581937.578026833] [controller_server]: Controller frequency set to 10.0000Hz
+[controller_server-12] [INFO] [1792581937.578097492] [local_costmap.local_costmap]: Configuring
+[controller_server-12] [INFO] [1792581937.600030962] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[realsense2_camera_node-9] [INFO] [1792581937.623655604] [camera.camera]: Starting Sensor: RGB Camera
+[realsense2_camera_node-9] [INFO] [1792581937.638003837] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 640, Height: 480, FPS: 6
+[controller_server-12] [INFO] [1792581937.655113814] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[realsense2_camera_node-9] [INFO] [1792581937.695212984] [camera.camera]: RealSense Node Is Up!
+[controller_server-12] [INFO] [1792581937.697515606] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-12] [INFO] [1792581937.697686397] [local_costmap.local_costmap]: Using plugin "depth_stvl"
+[controller_server-12] [ERROR] [1792581937.705754918] [local_costmap.local_costmap]: Caught exception in callback for transition 10
+[controller_server-12] [ERROR] [1792581937.706002384] [local_costmap.local_costmap]: Original error: Failed to load library /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/libcarcar_monitored_stvl.so. Make sure that you are calling the PLUGINLIB_EXPORT_CLASS macro in the library code, and that names are consistent between this macro and your XML. Error string: Could not load library dlopen error: libspatio_temporal_voxel_layer__rosidl_typesupport_cpp.so: cannot open shared object file: No such file or directory, at ./src/shared_library.c:99
+[controller_server-12] [WARN] [1792581937.706121685] [local_costmap.local_costmap]: Callback returned ERROR during the transition: configure
+[controller_server-12] [FATAL] [1792581937.706191288] [local_costmap.local_costmap]: Lifecycle node local_costmap does not have error state implemented
+[controller_server-12] [INFO] [1792581937.709021323] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::PoseProgressChecker
+[controller_server-12] [INFO] [1792581937.712386516] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-12] [INFO] [1792581937.713640391] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-12] [INFO] [1792581937.719996234] [controller_server]: Created controller : FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[joint_state_publisher-8] [INFO] [1792581937.730678558] [joint_state_publisher]: Waiting for robot_description to be published on the robot_description topic...
+[controller_server-12] [INFO] [1792581937.732074326] [controller_server]: Created internal controller for rotation shimming: FollowPath of type dwb_core::DWBLocalPlanner
+[controller_server-12] [INFO] [1792581937.735423295] [controller_server]: Setting transform_tolerance to 0.300000
+[controller_server-12] [INFO] [1792581937.769614352] [controller_server]: Using critic "RotateToGoal" (dwb_critics::RotateToGoalCritic)
+[controller_server-12] [INFO] [1792581937.771453083] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.772115798] [controller_server]: Using critic "Oscillation" (dwb_critics::OscillationCritic)
+[controller_server-12] [INFO] [1792581937.774422964] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.775071759] [controller_server]: Using critic "ObstacleFootprint" (dwb_critics::ObstacleFootprintCritic)
+[controller_server-12] [INFO] [1792581937.776041462] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.776645487] [controller_server]: Using critic "GoalAlign" (dwb_critics::GoalAlignCritic)
+[controller_server-12] [INFO] [1792581937.778531580] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.779176470] [controller_server]: Using critic "PathAlign" (dwb_critics::PathAlignCritic)
+[controller_server-12] [INFO] [1792581937.780706324] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.781488788] [controller_server]: Using critic "PathDist" (dwb_critics::PathDistCritic)
+[controller_server-12] [INFO] [1792581937.782706022] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.783381409] [controller_server]: Using critic "GoalDist" (dwb_critics::GoalDistCritic)
+[controller_server-12] [INFO] [1792581937.784518864] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792581937.784723224] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-18] [INFO] [1792581937.809468904] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-13] [INFO] [1792581937.809975773] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-18] [INFO] [1792581937.821299882] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-15] [INFO] [1792581937.821861697] [planner_server]: Configuring
+[planner_server-15] [INFO] [1792581937.822038088] [global_costmap.global_costmap]: Configuring
+[planner_server-15] [INFO] [1792581937.840075143] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-15] [INFO] [1792581937.848582082] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-15] [INFO] [1792581937.853447176] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-15] [INFO] [1792581937.853576974] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-15] [INFO] [1792581937.856136022] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-15] [INFO] [1792581937.868132095] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-15] [INFO] [1792581937.868268324] [global_costmap.global_costmap]: Using plugin "depth_stvl"
+[planner_server-15] [ERROR] [1792581937.870342969] [global_costmap.global_costmap]: Caught exception in callback for transition 10
+[planner_server-15] [ERROR] [1792581937.870518400] [global_costmap.global_costmap]: Original error: Failed to load library /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/libcarcar_monitored_stvl.so. Make sure that you are calling the PLUGINLIB_EXPORT_CLASS macro in the library code, and that names are consistent between this macro and your XML. Error string: Could not load library dlopen error: libspatio_temporal_voxel_layer__rosidl_typesupport_cpp.so: cannot open shared object file: No such file or directory, at ./src/shared_library.c:99
+[planner_server-15] [WARN] [1792581937.870615812] [global_costmap.global_costmap]: Callback returned ERROR during the transition: configure
+[planner_server-15] [FATAL] [1792581937.870667750] [global_costmap.global_costmap]: Lifecycle node global_costmap does not have error state implemented
+[planner_server-15] [INFO] [1792581937.871506344] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 342 X 299 at 0.050000 m/pix
+[planner_server-15] [INFO] [1792581937.886886747] [planner_server]: Created global planner plugin GridBased of type nav2_smac_planner/SmacPlanner2D
+[planner_server-15] [INFO] [1792581937.887165894] [planner_server]: Configuring GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792581937.900208794] [planner_server]: Configured plugin GridBased of type SmacPlanner2D with tolerance 0.10, maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal.
+[planner_server-15] [INFO] [1792581937.900346976] [planner_server]: Planner Server has GridBased  planners available.
+[nav_event_logger-19] [19:25:37] [目标 无活动目标] [阶段: 待命 (1.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[lifecycle_manager-18] [INFO] [1792581938.033665208] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-16] [INFO] [1792581938.034164812] [behavior_server]: Configuring
+[behavior_server-16] [INFO] [1792581938.060475932] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-16] [INFO] [1792581938.063726273] [behavior_server]: Configuring spin
+[behavior_server-16] [INFO] [1792581938.096657758] [behavior_server]: Creating behavior plugin backup of type carcar_navigation/ProtectedBackUp
+[behavior_server-16] [INFO] [1792581938.120284929] [behavior_server]: Configuring backup
+[behavior_server-16] [INFO] [1792581938.163120722] [behavior_server]: [ProtectedBackUp] 已配置防护倒车插件: 最大数据年龄=0.50s, 后方安全间隙=0.080m, 车体半长=0.140m
+[behavior_server-16] [INFO] [1792581938.164153660] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-16] [INFO] [1792581938.166901004] [behavior_server]: Configuring wait
+[rosmaster_node-1] Traceback (most recent call last):
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node", line 33, in <module>
+[rosmaster_node-1]     sys.exit(load_entry_point('carcar-base', 'console_scripts', 'rosmaster_node')())
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 800, in main
+[rosmaster_node-1]     node = RosmasterNode()
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 186, in __init__
+[rosmaster_node-1]     raise RuntimeError('巡检控制板串口已占用或检查异常；先停止其他驱动')
+[rosmaster_node-1] RuntimeError: 巡检控制板串口已占用或检查异常；先停止其他驱动
+[lifecycle_manager-18] [INFO] [1792581938.194708825] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-17] [INFO] [1792581938.195487097] [bt_navigator]: Configuring
+[lifecycle_manager-18] [INFO] [1792581938.448726887] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-12] [INFO] [1792581938.449140279] [controller_server]: Activating
+[controller_server-12] [WARN] [1792581938.449318079] [rcl_lifecycle]: No transition matching 3 found for current state unconfigured
+[controller_server-12] [INFO] [1792581938.449340544] [controller_server]: Activating controller: FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[controller_server-12] [INFO] [1792581938.449428163] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[sllidar_node-3] [ERROR] [1792581938.490517773] [sllidar_node]: Error, operation time out. SL_RESULT_OPERATION_TIMEOUT! 
+[ERROR] [rosmaster_node-1]: process has died [pid 13040, exit code 1, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node --ros-args -r __node:=rosmaster_base --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /tmp/launch_params_9pxhge2e --params-file /tmp/launch_params_hmjirw7k --params-file /tmp/launch_params_fmhxv3zx'].
+[lifecycle_manager-18] [INFO] [1792581938.560643862] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-18] [INFO] [1792581938.560908769] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-13] [INFO] [1792581938.561840135] [velocity_smoother]: Activating
+[velocity_smoother-13] [INFO] [1792581938.562127411] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[ERROR] [sllidar_node-3]: process has died [pid 13044, exit code 255, cmd '/home/jetson/luhao/my_nav_carcar/install/sllidar_ros2/lib/sllidar_ros2/sllidar_node --ros-args -r __node:=sllidar_node --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_lidar/share/carcar_lidar/config/rplidar_a1.yaml --params-file /tmp/launch_params_t6z756q_ --params-file /tmp/launch_params_x0sp6xie --params-file /tmp/launch_params_0u0958pp --params-file /tmp/launch_params_g0xgq3f9 --params-file /tmp/launch_params__m7nm8l3 --params-file /tmp/launch_params__elk27dc --params-file /tmp/launch_params_ke14o0a_'].
+[lifecycle_manager-18] [INFO] [1792581938.682640993] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-18] [INFO] [1792581938.682902283] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-15] [INFO] [1792581938.683832625] [planner_server]: Activating
+[planner_server-15] [WARN] [1792581938.684203680] [rcl_lifecycle]: No transition matching 3 found for current state unconfigured
+[planner_server-15] [INFO] [1792581938.685323406] [planner_server]: Activating plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792581938.690727658] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-18] [INFO] [1792581938.805438444] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-18] [INFO] [1792581938.805608851] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-16] [INFO] [1792581938.806313456] [behavior_server]: Activating
+[behavior_server-16] [INFO] [1792581938.806428692] [behavior_server]: Activating spin
+[behavior_server-16] [INFO] [1792581938.806484503] [behavior_server]: Activating backup
+[behavior_server-16] [INFO] [1792581938.806538041] [behavior_server]: Activating wait
+[behavior_server-16] [INFO] [1792581938.806586619] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-18] [INFO] [1792581938.917244023] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-18] [INFO] [1792581938.917473824] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-17] [INFO] [1792581938.918902523] [bt_navigator]: Activating
+[nav_event_logger-19] [19:25:38] [目标 无活动目标] [阶段: 待命 (2.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[bt_navigator-17] [INFO] [1792581939.066469302] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-18] [INFO] [1792581939.178024535] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-18] [INFO] [1792581939.178288961] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-18] [INFO] [1792581939.178824567] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[nav_event_logger-19] [19:25:39] [目标 无活动目标] [阶段: 待命 (3.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[realsense2_camera_node-9] [WARN] [1792581940.432444494] [camera.camera]: No matching stream for texture 'Process - Any'. Set 'pointcloud.stream_profile' to 'depth(1)', 'color(2)', or 'infrared(3)' to enable textured pointclouds.
+[nav_event_logger-19] [19:25:40] [目标 无活动目标] [阶段: 待命 (4.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:41] [目标 无活动目标] [阶段: 待命 (5.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:42] [目标 无活动目标] [阶段: 待命 (6.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:43] [目标 无活动目标] [阶段: 待命 (7.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:44] [目标 无活动目标] [阶段: 待命 (8.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:45] [目标 无活动目标] [阶段: 待命 (9.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:46] [目标 无活动目标] [阶段: 待命 (10.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:47] [目标 无活动目标] [阶段: 待命 (11.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:48] [目标 无活动目标] [阶段: 待命 (12.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:49] [目标 无活动目标] [阶段: 待命 (13.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:50] [目标 无活动目标] [阶段: 待命 (14.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:51] [目标 无活动目标] [阶段: 待命 (15.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:52] [目标 无活动目标] [阶段: 待命 (16.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:53] [目标 无活动目标] [阶段: 待命 (17.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:54] [目标 无活动目标] [阶段: 待命 (18.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:55] [目标 无活动目标] [阶段: 待命 (19.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:56] [目标 无活动目标] [阶段: 待命 (20.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:57] [目标 无活动目标] [阶段: 待命 (21.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:58] [目标 无活动目标] [阶段: 待命 (22.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:25:59] [目标 无活动目标] [阶段: 待命 (23.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:00] [目标 无活动目标] [阶段: 待命 (24.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:01] [目标 无活动目标] [阶段: 待命 (25.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:02] [目标 无活动目标] [阶段: 待命 (26.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:03] [目标 无活动目标] [阶段: 待命 (27.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:04] [目标 无活动目标] [阶段: 待命 (28.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:05] [目标 无活动目标] [阶段: 待命 (29.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:06] [目标 无活动目标] [阶段: 待命 (30.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:07] [目标 无活动目标] [阶段: 待命 (31.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:08] [目标 无活动目标] [阶段: 待命 (32.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:09] [目标 无活动目标] [阶段: 待命 (33.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:10] [目标 无活动目标] [阶段: 待命 (34.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:11] [目标 无活动目标] [阶段: 待命 (35.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:12] [目标 无活动目标] [阶段: 待命 (36.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:13] [目标 无活动目标] [阶段: 待命 (37.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:14] [目标 无活动目标] [阶段: 待命 (38.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:15] [目标 无活动目标] [阶段: 待命 (39.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:16] [目标 无活动目标] [阶段: 待命 (40.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:17] [目标 无活动目标] [阶段: 待命 (41.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:18] [目标 无活动目标] [阶段: 待命 (42.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:19] [目标 无活动目标] [阶段: 待命 (43.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:20] [目标 无活动目标] [阶段: 待命 (44.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:21] [目标 无活动目标] [阶段: 待命 (45.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:22] [目标 无活动目标] [阶段: 待命 (46.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:23] [目标 无活动目标] [阶段: 待命 (47.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:24] [目标 无活动目标] [阶段: 待命 (48.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:25] [目标 无活动目标] [阶段: 待命 (49.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:26] [目标 无活动目标] [阶段: 待命 (50.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:27] [目标 无活动目标] [阶段: 待命 (51.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:28] [目标 无活动目标] [阶段: 待命 (52.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:29] [目标 无活动目标] [阶段: 待命 (53.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:30] [目标 无活动目标] [阶段: 待命 (54.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:31] [目标 无活动目标] [阶段: 待命 (55.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:32] [目标 无活动目标] [阶段: 待命 (56.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:33] [目标 无活动目标] [阶段: 待命 (57.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:34] [目标 无活动目标] [阶段: 待命 (58.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:35] [目标 无活动目标] [阶段: 待命 (59.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:36] [目标 无活动目标] [阶段: 待命 (60.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:37] [目标 无活动目标] [阶段: 待命 (61.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:38] [目标 无活动目标] [阶段: 待命 (62.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:39] [目标 无活动目标] [阶段: 待命 (63.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:40] [目标 无活动目标] [阶段: 待命 (64.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:41] [目标 无活动目标] [阶段: 待命 (65.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:42] [目标 无活动目标] [阶段: 待命 (66.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:43] [目标 无活动目标] [阶段: 待命 (67.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:44] [目标 无活动目标] [阶段: 待命 (68.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:45] [目标 无活动目标] [阶段: 待命 (69.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:46] [目标 无活动目标] [阶段: 待命 (70.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:47] [目标 无活动目标] [阶段: 待命 (71.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:48] [目标 无活动目标] [阶段: 待命 (72.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:49] [目标 无活动目标] [阶段: 待命 (73.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:50] [目标 无活动目标] [阶段: 待命 (74.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:51] [目标 无活动目标] [阶段: 待命 (75.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:52] [目标 无活动目标] [阶段: 待命 (76.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:53] [目标 无活动目标] [阶段: 待命 (77.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:54] [目标 无活动目标] [阶段: 待命 (78.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:55] [目标 无活动目标] [阶段: 待命 (79.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:56] [目标 无活动目标] [阶段: 待命 (80.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:57] [目标 无活动目标] [阶段: 待命 (81.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:58] [目标 无活动目标] [阶段: 待命 (82.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:26:59] [目标 无活动目标] [阶段: 待命 (83.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:00] [目标 无活动目标] [阶段: 待命 (84.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:01] [目标 无活动目标] [阶段: 待命 (85.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:02] [目标 无活动目标] [阶段: 待命 (86.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:03] [目标 无活动目标] [阶段: 待命 (87.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:04] [目标 无活动目标] [阶段: 待命 (88.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:05] [目标 无活动目标] [阶段: 待命 (89.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:06] [目标 无活动目标] [阶段: 待命 (90.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:07] [目标 无活动目标] [阶段: 待命 (91.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:08] [目标 无活动目标] [阶段: 待命 (92.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:09] [目标 无活动目标] [阶段: 待命 (93.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:10] [目标 无活动目标] [阶段: 待命 (94.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:11] [目标 无活动目标] [阶段: 待命 (95.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:12] [目标 无活动目标] [阶段: 待命 (96.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:13] [目标 无活动目标] [阶段: 待命 (97.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:14] [目标 无活动目标] [阶段: 待命 (98.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:15] [目标 无活动目标] [阶段: 待命 (99.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:16] [目标 无活动目标] [阶段: 待命 (100.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:17] [目标 无活动目标] [阶段: 待命 (101.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:18] [目标 无活动目标] [阶段: 待命 (102.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:19] [目标 无活动目标] [阶段: 待命 (103.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:20] [目标 无活动目标] [阶段: 待命 (104.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:21] [目标 无活动目标] [阶段: 待命 (105.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:22] [目标 无活动目标] [阶段: 待命 (106.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:23] [目标 无活动目标] [阶段: 待命 (107.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:24] [目标 无活动目标] [阶段: 待命 (108.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:25] [目标 无活动目标] [阶段: 待命 (109.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:26] [目标 无活动目标] [阶段: 待命 (110.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:27] [目标 无活动目标] [阶段: 待命 (111.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:28] [目标 无活动目标] [阶段: 待命 (112.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:29] [目标 无活动目标] [阶段: 待命 (113.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:30] [目标 无活动目标] [阶段: 待命 (114.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:31] [目标 无活动目标] [阶段: 待命 (115.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:32] [目标 无活动目标] [阶段: 待命 (116.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:33] [目标 无活动目标] [阶段: 待命 (117.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:34] [目标 无活动目标] [阶段: 待命 (118.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:35] [目标 无活动目标] [阶段: 待命 (119.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:36] [目标 无活动目标] [阶段: 待命 (120.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:37] [目标 无活动目标] [阶段: 待命 (121.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:38] [目标 无活动目标] [阶段: 待命 (122.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:39] [目标 无活动目标] [阶段: 待命 (123.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:40] [目标 无活动目标] [阶段: 待命 (124.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:41] [目标 无活动目标] [阶段: 待命 (125.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:42] [目标 无活动目标] [阶段: 待命 (126.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:43] [目标 无活动目标] [阶段: 待命 (127.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:44] [目标 无活动目标] [阶段: 待命 (128.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:45] [目标 无活动目标] [阶段: 待命 (129.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:46] [目标 无活动目标] [阶段: 待命 (130.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:47] [目标 无活动目标] [阶段: 待命 (131.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:48] [目标 无活动目标] [阶段: 待命 (132.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:49] [目标 无活动目标] [阶段: 待命 (133.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:50] [目标 无活动目标] [阶段: 待命 (134.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:51] [目标 无活动目标] [阶段: 待命 (135.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:52] [目标 无活动目标] [阶段: 待命 (136.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:53] [目标 无活动目标] [阶段: 待命 (137.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:54] [目标 无活动目标] [阶段: 待命 (138.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:55] [目标 无活动目标] [阶段: 待命 (139.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:56] [目标 无活动目标] [阶段: 待命 (140.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:57] [目标 无活动目标] [阶段: 待命 (141.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:58] [目标 无活动目标] [阶段: 待命 (142.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:27:59] [目标 无活动目标] [阶段: 待命 (143.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:28:00] [目标 无活动目标] [阶段: 待命 (144.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:28:01] [目标 无活动目标] [阶段: 待命 (145.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:28:02] [目标 无活动目标] [阶段: 待命 (146.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:28:03] [目标 无活动目标] [阶段: 待命 (147.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[nav_event_logger-19] [19:28:04] [目标 无活动目标] [阶段: 待命 (148.5s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [inspection_console-20]: sending signal 'SIGINT' to process[inspection_console-20]
+[INFO] [nav_event_logger-19]: sending signal 'SIGINT' to process[nav_event_logger-19]
+[INFO] [lifecycle_manager-18]: sending signal 'SIGINT' to process[lifecycle_manager-18]
+[INFO] [bt_navigator-17]: sending signal 'SIGINT' to process[bt_navigator-17]
+[INFO] [behavior_server-16]: sending signal 'SIGINT' to process[behavior_server-16]
+[ERROR] [nav_event_logger-19]: process has died [pid 13219, exit code -2, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/carcar_navigation/nav_event_logger --ros-args -r __node:=nav_event_logger --params-file /tmp/launch_params_7s9aoda3 --params-file /tmp/launch_params_hrjujwei --params-file /tmp/launch_params_el67x0zp --params-file /tmp/launch_params_b7ci7q3i --params-file /tmp/launch_params_8rs2fyg0 --params-file /tmp/launch_params_qfrh5hri --params-file /tmp/launch_params_vwczk6tf --params-file /tmp/launch_params_zo6rpzxr --params-file /tmp/launch_params_zj8wir_d --params-file /tmp/launch_params_1h97x2ba --params-file /tmp/launch_params_loevphcu --params-file /tmp/launch_params_kcza9wzq --params-file /tmp/launch_params_qvhmp1px -r /cmd_vel:=/inspection/navigation/cmd_vel'].
+[INFO] [planner_server-15]: sending signal 'SIGINT' to process[planner_server-15]
+[INFO] [navigation_motion_gate-14]: sending signal 'SIGINT' to process[navigation_motion_gate-14]
+[INFO] [velocity_smoother-13]: sending signal 'SIGINT' to process[velocity_smoother-13]
+[INFO] [controller_server-12]: sending signal 'SIGINT' to process[controller_server-12]
+[ERROR] [navigation_motion_gate-14]: process has died [pid 13138, exit code -2, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/carcar_navigation/navigation_motion_gate --ros-args -r __node:=navigation_motion_gate --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_depth_stvl_experimental.yaml --params-file /tmp/launch_params_cq2dlm1r --params-file /tmp/launch_params_fr4fh2we -r /cmd_vel:=/inspection/navigation/cmd_vel'].
+[INFO] [depth_layer_supervisor-11]: sending signal 'SIGINT' to process[depth_layer_supervisor-11]
+[INFO] [depth_cloud_filter-10]: sending signal 'SIGINT' to process[depth_cloud_filter-10]
+[INFO] [realsense2_camera_node-9]: sending signal 'SIGINT' to process[realsense2_camera_node-9]
+[ERROR] [controller_server-12]: process has died [pid 13134, exit code -2, cmd '/opt/ros/humble/lib/nav2_controller/controller_server --ros-args -r __node:=controller_server --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_depth_stvl_experimental.yaml --params-file /tmp/launch_params_yklcu52g --params-file /tmp/launch_params_36tj3e86 -r /cmd_vel:=/inspection/navigation/cmd_vel -r cmd_vel:=/cmd_vel_nav'].
+[INFO] [joint_state_publisher-8]: sending signal 'SIGINT' to process[joint_state_publisher-8]
+[INFO] [lifecycle_manager-7]: sending signal 'SIGINT' to process[lifecycle_manager-7]
+[INFO] [localization_monitor-6]: sending signal 'SIGINT' to process[localization_monitor-6]
+[INFO] [amcl-5]: sending signal 'SIGINT' to process[amcl-5]
+[INFO] [map_server-4]: sending signal 'SIGINT' to process[map_server-4]
+[INFO] [robot_state_publisher-2]: sending signal 'SIGINT' to process[robot_state_publisher-2]
+[robot_state_publisher-2] [INFO] [1792582085.226041049] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-5] [INFO] [1792582085.226066810] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-5] [INFO] [1792582085.226323012] [amcl]: Running Nav2 LifecycleNode rcl preshutdown (amcl)
+[amcl-5] [INFO] [1792582085.226610639] [amcl]: Deactivating
+[amcl-5] [INFO] [1792582085.226723540] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[amcl-5] [INFO] [1792582085.238052887] [amcl]: Cleaning up
+[realsense2_camera_node-9] [INFO] [1792582085.226134909] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[realsense2_camera_node-9] [INFO] [1792582085.232302098] [camera.camera]: Stop Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792582085.232389974] [camera.camera]: Close Sensor. 
+[realsense2_camera_node-9] [INFO] [1792582085.239372619] [camera.camera]: Close Sensor - Done. 
+[realsense2_camera_node-9] [INFO] [1792582085.239453743] [camera.camera]: Stop Sensor: RGB Camera
+[realsense2_camera_node-9] [INFO] [1792582085.239496688] [camera.camera]: Close Sensor. 
+[lifecycle_manager-7] [INFO] [1792582085.226141533] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-7] [INFO] [1792582085.226357125] [lifecycle_manager_localization]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_localization)
+[lifecycle_manager-7] [INFO] [1792582085.226535724] [lifecycle_manager_localization]: [34m[1mTerminating bond timer...[0m[0m
+[depth_cloud_filter-10] [INFO] [1792582085.226322948] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[depth_layer_supervisor-11] [INFO] [1792582085.226272898] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-4] [INFO] [1792582085.228038920] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-4] [INFO] [1792582085.228288370] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-4] [INFO] [1792582085.228537436] [map_server]: Deactivating
+[map_server-4] [INFO] [1792582085.228614655] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[map_server-4] [INFO] [1792582085.249278838] [map_server]: Cleaning up
+[map_server-4] [INFO] [1792582085.249535200] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[navigation_motion_gate-14] [INFO] [1792582085.228065929] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[localization_monitor-6] [INFO] [1792582085.228956045] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-16] [INFO] [1792582085.230275617] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-16] [INFO] [1792582085.230601070] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-16] [INFO] [1792582085.230888090] [behavior_server]: Deactivating
+[behavior_server-16] [INFO] [1792582085.231067041] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[behavior_server-16] [INFO] [1792582085.262023825] [behavior_server]: Cleaning up
+[planner_server-15] [INFO] [1792582085.233874481] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582085.234133819] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-15] [INFO] [1792582085.234350564] [planner_server]: Deactivating
+[planner_server-15] [WARN] [1792582085.234458792] [rcl_lifecycle]: No transition matching 4 found for current state unconfigured
+[planner_server-15] [INFO] [1792582085.234493257] [planner_server]: Deactivating plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582085.234553708] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[controller_server-12] [INFO] [1792582085.234886457] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-12] [INFO] [1792582085.235110914] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-12] [INFO] [1792582085.236840295] [controller_server]: Deactivating
+[controller_server-12] [INFO] [1792582085.236986284] [controller_server]: Deactivating controller: FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[controller_server-12] [WARN] [1792582085.237114418] [rcl_lifecycle]: No transition matching 4 found for current state unconfigured
+[controller_server-12] [INFO] [1792582085.237343579] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[velocity_smoother-13] [INFO] [1792582085.236385973] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-13] [INFO] [1792582085.236606781] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-13] [INFO] [1792582085.236791813] [velocity_smoother]: Deactivating
+[velocity_smoother-13] [INFO] [1792582085.236893289] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[inspection_console-20] [INFO] [1792582085.240896648] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-17] [INFO] [1792582085.240912137] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-17] [INFO] [1792582085.241152818] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-17] [INFO] [1792582085.241472607] [bt_navigator]: Deactivating
+[bt_navigator-17] [INFO] [1792582085.241560131] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-18] [INFO] [1792582085.240920713] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-18] [INFO] [1792582085.241138962] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-18] [INFO] [1792582085.241344314] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m
+[nav_event_logger-19] [INFO] [1792582085.247756153] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[nav_event_logger-19] [会话日志: 已结束] [原始 rosbag: 未启用] 20261021_192536_13219
+[planner_server-15] [INFO] [1792582085.275070809] [planner_server]: Cleaning up
+[inspection_console-20] [INFO] [1792582085.276422894] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-12] [INFO] [1792582085.297912166] [controller_server]: Cleaning up
+[controller_server-12] [INFO] [1792582085.298073324] [controller_server]: Cleaning up controller: FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[controller_server-12] [WARN] [1792582085.298389785] [rcl_lifecycle]: No transition matching 2 found for current state unconfigured
+[controller_server-12] [INFO] [1792582085.307551910] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-12] Warning: class_loader.ClassLoader: SEVERE WARNING!!! Attempting to unload library while objects created by this loader exist in the heap! You should delete your objects before attempting to unload the library or destroying the ClassLoader. The library will NOT be unloaded.
+[controller_server-12]          at line 127 in ./src/class_loader.cpp
+[controller_server-12] [INFO] [1792582085.327474687] [local_costmap.local_costmap]: Destroying
+[depth_layer_supervisor-11] [INFO] [1792582085.337836923] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[depth_cloud_filter-10] [INFO] [1792582085.344750030] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[realsense2_camera_node-9] [INFO] [1792582085.351812775] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[localization_monitor-6] [INFO] [1792582085.368734505] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-4] [INFO] [1792582085.378565296] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[robot_state_publisher-2] [INFO] [1792582085.383039330] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[realsense2_camera_node-9] [INFO] [1792582085.453428916] [camera.camera]: Close Sensor - Done. 
+[velocity_smoother-13] [INFO] [1792582086.290851306] [velocity_smoother]: Cleaning up
+[velocity_smoother-13] [INFO] [1792582086.291097556] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[velocity_smoother-13] [INFO] [1792582086.293516533] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-7] [INFO] [1792582086.295648553] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-7] [INFO] [1792582086.301466769] [lifecycle_manager_localization]: Destroying lifecycle_manager_localization
+[amcl-5] [INFO] [1792582086.307675208] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[amcl-5] [INFO] [1792582086.308847927] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-13] [INFO] [1792582086.311051246] [velocity_smoother]: Destroying
+[map_server-4] [INFO] [1792582086.319871982] [map_server]: Destroying
+[bt_navigator-17] [INFO] [1792582086.320529384] [bt_navigator]: Cleaning up
+[amcl-5] [INFO] [1792582086.331948078] [amcl]: Destroying
+[behavior_server-16] [INFO] [1792582086.350699833] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[behavior_server-16] [INFO] [1792582086.364011562] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [WARN] [1792582086.411746550] [rcl_lifecycle]: No transition matching 2 found for current state unconfigured
+[planner_server-15] [INFO] [1792582086.412105733] [planner_server]: Cleaning up plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582086.416402800] [planner_server]: Destroying plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582086.420372590] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-15] [INFO] [1792582086.440224036] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] Warning: class_loader.ClassLoader: SEVERE WARNING!!! Attempting to unload library while objects created by this loader exist in the heap! You should delete your objects before attempting to unload the library or destroying the ClassLoader. The library will NOT be unloaded.
+[planner_server-15]          at line 127 in ./src/class_loader.cpp
+[lifecycle_manager-18] [INFO] [1792582086.445482005] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-18] [INFO] [1792582086.452438666] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[planner_server-15] [INFO] [1792582086.457162342] [global_costmap.global_costmap]: Destroying
+[behavior_server-16] [INFO] [1792582086.477112320] [behavior_server]: Destroying
+[planner_server-15] [INFO] [1792582086.487069804] [planner_server]: Destroying
+[INFO] [robot_state_publisher-2]: process has finished cleanly [pid 13042]
+[INFO] [lifecycle_manager-7]: process has finished cleanly [pid 13052]
+[INFO] [depth_cloud_filter-10]: process has finished cleanly [pid 13116]
+[INFO] [map_server-4]: process has finished cleanly [pid 13046]
+[bt_navigator-17] [INFO] [1792582086.566431491] [bt_navigator]: Completed Cleaning up
+[bt_navigator-17] [INFO] [1792582086.566630731] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[INFO] [amcl-5]: process has finished cleanly [pid 13048]
+[bt_navigator-17] [INFO] [1792582086.571163263] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [velocity_smoother-13]: process has finished cleanly [pid 13136]
+[bt_navigator-17] [INFO] [1792582086.578015536] [bt_navigator]: Destroying
+[INFO] [localization_monitor-6]: process has finished cleanly [pid 13050]
+[INFO] [depth_layer_supervisor-11]: process has finished cleanly [pid 13131]
+[INFO] [lifecycle_manager-18]: process has finished cleanly [pid 13217]
+[INFO] [behavior_server-16]: process has finished cleanly [pid 13160]
+[INFO] [planner_server-15]: process has finished cleanly [pid 13142]
+[INFO] [inspection_console-20]: process has finished cleanly [pid 13243]
+[INFO] [bt_navigator-17]: process has finished cleanly [pid 13196]
+[INFO] [realsense2_camera_node-9]: process has finished cleanly [pid 13107]
+[joint_state_publisher-8] Traceback (most recent call last):
+[joint_state_publisher-8]   File "/opt/ros/humble/lib/joint_state_publisher/joint_state_publisher", line 33, in <module>
+[joint_state_publisher-8]     sys.exit(load_entry_point('joint-state-publisher==2.4.0', 'console_scripts', 'joint_state_publisher')())
+[joint_state_publisher-8]   File "/opt/ros/humble/lib/python3.10/site-packages/joint_state_publisher/joint_state_publisher.py", line 470, in main
+[joint_state_publisher-8]     jsp.destroy_node()
+[joint_state_publisher-8]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/node.py", line 1696, in destroy_node
+[joint_state_publisher-8]     self.__node.destroy_when_not_in_use()
+[joint_state_publisher-8] KeyboardInterrupt
+[ERROR] [joint_state_publisher-8]: process has died [pid 13058, exit code -2, cmd '/opt/ros/humble/lib/joint_state_publisher/joint_state_publisher --ros-args -r __node:=joint_state_publisher --params-file /tmp/launch_params_dgjyq5kn'].

@@ -1,0 +1,123 @@
+{
+  "autonomy": {
+    "acceptance_wheel_ready": true,
+    "accepted_sequence": 4,
+    "accepted_wheel_position": [
+      0.0,
+      0.0
+    ],
+    "anchored": true,
+    "auto_start_pending": false,
+    "automatic_start_ready": true,
+    "automatic_start_reason": "",
+    "control_mode": "automatic",
+    "covariance_xy": 0.004104147969419042,
+    "direction_ratio": 0.8313821388947344,
+    "elapsed_seconds": 86.05193675300688,
+    "end_reason": "部分区域不可达，保留缺口；尝试返回",
+    "error": "",
+    "experimental": true,
+    "explore_seconds": 2400.0,
+    "generation": 3,
+    "goal": null,
+    "health_reason": "建图会话未就绪；检查首帧确认、保存或故障状态",
+    "healthy": false,
+    "loop_generation": 0,
+    "navigation_terminal": true,
+    "origin": [
+      -3.045021909287022e-07,
+      -0.0001744996457622918,
+      -0.0034899999999999237
+    ],
+    "outcome": "partial_unreachable",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "SAVE_PENDING",
+    "pose_correction_pending": false,
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "部分区域不可达，保留缺口；尝试返回；已返回起点，等待停稳保存候选",
+    "remaining_seconds": 2313.948063246993,
+    "request_id": "",
+    "request_result": "",
+    "return_remaining_seconds": 599.9495025399956,
+    "return_result": "succeeded",
+    "return_seconds": 600.0,
+    "save_required": true,
+    "seconds_since_acceptance": 92.80761305900523,
+    "seconds_waiting_expected_acceptance": 0.0,
+    "slam": {
+      "accepted": true,
+      "accepted_stamp_ns": 1793092971465597283,
+      "attempts": 4,
+      "loop_active": false,
+      "loop_generation": 0,
+      "note": "接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流",
+      "sequence": 4,
+      "startup_closed": true,
+      "startup_extras": 3
+    },
+    "still": true,
+    "task_id": "e79c45760eb4051dfb1aafd6285ab653",
+    "tf_map_odom_age": -0.030262325,
+    "tf_odom_base_age": 0.038448171,
+    "travel_since_acceptance": 0.01695118006794071,
+    "wheel_position": [
+      -0.016864888256252056,
+      0.0017082300196056503
+    ]
+  },
+  "base_frame": "base_footprint",
+  "complete": true,
+  "control_mode": "automatic",
+  "created": "20261027_172425_42afbba7",
+  "diagnostic_only": false,
+  "explore_commit": "326cf8a0b487c34246bb8f3326afbcd69576dc60",
+  "filter": "laser_filters 2.0.10 Speckle Distance",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "fast": [
+      0.18,
+      0.36
+    ],
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "review_required": true,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "ceres_loss_function": "None",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "4b5db682e0932029aecbaa171cb03961dd6d85a04bd7fd8ebc8d86f590b41bd7",
+    "graph.posegraph": "b959cdd8c2fd099ed895611a0fc57c169b9a6a76ebf25b117bd0a090fc87c65e",
+    "map.pgm": "5faf19201131f1aa0a3be0a13e43c78afb2ed0bb702de419e2d7d5c8ebb16da9",
+    "map.yaml": "201c64d1d9a1febd60f0499ce6f0da3a9f1134f10f4159f48910a8942e0d870b"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

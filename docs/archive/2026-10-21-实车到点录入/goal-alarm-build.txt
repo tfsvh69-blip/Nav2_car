@@ -1,0 +1,12 @@
+Starting >>> carcar_inspection
+--- stderr: carcar_inspection
+In file included from /home/jetson/luhao/my_nav_carcar/src/carcar_inspection/src/console_node.cpp:38:
+/home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/common.hpp: In function ‘std::pair<double, double> carcar_mapping_console::pixel_to_map(double, double, int, double, double, double, double)’:
+/home/jetson/luhao/my_nav_carcar/install/carcar_mapping_console/include/carcar_mapping_console/common.hpp:58:130: note: parameter passing for argument of type ‘std::pair<double, double>’ when C++17 is enabled changed to match C++14 in GCC 10.1
+   58 | inline std::pair<double, double> pixel_to_map(double u, double v, int height, double resolution, double ox, double oy, double yaw) {
+      |                                                                                                                                  ^
+---
+Finished <<< carcar_inspection [1min 32s]
+
+Summary: 1 package finished [1min 33s]
+  1 package had stderr output: carcar_inspection

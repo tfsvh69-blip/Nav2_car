@@ -1,0 +1,69 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+Test project /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+    Start 1: test_inspection_core
+1/2 Test #1: test_inspection_core .............   Passed    0.26 sec
+    Start 2: test_inspection_console
+2/2 Test #2: test_inspection_console ..........***Failed   46.91 sec
+-- run_test.py: invoking following command in '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection':
+ - /home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_console --gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 12 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 12 tests from ConsoleTest
+[ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+[       OK ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (430 ms)
+[ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+[       OK ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (5736 ms)
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+地图选择位置与朝向→保存草稿→刷新读回→手机选择最终停车位通过；无硬件请求
+真实浏览器完成导航到点→修改坐标再导航→调角新画面→按实车位置保存；平板与手机截图已保存
+[       OK ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (12428 ms)
+[ RUN      ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation
+[       OK ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation (2842 ms)
+[ RUN      ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/test/test_console.cpp:222: Failure
+Expected equality of these values:
+  fixture->beep_windows
+    Which is: 2
+  1
+测试证据保留："/tmp/carcar-inspection-console-1ntX3E"
+[  FAILED  ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow (9020 ms)
+[ RUN      ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation
+[       OK ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation (521 ms)
+[ RUN      ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow
+[       OK ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow (5434 ms)
+[ RUN      ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose
+[       OK ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose (2626 ms)
+[ RUN      ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain
+[       OK ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain (2424 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds
+[       OK ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds (1719 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation
+[       OK ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation (1313 ms)
+[ RUN      ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving
+[       OK ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving (2122 ms)
+[----------] 12 tests from ConsoleTest (46615 ms total)
+
+[----------] Global test environment tear-down
+[==========] 12 tests from 1 test suite ran. (46615 ms total)
+[  PASSED  ] 11 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+
+ 1 FAILED TEST
+-- run_test.py: return code 1
+-- run_test.py: inject classname prefix into gtest result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+-- run_test.py: verify result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+
+
+50% tests passed, 1 tests failed out of 2
+
+Label Time Summary:
+gtest    =  47.16 sec*proc (2 tests)
+
+Total Test time (real) =  47.17 sec
+
+The following tests FAILED:
+	  2 - test_inspection_console (Failed)
+Errors while running CTest

@@ -17,6 +17,32 @@ export const labels = {
   SUCCEEDED: "已完成",
   INTERRUPTED: "执行已中断",
 };
+export function trialLabel(phase) {
+  return (
+    {
+      IDLE: "尚未下发目标",
+      PREPARING: "正在恢复行驶姿态并检查避障",
+      NAVIGATING: "正在前往目标点",
+      STOPPING: "正在取消或确认停车",
+      ARRIVED: "已到达并停稳",
+      CANCELED: "已取消并停稳",
+      FAILED: "本次导航失败，已保持停车",
+      LOCKED: "停车状态待检查，禁止继续",
+    }[phase] || "等待车辆状态"
+  );
+}
+export function trialMatchesTarget(trial, target) {
+  return (
+    trial?.phase === "ARRIVED" &&
+    !!trial.request_id &&
+    !!trial.target &&
+    ["x", "y", "yaw"].every(
+      (key) =>
+        Number.isFinite(target[key]) &&
+        Math.abs(trial.target[key] - target[key]) < 1e-6,
+    )
+  );
+}
 export function stepTarget(current, delta) {
   return Math.round(Math.max(85, Math.min(160, current + delta)) * 10) / 10;
 }
@@ -70,7 +96,10 @@ function perimeter(distance) {
   return { x: x0, y: y0 + height - rest };
 }
 export function planSlots(count = 4) {
-  const total = Math.max(1, Math.min(planPointLimit, Math.round(Number(count) || 1)));
+  const total = Math.max(
+    1,
+    Math.min(planPointLimit, Math.round(Number(count) || 1)),
+  );
   const center = { x: 10, y: 5 };
   return Array.from({ length: total }, (_, index) => {
     const place = perimeter((index * 40) / total);

@@ -6,6 +6,9 @@
   <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps"/>
   <arg name="enable_hardware" default="false"/>
   <arg name="enable_navigation" default="false"/>
+  <arg name="enable_goal_navigation" default="false"/>
+  <arg name="require_depth" default="true"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
   <node pkg="carcar_inspection" exec="inspection_console" name="inspection_console" output="screen">
     <param from="$(find-pkg-share carcar_inspection)/config/console.yaml"/>
     <param name="bind_address" value="$(var bind_address)"/>
@@ -14,5 +17,8 @@
     <param name="map_root" value="$(var map_root)"/>
     <param name="enable_hardware" value="$(var enable_hardware)"/>
     <param name="enable_navigation" value="$(var enable_navigation)"/>
+    <param name="enable_goal_navigation" value="$(var enable_goal_navigation)"/>
+    <param name="require_depth" value="$(var require_depth)"/>
+    <param name="cmd_vel_topic" value="$(var cmd_vel_topic)"/>
   </node>
 </launch>

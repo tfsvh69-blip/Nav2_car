@@ -116,8 +116,16 @@
         </header>
         <div class="status-strip" role="status">
           <span id="connection">正在连接</span><span id="phase">等待数据</span
-          ><span class="status-caption">保持目视 · 松手停车</span>
+          ><span class="status-caption" id="status-caption">保持目视 · 松手停车</span>
         </div>
+        <section class="workflow-strip" aria-label="建图操作流程">
+          <ol class="workflow-steps" aria-label="流程阶段">
+            <li id="workflow-prepare">1 准备</li><li id="workflow-mapping">2 建图</li><li id="workflow-review">3 结束与审核</li>
+          </ol>
+          <div class="workflow-status" role="status" aria-live="polite" aria-atomic="true">
+            <strong id="workflow-title">准备本轮建图</strong><p id="workflow-next">选择新建或续建，再选择控制方式。</p>
+          </div>
+        </section>
         <section id="task-panel" class="task-panel" aria-label="建图工程">
           <div class="task-heading">
             <span class="tile-icon"
@@ -133,6 +141,8 @@
             ><select id="mode">
               <option value="new">新建地图</option>
               <option value="resume">继续已有工程</option></select
+            ><label class="sr-only" for="control-mode">控制方式</label><select id="control-mode">
+              <option value="manual">手动建图</option><option id="automatic-mode-option" value="automatic" disabled>自动建图（实验）</option></select
             ><select id="bundle" aria-label="续建工程" hidden></select
             ><button
               id="refresh-bundles"
@@ -141,13 +151,14 @@
               title="刷新工程"
             >
               <svg class="icon"><use href="#i-refresh" /></svg></button
-            ><button id="start" class="primary">
+            ><button id="start" class="primary" aria-describedby="task-info">
               <svg class="icon"><use href="#i-play" /></svg>检查并启动硬件
             </button>
           </div>
-          <span id="task-info">网页待命，硬件未启动</span>
+          <div id="startup-site-slot"><label class="site-check" id="site-check" hidden><input type="checkbox" id="site-confirmed"/>已核对本轮场地封闭、无落差，并排除激光扫描高度之外的障碍</label></div>
+          <span id="task-info" role="status" aria-live="polite">网页待命，硬件未启动</span>
         </section>
-        <main>
+        <main id="mapping-workspace">
           <section class="map-panel" aria-label="建图视图">
             <div class="panel-heading">
               <div>
@@ -164,6 +175,14 @@
               ><button id="hint">选择续建位置与朝向</button
               ><button id="try">试匹配</button
               ><button id="confirm">墙体与朝向已对齐</button>
+            </div>
+            <div class="nav-layers" id="nav-layers">
+              <label><input id="layer-global-cost" type="checkbox" checked />全局代价</label>
+              <label><input id="layer-local-cost" type="checkbox" checked />局部代价</label>
+              <label><input id="layer-global-path" type="checkbox" checked />全局路径</label>
+              <label><input id="layer-local-path" type="checkbox" checked />局部跟随</label>
+              <label><input id="layer-prediction" type="checkbox" checked />预测弧</label>
+              <label><input id="layer-body" type="checkbox" checked />车身停车框</label>
             </div>
             <div class="map-view">
               <canvas
@@ -186,15 +205,19 @@
             <div class="map-status">
               <span id="health">等待传感器数据</span
               ><span class="map-key"
-                ><i></i>激光<span><i></i>估计车位</span></span
+                ><i></i>激光<span><i></i>估计车位</span><span><i class="swatch-global"></i>全局代价</span
+                ><span><i class="swatch-local"></i>局部代价</span><span><i class="swatch-plan"></i>全局路径</span
+                ><span><i class="swatch-follow"></i>局部跟随</span><span><i class="swatch-arc"></i>预测弧</span></span
               >
             </div>
+            <p id="nav-layer-note"></p>
             <p id="hint-info"></p>
             <details class="legend">
               <summary>读懂地图与图像</summary>
               <p id="legend">
                 激光与轮式里程计生成俯视地图，使用 map
                 坐标系：黑色为占用、白色为空闲、灰色为未知；红点为当前激光，蓝色为估计车位示意（非车身外廓），黄色为人工初始位置。默认
+                绿色虚线圆为本次自动探索边界，绿色方框为返程起点，紫色圆为当前导航目标。橙色细框是车身停车框，0.28×0.26米。紫色是全局代价，橙色色块是局部代价，青色是全局路径，黄色是控制器正在跟随的路径，橙线是纯追踪的碰撞预测弧。代价里的红色是高代价障碍，透明处是未知或零代价，不能据此认为一定能过。默认
                 5 厘米/格；缩放只改变显示比例，地图约 3
                 秒更新。白色不保证各高度均无障碍。RGB 是前方透视辅助图，640 ×
                 480 为像素数；窗口大小不改变镜头视场，不能与俯视地图逐像素比较。
@@ -202,6 +225,28 @@
             </details>
           </section>
           <aside class="operate" aria-label="遥控与保存">
+            <section class="autonomy-card" id="autonomy-panel" aria-label="自动建图任务" hidden>
+              <h3>探索任务 <small>二维激光 · 实验验证</small></h3>
+              <p id="autonomy-stage" aria-live="polite">等待车端任务</p>
+              <p id="autonomy-budget">范围20米 · 探索40分钟 · 返程最多10分钟</p>
+              <p id="autonomy-quality"></p>
+              <p id="nav-status" hidden></p>
+              <div id="autonomy-site-slot"></div>
+              <div class="autonomy-actions" id="autonomy-actions">
+                <button id="auto-start" class="primary">开始自动探索</button><button id="auto-pause">暂停自动</button>
+                <button id="auto-manual">停稳后手动接管</button><button id="auto-finish">结束探索并返程</button>
+              </div>
+              <p class="muted" id="autonomy-hint">自动任务在网页断连后继续；停止请点停车并核对车端状态。手动断连仍停车。</p>
+            </section>
+            <section class="autonomy-card" id="publication-panel" aria-label="地图审核与发布" hidden>
+              <h3>地图版本</h3>
+              <select id="review-bundle" aria-label="候选与正式工程"></select>
+              <input id="review-note" aria-label="现场核对结论" placeholder="填写墙线、尺寸与现场核对结论" maxlength="300"/>
+              <p id="publication-help" class="muted">选择候选并填写现场核对结论后，可审核发布。</p>
+              <div class="autonomy-actions"><button id="review-approve">审核并发布</button><button id="review-reject">标记未通过</button><button id="map-activate">启用已发布地图</button></div>
+              <p id="publication-result" aria-live="polite">保存完整与审核发布是两个结果；启用后仍需重新定位，旧点位不迁移。</p>
+            </section>
+            <section id="manual-controls" class="manual-controls" aria-label="手动遥控" hidden>
             <div class="panel-heading">
               <div>
                 <span class="eyebrow">车辆控制</span>
@@ -243,11 +288,12 @@
             </div>
             <p id="motion" aria-live="polite">尚未启用遥控</p>
             <p id="fault-summary"></p>
-            <div class="save-actions">
+            </section>
+            <div class="save-actions" id="save-actions">
               <button id="save" class="primary">
                 <svg class="icon"><use href="#i-save" /></svg>停车并保存</button
               ><button id="finish">
-                <svg class="icon"><use href="#i-check" /></svg>保存并结束
+                <svg class="icon"><use href="#i-check" /></svg><span id="finish-label">保存并结束</span>
               </button>
             </div>
             <p id="save-age"></p>
@@ -273,7 +319,7 @@
         </main>
         <footer>
           <svg class="icon"><use href="#i-shield" /></svg
-          ><span
+          ><span id="safety-note"
             >遥控无自动避障。速度为命令上限，实物是否停稳须目视确认；紧急时切断轮动力。</span
           ><span class="footer-end">随行建图 / 巡检</span>
         </footer>

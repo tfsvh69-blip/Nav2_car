@@ -1,0 +1,6 @@
+waiting for service to become available...
+requester: making request: carcar_interfaces.srv.SetMotionHold_Request(owner_token='static_check_20261022_no_motion', driver_epoch='', hold=True)
+
+response:
+carcar_interfaces.srv.SetMotionHold_Response(accepted=True, reason='已保持零输出，仍须检查轮式停稳反馈', driver_epoch='21c7477c655b42adc2472ad5dd5c39f3', board_command=94, held=True)
+

@@ -1,5 +1,9 @@
 # Carcar 导航
 
+**2026-10-27 NAV-018：**纯激光实验参数在 `config/nav2_lidar_experimental.yaml`，由巡检入口 `inspection_lidar.launch.xml` 加载。定位与代价图订阅 `/scan/filtered`，控制器前进上限 0.10 m/s、角速度 0.36 rad/s，数值仍待实机。本节其余 STVL 与深度入口保留为历史实验。构建、启动、停止和回滚见[手册39节](../../docs/操作手册.md#nav-018-operation)。
+
+**2026-10-29 NAV-018-R18 录包修复：**`nav_event_logger` 对 `/tf_static` 显式使用 TF2 `StaticListenerQoS`，让先于静态发布者被发现的记录器也能请求保留消息；其他话题继续使用原 rosbag2 QoS 适配。回归启动真实日志进程、仅发布一次合成静态变换，在正常关闭后的录包核对消息与坐标值，覆盖发布者先后两种启动顺序。仅增加已有 Humble `tf2_msgs` 的显式测试依赖，无新运行框架。修复不补写历史包，也不代表返程障碍已消除；结果与完整操作见[测试记录R18](../../docs/测试记录.md#nav-018-r18)、[手册39.13](../../docs/操作手册.md#3913-历史扫描累积回放与静态tf录包回归nav-018-r18)。
+
 当前94档静止验收使用 `rviz/depth_costmap_stvl_level94_acceptance_100fps_candidate.rviz`，保存Frame Rate=100；相机/预览/地图频率分别维护。当前姿态新TF、空地/保持/撤障/健康判据和完整操作只见[手册31.16](../../docs/操作手册.md#3116-94档近平视与100刷新率的静止stvl验收)，历史配置与失败保留。
 
 当前100刷新验收配置已包含原生深度点云预览，配合9话题 `config/stvl_display_depth_cloud_bridge_candidate.yaml`，新增 `/camera/debug/points` 的最多8000点/1 Hz旁路；导航仍在域31使用完整点云。点云/体素颜色区分见[手册31.14](../../docs/操作手册.md#3114-打开原生深度点云预览)，当前完整操作用31.16，原15刷新配置保留作历史。

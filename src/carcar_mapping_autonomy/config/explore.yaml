@@ -1,0 +1,21 @@
+explore_node:
+  ros__parameters:
+    robot_base_frame: base_footprint
+    navigation_action: /mapping/explore_navigate_to_pose
+    candidate_rejection_topic: /mapping/explore_candidate_rejection
+    costmap_topic: /map
+    unknown_border_cells: 1
+    costmap_updates_topic: /mapping/unused_map_updates
+    visualize: true
+    planner_frequency: 1.0
+    progress_timeout: 30.0
+    # NAV-018-R10 实验候选；暂停和内部重验不清区域记忆。
+    progress_epsilon: 0.10
+    region_radius: 0.40
+    region_cooldown: 60.0
+    potential_scale: 0.001
+    orientation_scale: 0.0
+    gain_scale: 1.0
+    min_frontier_size: 0.20
+    return_to_init: false
+    transform_tolerance: 0.3

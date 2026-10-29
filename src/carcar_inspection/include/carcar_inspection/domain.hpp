@@ -63,6 +63,8 @@ inline json normalize_point(json point) {
   point["pose"] = first.at("pose");
   point["target_degrees"] = first.at("target_degrees");
   point["board_command"] = first.at("board_command");
+  if(first.contains("reference"))point["reference"]=first.at("reference");
+  else point.erase("reference");
   point["verified"] = verified;
   return point;
 }

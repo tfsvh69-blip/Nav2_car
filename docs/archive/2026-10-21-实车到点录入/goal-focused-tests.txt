@@ -1,0 +1,22 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+Note: Google Test filter = ConsoleTest.SingleGoal*:ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+[==========] Running 6 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 6 tests from ConsoleTest
+[ RUN      ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+[       OK ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow (5945 ms)
+[ RUN      ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose
+[       OK ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose (2605 ms)
+[ RUN      ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain
+[       OK ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain (2419 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds
+[       OK ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds (1737 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation
+[       OK ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation (1327 ms)
+[ RUN      ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving
+[       OK ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving (2122 ms)
+[----------] 6 tests from ConsoleTest (16157 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 1 test suite ran. (16157 ms total)
+[  PASSED  ] 6 tests.

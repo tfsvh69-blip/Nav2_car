@@ -1,0 +1,23 @@
+{
+  "ui_version": "inspection-20261021-5",
+  "hardware_enabled": true,
+  "navigation_enabled": false,
+  "goal_navigation_enabled": false,
+  "goal_navigation_block_reason": "当前是静止测试，尚未启用单点导航",
+  "health": {
+    "hardware_interface": true,
+    "localization": false,
+    "map_matches": true,
+    "odom": true,
+    "perception": false,
+    "rgb": true,
+    "scan": true,
+    "still": true,
+    "velocity_topology": true
+  },
+  "pose": null,
+  "navigation_trial": {
+    "active": false,
+    "phase": "IDLE"
+  }
+}

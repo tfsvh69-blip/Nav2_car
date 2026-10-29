@@ -308,7 +308,8 @@ struct HttpServer::Impl {
         try {
           asio::io_context local;
           beast::tcp_stream upstream(local);
-          upstream.expires_after(std::chrono::seconds(3));
+          // 巡检一次性命令在控制台最多等5秒，转发须更长才能把真实结果送回页面。
+          upstream.expires_after(std::chrono::seconds(8));
           upstream.connect({asio::ip::make_address(host), port});
           http::request<http::string_body> forwarded(method, upstream_target, 11);
           forwarded.set(http::field::host, host + ":" + std::to_string(port));
@@ -324,7 +325,7 @@ struct HttpServer::Impl {
           result.type = std::string(received[http::field::content_type]);
           if (result.type.empty()) result.type = "application/octet-stream";
           result.body = std::move(received.body());
-          for (const auto name : {"X-Frame-Sequence", "X-Source-Stamp", "X-Map-Meta"})
+          for (const auto name : {"X-Frame-Sequence", "X-Source-Stamp", "X-Map-Meta", "X-Navigation-Layer"})
             if (received.find(name) != received.end()) result.headers[name] = std::string(received[name]);
         } catch (const std::exception &) {}
         asio::post(self->owner.io, [self, result = std::move(result)]() mutable {self->reply(std::move(result));});
@@ -379,8 +380,14 @@ struct HttpServer::Impl {
         const auto inspect_target = rewrite_inspect(std::string(request.target()));
         if (!inspect_target.empty()) {
           if (!same_origin) return self->reply({403, "text/plain", {'d','e','n','i','e','d'}, {}});
-          if (websocket::is_upgrade(request)) return self->proxy_inspect_ws(std::move(request));
-          return self->proxy_inspect_http(std::move(request));
+          bool local;
+          {std::lock_guard<std::mutex> lock(self->owner.stats_mutex);
+            local=self->owner.inspect_host=="127.0.0.1"&&self->owner.inspect_port==self->owner.acceptor.local_endpoint().port();}
+          if(local)request.target(inspect_target);
+          else {
+            if (websocket::is_upgrade(request)) return self->proxy_inspect_ws(std::move(request));
+            return self->proxy_inspect_http(std::move(request));
+          }
         }
         if (websocket::is_upgrade(request) && request.target() == "/ws/control" && same_origin) {
           if (self->owner.controller.expired()) {

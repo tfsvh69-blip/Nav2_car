@@ -1,0 +1,107 @@
+{
+  "autonomy": {
+    "accepted_sequence": 1,
+    "anchored": true,
+    "auto_start_pending": false,
+    "control_mode": "automatic",
+    "covariance_xy": 1.0,
+    "direction_ratio": 0.8974080290075438,
+    "elapsed_seconds": 4.0415513690022635,
+    "end_reason": "部分区域不可达，保留缺口；尝试返回",
+    "error": "",
+    "experimental": true,
+    "explore_seconds": 2400.0,
+    "generation": 3,
+    "goal": null,
+    "health_reason": "建图会话未就绪；检查首帧确认、保存或故障状态",
+    "healthy": false,
+    "loop_generation": 0,
+    "navigation_terminal": true,
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "outcome": "partial_unreachable",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "SAVE_PENDING",
+    "pose_correction_pending": false,
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "部分区域不可达，保留缺口；尝试返回；起点不可达，原地停稳保存候选",
+    "remaining_seconds": 2395.9584486309977,
+    "request_id": "mapping-1793084758430-34820b80c0e87",
+    "request_result": "accepted",
+    "return_remaining_seconds": 600.0,
+    "return_result": "failed",
+    "return_seconds": 600.0,
+    "save_required": true,
+    "slam": {
+      "accepted": true,
+      "accepted_stamp_ns": 1793084738150285840,
+      "attempts": 1,
+      "loop_active": false,
+      "loop_generation": 0,
+      "note": "接纳与协方差不是独立真值；静止节流不要求每帧更新位姿",
+      "sequence": 1
+    },
+    "still": true,
+    "task_id": "44b84eb5ccef8bce09802d992d5bc190",
+    "tf_map_odom_age": 0.017113279,
+    "tf_odom_base_age": 0.038329967
+  },
+  "base_frame": "base_footprint",
+  "complete": true,
+  "control_mode": "automatic",
+  "created": "20261027_150607_b0ad705e",
+  "diagnostic_only": false,
+  "explore_commit": "326cf8a0b487c34246bb8f3326afbcd69576dc60",
+  "filter": "laser_filters 2.0.10 Speckle Distance",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "fast": [
+      0.18,
+      0.36
+    ],
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "review_required": true,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "ceres_loss_function": "None",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "4b17aa686db7a79f1e0600e923bb52722e10e0dd0a917bb6c1875e5bb2f06ccc",
+    "graph.posegraph": "059f30ab165c8904b0edf6224cdd2c39908b19d977613efe2949a06faa1288e2",
+    "map.pgm": "3204e698b956d23684a76abe0c8f562da5174e00d66eb3b13b48f80b069a0a0c",
+    "map.yaml": "174bf0669d6fd36cbcb94954175d87c928fbd9e98c6edf6c644bebd742909f33"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

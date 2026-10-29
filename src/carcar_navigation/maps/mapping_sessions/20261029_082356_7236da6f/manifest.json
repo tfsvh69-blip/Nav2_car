@@ -1,0 +1,152 @@
+{
+  "autonomy": {
+    "acceptance_wheel_ready": true,
+    "accepted_sequence": 24,
+    "accepted_wheel_position": [
+      0.20256015154049706,
+      -0.13477671051049772
+    ],
+    "active_request_id": "nav018-r13-finish-return",
+    "anchored": true,
+    "auto_start_pending": false,
+    "automatic_start_ready": true,
+    "automatic_start_reason": "",
+    "control_mode": "automatic",
+    "covariance_xy": 0.004080346409481414,
+    "direction_ratio": 0.6497411310305826,
+    "elapsed_seconds": 46.75852288500755,
+    "end_reason": "操作者结束探索，尝试返回起点",
+    "error": "",
+    "experimental": true,
+    "exploration_note": "",
+    "explore_seconds": 2400.0,
+    "frontier_goal": null,
+    "generation": 4,
+    "goal": null,
+    "goal_change_reason": "succeeded：已到达导航目标",
+    "goal_id": "",
+    "goal_request_id": "",
+    "goal_revalidating": false,
+    "goal_seconds": 0.0,
+    "health_reason": "建图会话未就绪；检查首帧确认、保存或故障状态",
+    "healthy": false,
+    "loop_generation": 0,
+    "loop_waiting_map": false,
+    "map_revision": 10,
+    "map_sequence": 60,
+    "motion_note": "",
+    "nav_goal_id": "",
+    "navigation_attempt": 0,
+    "navigation_attempt_seconds": 0.0,
+    "navigation_detail": "",
+    "navigation_progress_m": 0.0,
+    "navigation_remaining_m": -1.0,
+    "navigation_terminal": true,
+    "near_field": {
+      "count": 0,
+      "inside": false,
+      "range": 0.675000011920929,
+      "side": "左侧",
+      "valid": true,
+      "x": 0.06882560610045121,
+      "y": 0.6644587958843758
+    },
+    "observation_goal": null,
+    "origin": [
+      0.01000000000000003,
+      -2.8819083393143446e-17,
+      2.7755575615628914e-17
+    ],
+    "outcome": "operator_finished",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "SAVE_PENDING",
+    "pose_correction_pending": false,
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "操作者结束探索，尝试返回起点；已返回起点，等待停稳保存候选",
+    "remaining_seconds": 2353.2414771149924,
+    "request_id": "nav018-r13-finish-return",
+    "request_result": "accepted",
+    "return_remaining_seconds": 569.1979341069964,
+    "return_result": "succeeded",
+    "return_seconds": 600.0,
+    "save_required": true,
+    "seconds_since_acceptance": 14.935401409995393,
+    "seconds_waiting_expected_acceptance": 0.0,
+    "slam": {
+      "accepted": false,
+      "accepted_stamp_ns": 1793233421716442771,
+      "admission_retries": 16,
+      "attempts": 42,
+      "loop_active": false,
+      "loop_generation": 0,
+      "note": "接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流",
+      "sequence": 24,
+      "startup_closed": true,
+      "startup_extras": 3
+    },
+    "still": true,
+    "task_id": "144db04e7ec35435ad5d0f063fac9eda",
+    "tf_map_odom_age": 0.02962689,
+    "tf_odom_base_age": 0.004005891,
+    "travel_since_acceptance": 0.06110570488495349,
+    "wheel_position": [
+      0.14271072021445827,
+      -0.14710362169849595
+    ]
+  },
+  "base_frame": "base_footprint",
+  "complete": true,
+  "control_mode": "automatic",
+  "created": "20261029_082356_7236da6f",
+  "diagnostic_only": false,
+  "explore_commit": "326cf8a0b487c34246bb8f3326afbcd69576dc60",
+  "filter": "laser_filters 2.0.10 Speckle Distance",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "fast": [
+      0.18,
+      0.36
+    ],
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "review_required": true,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "ceres_loss_function": "None",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "e93f0981df1d820326a068762efb46349468388df7479e477bad9a4648d1c65b",
+    "graph.posegraph": "35dae20602d7bc348fe09faf82408e91e96a11311ced8d97deaec551bb289e53",
+    "map.pgm": "a40fe12a6ac5978e7689254ed1501f8b31c7688e9fff1c9823b38d51d8ef6398",
+    "map.yaml": "0737f713416e1c3527d8bfcc534d7e493f897b325d5995ace5f355b7506d41b5"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

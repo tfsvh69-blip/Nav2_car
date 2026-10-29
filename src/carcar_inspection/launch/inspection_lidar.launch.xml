@@ -1,0 +1,29 @@
+<launch>
+  <set_env name="LD_LIBRARY_PATH" value="$(find-pkg-prefix carcar_tf2_compat)/lib/carcar_tf2_compat:$(env LD_LIBRARY_PATH)"/>
+  <!-- 纯激光新入口；旧inspection_robot深度默认与历史入口保留。 -->
+  <arg name="real_hardware" default="false"/><arg name="enable_navigation" default="false"/>
+  <arg name="enable_goal_navigation" default="false"/>
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
+  <arg name="port" default="8081"/><arg name="data_root" default="/home/jetson/.local/share/carcar_inspection"/>
+  <include file="$(find-pkg-share carcar_inspection)/launch/inspection_robot.launch.xml">
+    <arg name="real_hardware" value="$(var real_hardware)"/><arg name="enable_navigation" value="$(var enable_navigation)"/>
+    <arg name="enable_goal_navigation" value="$(var enable_goal_navigation)"/><arg name="map" value="$(var map)"/>
+    <arg name="port" value="$(var port)"/><arg name="data_root" value="$(var data_root)"/>
+    <arg name="use_depth_navigation" value="false"/><arg name="scan_topic" value="/scan/filtered"/>
+    <arg name="sensor_params_file" value="$(find-pkg-share carcar_navigation)/config/nav2_lidar_experimental.yaml"/>
+    <arg name="cmd_vel_topic" value="/inspection/collision_input"/>
+  </include>
+  <group if="$(var real_hardware)">
+    <node pkg="laser_filters" exec="scan_to_scan_filter_chain" name="scan_to_scan_filter_chain" output="screen">
+      <param from="$(find-pkg-share carcar_mapping_autonomy)/config/laser_distance.yaml"/>
+      <remap from="scan" to="/scan"/><remap from="scan_filtered" to="/scan/filtered"/>
+    </node>
+    <node pkg="nav2_collision_monitor" exec="collision_monitor" name="collision_monitor" output="screen">
+      <param from="$(find-pkg-share carcar_mapping_autonomy)/config/collision.yaml"/>
+      <param name="cmd_vel_in_topic" value="/inspection/collision_input"/><param name="cmd_vel_out_topic" value="/cmd_vel"/>
+    </node>
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_collision" output="screen">
+      <param name="autostart" value="true"/><param name="node_names" value="['collision_monitor']"/>
+    </node>
+  </group>
+</launch>

@@ -1,0 +1,169 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+Note: Google Test filter = ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ConsoleTest
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+页面状态： {
+  hidden: false,
+  text: '巡检\n' +
+    '小车工作空间\n' +
+    '随行建图\n' +
+    '巡检工作台\n' +
+    '\n' +
+    '工作空间\n' +
+    '\n' +
+    '准备车辆\n' +
+    '录入巡检点\n' +
+    '安排巡检\n' +
+    '任务进度\n' +
+    '照片与记录\n' +
+    '操作者已连接\n' +
+    '任务与照片保存在车端\n' +
+    '\n' +
+    '室内巡检工作台\n' +
+    '\n' +
+    '录入巡检点\n' +
+    '\n' +
+    '先导航到候选停车位，再以实车停靠结果调整位置和拍摄角度。\n' +
+    '\n' +
+    '停车并取消当前行驶\n' +
+    '地图已载入，点击“在地图上选择巡检位置”开始标点。\n' +
+    '定位\n' +
+    '已就绪\n' +
+    '地图一致\n' +
+    '已就绪\n' +
+    '轮式反馈\n' +
+    '已就绪\n' +
+    '雷达\n' +
+    '已就绪\n' +
+    '相机\n' +
+    '已就绪\n' +
+    '角度接口\n' +
+    '已就绪\n' +
+    '场地地图\n' +
+    '请选择\n' +
+    'testmap\n' +
+    '载入地图\n' +
+    '新增点位\n' +
+    '当前图 testmap\n' +
+    '\n' +
+    '选候选目标 → 下发导航到点 → 实车坐标与相机微调 → 试拍确认并保存\n' +
+    '\n' +
+    '1\n' +
+    '选候选目标\n' +
+    '2\n' +
+    '导航到点\n' +
+    '3\n' +
+    '实车微调与试拍\n' +
+    '4\n' +
+    '保存确认结果\n' +
+    '1. 选择候选停车位\n' +
+    '地图坐标 · 米\n' +
+    '在地图上选择巡检位置\n' +
+    '\n' +
+    '点击上方选点按钮，或记录小车当前位置与朝向。选点只编辑配置，不会移动车辆。\n' +
+    '\n' +
+    '保存地图 · map坐标系 · 0.100 米/格。 白：空闲　黑：占用　灰：未知　蓝：当前定位估计　粉：编辑目标　绿：已确认点　黄：草稿。箭头为车头朝向。\n' +
+    '\n' +
+    '地图按原比例显示，屏幕大小不改变米制坐标。请在白色区域选停车位，并现场核对车身空间；保存地图不代表当前障碍状态。\n' +
+    '\n' +
+    '导航调试图层与数据状态\n' +
+    '\n' +
+    '来自车端真实话题；全局／局部代价图包含障碍与膨胀安全余量，红色为高代价障碍，透明部分不表示已确认安全。局部数据按当前TF转换到map；显示刷新最多2Hz，路径仅抽样显示，不修改规划。旧路径用虚线。\n' +
+    '\n' +
+    '全局障碍与膨胀（紫）\n' +
+    'map→map · 0.4秒前\n' +
+    '局部障碍与膨胀（橙）\n' +
+    'map→map · 0.4秒前\n' +
+    '全局路径（青）\n' +
+    'map→map · 0.0秒前 · 3个显示点\n' +
+    '局部路径（亮黄）\n' +
+    'map→map · 0.0秒前 · 3个显示点\n' +
+    '\n' +
+    '深度避障：当前有效\n' +
+    '\n' +
+    '2. 下发目标，让小车前往\n' +
+    '点位名称\n' +
+    '\n' +
+    '下面是候选导航目标。修改数字不会立即移动车辆，点击下发后才行驶。\n' +
+    '\n' +
+    'X / 米\n' +
+    'Y / 米\n' +
+    '车头朝向 / °\n' +
+    '微调候选坐标与方向\n' +
+    '下发目标，让小车前往\n' +
+    '\n' +
+    '尚未下发：请先在地图上选择停车位置与车头方向，或填写候选坐标\n' +
+    '\n' +
+    '尚未下发目标\n' +
+    '\n' +
+    '候选目标与实车定位估计（map坐标）\n' +
+    '来源\tX / 米\tY / 米\t朝向 / °\n' +
+    '候选目标\t0.00\t0.00\t0.0\n' +
+    '实车当前估计\t1.00\t1.00\t0.0\n' +
+    '\n' +
+    '最终确认保存的是实车当时的定位估计、舵机命令和新照片；候选坐标保留作对照，不当作实际到达值。\n' +
+    '\n' +
+    '仅保存计划草稿（尚未实车确认）\n' +
+    '保存巡检点草稿\n' +
+    '已保存点位\n' +
+    '相机实时画面\n' +
+    '当前源帧有效\n' +
+    '\n' +
+    'RGB原始流预览；窗口大小不改变镜头视场。图像时间戳：14:27:27。参考照片是历史画面。\n' +
+    '\n' +
+    '3. 实车到点后，调整镜头并试拍\n' +
+    '\n' +
+    '请先完成上方单点导航并停稳。修改候选坐标后，需要重新导航验证，才能确认保存。\n' +
+    '\n' +
+    '保持停车并等待轮式反馈停稳\n' +
+    '每次调整目标1°，等待发送结果和新画面\n' +
+    '确认画面合适，保存固定角度与参考照片\n' +
+    '\n' +
+    '尚未开始\n' +
+    '\n' +
+    '开始停车调角\n' +
+    '140.5°\n' +
+    'S1 俯仰目标 · 板端命令 94 档\n' +
+    '目标 −1°\n' +
+    '目标 +1°\n' +
+    '下发当前目标\n' +
+    '\n' +
+    '历史方向为目标减小抬头、增大低头，首次使用以实物验证。板端整数档会量化；没有实际位置反馈。每步人工点击，不连续扫角。\n' +
+    '\n' +
+    '4. 确认实车位置与画面，保存巡检点\n' +
+    '\n' +
+    '每个拍摄目标最多3个停车位，各自保存朝向和俯仰。某一位到不了就试下一位；三位都失败则记为未拍并继续后面的目标。保存后继续保持停车。支架异常时立即断开执行器电源。\n' +
+    '\n' +
+    '高级：手动遥控（首次录入优先使用单点导航）\n' +
+    '实车确认点位 · 照片保存在小车，可网页查看和下载 · 地图与点位按版本关联'
+}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 4000ms exceeded.
+    at /home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/test/browser.mjs:117:16 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2
+/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/test/test_console.cpp:222: Failure
+Expected equality of these values:
+  (((status) & 0xff00) >> 8)
+    Which is: 1
+  0
+测试证据保留："/tmp/carcar-inspection-console-ZOF5Bd"
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (8763 ms)
+[----------] 1 test from ConsoleTest (8763 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (8763 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+ 1 FAILED TEST

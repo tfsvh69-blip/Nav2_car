@@ -74,7 +74,7 @@ TEST(HttpTransport, RealUdpChannelSharesOwnerAndDropsOldTcpMotionAfterSwitch) {
     std::lock_guard<std::mutex> lock(mutex);owner=id;if(!body.empty())requests.push_back(json::parse(body));});
   NativeRtc client(18119);
   ASSERT_TRUE(client.wait([&]{return server.diagnostics().value("control_transport",std::string())=="webrtc_udp";}));
-  ASSERT_TRUE(client.probe->open);EXPECT_EQ(owner,client.session);
+  ASSERT_TRUE(client.wait([&]{return client.probe->open.load();}));EXPECT_EQ(owner,client.session);
   const json request{{"action","drive"},{"sequence",1},{"challenge","fresh"},{"x",1},{"yaw",0}};
   client.channel->send(request.dump());
   ASSERT_TRUE(client.wait([&]{std::lock_guard<std::mutex> lock(mutex);return std::any_of(requests.begin(),requests.end(),[](const json & v){return v.value("action","")=="drive";});}));
@@ -216,7 +216,8 @@ TEST(HttpTransport, InspectPrefixReachesUpstreamAndMissingUpstreamIsVisible) {
   asio::io_context io;
   HttpServer upstream("127.0.0.1",18119,[](const HttpRequest& request){
     const auto body=request.target=="/api/state"?std::string("{\"ok\":true}"):std::string("no");
-    return HttpResponse{200,"application/json",{body.begin(),body.end()},{}};
+    return HttpResponse{200,"application/json",{body.begin(),body.end()},
+      {{"X-Navigation-Layer","{\"source_frame\":\"odom\",\"sequence\":17}"},{"X-Private-Upstream","not-forwarded"}}};
   },[](const std::string&,const std::string&){});
   HttpServer server("127.0.0.1",18118,[](const HttpRequest&){return HttpResponse{};},[](const std::string&,const std::string&){});
   server.set_inspect_upstream("127.0.0.1",18119);
@@ -227,6 +228,8 @@ TEST(HttpTransport, InspectPrefixReachesUpstreamAndMissingUpstreamIsVisible) {
   beast::flat_buffer buffer;http::response<http::string_body> response;http::read(socket,buffer,response);
   EXPECT_EQ(response.result_int(),200);
   EXPECT_NE(response.body().find("ok"),std::string::npos);
+  EXPECT_EQ(response["X-Navigation-Layer"],"{\"source_frame\":\"odom\",\"sequence\":17}");
+  EXPECT_EQ(response.find("X-Private-Upstream"),response.end());
   socket.close();
   server.set_inspect_upstream("127.0.0.1",1);
   beast::tcp_stream missing(io);missing.connect({asio::ip::make_address("127.0.0.1"),18118});
@@ -257,4 +260,21 @@ TEST(HttpTransport, SilentOldControllerReleasesOwnershipForReconnect) {
   EXPECT_FALSE(server.diagnostics().value("rtc",nlohmann::json::object()).value("active",true));
   websocket::stream<tcp::socket> reconnect(io);reconnect.next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),18114));
   EXPECT_NO_THROW(reconnect.handshake("127.0.0.1:18114","/ws/control"));reconnect.next_layer().close();old.next_layer().close();
+}
+
+TEST(HttpTransport, InspectPrefixOnSameServerStaysLocalForHttpAndWebSocket) {
+  asio::io_context io;
+  HttpServer server("127.0.0.1",18117,[](const HttpRequest& request){
+    const std::string body=request.target=="/api/state"?"local-isolated-console":"wrong-path";
+    return HttpResponse{200,"text/plain",{body.begin(),body.end()},{}};
+  },[](const std::string&,const std::string&){});
+  server.set_inspect_upstream("127.0.0.1",18117);
+  beast::tcp_stream socket(io);socket.connect({asio::ip::make_address("127.0.0.1"),18117});
+  http::request<http::empty_body> request{http::verb::get,"/inspect/api/state",11};
+  request.set(http::field::host,"127.0.0.1:18117");http::write(socket,request);
+  beast::flat_buffer buffer;http::response<http::string_body> response;http::read(socket,buffer,response);
+  EXPECT_EQ(response.result_int(),200);EXPECT_EQ(response.body(),"local-isolated-console");
+  websocket::stream<tcp::socket> control(io);control.next_layer().connect({asio::ip::make_address("127.0.0.1"),18117});
+  EXPECT_NO_THROW(control.handshake("127.0.0.1:18117","/inspect/ws/control"));
+  control.next_layer().close();
 }

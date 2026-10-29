@@ -1,0 +1,17 @@
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-16-52-44-770077-xiaozhu-20302
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosmaster_node-1]: process started with pid [20323]
+[rosmaster_node-1] Traceback (most recent call last):
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node", line 33, in <module>
+[rosmaster_node-1]     sys.exit(load_entry_point('carcar-base', 'console_scripts', 'rosmaster_node')())
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 798, in main
+[rosmaster_node-1]     node = RosmasterNode()
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 184, in __init__
+[rosmaster_node-1]     raise RuntimeError('巡检控制板串口已占用或检查异常；先停止其他驱动')
+[rosmaster_node-1] RuntimeError: 巡检控制板串口已占用或检查异常；先停止其他驱动
+[ERROR] [rosmaster_node-1]: process has died [pid 20323, exit code 1, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node --ros-args -r __node:=rosmaster_base --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /tmp/launch_params_8sbazghg --params-file /tmp/launch_params_9mdy0q3t --params-file /tmp/launch_params_kl561k3z'].
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-16-55-39-282074-xiaozhu-21021
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosmaster_node-1]: process started with pid [21048]
+[rosmaster_node-1] [INFO] [1792572940.406286925] [rosmaster_base]: S1 已发送平视目标 140.5°（板端 94°）；无实际角度反馈，启动时相机会转动
+[rosmaster_node-1] [INFO] [1792572940.470205714] [rosmaster_base]: Rosmaster connected on /dev/myserial; car_type=1, holonomic=False, drive_mode=board_motion_pid, wheel_odometry_enabled=True

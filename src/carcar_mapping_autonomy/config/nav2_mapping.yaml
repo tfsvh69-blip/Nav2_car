@@ -1,0 +1,112 @@
+amcl:
+  ros__parameters:
+    scan_topic: /scan/filtered
+bt_navigator:
+  ros__parameters:
+    # 内部Action请求应答等待，单位毫秒；不是运动命令、数据新鲜度或停车超时。
+    default_server_timeout: 1000
+controller_server:
+  ros__parameters:
+    controller_frequency: 10.0
+    failure_tolerance: 0.5
+    progress_checker:
+      required_movement_radius: 0.05
+      movement_time_allowance: 30.0
+    FollowPath:
+      max_vel_x: 0.10
+      max_speed_xy: 0.10
+      max_vel_theta: 0.36
+      min_speed_xy: 0.0
+      min_speed_theta: 0.0
+      acc_lim_x: 0.20
+      acc_lim_theta: 0.80
+      decel_lim_x: -0.20
+      decel_lim_theta: -0.80
+      sim_time: 2.0
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      plugins: [obstacle_layer, inflation_layer]
+      publish_frequency: 5.0
+      obstacle_layer:
+        observation_sources: scan clearing_scan
+        scan:
+          topic: /scan/filtered
+          marking: true
+          clearing: false
+          inf_is_valid: false
+        clearing_scan:
+          topic: /scan
+          data_type: LaserScan
+          marking: false
+          clearing: true
+          inf_is_valid: false
+          raytrace_min_range: 0.10
+          raytrace_max_range: 3.0
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          min_obstacle_height: 0.0
+          max_obstacle_height: 2.0
+      inflation_layer:
+        enabled: true
+        inflation_radius: 0.20
+        cost_scaling_factor: 5.0
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 3.0
+      publish_frequency: 3.0
+      filters: [known_space_filter]
+      known_space_filter:
+        plugin: nav2_costmap_2d::KeepoutFilter
+        enabled: true
+        filter_info_topic: /mapping/known_space_filter_info
+      plugins: [static_layer, obstacle_layer, inflation_layer]
+      static_layer:
+        map_subscribe_transient_local: true
+        subscribe_to_updates: false
+      obstacle_layer:
+        observation_sources: scan clearing_scan
+        scan:
+          topic: /scan/filtered
+          marking: true
+          clearing: false
+          inf_is_valid: false
+        clearing_scan:
+          topic: /scan
+          data_type: LaserScan
+          marking: false
+          clearing: true
+          inf_is_valid: false
+          raytrace_min_range: 0.10
+          raytrace_max_range: 3.0
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          min_obstacle_height: 0.0
+          max_obstacle_height: 2.0
+      inflation_layer:
+        enabled: true
+        inflation_radius: 0.30
+        cost_scaling_factor: 3.0
+planner_server:
+  ros__parameters:
+    GridBased:
+      plugin: nav2_smac_planner/SmacPlanner2D
+      tolerance: 0.10
+      allow_unknown: false
+      max_planning_time: 1.0
+velocity_smoother:
+  ros__parameters:
+    feedback: OPEN_LOOP
+    # NAV-018-R12实验候选：同步缩放加速增量，避免起步时独立限幅放大转弯半径。
+    # 仅自动建图覆盖；保持原速度/加速度上限。真实Nav2加减速回归通过，实车收益待验。
+    scale_velocities: true
+    max_velocity: [0.10, 0.0, 0.36]
+    min_velocity: [0.0, 0.0, -0.36]
+    max_accel: [0.20, 0.0, 0.80]
+    max_decel: [-0.20, 0.0, -0.80]
+    velocity_timeout: 0.30
+lifecycle_manager_navigation:
+  ros__parameters:
+    autostart: true
+    node_names: [controller_server, velocity_smoother, planner_server, bt_navigator, collision_monitor]

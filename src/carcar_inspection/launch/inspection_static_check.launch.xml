@@ -1,0 +1,43 @@
+<launch>
+  <!-- 静止联调专用：不启动Nav2，底盘速度订阅隔离到无人发布的测试话题。 -->
+  <!-- 恢复正常导航前必须退出整个入口，不能把此速度重映射用于运动验收。 -->
+  <arg name="real_hardware" default="false"/>
+  <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
+  <arg name="port" default="8081"/>
+  <arg name="data_root" default="/home/jetson/.local/share/carcar_inspection"/>
+  <arg name="base_serial_port" default="/dev/myserial"/>
+  <arg name="lidar_serial_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
+  <group if="$(var real_hardware)">
+    <group scoped="true">
+      <set_remap from="/cmd_vel" to="/inspection/static_check/blocked_cmd_vel"/>
+      <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
+        <arg name="enable_inspection_interface" value="true"/>
+        <arg name="serial_port" value="$(var base_serial_port)"/>
+      </include>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml"/>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml">
+        <arg name="serial_port" value="$(var lidar_serial_port)"/>
+      </include>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_navigation)/launch/localization_experimental.launch.xml">
+        <arg name="map" value="$(var map)"/>
+        <arg name="use_rviz" value="false"/>
+      </include>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_camera)/launch/camera_mapping_rgb.launch.xml"/>
+    </group>
+  </group>
+  <include file="$(find-pkg-share carcar_inspection)/launch/console.launch.xml">
+    <arg name="port" value="$(var port)"/>
+    <arg name="data_root" value="$(var data_root)"/>
+    <arg name="enable_hardware" value="$(var real_hardware)"/>
+    <arg name="enable_navigation" value="false"/>
+    <arg name="enable_goal_navigation" value="false"/>
+  </include>
+</launch>

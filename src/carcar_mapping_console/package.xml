@@ -14,6 +14,7 @@
   <exec_depend>carcar_base</exec_depend><exec_depend>carcar_bringup</exec_depend>
   <exec_depend>carcar_camera</exec_depend><exec_depend>carcar_lidar</exec_depend>
   <exec_depend>carcar_navigation</exec_depend><exec_depend>launch_ros</exec_depend>
+  <exec_depend>carcar_mapping_autonomy</exec_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_test</test_depend>
   <test_depend>nodejs</test_depend>

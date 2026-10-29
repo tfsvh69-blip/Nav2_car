@@ -1,7 +1,9 @@
 """APP-001 isolated serial adapter tests; no real serial or actuator access."""
 import subprocess
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from geometry_msgs.msg import Twist
@@ -148,6 +150,37 @@ class InspectionServoReceiverTest(unittest.TestCase):
 
 class EnabledInspectionInterfaceTest(unittest.TestCase):
     """Enable real ROS services while replacing every hardware write."""
+
+    def test_real_fuser_allows_unused_path_before_stub_serial_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            serial_path = Path(directory) / 'serial-stub'
+            serial_path.touch()
+            rclpy.init(args=[
+                '--ros-args', '-p', 'enable_inspection_interface:=true',
+                '-p', f'serial_port:={serial_path}'])
+            node = None
+            try:
+                with patch('carcar_base.rosmaster_node.Rosmaster', BoardStub), \
+                        patch('carcar_base.rosmaster_node.fcntl.ioctl'):
+                    node = RosmasterNode()
+                self.assertTrue(hasattr(node, '_inspection_servo_service'))
+            finally:
+                if node is not None:
+                    node.destroy_node()
+                rclpy.shutdown()
+
+    def test_real_fuser_rejects_open_file_before_vendor_constructor(self):
+        with tempfile.NamedTemporaryFile() as serial_file:
+            rclpy.init(args=[
+                '--ros-args', '-p', 'enable_inspection_interface:=true',
+                '-p', f'serial_port:={serial_file.name}'])
+            try:
+                with patch('carcar_base.rosmaster_node.Rosmaster') as board:
+                    with self.assertRaisesRegex(RuntimeError, '串口已占用'):
+                        RosmasterNode()
+                    board.assert_not_called()
+            finally:
+                rclpy.shutdown()
 
     def test_explicit_parameter_creates_both_services(self):
         rclpy.init(args=[

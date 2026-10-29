@@ -1,0 +1,651 @@
+[INFO] [launch]: All log files can be found below /home/jetson/.ros/log/2026-10-21-19-28-37-118138-xiaozhu-13624
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [rosmaster_node-1]: process started with pid [13650]
+[INFO] [robot_state_publisher-2]: process started with pid [13652]
+[INFO] [sllidar_node-3]: process started with pid [13654]
+[INFO] [map_server-4]: process started with pid [13656]
+[INFO] [amcl-5]: process started with pid [13658]
+[INFO] [localization_monitor-6]: process started with pid [13660]
+[INFO] [lifecycle_manager-7]: process started with pid [13662]
+[INFO] [joint_state_publisher-8]: process started with pid [13668]
+[INFO] [realsense2_camera_node-9]: process started with pid [13700]
+[INFO] [depth_cloud_filter-10]: process started with pid [13723]
+[INFO] [depth_layer_supervisor-11]: process started with pid [13731]
+[INFO] [controller_server-12]: process started with pid [13733]
+[INFO] [velocity_smoother-13]: process started with pid [13736]
+[INFO] [navigation_motion_gate-14]: process started with pid [13742]
+[INFO] [planner_server-15]: process started with pid [13763]
+[INFO] [behavior_server-16]: process started with pid [13777]
+[INFO] [bt_navigator-17]: process started with pid [13781]
+[INFO] [lifecycle_manager-18]: process started with pid [13815]
+[INFO] [nav_event_logger-19]: process started with pid [13817]
+[INFO] [inspection_console-20]: process started with pid [13819]
+[sllidar_node-3] [INFO] [1792582118.331062119] [sllidar_node]: SLLidar running on ROS2 package SLLidar.ROS2 SDK Version:1.0.1, SLLIDAR SDK Version:2.1.0
+[localization_monitor-6] [INFO] [1792582118.371325155] [localization_monitor]: NAV-007 定位健康监控已启动：扫描新鲜度 <= 0.50s，端点命中率 >= 0.30，连续 5 次才放行
+[lifecycle_manager-7] [INFO] [1792582118.761726707] [lifecycle_manager_localization]: Creating
+[lifecycle_manager-7] [INFO] [1792582118.780048233] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[map_server-4] [INFO] [1792582118.787910017] [map_server]: 
+[map_server-4] 	map_server lifecycle node launched. 
+[map_server-4] 	Waiting on external lifecycle transitions to activate
+[map_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-4] [INFO] [1792582118.788190988] [map_server]: Creating
+[lifecycle_manager-18] [INFO] [1792582118.789143665] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-18] [INFO] [1792582118.793789130] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[amcl-5] [INFO] [1792582118.831139186] [amcl]: 
+[amcl-5] 	amcl lifecycle node launched. 
+[amcl-5] 	Waiting on external lifecycle transitions to activate
+[amcl-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[amcl-5] [INFO] [1792582118.833059934] [amcl]: Creating
+[controller_server-12] [INFO] [1792582118.836477701] [controller_server]: 
+[controller_server-12] 	controller_server lifecycle node launched. 
+[controller_server-12] 	Waiting on external lifecycle transitions to activate
+[controller_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-17] [INFO] [1792582118.870857752] [bt_navigator]: 
+[bt_navigator-17] 	bt_navigator lifecycle node launched. 
+[bt_navigator-17] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-17] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-17] [INFO] [1792582118.871295785] [bt_navigator]: Creating
+[realsense2_camera_node-9] [INFO] [1792582118.940907152] [camera.camera]: RealSense ROS v4.58.3
+[behavior_server-16] [INFO] [1792582118.941310848] [behavior_server]: 
+[behavior_server-16] 	behavior_server lifecycle node launched. 
+[behavior_server-16] 	Waiting on external lifecycle transitions to activate
+[behavior_server-16] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-12] [INFO] [1792582118.943190283] [controller_server]: Creating controller server
+[realsense2_camera_node-9] [INFO] [1792582118.953820656] [camera.camera]: Built with LibRealSense v2.58.4
+[realsense2_camera_node-9] [INFO] [1792582118.957237431] [camera.camera]: Running with LibRealSense v2.58.4
+[velocity_smoother-13] [INFO] [1792582119.034168480] [velocity_smoother]: 
+[velocity_smoother-13] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-13] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-13] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-15] [INFO] [1792582119.080612976] [planner_server]: 
+[planner_server-15] 	planner_server lifecycle node launched. 
+[planner_server-15] 	Waiting on external lifecycle transitions to activate
+[planner_server-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-15] [INFO] [1792582119.087939923] [planner_server]: Creating
+[depth_cloud_filter-10] [INFO] [1792582119.153379860] [depth_cloud_filter]: IPC=false, obstacle VoxelGrid=false, leaf=0.010m (CPU PCL)
+[planner_server-15] [INFO] [1792582119.211422192] [global_costmap.global_costmap]: 
+[planner_server-15] 	global_costmap lifecycle node launched. 
+[planner_server-15] 	Waiting on external lifecycle transitions to activate
+[planner_server-15] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-15] [INFO] [1792582119.215880481] [global_costmap.global_costmap]: Creating Costmap
+[robot_state_publisher-2] [INFO] [1792582119.227472428] [robot_state_publisher]: got segment base_footprint
+[robot_state_publisher-2] [INFO] [1792582119.237653151] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-2] [INFO] [1792582119.241065415] [robot_state_publisher]: got segment camera_link
+[robot_state_publisher-2] [INFO] [1792582119.243250973] [robot_state_publisher]: got segment camera_mount_link
+[robot_state_publisher-2] [INFO] [1792582119.245352849] [robot_state_publisher]: got segment camera_servo_left_foot_link
+[robot_state_publisher-2] [INFO] [1792582119.245487318] [robot_state_publisher]: got segment camera_servo_right_foot_link
+[robot_state_publisher-2] [INFO] [1792582119.245527576] [robot_state_publisher]: got segment camera_tilt_link
+[robot_state_publisher-2] [INFO] [1792582119.245547448] [robot_state_publisher]: got segment compute_link
+[robot_state_publisher-2] [INFO] [1792582119.245561241] [robot_state_publisher]: got segment front_left_wheel_link
+[robot_state_publisher-2] [INFO] [1792582119.245575033] [robot_state_publisher]: got segment front_right_wheel_link
+[robot_state_publisher-2] [INFO] [1792582119.245585946] [robot_state_publisher]: got segment imu_link
+[robot_state_publisher-2] [INFO] [1792582119.245600730] [robot_state_publisher]: got segment laser_frame
+[robot_state_publisher-2] [INFO] [1792582119.245701726] [robot_state_publisher]: got segment rear_left_wheel_link
+[robot_state_publisher-2] [INFO] [1792582119.246258164] [robot_state_publisher]: got segment rear_right_wheel_link
+[robot_state_publisher-2] [INFO] [1792582119.246376409] [robot_state_publisher]: got segment upper_body_link
+[controller_server-12] [INFO] [1792582119.261907969] [local_costmap.local_costmap]: 
+[controller_server-12] 	local_costmap lifecycle node launched. 
+[controller_server-12] 	Waiting on external lifecycle transitions to activate
+[controller_server-12] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-12] [INFO] [1792582119.265309351] [local_costmap.local_costmap]: Creating Costmap
+[nav_event_logger-19] [INFO] [1792582119.273515949] [nav_event_logger]: 【轻量日志模式】record_raw_bag=false，不创建原始 rosbag，专注记录事件、状态摘要与停车证据窗口。
+[nav_event_logger-19] [INFO] [1792582119.275601087] [nav_event_logger]: NAV-013 导航事件监控与会话录包系统已就绪: 会话目录=/home/jetson/luhao/my_nav_carcar/log/nav_sessions/20261021_192839_13817
+[realsense2_camera_node-9] [INFO] [1792582119.301801901] [camera.camera]: Device with serial number 213222078719 was found.
+[realsense2_camera_node-9] 
+[realsense2_camera_node-9] [INFO] [1792582119.302500265] [camera.camera]: Device with physical ID /sys/devices/platform/bus@0/3610000.usb/usb2/2-1/2-1.1/2-1.1:1.0/video4linux/video0 was found.
+[realsense2_camera_node-9] [INFO] [1792582119.302751763] [camera.camera]: Device with name RealSense D435 was found.
+[realsense2_camera_node-9] [INFO] [1792582119.303196677] [camera.camera]: Device with port number 2-1.1 was found.
+[realsense2_camera_node-9] [INFO] [1792582119.304047174] [camera.camera]: Device USB type: 3.2
+[realsense2_camera_node-9] [INFO] [1792582119.304493560] [camera.camera]: getParameters...
+[realsense2_camera_node-9] [INFO] [1792582119.324617206] [camera.camera]: Publish diagnostics every 1 seconds.
+[realsense2_camera_node-9] [INFO] [1792582119.337773439] [camera.camera]: JSON file is not provided
+[realsense2_camera_node-9] [INFO] [1792582119.337956902] [camera.camera]: Device Name: RealSense D435
+[realsense2_camera_node-9] [INFO] [1792582119.344537611] [camera.camera]: Device Serial No: 213222078719
+[realsense2_camera_node-9] [INFO] [1792582119.346191821] [camera.camera]: Device physical port: /sys/devices/platform/bus@0/3610000.usb/usb2/2-1/2-1.1/2-1.1:1.0/video4linux/video0
+[realsense2_camera_node-9] [INFO] [1792582119.347229942] [camera.camera]: Device FW version: 5.12.7.150
+[realsense2_camera_node-9] [INFO] [1792582119.347368635] [camera.camera]: Device Product ID: 0x0B07
+[realsense2_camera_node-9] [INFO] [1792582119.347419293] [camera.camera]: Sync Mode: Off
+[inspection_console-20] [INFO] [1792582119.365559020] [inspection_console]: APP-001 网页 http://127.0.0.1:8081，硬件控制=启用，自动导航=关闭；不自动启动硬件
+[joint_state_publisher-8] [INFO] [1792582119.445811032] [joint_state_publisher]: Waiting for robot_description to be published on the robot_description topic...
+[realsense2_camera_node-9] [WARN] [1792582119.446740125] [camera.camera]: re-enable the stream for the change to take effect.
+[realsense2_camera_node-9] [WARN] [1792582119.455858982] [camera.camera]: Could not set param: rgb_camera.power_line_frequency with 3 Range: [0, 2]: parameter 'rgb_camera.power_line_frequency' could not be set: Parameter {rgb_camera.power_line_frequency} doesn't comply with integer range.
+[realsense2_camera_node-9] [WARN] [1792582119.461460324] [camera.camera]: re-enable the stream for the change to take effect.
+[realsense2_camera_node-9] [INFO] [1792582119.490746925] [camera.camera]: Stopping Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792582119.491093690] [camera.camera]: Stopping Sensor: RGB Camera
+[realsense2_camera_node-9] [INFO] [1792582119.525856956] [camera.camera]: Starting Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792582119.573574143] [camera.camera]: Open profile: stream_type: Depth(0), Format: Z16, Width: 640, Height: 480, FPS: 6
+[realsense2_camera_node-9] [INFO] [1792582119.610644156] [camera.camera]: Starting Sensor: RGB Camera
+[realsense2_camera_node-9] [INFO] [1792582119.620593254] [camera.camera]: Open profile: stream_type: Color(0), Format: RGB8, Width: 640, Height: 480, FPS: 6
+[lifecycle_manager-7] [INFO] [1792582119.646533514] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-7] [INFO] [1792582119.649727369] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[map_server-4] [INFO] [1792582119.655005850] [map_server]: Configuring
+[map_server-4] [INFO] [1792582119.655244643] [map_io]: Loading yaml file: /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.yaml
+[map_server-4] [INFO] [1792582119.655730230] [map_io]: resolution: 0.05
+[map_server-4] [INFO] [1792582119.655752791] [map_io]: origin[0]: -6.12
+[map_server-4] [INFO] [1792582119.655760920] [map_io]: origin[1]: -8.84
+[map_server-4] [INFO] [1792582119.655766040] [map_io]: origin[2]: 0
+[map_server-4] [INFO] [1792582119.655771544] [map_io]: free_thresh: 0.25
+[map_server-4] [INFO] [1792582119.655776824] [map_io]: occupied_thresh: 0.65
+[map_server-4] [INFO] [1792582119.655784185] [map_io]: mode: trinary
+[map_server-4] [INFO] [1792582119.655791769] [map_io]: negate: 0
+[map_server-4] [INFO] [1792582119.656114246] [map_io]: Loading image_file: /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.pgm
+[realsense2_camera_node-9] [INFO] [1792582119.685294442] [camera.camera]: RealSense Node Is Up!
+[map_server-4] [INFO] [1792582119.697624179] [map_io]: Read map /home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions/20261019_223507_5ec7cfe3/map.pgm: 342 X 299 map @ 0.05 m/cell
+[lifecycle_manager-7] [INFO] [1792582119.767473667] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[amcl-5] [INFO] [1792582119.768755957] [amcl]: Configuring
+[amcl-5] [INFO] [1792582119.769050689] [amcl]: initTransforms
+[amcl-5] [INFO] [1792582119.832882050] [amcl]: initPubSub
+[lifecycle_manager-18] [INFO] [1792582119.894273059] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-18] [INFO] [1792582119.897547237] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-12] [INFO] [1792582119.902653967] [controller_server]: Configuring controller interface
+[controller_server-12] [INFO] [1792582119.903089953] [controller_server]: getting goal checker plugins..
+[controller_server-12] [INFO] [1792582119.903257831] [controller_server]: Controller frequency set to 10.0000Hz
+[controller_server-12] [INFO] [1792582119.903348331] [local_costmap.local_costmap]: Configuring
+[amcl-5] [INFO] [1792582119.906033205] [amcl]: Subscribed to map topic.
+[controller_server-12] [INFO] [1792582119.939589639] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[lifecycle_manager-7] [INFO] [1792582119.959278707] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[map_server-4] [INFO] [1792582119.959747782] [map_server]: Activating
+[map_server-4] [INFO] [1792582119.960266458] [map_server]: Creating bond (map_server) to lifecycle manager.
+[amcl-5] [INFO] [1792582119.961684242] [amcl]: Received a 342 X 299 map @ 0.050 m/pix
+[controller_server-12] [INFO] [1792582119.997288853] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-12] [INFO] [1792582120.036315040] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-12] [INFO] [1792582120.036722800] [local_costmap.local_costmap]: Using plugin "depth_stvl"
+[lifecycle_manager-7] [INFO] [1792582120.079332936] [lifecycle_manager_localization]: Server map_server connected with bond.
+[lifecycle_manager-7] [INFO] [1792582120.079760921] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[amcl-5] [INFO] [1792582120.080486550] [amcl]: Activating
+[amcl-5] [INFO] [1792582120.080653180] [amcl]: Creating bond (amcl) to lifecycle manager.
+[controller_server-12] [INFO] [1792582120.128386432] [local_costmap.local_costmap]: depth_stvl being initialized as SpatioTemporalVoxelLayer!
+[controller_server-12] [INFO] [1792582120.128563847] [local_costmap.local_costmap]: depth_stvl's global frame is odom.
+[controller_server-12] [INFO] [1792582120.137413989] [local_costmap.local_costmap]: depth_stvl loaded parameters from parameter server.
+[controller_server-12] [INFO] [1792582120.154445576] [local_costmap.local_costmap]: depth_stvl created underlying voxel grid.
+[controller_server-12] [INFO] [1792582120.163043229] [local_costmap.local_costmap]: Passthough filter activated.
+[controller_server-12] [INFO] [1792582120.173948269] [local_costmap.local_costmap]: Passthough filter activated.
+[controller_server-12] [INFO] [1792582120.178638343] [local_costmap.local_costmap]: depth_stvl initialization complete!
+[controller_server-12] [INFO] [1792582120.181472087] [local_costmap.local_costmap]: Initialized plugin "depth_stvl"
+[controller_server-12] [INFO] [1792582120.181717633] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-12] [INFO] [1792582120.182788043] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[lifecycle_manager-7] [INFO] [1792582120.201566483] [lifecycle_manager_localization]: Server amcl connected with bond.
+[lifecycle_manager-7] [INFO] [1792582120.201782716] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-7] [INFO] [1792582120.201845054] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m
+[controller_server-12] [INFO] [1792582120.204038485] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::PoseProgressChecker
+[controller_server-12] [INFO] [1792582120.206798274] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-12] [INFO] [1792582120.208536199] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-12] [INFO] [1792582120.213818233] [controller_server]: Created controller : FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[controller_server-12] [INFO] [1792582120.221325026] [controller_server]: Created internal controller for rotation shimming: FollowPath of type dwb_core::DWBLocalPlanner
+[controller_server-12] [INFO] [1792582120.224240086] [controller_server]: Setting transform_tolerance to 0.300000
+[rosmaster_node-1] Traceback (most recent call last):
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node", line 33, in <module>
+[rosmaster_node-1]     sys.exit(load_entry_point('carcar-base', 'console_scripts', 'rosmaster_node')())
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 800, in main
+[rosmaster_node-1]     node = RosmasterNode()
+[rosmaster_node-1]   File "/home/jetson/luhao/my_nav_carcar/build/carcar_base/carcar_base/rosmaster_node.py", line 186, in __init__
+[rosmaster_node-1]     raise RuntimeError('巡检控制板串口已占用或检查异常；先停止其他驱动')
+[rosmaster_node-1] RuntimeError: 巡检控制板串口已占用或检查异常；先停止其他驱动
+[controller_server-12] [INFO] [1792582120.249733096] [controller_server]: Using critic "RotateToGoal" (dwb_critics::RotateToGoalCritic)
+[controller_server-12] [INFO] [1792582120.251727479] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.252466612] [controller_server]: Using critic "Oscillation" (dwb_critics::OscillationCritic)
+[controller_server-12] [INFO] [1792582120.254242298] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.254722573] [controller_server]: Using critic "ObstacleFootprint" (dwb_critics::ObstacleFootprintCritic)
+[controller_server-12] [INFO] [1792582120.255419881] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.255834745] [controller_server]: Using critic "GoalAlign" (dwb_critics::GoalAlignCritic)
+[controller_server-12] [INFO] [1792582120.257011848] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.257481531] [controller_server]: Using critic "PathAlign" (dwb_critics::PathAlignCritic)
+[controller_server-12] [INFO] [1792582120.258587814] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.259039928] [controller_server]: Using critic "PathDist" (dwb_critics::PathDistCritic)
+[controller_server-12] [INFO] [1792582120.260019839] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.260491634] [controller_server]: Using critic "GoalDist" (dwb_critics::GoalDistCritic)
+[controller_server-12] [INFO] [1792582120.261381621] [controller_server]: Critic plugin initialized
+[controller_server-12] [INFO] [1792582120.261643264] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-18] [INFO] [1792582120.282927307] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-13] [INFO] [1792582120.283522626] [velocity_smoother]: Configuring velocity smoother
+[nav_event_logger-19] [19:28:40] [目标 无活动目标] [阶段: 待命 (1.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[lifecycle_manager-18] [INFO] [1792582120.292261341] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-15] [INFO] [1792582120.292896566] [planner_server]: Configuring
+[planner_server-15] [INFO] [1792582120.293206850] [global_costmap.global_costmap]: Configuring
+[planner_server-15] [INFO] [1792582120.320892171] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-15] [INFO] [1792582120.333708583] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-15] [INFO] [1792582120.339480268] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-15] [INFO] [1792582120.339883420] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-15] [INFO] [1792582120.346598278] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-15] [INFO] [1792582120.362786055] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-15] [INFO] [1792582120.362919276] [global_costmap.global_costmap]: Using plugin "depth_stvl"
+[planner_server-15] [INFO] [1792582120.427306435] [global_costmap.global_costmap]: depth_stvl being initialized as SpatioTemporalVoxelLayer!
+[planner_server-15] [INFO] [1792582120.427480074] [global_costmap.global_costmap]: depth_stvl's global frame is map.
+[planner_server-15] [INFO] [1792582120.429095210] [global_costmap.global_costmap]: depth_stvl loaded parameters from parameter server.
+[planner_server-15] [INFO] [1792582120.434730377] [global_costmap.global_costmap]: depth_stvl created underlying voxel grid.
+[planner_server-15] [INFO] [1792582120.437092583] [global_costmap.global_costmap]: Passthough filter activated.
+[planner_server-15] [INFO] [1792582120.447441761] [global_costmap.global_costmap]: Passthough filter activated.
+[planner_server-15] [INFO] [1792582120.452602414] [global_costmap.global_costmap]: depth_stvl initialization complete!
+[planner_server-15] [INFO] [1792582120.455341850] [global_costmap.global_costmap]: Initialized plugin "depth_stvl"
+[planner_server-15] [INFO] [1792582120.455445886] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-15] [INFO] [1792582120.457084447] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-15] [INFO] [1792582120.479324016] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 342 X 299 at 0.050000 m/pix
+[planner_server-15] [INFO] [1792582120.488115789] [planner_server]: Created global planner plugin GridBased of type nav2_smac_planner/SmacPlanner2D
+[planner_server-15] [INFO] [1792582120.488278099] [planner_server]: Configuring GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582120.492489050] [planner_server]: Configured plugin GridBased of type SmacPlanner2D with tolerance 0.10, maximum iterations 1000000, max on approach iterations 1000, and not allowing unknown traversal.
+[planner_server-15] [INFO] [1792582120.492632096] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-18] [INFO] [1792582120.510379807] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-16] [INFO] [1792582120.510920916] [behavior_server]: Configuring
+[ERROR] [rosmaster_node-1]: process has died [pid 13650, exit code 1, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_base/lib/carcar_base/rosmaster_node --ros-args -r __node:=rosmaster_base --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_base/share/carcar_base/config/base.yaml --params-file /tmp/launch_params_dcq021oa --params-file /tmp/launch_params_6qbg4uli --params-file /tmp/launch_params_yz018y4c'].
+[behavior_server-16] [INFO] [1792582120.537023230] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-16] [INFO] [1792582120.538739330] [behavior_server]: Configuring spin
+[behavior_server-16] [INFO] [1792582120.568182385] [behavior_server]: Creating behavior plugin backup of type carcar_navigation/ProtectedBackUp
+[behavior_server-16] [INFO] [1792582120.582970043] [behavior_server]: Configuring backup
+[behavior_server-16] [INFO] [1792582120.616557774] [behavior_server]: [ProtectedBackUp] 已配置防护倒车插件: 最大数据年龄=0.50s, 后方安全间隙=0.080m, 车体半长=0.140m
+[behavior_server-16] [INFO] [1792582120.617349325] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-16] [INFO] [1792582120.618893866] [behavior_server]: Configuring wait
+[lifecycle_manager-18] [INFO] [1792582120.636851090] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-17] [INFO] [1792582120.637414632] [bt_navigator]: Configuring
+[sllidar_node-3] [ERROR] [1792582120.845228146] [sllidar_node]: Error, operation time out. SL_RESULT_OPERATION_TIMEOUT! 
+[lifecycle_manager-18] [INFO] [1792582120.898461487] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-12] [INFO] [1792582120.900576995] [controller_server]: Activating
+[controller_server-12] [INFO] [1792582120.900723785] [local_costmap.local_costmap]: Activating
+[controller_server-12] [INFO] [1792582120.900782635] [local_costmap.local_costmap]: Checking transform
+[controller_server-12] [INFO] [1792582120.900848814] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[ERROR] [sllidar_node-3]: process has died [pid 13654, exit code 255, cmd '/home/jetson/luhao/my_nav_carcar/install/sllidar_ros2/lib/sllidar_ros2/sllidar_node --ros-args -r __node:=sllidar_node --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_lidar/share/carcar_lidar/config/rplidar_a1.yaml --params-file /tmp/launch_params_alhwvzf1 --params-file /tmp/launch_params_5l4py4a7 --params-file /tmp/launch_params_p9umw49a --params-file /tmp/launch_params_sd11xni9 --params-file /tmp/launch_params_sbkxcix5 --params-file /tmp/launch_params_u5vms9ik --params-file /tmp/launch_params_2yk8inpc'].
+[nav_event_logger-19] [19:28:41] [目标 无活动目标] [阶段: 待命 (2.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582121.400929586] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582121.900928306] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:42] [目标 无活动目标] [阶段: 待命 (3.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582122.400928528] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[realsense2_camera_node-9] [WARN] [1792582122.415180005] [camera.camera]: No matching stream for texture 'Process - Any'. Set 'pointcloud.stream_profile' to 'depth(1)', 'color(2)', or 'infrared(3)' to enable textured pointclouds.
+[controller_server-12] [INFO] [1792582122.900917709] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:43] [目标 无活动目标] [阶段: 待命 (4.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582123.400930506] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582123.900923012] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:44] [目标 无活动目标] [阶段: 待命 (5.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582124.400942526] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582124.900956311] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:45] [目标 无活动目标] [阶段: 待命 (6.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582125.400946061] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582125.900945763] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:46] [目标 无活动目标] [阶段: 待命 (7.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582126.400943031] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582126.900933642] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:47] [目标 无活动目标] [阶段: 待命 (8.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582127.400932028] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582127.900938989] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:48] [目标 无活动目标] [阶段: 待命 (9.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582128.400938684] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582128.900934986] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:49] [目标 无活动目标] [阶段: 待命 (10.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582129.400929334] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582129.900934595] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:50] [目标 无活动目标] [阶段: 待命 (11.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582130.400912940] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582130.900928694] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:51] [目标 无活动目标] [阶段: 待命 (12.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582131.400929469] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582131.900934532] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:52] [目标 无活动目标] [阶段: 待命 (13.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582132.400930921] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582132.900913805] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:53] [目标 无活动目标] [阶段: 待命 (14.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582133.400923983] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582133.900907633] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:54] [目标 无活动目标] [阶段: 待命 (15.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582134.400923921] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582134.900918768] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:55] [目标 无活动目标] [阶段: 待命 (16.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582135.400927598] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582135.900918794] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:56] [目标 无活动目标] [阶段: 待命 (17.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582136.400929894] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582136.900942721] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:57] [目标 无活动目标] [阶段: 待命 (18.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582137.400923000] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582137.900928752] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:58] [目标 无活动目标] [阶段: 待命 (19.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582138.400916390] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582138.900909883] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:28:59] [目标 无活动目标] [阶段: 待命 (20.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582139.400928495] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582139.900911074] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:00] [目标 无活动目标] [阶段: 待命 (21.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582140.400929267] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582140.900928452] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:01] [目标 无活动目标] [阶段: 待命 (22.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582141.400929810] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582141.900926048] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:02] [目标 无活动目标] [阶段: 待命 (23.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582142.400929964] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582142.900929048] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:03] [目标 无活动目标] [阶段: 待命 (24.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582143.400911681] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582143.900920746] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:04] [目标 无活动目标] [阶段: 待命 (25.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582144.400918449] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582144.900960058] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:05] [目标 无活动目标] [阶段: 待命 (26.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582145.400928317] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582145.900929569] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:06] [目标 无活动目标] [阶段: 待命 (27.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582146.400893858] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582146.900920901] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:07] [目标 无活动目标] [阶段: 待命 (28.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582147.400925125] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582147.900924580] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:08] [目标 无活动目标] [阶段: 待命 (29.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582148.400921954] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582148.900924895] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:09] [目标 无活动目标] [阶段: 待命 (30.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582149.400916697] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582149.900887699] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:10] [目标 无活动目标] [阶段: 待命 (31.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582150.400921037] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582150.900944774] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:11] [目标 无活动目标] [阶段: 待命 (32.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582151.400879641] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582151.900932017] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:12] [目标 无活动目标] [阶段: 待命 (33.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582152.400935685] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582152.900932184] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:13] [目标 无活动目标] [阶段: 待命 (34.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582153.400917353] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582153.900903065] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:14] [目标 无活动目标] [阶段: 待命 (35.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582154.400932233] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582154.900929175] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:15] [目标 无活动目标] [阶段: 待命 (36.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582155.400929092] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582155.900929232] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:16] [目标 无活动目标] [阶段: 待命 (37.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582156.400934842] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582156.900935908] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:17] [目标 无活动目标] [阶段: 待命 (38.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582157.400932460] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582157.900921811] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:18] [目标 无活动目标] [阶段: 待命 (39.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582158.400928440] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582158.900935261] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:19] [目标 无活动目标] [阶段: 待命 (40.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582159.400926208] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582159.900925922] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:20] [目标 无活动目标] [阶段: 待命 (41.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582160.400929219] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582160.900930627] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:21] [目标 无活动目标] [阶段: 待命 (42.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582161.400926402] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582161.900929439] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:22] [目标 无活动目标] [阶段: 待命 (43.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582162.400928347] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582162.900934775] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:23] [目标 无活动目标] [阶段: 待命 (44.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582163.400924080] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582163.900905064] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:24] [目标 无活动目标] [阶段: 待命 (45.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582164.400926592] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582164.900930743] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:25] [目标 无活动目标] [阶段: 待命 (46.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582165.400924268] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582165.900929216] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:26] [目标 无活动目标] [阶段: 待命 (47.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582166.400926611] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582166.900922724] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:27] [目标 无活动目标] [阶段: 待命 (48.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582167.400922933] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582167.900929989] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:28] [目标 无活动目标] [阶段: 待命 (49.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582168.400928498] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582168.900925119] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:29] [目标 无活动目标] [阶段: 待命 (50.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582169.400921291] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582169.900921686] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:30] [目标 无活动目标] [阶段: 待命 (51.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582170.400925695] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582170.900928360] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:31] [目标 无活动目标] [阶段: 待命 (52.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582171.400924014] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582171.900925845] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:32] [目标 无活动目标] [阶段: 待命 (53.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582172.400927801] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582172.900926845] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:33] [目标 无活动目标] [阶段: 待命 (54.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582173.400923551] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582173.900929985] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:34] [目标 无活动目标] [阶段: 待命 (55.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582174.400928769] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582174.900925408] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:35] [目标 无活动目标] [阶段: 待命 (56.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582175.400932862] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582175.900933563] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:36] [目标 无活动目标] [阶段: 待命 (57.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582176.400933815] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582176.900929393] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:37] [目标 无活动目标] [阶段: 待命 (58.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582177.400940619] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582177.900932291] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:38] [目标 无活动目标] [阶段: 待命 (59.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582178.400935034] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582178.900931568] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:39] [目标 无活动目标] [阶段: 待命 (60.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582179.400934084] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582179.900933496] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:40] [目标 无活动目标] [阶段: 待命 (61.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582180.400930282] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582180.900922363] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:41] [目标 无活动目标] [阶段: 待命 (62.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582181.400954060] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582181.900929627] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:42] [目标 无活动目标] [阶段: 待命 (63.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582182.400928680] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582182.900933654] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:43] [目标 无活动目标] [阶段: 待命 (64.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582183.400930977] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582183.900920427] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:44] [目标 无活动目标] [阶段: 待命 (65.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582184.400928660] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582184.900919357] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:45] [目标 无活动目标] [阶段: 待命 (66.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582185.400882754] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582185.900926186] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:46] [目标 无活动目标] [阶段: 待命 (67.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582186.400926062] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582186.900920562] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:47] [目标 无活动目标] [阶段: 待命 (68.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582187.400977367] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582187.900924374] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:48] [目标 无活动目标] [阶段: 待命 (69.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582188.400927255] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582188.900927062] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:49] [目标 无活动目标] [阶段: 待命 (70.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582189.400898035] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582189.900927281] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:50] [目标 无活动目标] [阶段: 待命 (71.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582190.400922636] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582190.900918183] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:51] [目标 无活动目标] [阶段: 待命 (72.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582191.400925665] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582191.900928442] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:52] [目标 无活动目标] [阶段: 待命 (73.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582192.400926769] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582192.900925543] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:53] [目标 无活动目标] [阶段: 待命 (74.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582193.400933276] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582193.900926096] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:54] [目标 无活动目标] [阶段: 待命 (75.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582194.400885633] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582194.900926069] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:55] [目标 无活动目标] [阶段: 待命 (76.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582195.400929542] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582195.900922549] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:56] [目标 无活动目标] [阶段: 待命 (77.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582196.400927620] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582196.900930578] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:57] [目标 无活动目标] [阶段: 待命 (78.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582197.400933822] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582197.900929929] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:58] [目标 无活动目标] [阶段: 待命 (79.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582198.400926963] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582198.900929532] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:29:59] [目标 无活动目标] [阶段: 待命 (80.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582199.400929764] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582199.900928619] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:00] [目标 无活动目标] [阶段: 待命 (81.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582200.400925712] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582200.900933045] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:01] [目标 无活动目标] [阶段: 待命 (82.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582201.400932760] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582201.900936987] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:02] [目标 无活动目标] [阶段: 待命 (83.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582202.400946492] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582202.900934301] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:03] [目标 无活动目标] [阶段: 待命 (84.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582203.400935931] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582203.900920761] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:04] [目标 无活动目标] [阶段: 待命 (85.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582204.400931062] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582204.900931090] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:05] [目标 无活动目标] [阶段: 待命 (86.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582205.400930125] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582205.900937319] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:06] [目标 无活动目标] [阶段: 待命 (87.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582206.400931743] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582206.900931063] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:07] [目标 无活动目标] [阶段: 待命 (88.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582207.400935021] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582207.900934467] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:08] [目标 无活动目标] [阶段: 待命 (89.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582208.400930935] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582208.900931946] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:09] [目标 无活动目标] [阶段: 待命 (90.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582209.400930108] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582209.900931821] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:10] [目标 无活动目标] [阶段: 待命 (91.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582210.400925341] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582210.900925708] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:11] [目标 无活动目标] [阶段: 待命 (92.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582211.400930137] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582211.900929446] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:12] [目标 无活动目标] [阶段: 待命 (93.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[controller_server-12] [INFO] [1792582212.400928402] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[controller_server-12] [INFO] [1792582212.900930941] [local_costmap.local_costmap]: Timed out waiting for transform from base_footprint to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[nav_event_logger-19] [19:30:13] [目标 无活动目标] [阶段: 待命 (94.2s)] [剩余: 缺失] [指令: nav(0.00,0.00) cmd(0.00,0.00)(过期)] [里程计: 缺失] [定位: 定位未就绪] [线索: 运行中] [会话日志: 记录中] [原始 rosbag: 未启用]
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [inspection_console-20]: sending signal 'SIGINT' to process[inspection_console-20]
+[INFO] [nav_event_logger-19]: sending signal 'SIGINT' to process[nav_event_logger-19]
+[INFO] [lifecycle_manager-18]: sending signal 'SIGINT' to process[lifecycle_manager-18]
+[INFO] [bt_navigator-17]: sending signal 'SIGINT' to process[bt_navigator-17]
+[INFO] [behavior_server-16]: sending signal 'SIGINT' to process[behavior_server-16]
+[INFO] [planner_server-15]: sending signal 'SIGINT' to process[planner_server-15]
+[INFO] [navigation_motion_gate-14]: sending signal 'SIGINT' to process[navigation_motion_gate-14]
+[INFO] [velocity_smoother-13]: sending signal 'SIGINT' to process[velocity_smoother-13]
+[INFO] [controller_server-12]: sending signal 'SIGINT' to process[controller_server-12]
+[INFO] [depth_layer_supervisor-11]: sending signal 'SIGINT' to process[depth_layer_supervisor-11]
+[ERROR] [navigation_motion_gate-14]: process has died [pid 13742, exit code -2, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/carcar_navigation/navigation_motion_gate --ros-args -r __node:=navigation_motion_gate --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_depth_stvl_experimental.yaml --params-file /tmp/launch_params_70e5ect_ --params-file /tmp/launch_params_bog8uox6 -r /cmd_vel:=/inspection/navigation/cmd_vel'].
+[INFO] [depth_cloud_filter-10]: sending signal 'SIGINT' to process[depth_cloud_filter-10]
+[ERROR] [nav_event_logger-19]: process has died [pid 13817, exit code -2, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/carcar_navigation/nav_event_logger --ros-args -r __node:=nav_event_logger --params-file /tmp/launch_params_5uwczwqf --params-file /tmp/launch_params_l2a3ote1 --params-file /tmp/launch_params_0zd3qs4g --params-file /tmp/launch_params_kxx_uz52 --params-file /tmp/launch_params_0c0kzj3a --params-file /tmp/launch_params_v_7crwyj --params-file /tmp/launch_params_6dh_t_dp --params-file /tmp/launch_params_tou_5d5o --params-file /tmp/launch_params_rn3cmn3i --params-file /tmp/launch_params_dakyc7qm --params-file /tmp/launch_params_ndgadskv --params-file /tmp/launch_params_n060o9rb --params-file /tmp/launch_params_wqcs78nx -r /cmd_vel:=/inspection/navigation/cmd_vel'].
+[ERROR] [velocity_smoother-13]: process has died [pid 13736, exit code -2, cmd '/opt/ros/humble/lib/nav2_velocity_smoother/velocity_smoother --ros-args -r __node:=velocity_smoother --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_depth_stvl_experimental.yaml --params-file /tmp/launch_params_zeuodl3s --params-file /tmp/launch_params_9_2646gb -r /cmd_vel:=/inspection/navigation/cmd_vel -r cmd_vel:=/cmd_vel_nav -r cmd_vel_smoothed:=/cmd_vel_smoothed_raw'].
+[INFO] [realsense2_camera_node-9]: sending signal 'SIGINT' to process[realsense2_camera_node-9]
+[INFO] [joint_state_publisher-8]: sending signal 'SIGINT' to process[joint_state_publisher-8]
+[ERROR] [controller_server-12]: process has died [pid 13733, exit code -2, cmd '/opt/ros/humble/lib/nav2_controller/controller_server --ros-args -r __node:=controller_server --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_depth_stvl_experimental.yaml --params-file /tmp/launch_params_cijbhttz --params-file /tmp/launch_params_zfqs3isi -r /cmd_vel:=/inspection/navigation/cmd_vel -r cmd_vel:=/cmd_vel_nav'].
+[INFO] [lifecycle_manager-7]: sending signal 'SIGINT' to process[lifecycle_manager-7]
+[INFO] [localization_monitor-6]: sending signal 'SIGINT' to process[localization_monitor-6]
+[ERROR] [lifecycle_manager-7]: process has died [pid 13662, exit code -2, cmd '/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args -r __node:=lifecycle_manager_localization --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /tmp/launch_params_aebyhc0x'].
+[INFO] [amcl-5]: sending signal 'SIGINT' to process[amcl-5]
+[INFO] [map_server-4]: sending signal 'SIGINT' to process[map_server-4]
+[ERROR] [localization_monitor-6]: process has died [pid 13660, exit code -2, cmd '/home/jetson/luhao/my_nav_carcar/install/carcar_navigation/lib/carcar_navigation/localization_monitor --ros-args -r __node:=localization_monitor --params-file /tmp/launch_params_fo0c9d3k --params-file /tmp/launch_params_vznodx1i'].
+[INFO] [robot_state_publisher-2]: sending signal 'SIGINT' to process[robot_state_publisher-2]
+[robot_state_publisher-2] [INFO] [1792582213.349748048] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-4] [INFO] [1792582213.349772241] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-4] [INFO] [1792582213.349906871] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-4] [INFO] [1792582213.350122335] [map_server]: Deactivating
+[map_server-4] [INFO] [1792582213.350174177] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[map_server-4] [INFO] [1792582213.363203200] [map_server]: Cleaning up
+[map_server-4] [INFO] [1792582213.363358086] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[amcl-5] [INFO] [1792582213.349766225] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[amcl-5] [INFO] [1792582213.349906743] [amcl]: Running Nav2 LifecycleNode rcl preshutdown (amcl)
+[amcl-5] [INFO] [1792582213.350121343] [amcl]: Deactivating
+[amcl-5] [INFO] [1792582213.350174241] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[amcl-5] [INFO] [1792582213.360671836] [amcl]: Cleaning up
+[localization_monitor-6] [INFO] [1792582213.350070269] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ERROR] [map_server-4]: process has died [pid 13656, exit code -2, cmd '/opt/ros/humble/lib/nav2_map_server/map_server --ros-args -r __node:=map_server --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /tmp/launch_params_3s9n1aae --params-file /tmp/launch_params_qq06dy78'].
+[depth_cloud_filter-10] [INFO] [1792582213.350495438] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-18] [INFO] [1792582213.350644019] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-18] [INFO] [1792582213.350790905] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[ERROR] [robot_state_publisher-2]: process has died [pid 13652, exit code -2, cmd '/opt/ros/humble/lib/robot_state_publisher/robot_state_publisher --ros-args -r __node:=robot_state_publisher --params-file /tmp/launch_params_32f122u5 --params-file /tmp/launch_params_qnepmg1p'].
+[lifecycle_manager-7] [INFO] [1792582213.351046755] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-7] [INFO] [1792582213.351195753] [lifecycle_manager_localization]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_localization)
+[lifecycle_manager-7] [INFO] [1792582213.351321230] [lifecycle_manager_localization]: [34m[1mTerminating bond timer...[0m[0m
+[controller_server-12] [INFO] [1792582213.351152839] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-12] [INFO] [1792582213.351286669] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-12] [INFO] [1792582213.351421362] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-12] [INFO] [1792582213.352669475] [local_costmap.local_costmap]: start
+[controller_server-12] [ERROR] [1792582213.353062962] [local_costmap.local_costmap]: Caught exception in callback for transition 13
+[controller_server-12] [ERROR] [1792582213.353081363] [local_costmap.local_costmap]: Original error: could not create subscription: rcl node's context is invalid, at ./src/rcl/node.c:428
+[controller_server-12] [ERROR] [1792582213.353110612] [local_costmap.local_costmap]: Failed to finish transition 3. Current state is now: errorprocessing (Could not publish transition: publisher's context is invalid, at ./src/rcl/publisher.c:389, at ./src/rcl_lifecycle.c:368)
+[controller_server-12] [INFO] [1792582213.353124501] [controller_server]: Activating controller: FollowPath of type nav2_rotation_shim_controller::RotationShimController
+[controller_server-12] [INFO] [1792582213.353194167] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[controller_server-12] [ERROR] [1792582213.354731604] [controller_server]: Caught exception in callback for transition 13
+[controller_server-12] [ERROR] [1792582213.354757141] [controller_server]: Original error: could not create publisher: rcl node's context is invalid, at ./src/rcl/node.c:428
+[controller_server-12] [ERROR] [1792582213.354774517] [controller_server]: Failed to finish transition 3. Current state is now: errorprocessing (Could not publish transition: publisher's context is invalid, at ./src/rcl/publisher.c:389, at ./src/rcl_lifecycle.c:368)
+[realsense2_camera_node-9] [INFO] [1792582213.351260012] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[realsense2_camera_node-9] [INFO] [1792582213.352325077] [camera.camera]: Stop Sensor: Depth Module
+[realsense2_camera_node-9] [INFO] [1792582213.352383832] [camera.camera]: Close Sensor. 
+[realsense2_camera_node-9] [INFO] [1792582213.358239837] [camera.camera]: Close Sensor - Done. 
+[realsense2_camera_node-9] [INFO] [1792582213.358298367] [camera.camera]: Stop Sensor: RGB Camera
+[realsense2_camera_node-9] [INFO] [1792582213.358326305] [camera.camera]: Close Sensor. 
+[behavior_server-16] [INFO] [1792582213.351672284] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-16] [INFO] [1792582213.351836354] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-16] [INFO] [1792582213.351971623] [behavior_server]: Cleaning up
+[behavior_server-16] [INFO] [1792582213.356145515] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[bt_navigator-17] [INFO] [1792582213.351955271] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-17] [INFO] [1792582213.352094828] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-17] [INFO] [1792582213.352255987] [bt_navigator]: Cleaning up
+[velocity_smoother-13] [INFO] [1792582213.353238297] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-13] [INFO] [1792582213.353436897] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-13] [INFO] [1792582213.353597447] [velocity_smoother]: Cleaning up
+[velocity_smoother-13] [INFO] [1792582213.353672106] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[velocity_smoother-13] [INFO] [1792582213.357240950] [velocity_smoother]: Destroying
+[ERROR] [amcl-5]: process has died [pid 13658, exit code -2, cmd '/opt/ros/humble/lib/nav2_amcl/amcl --ros-args -r __node:=amcl --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2.yaml --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_navigation/share/carcar_navigation/config/nav2_experimental.yaml --params-file /tmp/launch_params_27c_haky'].
+[inspection_console-20] [INFO] [1792582213.354002967] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[depth_layer_supervisor-11] [INFO] [1792582213.354615023] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582213.356552763] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582213.356719362] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-15] [INFO] [1792582213.367902168] [planner_server]: Cleaning up
+[navigation_motion_gate-14] [INFO] [1792582213.360662428] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[nav_event_logger-19] [INFO] [1792582213.361587104] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[nav_event_logger-19] [会话日志: 已结束] [原始 rosbag: 未启用] 20261021_192839_13817
+[map_server-4] [INFO] [1792582213.388313304] [map_server]: Destroying
+[amcl-5] [INFO] [1792582213.396423893] [amcl]: Destroying bond (amcl) to lifecycle manager.
+[amcl-5] [INFO] [1792582213.405867911] [amcl]: Destroying
+[behavior_server-16] [INFO] [1792582213.410587808] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-7] [INFO] [1792582213.425582284] [lifecycle_manager_localization]: Destroying lifecycle_manager_localization
+[depth_layer_supervisor-11] [INFO] [1792582213.443356196] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582213.449041507] [global_costmap.global_costmap]: Cleaning up
+[bt_navigator-17] [INFO] [1792582213.455068879] [bt_navigator]: Completed Cleaning up
+[bt_navigator-17] [INFO] [1792582213.455410973] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[depth_cloud_filter-10] [INFO] [1792582213.456012052] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-17] [INFO] [1792582213.460470979] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[inspection_console-20] [INFO] [1792582213.462508435] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-16] [INFO] [1792582213.466707799] [behavior_server]: Destroying
+[realsense2_camera_node-9] [INFO] [1792582213.476238541] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582213.477210675] [planner_server]: Cleaning up plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582213.477658533] [planner_server]: Destroying plugin GridBased of type SmacPlanner2D
+[planner_server-15] [INFO] [1792582213.488208098] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-15] [INFO] [1792582213.496940312] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-15] [INFO] [1792582213.497918975] [global_costmap.global_costmap]: Destroying
+[joint_state_publisher-8] Traceback (most recent call last):
+[joint_state_publisher-8]   File "/opt/ros/humble/lib/joint_state_publisher/joint_state_publisher", line 33, in <module>
+[joint_state_publisher-8]     sys.exit(load_entry_point('joint-state-publisher==2.4.0', 'console_scripts', 'joint_state_publisher')())
+[joint_state_publisher-8]   File "/opt/ros/humble/lib/python3.10/site-packages/joint_state_publisher/joint_state_publisher.py", line 470, in main
+[joint_state_publisher-8]     jsp.destroy_node()
+[joint_state_publisher-8]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/node.py", line 1696, in destroy_node
+[joint_state_publisher-8]     self.__node.destroy_when_not_in_use()
+[joint_state_publisher-8] KeyboardInterrupt
+[bt_navigator-17] [INFO] [1792582213.510455146] [bt_navigator]: Destroying
+[planner_server-15] [INFO] [1792582213.516349617] [planner_server]: Destroying
+[ERROR] [joint_state_publisher-8]: process has died [pid 13668, exit code -2, cmd '/opt/ros/humble/lib/joint_state_publisher/joint_state_publisher --ros-args -r __node:=joint_state_publisher --params-file /tmp/launch_params_m0d6d0p8'].
+[INFO] [depth_cloud_filter-10]: process has finished cleanly [pid 13723]
+[INFO] [depth_layer_supervisor-11]: process has finished cleanly [pid 13731]
+[INFO] [behavior_server-16]: process has finished cleanly [pid 13777]
+[INFO] [planner_server-15]: process has finished cleanly [pid 13763]
+[INFO] [bt_navigator-17]: process has finished cleanly [pid 13781]
+[INFO] [inspection_console-20]: process has finished cleanly [pid 13819]
+[realsense2_camera_node-9] [INFO] [1792582214.201761850] [camera.camera]: Close Sensor - Done. 
+[lifecycle_manager-18] [ERROR] [1792582215.366101325] [lifecycle_manager_navigation]: Failed to change state for node: controller_server. Exception: controller_server/get_state service client: async_send_request failed.
+[lifecycle_manager-18] [ERROR] [1792582215.366425754] [lifecycle_manager_navigation]: Failed to bring up all requested nodes. Aborting bringup.
+[lifecycle_manager-18] [INFO] [1792582215.379228559] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-18] [INFO] [1792582215.379571517] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[INFO] [lifecycle_manager-18]: process has finished cleanly [pid 13815]
+[INFO] [realsense2_camera_node-9]: process has finished cleanly [pid 13700]

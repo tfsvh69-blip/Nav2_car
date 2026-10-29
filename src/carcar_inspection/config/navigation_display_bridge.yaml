@@ -1,0 +1,48 @@
+# 复用本机domain_bridge 0.5.0（Apache-2.0），域31→32单向显示。
+# 不桥接速度、初始定位、目标、服务或动作；不转发原始相机大点云。
+name: inspection_navigation_display
+from_domain: 31
+to_domain: 32
+topics:
+  /map:
+    type: nav_msgs/msg/OccupancyGrid
+    qos: &latched {reliability: reliable, durability: transient_local, depth: 1}
+  /global_costmap/costmap:
+    type: nav_msgs/msg/OccupancyGrid
+    qos: *latched
+  /local_costmap/costmap:
+    type: nav_msgs/msg/OccupancyGrid
+    qos: *latched
+  /tf:
+    type: tf2_msgs/msg/TFMessage
+    qos: &dynamic {reliability: reliable, durability: volatile, depth: 10}
+  /tf_static:
+    type: tf2_msgs/msg/TFMessage
+    qos: {reliability: reliable, durability: transient_local, depth: 100}
+  /robot_description:
+    type: std_msgs/msg/String
+    qos: *latched
+  /scan:
+    type: sensor_msgs/msg/LaserScan
+    qos: &sensor {reliability: best_effort, durability: volatile, depth: 1}
+  /wheel/odometry:
+    type: nav_msgs/msg/Odometry
+    qos: *sensor
+  /amcl_pose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    qos: *dynamic
+  /plan:
+    type: nav_msgs/msg/Path
+    qos: *dynamic
+  /local_plan:
+    type: nav_msgs/msg/Path
+    qos: *dynamic
+  /local_costmap/published_footprint:
+    type: geometry_msgs/msg/PolygonStamped
+    qos: *dynamic
+  /localization_monitor/ready:
+    type: std_msgs/msg/Bool
+    qos: *dynamic
+  /navigation/perception_motion_allowed:
+    type: std_msgs/msg/Bool
+    qos: *latched

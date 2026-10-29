@@ -2,6 +2,7 @@
 
 import fcntl
 import math
+import os
 import secrets
 import subprocess
 import termios
@@ -175,7 +176,8 @@ class RosmasterNode(Node):
         if inspection_interface:
             try:
                 check = subprocess.run(
-                    ['fuser', '--', self._serial_port],
+                    # PSmisc 23.4 rejects '--'; absolute paths are not options.
+                    ['fuser', os.path.abspath(self._serial_port)],
                     capture_output=True, text=True, timeout=1.0, check=False)
             except (OSError, subprocess.SubprocessError) as exc:
                 raise RuntimeError('巡检串口占用检查失败，拒绝启动') from exc
@@ -254,7 +256,8 @@ class RosmasterNode(Node):
             TransformBroadcaster(self) if self._publish_odom_tf else None
         )
 
-        now_ns = self.get_clock().now().nanoseconds
+        # NAV-018-R16：用户授权局部修复旧Python驱动；时长只用单调时间。
+        now_ns = time.monotonic_ns()
         self._last_command_ns = now_ns
         self._last_update_ns = now_ns
         self._watchdog_stopped = True
@@ -267,6 +270,10 @@ class RosmasterNode(Node):
         self._previous_encoder_ns = None
         self._previous_odom_encoders = None
         self._previous_odom_ns = None
+        self._wheel_velocity_recovery_samples = 0
+        self._wheel_sample_interval_s = 0.0
+        self._driver_update_period_s = 0.0
+        self._driver_sample_latency_ms = 0.0
         self._wheel_odom_status = (
             'waiting_for_encoder_baseline'
             if self._wheel_odometry_enabled else 'disabled_pending_calibration'
@@ -521,14 +528,15 @@ class RosmasterNode(Node):
             if self._inspection_hold_owner:
                 velocity_x = velocity_y = angular_z = 0.0
             self._driver.set_car_motion(velocity_x, velocity_y, angular_z)
-        self._last_command_ns = self.get_clock().now().nanoseconds
+        self._last_command_ns = time.monotonic_ns()
         self._watchdog_stopped = is_zero_motion_command(
             velocity_x, velocity_y, angular_z
         )
 
     def _update(self) -> None:
-        now = self.get_clock().now()
-        now_ns = now.nanoseconds
+        now_ns = time.monotonic_ns()
+        self._driver_update_period_s = (
+            now_ns - self._last_update_ns) * 1e-9
         command_age = (now_ns - self._last_command_ns) * 1e-9
         if command_age >= self._command_timeout and not self._watchdog_stopped:
             with self._io_lock:
@@ -538,7 +546,9 @@ class RosmasterNode(Node):
 
         # 声光指示器超时保护：若超过 1.0s 未收到 IndicatorCommand，自动熄灭并停音
         if self._indicator_active and self._last_indicator_cmd_ns > 0:
-            indicator_age = (now_ns - self._last_indicator_cmd_ns) * 1e-9
+            indicator_now_ns = self.get_clock().now().nanoseconds
+            indicator_age = (
+                indicator_now_ns - self._last_indicator_cmd_ns) * 1e-9
             if indicator_age >= 1.0:
                 with self._io_lock:
                     self._driver.set_beep(0)
@@ -548,10 +558,14 @@ class RosmasterNode(Node):
         self._last_update_ns = now_ns
         with self._io_lock:
             encoder_values = tuple(self._driver.get_motor_encoder())
-        self._update_wheel_odometry(now.to_msg(), now_ns, encoder_values)
-        self._publish_imu(now.to_msg())
+        # 先取快照再取时间，不能把I/O锁等待前的时间贴到等待后的计数上。
+        sample_ns = time.monotonic_ns()
+        self._driver_sample_latency_ms = (sample_ns - now_ns) * 1e-6
+        stamp = self.get_clock().now().to_msg()
+        self._update_wheel_odometry(stamp, sample_ns, encoder_values)
+        self._publish_imu(stamp)
         self._publish_board_state(
-            now.to_msg(), command_age, now_ns, encoder_values
+            stamp, command_age, sample_ns, encoder_values
         )
 
     def _update_wheel_odometry(
@@ -570,18 +584,21 @@ class RosmasterNode(Node):
             return
 
         dt = (now_ns - self._previous_odom_ns) * 1e-9
+        self._wheel_sample_interval_s = dt
         count_deltas = tuple(
             current - previous for current, previous in zip(
                 encoder_values, self._previous_odom_encoders)
         )
         self._previous_odom_encoders = encoder_values
         self._previous_odom_ns = now_ns
-        if dt <= 0.0 or dt > 0.25:
+        if dt <= 0.0:
             self._wheel_odom_status = 'encoder_interval_rejected'
+            self._wheel_velocity_recovery_samples = 2
             return
         if any(abs(delta) > self._wheel_odom_max_count_delta
                for delta in count_deltas):
             self._wheel_odom_status = 'encoder_jump_rejected'
+            self._wheel_velocity_recovery_samples = 2
             self.get_logger().warning(
                 '轮式里程计丢弃异常编码器跳变：'
                 f'{count_deltas}'
@@ -609,6 +626,18 @@ class RosmasterNode(Node):
             delta_y,
             delta_yaw,
         )
+        # 位置由有效计数增量决定；时间断层不应丢掉真实里程。
+        # 时间断层／追赶回调后的首批数据不具备可靠瞬时速度：继续累计位移，
+        # 连续两个正常采样间隔后才恢复发布，绝不把未知速度发布成零。
+        if dt > 0.25 or dt < 0.5 / self._publish_rate:
+            self._wheel_velocity_recovery_samples = 2
+            self._wheel_odom_status = 'encoder_timing_recovery'
+            return
+        if self._wheel_velocity_recovery_samples:
+            self._wheel_velocity_recovery_samples -= 1
+            if self._wheel_velocity_recovery_samples:
+                self._wheel_odom_status = 'encoder_timing_recovery'
+                return
         self._wheel_odom_status = 'encoder_odometry_active'
         self._publish_odometry(
             stamp,
@@ -741,6 +770,10 @@ class RosmasterNode(Node):
         else:
             status.level = DiagnosticStatus.OK
             status.message = 'Connected'
+        if (self._wheel_odometry_enabled
+                and self._wheel_odom_status == 'encoder_timing_recovery'):
+            status.level = DiagnosticStatus.WARN
+            status.message = '轮式采样时间恢复中，速度未知，暂缓发布里程计'
         status.values = [
             KeyValue(key='drive_mode', value=self._drive_mode),
             KeyValue(key='battery_voltage', value=f'{voltage:.2f}'),
@@ -768,6 +801,13 @@ class RosmasterNode(Node):
                 key='wheel_odometry_status',
                 value=self._wheel_odom_status,
             ),
+            KeyValue(key='motion_interval_clock', value='steady'),
+            KeyValue(key='wheel_sample_interval_s',
+                     value=f'{self._wheel_sample_interval_s:.6f}'),
+            KeyValue(key='driver_update_period_s',
+                     value=f'{self._driver_update_period_s:.6f}'),
+            KeyValue(key='driver_sample_latency_ms',
+                     value=f'{self._driver_sample_latency_ms:.3f}'),
         ]
         diagnostics = DiagnosticArray()
         diagnostics.header.stamp = stamp

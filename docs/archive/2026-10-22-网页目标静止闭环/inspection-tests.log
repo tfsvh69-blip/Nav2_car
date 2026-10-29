@@ -1,0 +1,179 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+UpdateCTestConfiguration  from :/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/CTestConfiguration.ini
+Parse Config file:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/CTestConfiguration.ini
+ Add coverage exclude regular expressions.
+UpdateCTestConfiguration  from :/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/CTestConfiguration.ini
+Parse Config file:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/CTestConfiguration.ini
+Test project /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: test_navigation_debug
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_navigation_debug.gtest.xml" "--package-name" "carcar_inspection" "--output-file" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/ament_cmake_gtest/test_navigation_debug.txt" "--command" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_navigation_debug" "--gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_navigation_debug.gtest.xml"
+1: Test timeout computed to be: 60
+1: -- run_test.py: invoking following command in '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection':
+1:  - /home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_navigation_debug --gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_navigation_debug.gtest.xml
+1: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+1: [==========] Running 4 tests from 1 test suite.
+1: [----------] Global test environment set-up.
+1: [----------] 4 tests from NavigationDebugTest
+1: [ RUN      ] NavigationDebugTest.RotatesLocalGridAndPairsImageGeometryWithPixels
+1: [       OK ] NavigationDebugTest.RotatesLocalGridAndPairsImageGeometryWithPixels (4 ms)
+1: [ RUN      ] NavigationDebugTest.MissingTransformNeverPresentsOdomAsMap
+1: [       OK ] NavigationDebugTest.MissingTransformNeverPresentsOdomAsMap (4 ms)
+1: [ RUN      ] NavigationDebugTest.LargeGridReturnsBeforeEncodingFinishes
+1: [       OK ] NavigationDebugTest.LargeGridReturnsBeforeEncodingFinishes (48 ms)
+1: [ RUN      ] NavigationDebugTest.ConvertsPathEndpointsWithoutInventingMissingPaths
+1: [       OK ] NavigationDebugTest.ConvertsPathEndpointsWithoutInventingMissingPaths (2 ms)
+1: [----------] 4 tests from NavigationDebugTest (58 ms total)
+1: 
+1: [----------] Global test environment tear-down
+1: [==========] 4 tests from 1 test suite ran. (58 ms total)
+1: [  PASSED  ] 4 tests.
+1: -- run_test.py: return code 0
+1: -- run_test.py: inject classname prefix into gtest result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_navigation_debug.gtest.xml'
+1: -- run_test.py: verify result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_navigation_debug.gtest.xml'
+1/3 Test #1: test_navigation_debug ............   Passed    0.22 sec
+test 2
+    Start 2: test_inspection_core
+
+2: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml" "--package-name" "carcar_inspection" "--output-file" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/ament_cmake_gtest/test_inspection_core.txt" "--command" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_core" "--gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml"
+2: Test timeout computed to be: 60
+2: -- run_test.py: invoking following command in '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection':
+2:  - /home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_core --gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml
+2: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+2: [==========] Running 17 tests from 5 test suites.
+2: [----------] Global test environment set-up.
+2: [----------] 4 tests from Domain
+2: [ RUN      ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit
+2: [       OK ] Domain.ServoBoundsDoNotQuantizeBeyondCollisionLimit (0 ms)
+2: [ RUN      ] Domain.OneAngleAndExplicitFinalParkingAreRequired
+2: [       OK ] Domain.OneAngleAndExplicitFinalParkingAreRequired (0 ms)
+2: [ RUN      ] Domain.RepeatedPointsAndTraversalAreRejected
+2: [       OK ] Domain.RepeatedPointsAndTraversalAreRejected (0 ms)
+2: [ RUN      ] Domain.AtMostThreeApproachesAndEachKeepsItsOwnAngle
+2: [       OK ] Domain.AtMostThreeApproachesAndEachKeepsItsOwnAngle (0 ms)
+2: [----------] 4 tests from Domain (0 ms total)
+2: 
+2: [----------] 3 tests from Store
+2: [ RUN      ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint
+2: [       OK ] Store.RevisionConflictDoesNotOverwriteConfirmedPoint (21 ms)
+2: [ RUN      ] Store.TaskOrderAndPhotoReferencesSurviveRestart
+2: [       OK ] Store.TaskOrderAndPhotoReferencesSurviveRestart (20 ms)
+2: [ RUN      ] Store.RestartMarksOldExecutionInterruptedWithoutReplay
+2: [       OK ] Store.RestartMarksOldExecutionInterruptedWithoutReplay (24 ms)
+2: [----------] 3 tests from Store (65 ms total)
+2: 
+2: [----------] 4 tests from Teaching
+2: [ RUN      ] Teaching.CannotStepBeforeStopOrSkipManyDegrees
+2: [       OK ] Teaching.CannotStepBeforeStopOrSkipManyDegrees (0 ms)
+2: [ RUN      ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm
+2: [       OK ] Teaching.OldRevisionAndPreCommandFrameCannotConfirm (0 ms)
+2: [ RUN      ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation
+2: [       OK ] Teaching.ANewStepInvalidatesThePreviousRenderedConfirmation (0 ms)
+2: [ RUN      ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm
+2: [       OK ] Teaching.FailedWriteAndDisconnectedSessionCannotConfirm (0 ms)
+2: [----------] 4 tests from Teaching (0 ms total)
+2: 
+2: [----------] 5 tests from Executor
+2: [ RUN      ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking
+2: [       OK ] Executor.LastPhotoDoesNotCompleteBeforeFinalParking (0 ms)
+2: [ RUN      ] Executor.CancelHaltsInFlightActionAndCannotAdvance
+2: [       OK ] Executor.CancelHaltsInFlightActionAndCannotAdvance (1 ms)
+2: [ RUN      ] Executor.PauseAndResumeKeepCurrentPoint
+2: [       OK ] Executor.PauseAndResumeKeepCurrentPoint (0 ms)
+2: [ RUN      ] Executor.NavigationFailureSkipsPointAndStillParks
+2: [       OK ] Executor.NavigationFailureSkipsPointAndStillParks (0 ms)
+2: [ RUN      ] Executor.SecondApproachIsUsedWhenTheFirstCannotBeReached
+2: [       OK ] Executor.SecondApproachIsUsedWhenTheFirstCannotBeReached (0 ms)
+2: [----------] 5 tests from Executor (1 ms total)
+2: 
+2: [----------] 1 test from Upload
+2: [ RUN      ] Upload.MismatchStaysPendingAndMatchingChecksumConfirmsWithoutDeletingTheFile
+2: [       OK ] Upload.MismatchStaysPendingAndMatchingChecksumConfirmsWithoutDeletingTheFile (27 ms)
+2: [----------] 1 test from Upload (27 ms total)
+2: 
+2: [----------] Global test environment tear-down
+2: [==========] 17 tests from 5 test suites ran. (93 ms total)
+2: [  PASSED  ] 17 tests.
+2: -- run_test.py: return code 0
+2: -- run_test.py: inject classname prefix into gtest result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+2: -- run_test.py: verify result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_core.gtest.xml'
+2/3 Test #2: test_inspection_core .............   Passed    0.25 sec
+test 3
+    Start 3: test_inspection_console
+
+3: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml" "--package-name" "carcar_inspection" "--output-file" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/ament_cmake_gtest/test_inspection_console.txt" "--command" "/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_console" "--gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml"
+3: Environment variables: 
+3:  ROS_DOMAIN_ID=227
+3:  ROS_LOCALHOST_ONLY=1
+3: Test timeout computed to be: 120
+3: -- run_test.py: invoking following command in '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection':
+3:  - /home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_console --gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+3: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+3: [==========] Running 13 tests from 1 test suite.
+3: [----------] Global test environment set-up.
+3: [----------] 13 tests from ConsoleTest
+3: [ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+3: [       OK ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (738 ms)
+3: [ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+3: [       OK ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (5940 ms)
+3: [ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+3: 浏览器已加载巡检网页
+3: 地图选择位置与朝向→保存草稿→刷新读回→手机选择最终停车位通过；无硬件请求
+3: 真实浏览器完成导航到点→修改坐标再导航→调角新画面→按实车位置保存；平板与手机截图已保存
+3: [       OK ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (10337 ms)
+3: [ RUN      ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation
+3: [       OK ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation (2834 ms)
+3: [ RUN      ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+3: [       OK ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow (6117 ms)
+3: [ RUN      ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation
+3: [       OK ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation (528 ms)
+3: [ RUN      ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow
+3: [       OK ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow (5416 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose
+3: [       OK ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose (2008 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain
+3: [       OK ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain (1506 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds
+3: [       OK ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds (1028 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation
+3: [       OK ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation (812 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving
+3: [       OK ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving (1515 ms)
+3: [ RUN      ] ConsoleTest.SingleGoalThroughGatewayWithStatusBackqueryDoesNotTimeout
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0168942
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.00937237
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0182818
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0181986
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0185069
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0181633
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0182862
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0184199
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0174611
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0182633
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0182722
+3: APP-001-R10 isolated target=/api/teach/cancel-navigation status=200 elapsed_s=0.0186029
+3: APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.020938
+3: [       OK ] ConsoleTest.SingleGoalThroughGatewayWithStatusBackqueryDoesNotTimeout (2349 ms)
+3: [----------] 13 tests from ConsoleTest (41128 ms total)
+3: 
+3: [----------] Global test environment tear-down
+3: [==========] 13 tests from 1 test suite ran. (41128 ms total)
+3: [  PASSED  ] 13 tests.
+3: -- run_test.py: return code 0
+3: -- run_test.py: inject classname prefix into gtest result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+3: -- run_test.py: verify result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+3/3 Test #3: test_inspection_console ..........   Passed   41.42 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Label Time Summary:
+gtest    =  41.89 sec*proc (3 tests)
+
+Total Test time (real) =  41.90 sec

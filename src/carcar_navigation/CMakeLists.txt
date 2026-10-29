@@ -306,6 +306,14 @@ if(BUILD_TESTING)
   set_tests_properties(test_nav_escape_logic PROPERTIES
     ENVIRONMENT "ROS_DOMAIN_ID=211;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 30)
   ament_add_gtest(test_nav012_regressions test/test_nav012_regressions.cpp)
+  ament_add_gtest(test_nav_recording test/test_nav_recording.cpp)
+  find_package(tf2_msgs REQUIRED)
+  ament_target_dependencies(test_nav_recording rclcpp tf2_ros tf2_msgs rosbag2_cpp)
+  target_compile_definitions(test_nav_recording PRIVATE
+    NAV_LOGGER_EXECUTABLE="$<TARGET_FILE:nav_event_logger>")
+  add_dependencies(test_nav_recording nav_event_logger)
+  set_tests_properties(test_nav_recording PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=216;ROS_LOCALHOST_ONLY=1" RUN_SERIAL TRUE TIMEOUT 30)
   ament_target_dependencies(test_nav012_regressions rclcpp rclcpp_action nav2_msgs nav2_behavior_tree
     nav2_util nav_msgs sensor_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs action_msgs)
   target_link_libraries(test_nav012_regressions carcar_nav_bt_nodes BT::behaviortree_cpp_v3

@@ -1,0 +1,6 @@
+[amcl-5] [INFO] [1792909289.222281213] [amcl]: Setting pose (1792909289.222278): -1.184 -0.244 -2.907
+[bt_navigator-17] [INFO] [1792909310.445746863] [bt_navigator]: Begin navigating from current location (-1.26, -0.12) to (-4.57, -1.05)
+[planner_server-15] [WARN] [1792909310.932896657] [planner_server]: GridBased: failed to create plan, invalid use: Starting point in lethal space! Cannot create feasible plan..
+[planner_server-15] [WARN] [1792909311.443524959] [planner_server]: GridBased: failed to create plan, invalid use: Starting point in lethal space! Cannot create feasible plan..
+[planner_server-15] [WARN] [1792909322.870388252] [planner_server]: GridBased: failed to create plan, invalid use: Starting point in lethal space! Cannot create feasible plan..
+[bt_navigator-17] [ERROR] [1792909327.340946977] [bt_navigator]: Goal failed

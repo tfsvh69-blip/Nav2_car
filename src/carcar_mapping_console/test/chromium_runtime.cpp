@@ -10,7 +10,7 @@ int main(int argc,char ** argv) {
   std::vector<std::string> args{"bwrap","--die-with-parent","--unshare-pid",
     "--ro-bind","/snap/core24/current","/","--dev","/dev","--proc","/proc",
     "--ro-bind","/snap/chromium/current","/opt","--ro-bind","/snap/gnome-46-2404/current","/mnt",
-    "--ro-bind","/snap/mesa-2404/current","/media","--bind","/tmp","/tmp","--chdir","/tmp",
+    "--ro-bind","/snap/mesa-2404/current","/media","--ro-bind","/usr/share/fonts","/usr/share/fonts","--bind","/tmp","/tmp","--chdir","/tmp",
     "--setenv","HOME","/tmp","--setenv","LD_LIBRARY_PATH",
     "/usr/lib/aarch64-linux-gnu:/opt/usr/lib/aarch64-linux-gnu:/mnt/usr/lib/aarch64-linux-gnu:/mnt/usr/lib/aarch64-linux-gnu/pulseaudio:/media/usr/lib/aarch64-linux-gnu:/opt/usr/lib/chromium-browser",
     "--","/opt/usr/lib/chromium-browser/chrome"};

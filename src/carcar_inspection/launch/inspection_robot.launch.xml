@@ -2,37 +2,63 @@
   <!-- APP-001独立实机入口；默认不启动硬件。不得与建图/原导航入口并行。 -->
   <arg name="real_hardware" default="false"/>
   <arg name="enable_navigation" default="false"/>
+  <arg name="enable_goal_navigation" default="false"/>
+  <arg name="use_depth_navigation" default="true"/>
+  <arg name="sensor_params_file" default="$(find-pkg-share carcar_navigation)/config/nav2_depth_stvl_experimental.yaml"/>
+  <arg name="scan_topic" default="/scan"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
   <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
   <arg name="port" default="8081"/>
   <arg name="data_root" default="/home/jetson/.local/share/carcar_inspection"/>
+  <arg name="base_serial_port" default="/dev/myserial"/>
+  <arg name="lidar_serial_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
   <group if="$(var real_hardware)">
-    <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
-      <arg name="enable_inspection_interface" value="true"/>
-    </include>
-    <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml"/>
-    <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml"/>
-    <include file="$(find-pkg-share carcar_navigation)/launch/localization_experimental.launch.xml">
-      <arg name="map" value="$(var map)"/>
-      <arg name="use_rviz" value="false"/>
-    </include>
+    <!-- 子入口有同名参数（serial_port、params_file等），必须分别隔离作用域。 -->
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_base)/launch/base.launch.xml">
+        <arg name="enable_inspection_interface" value="true"/>
+        <arg name="speed_params_file" value="$(find-pkg-share carcar_inspection)/config/navigation_speed_envelope.yaml"/>
+        <arg name="serial_port" value="$(var base_serial_port)"/>
+      </include>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_description)/launch/description.launch.xml"/>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_lidar)/launch/lidar.launch.xml">
+        <arg name="serial_port" value="$(var lidar_serial_port)"/>
+      </include>
+    </group>
+    <group scoped="true">
+      <include file="$(find-pkg-share carcar_navigation)/launch/localization_experimental.launch.xml">
+        <arg name="map" value="$(var map)"/>
+        <arg name="use_rviz" value="false"/>
+        <arg name="scan_topic" value="$(var scan_topic)"/>
+      </include>
+    </group>
     <node pkg="realsense2_camera" exec="realsense2_camera_node" namespace="camera" name="camera" output="screen">
       <param from="$(find-pkg-share carcar_camera)/config/d435_navigation.yaml"/>
       <param name="enable_color" value="true"/>
+      <param name="enable_depth" value="$(var use_depth_navigation)"/>
+      <param name="pointcloud.enable" value="$(var use_depth_navigation)"/>
+      <param name="pointcloud__neon_.enable" value="$(var use_depth_navigation)"/>
       <param name="rgb_camera.color_profile" value="640x480x6"/>
       <param name="rgb_camera.color_format" value="RGB8"/>
       <remap from="/camera/camera/depth/color/points" to="/camera/depth/points"/>
     </node>
-    <node pkg="carcar_camera" exec="depth_cloud_filter" name="depth_cloud_filter" output="screen">
+    <node if="$(var use_depth_navigation)" pkg="carcar_camera" exec="depth_cloud_filter" name="depth_cloud_filter" output="screen">
       <param from="$(find-pkg-share carcar_camera)/config/depth_filter_stvl_experimental.yaml"/>
       <param name="input_topic" value="/inspection/navigation/points"/>
     </node>
-    <node pkg="carcar_camera" exec="depth_layer_supervisor" name="depth_layer_supervisor" output="screen">
+    <node if="$(var use_depth_navigation)" pkg="carcar_camera" exec="depth_layer_supervisor" name="depth_layer_supervisor" output="screen">
       <param from="$(find-pkg-share carcar_camera)/config/depth_filter_stvl_experimental.yaml"/>
     </node>
-    <group>
-      <set_remap from="/cmd_vel" to="/inspection/navigation/cmd_vel"/>
+    <group scoped="true">
       <include file="$(find-pkg-share carcar_navigation)/launch/navigation_experimental.launch.xml">
-        <arg name="sensor_params_file" value="$(find-pkg-share carcar_navigation)/config/nav2_depth_stvl_experimental.yaml"/>
+        <!-- 只改最终门控出口；组级set_remap会覆盖控制器/恢复/平滑器各自的cmd_vel改名。 -->
+        <arg name="cmd_vel_topic" value="/inspection/navigation/cmd_vel"/>
+        <arg name="speed_params_file" value="$(find-pkg-share carcar_inspection)/config/navigation_speed_envelope.yaml"/>
+        <arg name="sensor_params_file" value="$(var sensor_params_file)"/>
         <arg name="enable_indicator" value="false"/>
       </include>
     </group>
@@ -42,5 +68,8 @@
     <arg name="data_root" value="$(var data_root)"/>
     <arg name="enable_hardware" value="$(var real_hardware)"/>
     <arg name="enable_navigation" value="$(var enable_navigation)"/>
+    <arg name="enable_goal_navigation" value="$(var enable_goal_navigation)"/>
+    <arg name="require_depth" value="$(var use_depth_navigation)"/>
+    <arg name="cmd_vel_topic" value="$(var cmd_vel_topic)"/>
   </include>
 </launch>

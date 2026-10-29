@@ -1,0 +1,5 @@
+<launch>
+  <!-- 单向显示，不启动硬件，不桥接任何执行器控制接口。 -->
+  <arg name="config_file" default="$(find-pkg-share carcar_inspection)/config/navigation_display_bridge.yaml"/>
+  <node pkg="domain_bridge" exec="domain_bridge" output="screen" args="$(var config_file)"/>
+</launch>

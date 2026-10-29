@@ -1,0 +1,9 @@
+{
+  "asset_sha256": {
+    "graph.data": "8bb157a04d2b03a7aaa507b03f4698e17094fe8240c9049a343bf780e4b17d9a",
+    "graph.posegraph": "3a30a1cef1f58968429c5f704bc2aee0fc3b76ffdd7f16f9d8b5660885ee6055",
+    "map.pgm": "dfd1c03c62cac3a31adc1d0c5f48da60d9c5336b2ac1b029e9a3b40096ca0649",
+    "map.yaml": "f11896d797590ad7b693f6b593385ce87b2208b09ebe2d134150f78616371746"
+  },
+  "status": "candidate"
+}

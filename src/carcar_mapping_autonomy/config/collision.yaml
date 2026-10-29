@@ -1,0 +1,27 @@
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    cmd_vel_in_topic: /mapping/collision_input
+    cmd_vel_out_topic: /mapping/collision_output
+    transform_tolerance: 0.1
+    source_timeout: 0.5
+    base_shift_correction: true
+    stop_pub_timeout: 0.0
+    polygons: [Stop]
+    Stop:
+      type: polygon
+      # 2026-10-27：与 nav2.yaml footprint 对齐，0.28 m × 0.26 m。
+      # 整车实测长 0.235 m、宽 0.216 m。原先 0.48 m × 0.40 m 会把车身外侧约 0.15 m 的回波当成贴身障碍。
+      points: [0.14, 0.13, 0.14, -0.13, -0.14, -0.13, -0.14, 0.13]
+      action_type: stop
+      max_points: 0
+      visualize: true
+      polygon_pub_topic: /mapping/collision_stop_polygon
+      enabled: true
+    observation_sources: [scan]
+    scan:
+      type: scan
+      topic: /scan
+      enabled: true

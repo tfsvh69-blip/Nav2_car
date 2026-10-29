@@ -1,0 +1,13 @@
+# APP-001-R15独立巡检实验包络；旧底盘/STVL默认配置保留。
+# 网页默认0.18m/s，通过控制器原子参数和最终输出裁剪提供四档。
+rosmaster_base:
+  ros__parameters:
+    max_linear_x: 0.30
+controller_server:
+  ros__parameters:
+    FollowPath:
+      max_vel_x: 0.18
+      max_speed_xy: 0.18
+velocity_smoother:
+  ros__parameters:
+    max_velocity: [0.30, 0.0, 0.45]

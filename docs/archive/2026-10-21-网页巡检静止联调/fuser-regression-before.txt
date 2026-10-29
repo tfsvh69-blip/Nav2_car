@@ -1,0 +1,174 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_ EnabledInspectionInterfaceTest.test_real_fuser_allows_unused_path_before_stub_serial_open _
+
+self = <test.test_inspection_servo_receiver.EnabledInspectionInterfaceTest testMethod=test_real_fuser_allows_unused_path_before_stub_serial_open>
+
+    def test_real_fuser_allows_unused_path_before_stub_serial_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            serial_path = Path(directory) / 'serial-stub'
+            serial_path.touch()
+            rclpy.init(args=[
+                '--ros-args', '-p', 'enable_inspection_interface:=true',
+                '-p', f'serial_port:={serial_path}'])
+            node = None
+            try:
+                with patch('carcar_base.rosmaster_node.Rosmaster', BoardStub), \
+                        patch('carcar_base.rosmaster_node.fcntl.ioctl'):
+>                   node = RosmasterNode()
+
+src/carcar_base/test/test_inspection_servo_receiver.py:165: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <carcar_base.rosmaster_node.RosmasterNode object at 0xffffa0869f60>
+
+    def __init__(self) -> None:
+        super().__init__('rosmaster_base')
+    
+        self.declare_parameter('serial_port', '/dev/myserial')
+        # APP-001：2026-10-15用户授权的既有Python串口适配修改；默认不启用。
+        self.declare_parameter('enable_inspection_interface', False)
+        self.declare_parameter('car_type', 1)
+        self.declare_parameter('drive_mode', 'board_motion_pid')
+        self.declare_parameter('holonomic', True)
+        self.declare_parameter('publish_rate', 25.0)
+        self.declare_parameter('command_timeout', 0.5)
+        self.declare_parameter('max_linear_x', 0.5)
+        self.declare_parameter('max_linear_y', 0.5)
+        self.declare_parameter('max_angular_z', 2.0)
+        self.declare_parameter('base_frame', 'base_footprint')
+        self.declare_parameter('odom_frame', 'odom')
+        self.declare_parameter('imu_frame', 'imu_link')
+        self.declare_parameter('publish_odom_tf', False)
+        self.declare_parameter('wheel_odometry_enabled', False)
+        self.declare_parameter('wheel_diameter_m', 0.060)
+        self.declare_parameter('wheelbase_m', 0.120)
+        self.declare_parameter('track_width_m', 0.185)
+        self.declare_parameter('wheel_counts_per_revolution', [0.0] * 4)
+        self.declare_parameter('wheel_encoder_signs', [1] * 4)
+        self.declare_parameter(
+            'wheel_port_wheels',
+            ['left_front', 'left_rear', 'right_front', 'right_rear'],
+        )
+        self.declare_parameter('wheel_odom_max_count_delta', 100000)
+        self.declare_parameter('imu_gyro_signs', [1, 1, -1])
+        self.declare_parameter('imu_accel_signs', [1, 1, -1])
+        self.declare_parameter('battery_min_voltage', 9.6)
+        self.declare_parameter('battery_max_voltage', 12.6)
+        self.declare_parameter('debug_serial', False)
+        self.declare_parameter('motion_kp', 0.8)
+        self.declare_parameter('motion_ki', 0.06)
+        self.declare_parameter('motion_kd', 0.5)
+        self.declare_parameter('motion_pid_apply', False)
+    
+        self._serial_port = str(self.get_parameter('serial_port').value)
+        self._car_type = int(self.get_parameter('car_type').value)
+        self._drive_mode = str(self.get_parameter('drive_mode').value)
+        self._holonomic = bool(self.get_parameter('holonomic').value)
+        self._publish_rate = float(self.get_parameter('publish_rate').value)
+        self._command_timeout = float(
+            self.get_parameter('command_timeout').value
+        )
+        self._max_linear_x = float(self.get_parameter('max_linear_x').value)
+        self._max_linear_y = float(self.get_parameter('max_linear_y').value)
+        self._max_angular_z = float(self.get_parameter('max_angular_z').value)
+        self._base_frame = str(self.get_parameter('base_frame').value)
+        self._odom_frame = str(self.get_parameter('odom_frame').value)
+        self._imu_frame = str(self.get_parameter('imu_frame').value)
+        self._publish_odom_tf = bool(
+            self.get_parameter('publish_odom_tf').value
+        )
+        self._wheel_odometry_enabled = bool(
+            self.get_parameter('wheel_odometry_enabled').value
+        )
+        self._wheel_diameter_m = float(
+            self.get_parameter('wheel_diameter_m').value
+        )
+        self._wheelbase_m = float(self.get_parameter('wheelbase_m').value)
+        self._track_width_m = float(
+            self.get_parameter('track_width_m').value
+        )
+        self._wheel_counts_per_revolution = tuple(
+            float(value) for value in self.get_parameter(
+                'wheel_counts_per_revolution').value
+        )
+        self._wheel_encoder_signs = tuple(int(value) for value in
+                                          self.get_parameter(
+                                              'wheel_encoder_signs').value)
+        self._wheel_port_wheels = tuple(str(value) for value in
+                                        self.get_parameter(
+                                            'wheel_port_wheels').value)
+        self._wheel_odom_max_count_delta = int(
+            self.get_parameter('wheel_odom_max_count_delta').value
+        )
+        self._imu_gyro_signs = validate_imu_signs(
+            self.get_parameter('imu_gyro_signs').value
+        )
+        self._imu_accel_signs = validate_imu_signs(
+            self.get_parameter('imu_accel_signs').value
+        )
+    
+        self._battery_min = float(
+            self.get_parameter('battery_min_voltage').value
+        )
+        self._battery_max = float(
+            self.get_parameter('battery_max_voltage').value
+        )
+        configured_pid = validate_motion_pid(
+            self.get_parameter('motion_kp').value,
+            self.get_parameter('motion_ki').value,
+            self.get_parameter('motion_kd').value,
+        )
+    
+        if self._publish_rate <= 0.0:
+            raise ValueError('publish_rate must be greater than zero')
+        if self._drive_mode != 'board_motion_pid':
+            raise ValueError(
+                'rosmaster_node only supports drive_mode=board_motion_pid'
+            )
+        if self._command_timeout <= 0.0:
+            raise ValueError('command_timeout must be greater than zero')
+        if self._battery_max <= self._battery_min:
+            raise ValueError(
+                'battery_max_voltage must exceed battery_min_voltage'
+            )
+        if self._wheel_odom_max_count_delta <= 0:
+            raise ValueError('wheel_odom_max_count_delta must be positive')
+        calibration_counts = self._wheel_counts_per_revolution
+        if not self._wheel_odometry_enabled:
+            calibration_counts = (1.0, 1.0, 1.0, 1.0)
+        (
+            self._wheel_diameter_m,
+            self._wheelbase_m,
+            self._track_width_m,
+            _,
+            self._wheel_encoder_signs,
+            self._wheel_port_wheels,
+        ) = validate_mecanum_odometry_parameters(
+            self._wheel_diameter_m,
+            self._wheelbase_m,
+            self._track_width_m,
+            calibration_counts,
+            self._wheel_encoder_signs,
+            self._wheel_port_wheels,
+        )
+    
+        self._io_lock = threading.Lock()
+        inspection_interface = bool(
+            self.get_parameter('enable_inspection_interface').value)
+        if inspection_interface:
+            try:
+                check = subprocess.run(
+                    ['fuser', '--', self._serial_port],
+                    capture_output=True, text=True, timeout=1.0, check=False)
+            except (OSError, subprocess.SubprocessError) as exc:
+                raise RuntimeError('巡检串口占用检查失败，拒绝启动') from exc
+            if (check.returncode != 1 or check.stdout.strip() or
+                    check.stderr.strip()):
+>               raise RuntimeError('巡检控制板串口已占用或检查异常；先停止其他驱动')
+E               RuntimeError: 巡检控制板串口已占用或检查异常；先停止其他驱动
+
+src/carcar_base/carcar_base/rosmaster_node.py:184: RuntimeError
+=========================== short test summary info ============================
+FAILED src/carcar_base/test/test_inspection_servo_receiver.py::EnabledInspectionInterfaceTest::test_real_fuser_allows_unused_path_before_stub_serial_open
+1 failed, 1 passed, 9 deselected in 0.70s

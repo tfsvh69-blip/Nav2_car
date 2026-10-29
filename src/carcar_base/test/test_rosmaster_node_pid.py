@@ -1,8 +1,11 @@
+import math
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import rclpy
 from rclpy.parameter import Parameter
+from rclpy.time import Time
+from geometry_msgs.msg import Twist
 
 from carcar_base.rosmaster_node import RosmasterNode
 
@@ -143,6 +146,93 @@ class RosmasterNodePidTest(unittest.TestCase):
         self.assertAlmostEqual(msg.linear_acceleration.y, -0.04)
         # raw az was -9.88, with sign -1 it should be +9.88
         self.assertAlmostEqual(msg.linear_acceleration.z, 9.88)
+
+    def _timing_odometry(self, samples):
+        self.node._wheel_odometry_enabled = True
+        self.node._wheel_counts_per_revolution = (1000.0,) * 4
+        published = []
+        self.node._odom_pub = type(
+            'CapturePub', (), {'publish': published.append})()
+        for seconds, counts in samples:
+            stamp = self.node.get_clock().now().to_msg()
+            self.node._update_wheel_odometry(
+                stamp, int(seconds * 1_000_000_000), (counts,) * 4)
+        return published
+
+    def test_delayed_encoder_burst_keeps_distance_without_velocity_spike(self):
+        messages = self._timing_odometry([
+            (1.0, 0), (1.04, 20), (1.4, 20),
+            (1.427, 160), (1.467, 180),
+        ])
+        self.assertLess(max(abs(m.twist.twist.linear.x)
+                            for m in messages), 0.2)
+        self.assertAlmostEqual(self.node._x, 180 * math.pi * 0.06 / 1000)
+        self.assertEqual(len(messages), 2,
+                         '延迟恢复中的未知速度不得伪报为零或发布尖峰')
+
+    def test_long_poll_gap_does_not_discard_valid_encoder_distance(self):
+        messages = self._timing_odometry([
+            (1.0, 0), (1.04, 20), (1.4, 140),
+            (1.427, 160), (1.467, 180),
+        ])
+        self.assertAlmostEqual(self.node._x, 180 * math.pi * 0.06 / 1000)
+        self.assertEqual(len(messages), 2)
+
+    def test_catchup_callbacks_cannot_publish_short_interval_spikes(self):
+        messages = self._timing_odometry([
+            (1.0, 0), (1.04, 20), (1.041, 40),
+            (1.042, 60), (1.082, 80), (1.122, 100),
+        ])
+        self.assertEqual(len(messages), 2)
+        self.assertLess(max(abs(m.twist.twist.linear.x)
+                            for m in messages), 0.2)
+        self.assertAlmostEqual(self.node._x, 100 * math.pi * 0.06 / 1000)
+
+    def test_normal_fast_encoder_feedback_is_not_clipped(self):
+        messages = self._timing_odometry([(1.0, 0), (1.04, 200)])
+        self.assertEqual(len(messages), 1)
+        self.assertGreater(messages[0].twist.twist.linear.x, 0.9,
+                           '有效间隔内的原始速度不得被人为限幅')
+
+    def test_wall_clock_jump_does_not_trigger_command_watchdog(self):
+        clock = Mock()
+        clock.now.return_value = Time(seconds=100)
+        cmd = Twist()
+        cmd.linear.x = 0.1
+        with patch.object(self.node, 'get_clock', return_value=clock), \
+                patch('carcar_base.rosmaster_node.time.monotonic_ns',
+                      side_effect=[10_000_000_000, 10_050_000_000,
+                                   10_050_000_000]), \
+                patch.object(self.node._driver, 'set_car_motion') as motion, \
+                patch.object(self.node._driver, 'get_motor_encoder',
+                             return_value=(0,) * 4, create=True), \
+                patch.object(self.node, '_publish_imu'), \
+                patch.object(self.node, '_publish_board_state'):
+            self.node._on_cmd_vel(cmd)
+            clock.now.return_value = Time(seconds=101)
+            self.node._update()
+        self.assertEqual(motion.call_count, 1,
+                         '只经过50ms，ROS时间前跳不得导致超时停车')
+
+    def test_monotonic_command_timeout_still_stops_with_frozen_ros_clock(self):
+        self.node._command_timeout = 0.3
+        clock = Mock()
+        clock.now.return_value = Time(seconds=100)
+        cmd = Twist()
+        cmd.linear.x = 0.1
+        with patch.object(self.node, 'get_clock', return_value=clock), \
+                patch('carcar_base.rosmaster_node.time.monotonic_ns',
+                      side_effect=[10_000_000_000, 10_310_000_000,
+                                   10_310_000_000]), \
+                patch.object(self.node._driver, 'set_car_motion') as motion, \
+                patch.object(self.node._driver, 'get_motor_encoder',
+                             return_value=(0,) * 4, create=True), \
+                patch.object(self.node, '_publish_imu'), \
+                patch.object(self.node, '_publish_board_state'):
+            self.node._on_cmd_vel(cmd)
+            self.node._update()
+        self.assertEqual(motion.call_args.args, (0.0, 0.0, 0.0))
+        self.assertTrue(self.node._watchdog_stopped)
 
 
 if __name__ == '__main__':

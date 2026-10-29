@@ -59,11 +59,13 @@ public:
         }
       });
     timer_ = create_wall_timer(std::chrono::milliseconds(20), [this] {
+      if(!rclcpp::ok())return;
+      try {
       const auto now_s = steady();
       timer_gap_ms_ = tick_at_ == 0 ? 0 : (now_s-tick_at_)*1000; tick_at_=now_s;
       if (now_s - topology_at_ > 0.5) {
         topology_at_ = now_s;
-        const auto pubs = get_publishers_info_by_topic("/mapping/cmd_vel");
+        const auto pubs = get_publishers_info_by_topic(output_->get_topic_name());
         safety_.topology_ok = pubs.size() == 1 && pubs.front().node_name() == get_name() &&
           get_publishers_info_by_topic("/scan").size() == 1 && get_publishers_info_by_topic("/wheel/odometry").size() == 1;
       }
@@ -82,6 +84,9 @@ public:
           {"accepted_sequence",safety_.timing(now_s).accepted_sequence},
           {"timing", timing_json(now_s)}, {"last_stop", last_stop_}};
         std_msgs::msg::String state; state.data = value.dump(); state_->publish(state);
+      }
+      }catch(const rclcpp::exceptions::RCLError&e){
+        if(rclcpp::ok())RCLCPP_ERROR(get_logger(),"手动门控ROS接口失效：%s",e.what());
       }
     });
   }

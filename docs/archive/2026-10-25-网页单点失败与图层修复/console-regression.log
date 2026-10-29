@@ -1,0 +1,11 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+Test project /home/jetson/luhao/my_nav_carcar/build/carcar_inspection
+    Start 4: test_inspection_console
+1/1 Test #4: test_inspection_console ..........   Passed   42.80 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+gtest    =  42.80 sec*proc (1 test)
+
+Total Test time (real) =  42.81 sec

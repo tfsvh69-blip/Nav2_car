@@ -1,0 +1,29 @@
+Starting >>> carcar_mapping_console
+--- stderr: carcar_mapping_console
+In file included from /home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/src/http_server.cpp:2:
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/include/carcar_mapping_console/common.hpp: In function ‘std::pair<double, double> carcar_mapping_console::pixel_to_map(double, double, int, double, double, double, double)’:
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/include/carcar_mapping_console/common.hpp:58:130: note: parameter passing for argument of type ‘std::pair<double, double>’ when C++17 is enabled changed to match C++14 in GCC 10.1
+   58 | inline std::pair<double, double> pixel_to_map(double u, double v, int height, double resolution, double ox, double oy, double yaw) {
+      |                                                                                                                                  ^
+In file included from /home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/src/http_server.cpp:2:
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/include/carcar_mapping_console/common.hpp: In function ‘std::pair<double, double> carcar_mapping_console::pixel_to_map(double, double, int, double, double, double, double)’:
+/home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/include/carcar_mapping_console/common.hpp:58:130: note: parameter passing for argument of type ‘std::pair<double, double>’ when C++17 is enabled changed to match C++14 in GCC 10.1
+   58 | inline std::pair<double, double> pixel_to_map(double u, double v, int height, double resolution, double ox, double oy, double yaw) {
+      |                                                                                                                                  ^
+In file included from /home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/message.hpp:13,
+                 from /home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/mediahandler.hpp:15,
+                 from /home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/track.hpp:15,
+                 from /home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/peerconnection.hpp:18,
+                 from /home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/rtc.hpp:17,
+                 from /home/jetson/luhao/my_nav_carcar/src/carcar_mapping_console/test/test_http.cpp:14:
+/home/jetson/luhao/my_nav_carcar/log/mapping_webrtc_r9_20261015_zkQjZK/libdatachannel/include/rtc/frameinfo.hpp:20:142: warning: extra ‘;’ [-Wpedantic]
+   20 |         template<typename Period = std::ratio<1>> FrameInfo(std::chrono::duration<double, Period> timestamp) : timestampSeconds(timestamp) {};
+      |                                                                                                                                              ^
+      |                                                                                                                                              -
+---
+Finished <<< carcar_mapping_console [1min 41s]
+Starting >>> carcar_inspection
+Finished <<< carcar_inspection [7.36s]
+
+Summary: 2 packages finished [1min 49s]
+  1 package had stderr output: carcar_mapping_console

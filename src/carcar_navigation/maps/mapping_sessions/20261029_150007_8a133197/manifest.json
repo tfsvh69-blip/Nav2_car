@@ -1,0 +1,158 @@
+{
+  "autonomy": {
+    "acceptance_wheel_ready": true,
+    "accepted_sequence": 23,
+    "accepted_wheel_position": [
+      -1.3863603912786648,
+      -0.5192388895374752
+    ],
+    "active_request_id": "nav018-r17-finish-return",
+    "anchored": true,
+    "auto_start_pending": false,
+    "automatic_start_ready": true,
+    "automatic_start_reason": "",
+    "control_max_tick_gap_ms": 197.14705400110688,
+    "control_max_tick_work_ms": 19.5634689880535,
+    "control_mode": "automatic",
+    "control_tick_gap_ms": 50.01988100411836,
+    "covariance_xy": 0.008494838350733872,
+    "direction_ratio": 0.7912575434381791,
+    "elapsed_seconds": 64.5513493949984,
+    "end_reason": "操作者结束探索，尝试返回起点",
+    "error": "",
+    "experimental": true,
+    "exploration_note": "",
+    "explore_seconds": 2400.0,
+    "frontier_goal": null,
+    "generation": 4,
+    "goal": null,
+    "goal_change_reason": "failed：路径规划失败，未下发运动目标；检查 /plan 与规划器日志",
+    "goal_id": "",
+    "goal_request_id": "",
+    "goal_revalidating": false,
+    "goal_seconds": 0.0,
+    "goal_selecting": false,
+    "health_reason": "建图会话未就绪；检查首帧确认、保存或故障状态",
+    "healthy": false,
+    "loop_generation": 0,
+    "loop_waiting_map": false,
+    "map_revision": 11,
+    "map_sequence": 79,
+    "motion_note": "导航已经给出速度，但发给轮子的速度仍是零。最近激光在后方 0.16 米，位于车身停车框外。请看全局和局部代价是否把路堵住，或碰撞监视器是否因扫描超时停车。",
+    "nav_goal_id": "",
+    "navigation_attempt": 0,
+    "navigation_attempt_seconds": 0.0,
+    "navigation_detail": "路径规划失败，未下发运动目标；检查 /plan 与规划器日志",
+    "navigation_progress_m": 0.0,
+    "navigation_remaining_m": -1.0,
+    "navigation_terminal": true,
+    "near_field": {
+      "count": 0,
+      "inside": false,
+      "range": 0.6330000162124634,
+      "side": "前方",
+      "valid": true,
+      "x": 0.488016034819946,
+      "y": 0.33350827096430696
+    },
+    "observation_goal": null,
+    "origin": [
+      0.009998781994945196,
+      0.0003489971661035941,
+      0.006980000000000123
+    ],
+    "outcome": "operator_finished",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "SAVE_PENDING",
+    "pose_correction_pending": false,
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "操作者结束探索，尝试返回起点；返程未完成：路径规划失败，未下发运动目标；检查 /plan 与规划器日志；停车保存候选",
+    "remaining_seconds": 2335.4486506050016,
+    "request_id": "nav018-r17-finish-return",
+    "request_result": "accepted",
+    "return_remaining_seconds": 600.0,
+    "return_result": "failed",
+    "return_seconds": 600.0,
+    "save_required": true,
+    "seconds_since_acceptance": 175.95992326000123,
+    "seconds_waiting_expected_acceptance": 0.0,
+    "slam": {
+      "accepted": true,
+      "accepted_stamp_ns": 1793257031285300299,
+      "admission_retries": 9,
+      "attempts": 33,
+      "loop_active": false,
+      "loop_generation": 0,
+      "note": "接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流",
+      "sequence": 23,
+      "startup_closed": true,
+      "startup_extras": 3
+    },
+    "still": true,
+    "task_id": "a4c4c9b472af1c1cf53518a8cd173cef",
+    "tf_map_odom_age": 0.061949665,
+    "tf_odom_base_age": 0.059083962,
+    "topology_age_s": 0.17141254799207672,
+    "topology_query_ms": 0.3416760009713471,
+    "travel_since_acceptance": 0.0417076732585907,
+    "wheel_position": [
+      -1.4185488375967303,
+      -0.5457612184750775
+    ]
+  },
+  "base_frame": "base_footprint",
+  "complete": true,
+  "control_mode": "automatic",
+  "created": "20261029_150007_8a133197",
+  "diagnostic_only": false,
+  "explore_commit": "326cf8a0b487c34246bb8f3326afbcd69576dc60",
+  "filter": "laser_filters 2.0.10 Speckle Distance",
+  "graph_saved": true,
+  "grid_saved": true,
+  "limits": {
+    "fast": [
+      0.18,
+      0.36
+    ],
+    "normal": [
+      0.1,
+      0.2
+    ],
+    "slow": [
+      0.05,
+      0.1
+    ]
+  },
+  "offline_validation_is_not_hardware_acceptance": true,
+  "range_m": 3.0,
+  "resolution": 0.05000000074505806,
+  "review_required": true,
+  "runtime_parameters": {
+    "base_frame": "base_footprint",
+    "ceres_loss_function": "None",
+    "map_frame": "map",
+    "map_update_interval": "3.000000",
+    "max_laser_range": "3.000000",
+    "min_laser_range": "0.100000",
+    "odom_frame": "odom",
+    "resolution": "0.050000",
+    "scan_topic": "/mapping/slam_scan"
+  },
+  "sha256": {
+    "graph.data": "008cda2eedfa73f3f64d59c9a582e65498c75793d4aa742c631455e80e266673",
+    "graph.posegraph": "bdd74d088cb3200812ae276340b38b8fdc14db47df1b2c7a990535fef38e1ca8",
+    "map.pgm": "2d530d936b56813d08de79a352c0b53431740ad7c7dd587840106b89c398563c",
+    "map.yaml": "6c3aba1b6e8d04d722505c836948f0029ecab684e05471f4bfb5e9da0f6c4b90"
+  },
+  "slam_version": "2.6.10",
+  "source_bundle": "",
+  "versions": {
+    "nav2_map_server": "1.1.20",
+    "realsense2_camera": "4.58.3",
+    "slam_toolbox": "2.6.10"
+  }
+}

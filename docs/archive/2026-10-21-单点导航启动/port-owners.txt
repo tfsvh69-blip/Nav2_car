@@ -1,0 +1,3 @@
+                     用户     进程号 权限   命令
+/dev/ttyUSB0:        jetson    14505 F.... rosmaster_node
+/dev/ttyUSB1:        jetson    14509 F.... sllidar_node

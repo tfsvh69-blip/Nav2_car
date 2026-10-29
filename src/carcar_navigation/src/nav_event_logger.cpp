@@ -53,6 +53,7 @@
 #include "diagnostic_msgs/msg/key_value.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "tf2_ros/qos.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav2_msgs/msg/behavior_tree_log.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
@@ -735,9 +736,19 @@ private:
       record_options.rmw_serialization_format = rmw_get_serialization_format();
       record_options.include_hidden_topics = true;
       record_options.include_unpublished_topics = true;
+      // 静态TF只需发布一次。录包可能先于发布者被发现，不能用volatile订阅错过保留样本。
+      // 复用TF2静态监听策略；其余话题继续使用rosbag2原有QoS适配。
+      record_options.topic_qos_profile_overrides.emplace("/tf_static", tf2_ros::StaticListenerQoS());
       // 专项录包明确保留 DWB 评分与候选轨迹，便于还原路径换向和无可行轨迹原因。
       record_options.topics = {
         "/scan",
+        "/scan/filtered", "/mapping/slam_scan", "/pose", "/mapping/slam/status", "/mapping/autonomy/state",
+        "/mapping/cmd_vel", "/mapping/manual_cmd_vel", "/mapping/auto_cmd_vel",
+        "/mapping/nav_raw", "/mapping/collision_input", "/mapping/collision_output",
+        "/mapping/known_space_mask", "/mapping/known_space_filter_info",
+        "/explore/resume", "/explore/status",
+        "/mapping/explore_navigate_to_pose/_action/status",
+        "/mapping/explore_navigate_to_pose/_action/feedback",
         "/map",
         "/map_metadata",
         "/tf",

@@ -60,11 +60,32 @@ describe("示教显示约束", () => {
     expect(tiltPhrase(140.5)).toBe("镜头大致平视");
     expect(tiltPhrase(150)).toContain("偏低");
     expect(tiltPhrase(100)).toContain("偏高");
-    expect(confirmReason({ still: false, rgb: true }, "READY")).toBe("请先停稳");
+    expect(confirmReason({ still: false, rgb: true }, "READY")).toBe(
+      "请先停稳",
+    );
     expect(confirmReason({ still: true, rgb: false }, "READY")).toBe(
       "画面还没更新",
     );
     expect(sitePath("/api/state", "/inspect/")).toBe("/inspect/api/state");
     expect(sitePath("/api/state", "/")).toBe("/api/state");
+  });
+});
+
+describe("实车到点录入", () => {
+  it("只有到达当前候选目标才允许继续试拍；坐标改动要求重新导航", async () => {
+    const { trialMatchesTarget, trialLabel } = await import("./workflow.js");
+    const target = { x: 1.2, y: 0.8, yaw: 0.2 };
+    const trial = { phase: "ARRIVED", request_id: "trial1", target };
+    expect(trialMatchesTarget(trial, target)).toBe(true);
+    expect(trialMatchesTarget({ ...trial, phase: "NAVIGATING" }, target)).toBe(
+      false,
+    );
+    expect(trialMatchesTarget({ ...trial, phase: "CANCELED" }, target)).toBe(
+      false,
+    );
+    expect(trialMatchesTarget(trial, { ...target, x: 1.25 })).toBe(false);
+    expect(trialMatchesTarget(trial, { ...target, yaw: 0.21 })).toBe(false);
+    expect(trialLabel("STOPPING")).toContain("停车");
+    expect(trialLabel("ARRIVED")).toBe("已到达并停稳");
   });
 });

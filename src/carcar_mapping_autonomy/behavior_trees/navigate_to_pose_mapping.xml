@@ -1,0 +1,19 @@
+<!-- 自动建图独立实验树；旧导航树及禁止清图/Spin/BackUp/Wait的基线保留。
+     复用Humble RecoveryNode，只在规划失败时延迟400ms后重试一次。
+     Delay是可取消的BT计时器，不调用Wait行为服务；不清图、不新增运动恢复。
+     https://github.com/ros-navigation/navigation2/blob/humble/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="mapping_NavigateWithReplanning">
+      <RateController name="mapping_RateController" hz="1.0">
+        <RecoveryNode name="mapping_PlannerRetry" number_of_retries="1">
+          <ComputePathToPose name="mapping_ComputePathToPose" goal="{goal}" path="{path}" planner_id="GridBased"/>
+          <Delay name="mapping_AwaitCostmapPeriod" delay_msec="400">
+            <AlwaysSuccess name="mapping_AllowOneRetry"/>
+          </Delay>
+        </RecoveryNode>
+      </RateController>
+      <FollowPath name="mapping_FollowPath" path="{path}" controller_id="FollowPath"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

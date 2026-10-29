@@ -1,0 +1,107 @@
+amcl:
+  ros__parameters:
+    scan_topic: /scan/filtered
+controller_server:
+  ros__parameters:
+    controller_frequency: 10.0
+    failure_tolerance: 0.5
+    progress_checker:
+      required_movement_radius: 0.05
+      movement_time_allowance: 30.0
+    FollowPath:
+      max_vel_x: 0.10
+      max_speed_xy: 0.10
+      max_vel_theta: 0.36
+      min_speed_xy: 0.0
+      min_speed_theta: 0.0
+      acc_lim_x: 0.20
+      acc_lim_theta: 0.80
+      decel_lim_x: -0.20
+      decel_lim_theta: -0.80
+      sim_time: 2.0
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      plugins: [obstacle_layer, inflation_layer]
+      publish_frequency: 5.0
+      obstacle_layer:
+        observation_sources: scan clearing_scan
+        scan:
+          topic: /scan/filtered
+          marking: true
+          clearing: false
+          inf_is_valid: false
+        clearing_scan:
+          topic: /scan
+          data_type: LaserScan
+          marking: false
+          clearing: true
+          inf_is_valid: false
+          raytrace_min_range: 0.10
+          raytrace_max_range: 3.0
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          min_obstacle_height: 0.0
+          max_obstacle_height: 2.0
+      inflation_layer:
+        enabled: true
+        inflation_radius: 0.20
+        cost_scaling_factor: 5.0
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 3.0
+      publish_frequency: 3.0
+      plugins: [static_layer, obstacle_layer, inflation_layer]
+      static_layer:
+        map_subscribe_transient_local: true
+        subscribe_to_updates: false
+      obstacle_layer:
+        observation_sources: scan clearing_scan
+        scan:
+          topic: /scan/filtered
+          marking: true
+          clearing: false
+          inf_is_valid: false
+        clearing_scan:
+          topic: /scan
+          data_type: LaserScan
+          marking: false
+          clearing: true
+          inf_is_valid: false
+          raytrace_min_range: 0.10
+          raytrace_max_range: 3.0
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          min_obstacle_height: 0.0
+          max_obstacle_height: 2.0
+      inflation_layer:
+        enabled: true
+        inflation_radius: 0.30
+        cost_scaling_factor: 3.0
+planner_server:
+  ros__parameters:
+    GridBased:
+      plugin: nav2_smac_planner/SmacPlanner2D
+      tolerance: 0.10
+      allow_unknown: false
+      max_planning_time: 1.0
+velocity_smoother:
+  ros__parameters:
+    feedback: OPEN_LOOP
+    max_velocity: [0.10, 0.0, 0.36]
+    min_velocity: [0.0, 0.0, -0.36]
+    max_accel: [0.20, 0.0, 0.80]
+    max_decel: [-0.20, 0.0, -0.80]
+    velocity_timeout: 0.30
+navigation_motion_gate:
+  ros__parameters:
+    require_perception_health: false
+bt_navigator:
+  ros__parameters:
+    recovery.require_perception_health: false
+# 巡检仍使用既有恢复树及自己的生命周期列表，不能复用建图无AMCL组合的列表。
+lifecycle_manager_navigation:
+  ros__parameters:
+    autostart: true
+    node_names: [controller_server, velocity_smoother, planner_server, behavior_server, bt_navigator]

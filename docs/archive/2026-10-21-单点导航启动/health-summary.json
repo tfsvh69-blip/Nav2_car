@@ -1,0 +1,16 @@
+{
+  "samples": 20,
+  "first": "2026-10-21T11:36:43.235Z",
+  "last": "2026-10-21T11:37:02.410Z",
+  "frames_first": 507,
+  "frames_last": 608,
+  "always_good": {
+    "still": true,
+    "odom": true,
+    "scan": true,
+    "rgb": true,
+    "hardware_interface": true,
+    "velocity_topology": true
+  },
+  "last_block": "请载入实测地图，规划草图不能导航"
+}

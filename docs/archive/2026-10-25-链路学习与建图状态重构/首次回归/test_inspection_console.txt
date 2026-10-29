@@ -1,0 +1,58 @@
+-- run_test.py: invoking following command in '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection':
+ - /home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_inspection_console --gtest_output=xml:/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml
+
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 13 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 13 tests from ConsoleTest
+[ RUN      ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands
+[       OK ] ConsoleTest.ConfigurationModeNeverRequestsActuatorCommands (444 ms)
+[ RUN      ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast
+[       OK ] ConsoleTest.TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndParksLast (5716 ms)
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+[  SKIPPED ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (24 ms)
+[ RUN      ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation
+[       OK ] ConsoleTest.StaleLayerEvidenceCannotReleaseCameraHoldOrStartNavigation (3027 ms)
+[ RUN      ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow
+[       OK ] ConsoleTest.NavigationFailureStopsWithoutParkingAndUsesOneRedAlarmWindow (5918 ms)
+[ RUN      ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation
+[       OK ] ConsoleTest.PlanningSketchDoesNotSeedPointsOrStartNavigation (511 ms)
+[ RUN      ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow
+[       OK ] ConsoleTest.PhotoWriteFailureStopsWithoutParkingAndUsesOneYellowAlarmWindow (5420 ms)
+[ RUN      ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose
+[       OK ] ConsoleTest.SingleGoalArrivesBeforeTeachingAndSavesMeasuredPose (2011 ms)
+[ RUN      ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain
+[       OK ] ConsoleTest.SingleGoalCancelThenRefineAndNavigateAgain (1521 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds
+[       OK ] ConsoleTest.SingleGoalDisconnectCancelsAndHolds (1021 ms)
+[ RUN      ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation
+[       OK ] ConsoleTest.SingleGoalDisabledAndStaleLayersDoNotDispatchNavigation (622 ms)
+[ RUN      ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving
+[       OK ] ConsoleTest.SingleGoalRequiresFreshRebuiltLayersBeforeDriving (1514 ms)
+[ RUN      ] ConsoleTest.SingleGoalThroughGatewayWithStatusBackqueryDoesNotTimeout
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.00242139
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.00207281
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0190865
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.017998
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0181828
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0188736
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0177221
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0181244
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.017939
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0180443
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.0183379
+APP-001-R10 isolated target=/api/teach/cancel-navigation status=200 elapsed_s=0.0184807
+APP-001-R10 isolated target=/api/teach/navigate status=200 elapsed_s=0.00866361
+[       OK ] ConsoleTest.SingleGoalThroughGatewayWithStatusBackqueryDoesNotTimeout (2122 ms)
+[----------] 13 tests from ConsoleTest (29872 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 1 test suite ran. (29872 ms total)
+[  PASSED  ] 12 tests.
+[  SKIPPED ] 1 test, listed below:
+[  SKIPPED ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+
+-- run_test.py: return code 0
+-- run_test.py: inject classname prefix into gtest result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'
+-- run_test.py: verify result file '/home/jetson/luhao/my_nav_carcar/build/carcar_inspection/test_results/carcar_inspection/test_inspection_console.gtest.xml'

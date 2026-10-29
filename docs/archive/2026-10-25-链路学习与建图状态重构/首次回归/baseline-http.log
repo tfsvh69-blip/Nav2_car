@@ -1,0 +1,11 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar/build/carcar_mapping_console
+Test project /home/jetson/luhao/my_nav_carcar/build/carcar_mapping_console
+    Start 6: test_mapping_http
+1/1 Test #6: test_mapping_http ................   Passed   14.76 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+gtest    =  14.76 sec*proc (1 test)
+
+Total Test time (real) =  14.76 sec

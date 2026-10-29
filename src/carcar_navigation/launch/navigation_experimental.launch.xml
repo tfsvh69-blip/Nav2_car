@@ -6,6 +6,8 @@
     description="Optional final sensor/costmap overlay; default repeats the existing experiment file"/>
   <arg name="use_sim_time" default="false"/>
   <arg name="odom_topic" default="/wheel/odometry" description="Navigation odometry source"/>
+  <arg name="cmd_vel_topic" default="/cmd_vel" description="Only the final motion gate output; keep raw and smoothed stages separate"/>
+  <arg name="speed_params_file" default="$(var sensor_params_file)" description="Optional final controller/smoother speed envelope"/>
   <arg name="planner_params_file" default="$(var experiment_params_file)" description="Optional final planner overlay"/>
   <!-- NAV-010/NAV-011: Groot 与桥接监视器默认关闭并停用，由 nav_event_logger 终端摘要与会话录包替代 -->
   <arg name="start_bt_monitor" default="false"/>
@@ -28,6 +30,7 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param from="$(var sensor_params_file)"/>
+    <param from="$(var speed_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
@@ -37,11 +40,13 @@
     <param from="$(var base_params_file)"/>
     <param from="$(var experiment_params_file)"/>
     <param from="$(var sensor_params_file)"/>
+    <param from="$(var speed_params_file)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param name="odom_topic" value="$(var odom_topic)"/>
   </node>
   <!-- 最终速度联锁：默认关闭；停止或异常时由底盘既有看门狗继续兜底。 -->
   <node pkg="carcar_navigation" exec="navigation_motion_gate" name="navigation_motion_gate" output="screen">
+    <remap from="/cmd_vel" to="$(var cmd_vel_topic)"/>
     <param from="$(var sensor_params_file)"/>
     <param name="permit_timeout" value="0.20"/>
     <param name="command_timeout" value="0.30"/>

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carcar_mapping_autonomy</name><version>0.1.0</version>
+  <description>有界二维自动建图、唯一运动所有权与SLAM质量监督</description>
+  <maintainer email="maintainer@example.com">carcar maintainers</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend><depend>rclcpp_action</depend><depend>std_msgs</depend>
+  <depend>sensor_msgs</depend><depend>geometry_msgs</depend><depend>nav_msgs</depend>
+  <depend>nav2_msgs</depend><depend>tf2</depend><depend>tf2_ros</depend>
+  <depend>slam_toolbox</depend><depend>explore_lite_msgs</depend>
+  <depend>diagnostic_msgs</depend><depend>nlohmann-json-dev</depend>
+  <depend>std_srvs</depend>
+  <depend>eigen</depend><depend>libtbb-dev</depend>
+  <depend>boost</depend>
+  <exec_depend>carcar_navigation</exec_depend>
+  <exec_depend>carcar_tf2_compat</exec_depend>
+  <exec_depend>explore_lite</exec_depend><exec_depend>laser_filters</exec_depend>
+  <depend>nav2_lifecycle_manager</depend>
+  <depend>nav2_util</depend><depend>lifecycle_msgs</depend>
+  <exec_depend>nav2_costmap_2d</exec_depend>
+  <exec_depend>nav2_collision_monitor</exec_depend>
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
+  <exec_depend>rosbag2_transport</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>rmw</test_depend>
+  <test_depend>behaviortree_cpp_v3</test_depend>
+  <test_depend>nav2_behavior_tree</test_depend>
+  <test_depend>filters</test_depend>
+  <test_depend>nav2_smac_planner</test_depend>
+  <test_depend>nav2_velocity_smoother</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

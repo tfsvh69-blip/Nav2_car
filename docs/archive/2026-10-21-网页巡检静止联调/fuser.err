@@ -1,0 +1,27 @@
+未指定进程
+用法：fuser [-fIMuvw] [-a|-s] [-4|-6] [-c|-m|-n 命名空间]
+            [-k [-i] [-信号]] 名字...
+      fuser -l
+      fuser -V
+显示哪些进程使用指定的文件、端口或文件系统。
+
+  -a,--all              也显示未使用的文件
+  -i,--interactive      杀死程序前询问 (未指定 -k 选项时被忽略)
+  -I,--inode            总是使用 inode 来比较文件
+  -k,--kill             杀死访问指定文件的进程
+  -l,--list-signals     列出可用的信号名
+  -m,--mount            显示所有使用指定文件系统或块设备的进程
+  -M,--ismountpoint     只在 <名字> 为挂载点时完成要求
+  -n,--namespace 空间   在指定命名空间中查找 (file、udp 或 tcp)
+  -s,--silent           不输出信息
+  -信号                 发送指定的 "信号" 而不是 SIGKILL
+  -u,--user             显示用户 ID
+  -v,--verbose          输出更多信息
+  -w,--writeonly        只杀死有权写入的进程
+  -V,--version          显示版本信息
+  -4,--ipv4             仅查找 IPv4 套接字
+  -6,--ipv6             仅查找 IPv6 套接字
+  -                     重置选项
+
+  udp/tcp 名字格式: [本地端口][,[远程主机][,[远程端口]]]
+
