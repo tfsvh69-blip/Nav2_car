@@ -1,5 +1,7 @@
 # 固定第三方依赖
 
+NAV-018-R24／R25来源保留（2026-10-30，2026-11-01补记）：`frontier_ordering` 的 `frontier_types.hpp`、`mrtsp_ordering.hpp/.cpp`、`mrtsp_solver.hpp/.cpp` 原样取自 [mertgulerx/frontier_exploration_ros2 固定提交11864e4ac6789dc81fd71bad51e43339c01deca2](https://github.com/mertgulerx/frontier_exploration_ros2/tree/11864e4ac6789dc81fd71bad51e43339c01deca2)，Copyright 2026 Mert Güler，Apache-2.0。文件版权声明和完整LICENSE保留。2026-11-01联网逐文件比对，5项源码／头文件及LICENSE均与该提交逐字节一致。曾供有限前瞻排序实验；R25已从默认编译依赖中移除，现保留历史源码和许可证，不代表正式导航启用该排序器，不引入上游整包或替换本车Smac路径审查。下方R10“未复制源码”保留其更早阶段的历史含义。
+
 - explore_lite / explore_lite_msgs：robo-friends/m-explore-ros2，commit `326cf8a0b487c34246bb8f3326afbcd69576dc60`，BSD-3-Clause。只引入单车探索，不引入多机合图。原许可证及源文件归属保留。
 - laser_filters：ros-perception/laser_filters，tag `2.0.10`，BSD。仅使用 Speckle Distance (`filter_type=0`)。RadiusOutlier 的索引检查顺序在本地修正，仍不作为本车默认模式；另修正 validator 析构条件并补齐基类虚析构，保证插件销毁与重配置安全释放。
 

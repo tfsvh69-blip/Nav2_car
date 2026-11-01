@@ -9,6 +9,12 @@ controller_server:
   ros__parameters:
     controller_frequency: 10.0
     failure_tolerance: 0.5
+    # 普通观测点只验收到点；返程继续使用原来的位置+起点朝向验收。
+    goal_checker_plugins: [general_goal_checker, exploration_goal_checker]
+    exploration_goal_checker:
+      plugin: nav2_controller::PositionGoalChecker
+      xy_goal_tolerance: 0.15
+      stateful: true
     progress_checker:
       required_movement_radius: 0.05
       movement_time_allowance: 30.0
@@ -90,18 +96,27 @@ global_costmap:
         cost_scaling_factor: 3.0
 planner_server:
   ros__parameters:
+    planner_plugins: [GridBased, ExplorationGrid]
     GridBased:
-      plugin: nav2_smac_planner/SmacPlanner2D
+      plugin: carcar_mapping_autonomy/SubcellSmacPlanner
       tolerance: 0.10
       allow_unknown: false
       max_planning_time: 1.0
+      use_final_approach_orientation: false
+    ExplorationGrid:
+      plugin: carcar_mapping_autonomy/SubcellSmacPlanner
+      tolerance: 0.10
+      allow_unknown: false
+      max_planning_time: 1.0
+      # 末端朝向取实际路径切线，避免先强制对齐地图坐标轴再换目标。
+      use_final_approach_orientation: true
 velocity_smoother:
   ros__parameters:
     feedback: OPEN_LOOP
     # NAV-018-R12实验候选：同步缩放加速增量，避免起步时独立限幅放大转弯半径。
-    # 仅自动建图覆盖；保持原速度/加速度上限。真实Nav2加减速回归通过，实车收益待验。
+    # 仅自动建图覆盖；行驶上限由RPP与监督器确认，平滑器保留0.18m/s包络。
     scale_velocities: true
-    max_velocity: [0.10, 0.0, 0.36]
+    max_velocity: [0.18, 0.0, 0.36]
     min_velocity: [0.0, 0.0, -0.36]
     max_accel: [0.20, 0.0, 0.80]
     max_decel: [-0.20, 0.0, -0.80]

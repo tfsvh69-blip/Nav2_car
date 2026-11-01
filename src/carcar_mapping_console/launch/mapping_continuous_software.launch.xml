@@ -1,0 +1,20 @@
+<launch>
+  <!-- 软件验收入口：硬件固定关闭；连续导航和在线快照不能据此当作实车已验收。 -->
+  <!-- 使用隔离DDS域，避免软件场景命令进入另一个正在运行的硬件入口。 -->
+  <set_env name="ROS_DOMAIN_ID" value="227"/>
+  <set_env name="ROS_LOCALHOST_ONLY" value="1"/>
+  <arg name="port" default="8082"/>
+  <arg name="task_id" default="continuous_software"/>
+  <arg name="recovery_enabled" default="true"/>
+  <arg name="online_snapshots" default="$(var recovery_enabled)"/>
+  <include file="$(find-pkg-share carcar_mapping_console)/launch/mapping_autonomous.launch.xml">
+    <arg name="start_hardware" value="false"/>
+    <arg name="continuous_exploration" value="true"/>
+    <arg name="bt_params" value="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_continuous.yaml"/>
+    <arg name="task_id" value="$(var task_id)"/>
+    <arg name="port" value="$(var port)"/>
+    <arg name="recovery_enabled" value="$(var recovery_enabled)"/>
+    <arg name="online_snapshots" value="$(var online_snapshots)"/>
+    <arg name="record_raw_bag" value="false"/>
+  </include>
+</launch>

@@ -26,15 +26,18 @@ inline Pose cell_world(const nav_msgs::msg::OccupancyGrid & m,int x,int y) {
     m.info.origin.position.y+std::sin(a)*gx+std::cos(a)*gy,0};
 }
 // 圆包络覆盖当前配置矩形所有航向；未知/图外一律不是安全停靠点。
-inline bool free_footprint(const nav_msgs::msg::OccupancyGrid & m,const Pose & p,double radius=.22) {
-  if(!grid_valid(m)||!std::isfinite(p.x)||!std::isfinite(p.y)||!std::isfinite(radius)||radius<0)return false;
+struct FootprintEvidence {bool invalid=false,outside=false;size_t unknown=0,occupied=0;};
+inline bool free_footprint(const nav_msgs::msg::OccupancyGrid & m,const Pose & p,double radius=.22,FootprintEvidence*evidence=nullptr) {
+  if(evidence)*evidence={};
+  if(!grid_valid(m)||!std::isfinite(p.x)||!std::isfinite(p.y)||!std::isfinite(radius)||radius<0){if(evidence)evidence->invalid=true;return false;}
+  const auto outside=[&]{if(evidence)evidence->outside=true;return false;};
   const auto a=grid_yaw(m),dx=p.x-m.info.origin.position.x,dy=p.y-m.info.origin.position.y;
   const auto gx=(std::cos(a)*dx+std::sin(a)*dy)/m.info.resolution;
   const auto gy=(-std::sin(a)*dx+std::cos(a)*dy)/m.info.resolution;
-  if(!std::isfinite(gx)||!std::isfinite(gy)||gx<0||gy<0||gx>=m.info.width||gy>=m.info.height)return false;
+  if(!std::isfinite(gx)||!std::isfinite(gy)||gx<0||gy<0||gx>=m.info.width||gy>=m.info.height)return outside();
   const double cells=radius/m.info.resolution;
-  if(!std::isfinite(cells)||cells>std::min(m.info.width,m.info.height))return false;
-  if(gx-cells<=0||gy-cells<=0||gx+cells>=m.info.width||gy+cells>=m.info.height)return false;
+  if(!std::isfinite(cells)||cells>std::min(m.info.width,m.info.height))return outside();
+  if(gx-cells<=0||gy-cells<=0||gx+cells>=m.info.width||gy+cells>=m.info.height)return outside();
   // 闭区间相交也要检查负方向相切的前一格；floor(min)会在整数边界漏掉该格。
   const int x0=std::max(0,static_cast<int>(std::ceil(gx-cells))-1),x1=static_cast<int>(std::floor(gx+cells));
   const int y0=std::max(0,static_cast<int>(std::ceil(gy-cells))-1),y1=static_cast<int>(std::floor(gy+cells));
@@ -45,11 +48,14 @@ inline bool free_footprint(const nav_msgs::msg::OccupancyGrid & m,const Pose & p
     const double nx=std::clamp(gx,static_cast<double>(x),static_cast<double>(x+1));
     const double ny=std::clamp(gy,static_cast<double>(y),static_cast<double>(y+1));
     const double ex=gx-nx,ey=gy-ny;
-    if(ex*ex+ey*ey<=cells*cells+1e-12)return false;
+    if(ex*ex+ey*ey<=cells*cells+1e-12){
+      if(!evidence)return false;
+      if(v<0)++evidence->unknown;else ++evidence->occupied;
+    }
   }
-  return true;
+  return !evidence||(evidence->unknown==0&&evidence->occupied==0);
 }
-// 规划栅格中心到连续线段最多跨一个对角格；额外预留该距离，基础审查仍为0.22米。
+// 保留已验收的整格对角余量，给跟踪转弯留出空间；基础审查仍为0.22米。
 inline bool planning_footprint(const nav_msgs::msg::OccupancyGrid&m,const Pose&p){
   return free_footprint(m,p,.22+std::sqrt(2.0)*m.info.resolution);
 }
@@ -79,8 +85,10 @@ inline bool observation_visible(const nav_msgs::msg::OccupancyGrid&m,const Pose&
   }
   return false;
 }
+struct ObservationCounts {size_t clearance=0,connected=0,visible=0,progress=0;};
 inline std::optional<Pose> safe_observation(const nav_msgs::msg::OccupancyGrid & m,const Pose & target,const Task & t,
-                                          const std::vector<uint8_t>*reachable=nullptr) {
+                                          const std::vector<uint8_t>*reachable=nullptr,
+                                          const Pose*current=nullptr,ObservationCounts*counts=nullptr) {
   if(!grid_valid(m)||!std::isfinite(target.x)||!std::isfinite(target.y)||
      (reachable&&reachable->size()!=m.data.size()))return {};
   const auto a=grid_yaw(m),dx=target.x-m.info.origin.position.x,dy=target.y-m.info.origin.position.y;
@@ -95,10 +103,18 @@ inline std::optional<Pose> safe_observation(const nav_msgs::msg::OccupancyGrid &
   const int x1=std::min(static_cast<int>(m.info.width)-1,cx+reach),y1=std::min(static_cast<int>(m.info.height)-1,cy+reach);
   std::optional<Pose> best;double distance=.8;
   for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x) {
-    if(reachable&&!(*reachable)[static_cast<size_t>(y)*m.info.width+x])continue;
     if(m.data[static_cast<size_t>(y)*m.info.width+x]!=0)continue;
     auto p=cell_world(m,x,y);const double d=std::hypot(p.x-target.x,p.y-target.y);
-    if(d<distance&&t.inside(p)&&planning_footprint(m,p)&&observation_visible(m,p,target)){distance=d;best=p;}
+    if(d>=.8||!t.inside(p)||!planning_footprint(m,p))continue;
+    if(counts)++counts->clearance;
+    if(reachable&&!(*reachable)[static_cast<size_t>(y)*m.info.width+x])continue;
+    if(counts)++counts->connected;
+    if(!observation_visible(m,p,target))continue;
+    if(counts)++counts->visible;
+    // 将到点距离要求纳入候选枚举，不能选中已到过的最近点后直接放弃其余候选。
+    if(current&&std::hypot(p.x-current->x,p.y-current->y)<=.25)continue;
+    if(counts)++counts->progress;
+    if(d<distance){distance=d;best=p;}
   }
   return best;
 }

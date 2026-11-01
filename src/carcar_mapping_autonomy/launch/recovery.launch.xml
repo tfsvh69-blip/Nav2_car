@@ -1,0 +1,24 @@
+<launch>
+  <!-- AMCL只提出候选，生产map→odom始终由mapping_slam独占。 -->
+  <arg name="task_id" default=""/>
+  <arg name="checkpoint_root" default="/home/jetson/luhao/my_nav_carcar/log/mapping_checkpoints"/>
+  <arg name="require_imu" default="true"/>
+  <arg name="online_snapshots" default="false"/>
+  <node pkg="nav2_amcl" exec="amcl" name="amcl" namespace="mapping/relocalizer" output="screen">
+    <param from="$(find-pkg-share carcar_mapping_autonomy)/config/relocalizer.yaml"/>
+    <param name="tf_broadcast" value="false"/>
+    <remap from="amcl_pose" to="/mapping/recovery/amcl_pose"/>
+    <remap from="initialpose" to="/mapping/recovery/initialpose"/>
+  </node>
+  <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_relocalizer" namespace="mapping/relocalizer" output="screen">
+    <param name="autostart" value="true"/>
+    <param name="bond_timeout" value="4.0"/>
+    <param name="node_names" value="['amcl']"/>
+  </node>
+  <node pkg="carcar_mapping_autonomy" exec="mapping_recovery" name="mapping_recovery" output="screen">
+    <param name="task_id" value="$(var task_id)" type="str"/>
+    <param name="checkpoint_root" value="$(var checkpoint_root)" type="str"/>
+    <param name="require_imu" value="$(var require_imu)"/>
+    <param name="online_snapshots" value="$(var online_snapshots)"/>
+  </node>
+</launch>

@@ -1,0 +1,13 @@
+
+> carcar-inspection-console@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.4 /home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  19:56:21
+   Duration  260ms (import 37%, tests 29%, transform 20%, worker 14%, environment 1%)
+

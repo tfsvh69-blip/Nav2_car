@@ -19,6 +19,11 @@ TEST(ObservationSelector, WideDoorKeepsOriginalObservationAndMap){
   ObservationSelector::Search search;auto target=search.select(j);ASSERT_TRUE(target);ASSERT_TRUE(expected);
   EXPECT_DOUBLE_EQ(target->x,expected->x);EXPECT_DOUBLE_EQ(target->y,expected->y);EXPECT_EQ(original,j.map->data);
 }
+TEST(ObservationSelector, AlreadyReachedNearestCandidateDoesNotHideOtherUsefulCandidates){
+  auto j=doorway(1.2);j.current=*safe_observation(*j.map,j.frontier,j.task);
+  ObservationSelector::Search search;const auto target=search.select(j);ASSERT_TRUE(target);
+  EXPECT_GT(std::hypot(target->x-j.current.x,target->y-j.current.y),.25);
+}
 TEST(ObservationSelector, NewMapAndChangedStartInvalidateComponentCache){
   auto j=doorway(.35);ObservationSelector::Search search;EXPECT_FALSE(search.select(j));
   j.current={1.2,0,0};EXPECT_TRUE(search.select(j));

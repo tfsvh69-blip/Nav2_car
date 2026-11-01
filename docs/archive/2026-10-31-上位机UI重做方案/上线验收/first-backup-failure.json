@@ -1,0 +1,20 @@
+{
+  "phase": "backup-before-any-publication",
+  "reason": "旧安装含历史失效哈希软链接，原解引用备份失败；保留失败备份，改为保留失效链接并固化有效文件",
+  "dangling_links": {
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-DF20UNrI.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-DF20UNrI.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-BKQ5AfmH.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-BKQ5AfmH.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-DiDwn9o0.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-DiDwn9o0.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-CURYXw-C.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-CURYXw-C.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-Dh71stmJ.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-Dh71stmJ.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-7Na7fNuQ.css": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-7Na7fNuQ.css",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-o63A5jXe.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-o63A5jXe.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-Dz1lyfUs.css": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-Dz1lyfUs.css",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-NMHuUIs0.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-NMHuUIs0.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-DGuKH20i.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-DGuKH20i.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-BUfJ0WPq.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-BUfJ0WPq.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-H8V4JubB.js": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-H8V4JubB.js",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-cgjamafm.css": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-cgjamafm.css",
+    "install/carcar_inspection/share/carcar_inspection/web/assets/index-DrVplKlh.css": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/assets/index-DrVplKlh.css"
+  }
+}

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "carcar_mapping_console/http_server.hpp"
+#include "carcar_mapping_console/common.hpp"
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/websocket.hpp>
@@ -15,6 +16,25 @@
 #endif
 namespace asio=boost::asio;namespace beast=boost::beast;namespace http=beast::http;namespace websocket=beast::websocket;using tcp=asio::ip::tcp;
 using namespace carcar_mapping_console;
+TEST(HttpTransport, ReconnectDuringBroadcastAlwaysWelcomesBeforeState){
+  asio::io_context io;HttpServer server("127.0.0.1",18125,[](const HttpRequest&){return HttpResponse{};},
+    [](const std::string&,const std::string&){});
+  struct Broadcaster{
+    std::atomic<bool> done{false};std::thread thread;
+    explicit Broadcaster(HttpServer&server):thread([this,&server]{while(!done){server.broadcast("{\"armed\":false}");std::this_thread::sleep_for(std::chrono::microseconds(100));}}){}
+    ~Broadcaster(){done=true;thread.join();}
+  } broadcaster(server);
+  for(int i=0;i<64;++i){
+    websocket::stream<tcp::socket> ws(io);ws.next_layer().connect({asio::ip::make_address("127.0.0.1"),18125});
+    ws.handshake("127.0.0.1:18125","/ws/control");beast::flat_buffer buffer;ws.read(buffer);
+    EXPECT_TRUE(nlohmann::json::parse(beast::buffers_to_string(buffer.data())).contains("session"));
+    ws.next_layer().close();
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+    while(server.diagnostics().value("connected",false)&&std::chrono::steady_clock::now()<deadline)
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    ASSERT_FALSE(server.diagnostics().value("connected",true));
+  }
+}
 TEST(HttpTransport, WebRtcCapabilityRetainsExistingControllerSession) {
   asio::io_context io;HttpServer server("127.0.0.1",18118,[](const HttpRequest&){return HttpResponse{};},
     [](const std::string&,const std::string&){});
@@ -131,6 +151,25 @@ TEST(HttpTransport, BriefTcpSilenceDoesNotTearDownHealthyUdpController) {
   EXPECT_GT(received.load(),50);
   std::lock_guard<std::mutex> lock(client.probe->mutex);EXPECT_GT(client.probe->received.size(),50u);
 }
+TEST(HttpTransport, MultiClientRtcAndWebSocketKeepIndependentTransport) {
+  std::atomic<int> stops{0};
+  HttpServer server("127.0.0.1",18132,[](const HttpRequest&){return HttpResponse{};},
+    [&](const std::string &,const std::string & body){if(body.find("multi_rtc_stop")!=std::string::npos)++stops;},ControlPolicy::MultiClient);
+  NativeRtc rtc(18132);ASSERT_TRUE(rtc.wait([&]{return rtc.probe->open.load()&&
+    server.diagnostics().value("control_transport",std::string())=="webrtc_udp";}));
+  asio::io_context io;websocket::stream<tcp::socket> ws(io);
+  ws.next_layer().connect({asio::ip::make_address("127.0.0.1"),18132});ws.handshake("127.0.0.1:18132","/ws/control");
+  beast::flat_buffer welcome;ws.read(welcome);ASSERT_TRUE(json::parse(beast::buffers_to_string(welcome.data())).contains("session"));
+  EXPECT_EQ(server.diagnostics()["control_transport"],"mixed");EXPECT_EQ(server.diagnostics()["control_clients"],2);
+  server.broadcast(json{{"challenge","two-transports"},{"issued_steady_ms",steady()*1000},{"armed",false}}.dump());
+  ASSERT_TRUE(rtc.wait([&]{std::lock_guard<std::mutex> lock(rtc.probe->mutex);return !rtc.probe->received.empty();}));
+  beast::flat_buffer state;ws.read(state);EXPECT_EQ(json::parse(beast::buffers_to_string(state.data()))["challenge"],"two-transports");
+  ws.next_layer().close();
+  ASSERT_TRUE(rtc.wait([&]{return server.diagnostics().value("control_clients",0)==1;}));
+  EXPECT_TRUE(server.diagnostics().value("connected",false));EXPECT_EQ(server.diagnostics()["control_transport"],"webrtc_udp");
+  rtc.channel->send("{\"action\":\"stop\",\"cause\":\"multi_rtc_stop\"}");
+  ASSERT_TRUE(rtc.wait([&]{return stops.load()==1;}));
+}
 #endif
 TEST(HttpTransport, SlowHttpHandlerDoesNotDelayStop) {
   asio::io_context io; std::atomic<bool> entered{false}, stopped{false};
@@ -211,6 +250,106 @@ TEST(HttpTransport, SecondControllerCannotTakeOver) {
   }while(std::chrono::steady_clock::now()<until);
   EXPECT_EQ(ec,asio::error::eof);
   first.next_layer().close();
+}
+TEST(HttpTransport, MultiClientBroadcastAndIndependentDisconnect) {
+  std::mutex mutex;std::vector<std::pair<std::string,std::string>> events;
+  HttpServer server("127.0.0.1",18127,[](const HttpRequest&){return HttpResponse{};},
+    [&](const std::string & id,const std::string & body){std::lock_guard<std::mutex> lock(mutex);events.emplace_back(id,body);},
+    ControlPolicy::MultiClient);
+  asio::io_context io;websocket::stream<tcp::socket> computer(io),phone(io);
+  auto connect=[&](auto & socket){
+    socket.next_layer().connect({asio::ip::make_address("127.0.0.1"),18127});socket.handshake("127.0.0.1:18127","/ws/control");
+    beast::flat_buffer buffer;socket.read(buffer);return json::parse(beast::buffers_to_string(buffer.data())).at("session").template get<std::string>();
+  };
+  const auto computer_id=connect(computer),phone_id=connect(phone);EXPECT_NE(computer_id,phone_id);
+  auto read=[&](auto & socket){beast::flat_buffer buffer;socket.read(buffer);return json::parse(beast::buffers_to_string(buffer.data()));};
+  server.broadcast("{\"probe\":1}");EXPECT_EQ(read(computer)["probe"],1);EXPECT_EQ(read(phone)["probe"],1);
+  computer.next_layer().close();
+  const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+  while(server.diagnostics().value("control_clients",0)!=1&&std::chrono::steady_clock::now()<deadline)
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  EXPECT_EQ(server.diagnostics()["control_clients"],1);EXPECT_TRUE(server.diagnostics().value("connected",false));
+  EXPECT_EQ(server.diagnostics()["control_policy"],"multi_client");
+  const std::string marker="{\"action\":\"phone_marker\"}";phone.write(asio::buffer(marker));
+  const auto marker_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+  bool marked=false;
+  while(std::chrono::steady_clock::now()<marker_deadline){
+    {std::lock_guard<std::mutex> lock(mutex);marked=std::count(events.begin(),events.end(),std::make_pair(phone_id,marker))==1;}
+    if(marked)break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  ASSERT_TRUE(marked);
+  server.broadcast("{\"probe\":2}");EXPECT_EQ(read(phone)["probe"],2);
+  server.stop();
+  // stop返回前关闭所有会话，每个ID只回报一次断开，回调不得拖到调用方状态销毁之后。
+  std::lock_guard<std::mutex> lock(mutex);
+  EXPECT_EQ(std::count(events.begin(),events.end(),std::make_pair(computer_id,std::string())),1);
+  EXPECT_EQ(std::count(events.begin(),events.end(),std::make_pair(phone_id,std::string())),1);
+  EXPECT_EQ(std::count(events.begin(),events.end(),std::make_pair(phone_id,marker)),1);
+  EXPECT_FALSE(server.diagnostics().value("connected",true));EXPECT_EQ(server.diagnostics()["control_clients"],0);
+}
+TEST(HttpTransport, MultiClientCompactProfileDoesNotChangeOtherWriter) {
+  std::atomic<int> markers{0};
+  HttpServer server("127.0.0.1",18128,[](const HttpRequest&){return HttpResponse{};},
+    [&](const std::string &,const std::string & body){if(body.find("profile_ready")!=std::string::npos)++markers;},ControlPolicy::MultiClient);
+  asio::io_context io;websocket::stream<tcp::socket> compact(io),full(io);
+  for(auto * socket:{&compact,&full}){
+    socket->next_layer().connect({asio::ip::make_address("127.0.0.1"),18128});socket->handshake("127.0.0.1:18128","/ws/control");
+    beast::flat_buffer buffer;socket->read(buffer);ASSERT_TRUE(json::parse(beast::buffers_to_string(buffer.data())).contains("session"));
+  }
+  const std::string profile="{\"action\":\"transport\",\"profile\":\"compact\"}",marker="{\"action\":\"profile_ready\"}";
+  compact.write(asio::buffer(profile));compact.write(asio::buffer(marker));
+  const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(1);
+  while(markers.load()!=1&&std::chrono::steady_clock::now()<deadline)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  ASSERT_EQ(markers.load(),1);
+  server.broadcast(json{{"challenge","fixture"},{"issued_steady_ms",steady()*1000},{"control_lease_ms",1000},
+    {"armed",false},{"large_diagnostic","only-full-client"}}.dump());
+  beast::flat_buffer compact_buffer,full_buffer;compact.read(compact_buffer);full.read(full_buffer);
+  const auto compact_state=json::parse(beast::buffers_to_string(compact_buffer.data()));
+  const auto full_state=json::parse(beast::buffers_to_string(full_buffer.data()));
+  EXPECT_EQ(compact_state["challenge"],"fixture");EXPECT_FALSE(compact_state.contains("large_diagnostic"));
+  EXPECT_EQ(full_state["large_diagnostic"],"only-full-client");
+  compact.next_layer().close();full.next_layer().close();
+}
+TEST(HttpTransport, SlowWebSocketPeerDoesNotBlockOtherClientStop) {
+  std::atomic<int> stops{0};
+  HttpServer server("127.0.0.1",18131,[](const HttpRequest&){return HttpResponse{};},
+    [&](const std::string &,const std::string & body){if(body.find("stop_probe")!=std::string::npos)++stops;},ControlPolicy::MultiClient);
+  asio::io_context io;websocket::stream<tcp::socket> slow(io),fast(io);
+  slow.next_layer().open(tcp::v4());slow.next_layer().set_option(asio::socket_base::receive_buffer_size(1024));
+  for(auto * socket:{&slow,&fast}){
+    socket->next_layer().connect({asio::ip::make_address("127.0.0.1"),18131});socket->handshake("127.0.0.1:18131","/ws/control");
+    beast::flat_buffer buffer;socket->read(buffer);
+  }
+  // 慢端从此不再读取，填满其TCP接收窗口；快端仍须读到每次新状态。
+  for(int revision=0;revision<6;++revision){
+    server.broadcast(json{{"revision",revision},{"padding",std::string(256*1024,'x')}}.dump());
+    beast::flat_buffer buffer;fast.read(buffer);EXPECT_EQ(json::parse(beast::buffers_to_string(buffer.data()))["revision"],revision);
+  }
+  const std::string stop="{\"action\":\"stop\",\"cause\":\"stop_probe\"}";
+  const auto sent=std::chrono::steady_clock::now();fast.write(asio::buffer(stop));
+  const auto deadline=sent+std::chrono::milliseconds(500);
+  while(stops.load()!=1&&std::chrono::steady_clock::now()<deadline)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  EXPECT_EQ(stops.load(),1);EXPECT_LT(std::chrono::steady_clock::now()-sent,std::chrono::milliseconds(500));
+  server.broadcast("{\"revision\":99}");beast::flat_buffer buffer;fast.read(buffer);
+  EXPECT_EQ(json::parse(beast::buffers_to_string(buffer.data()))["revision"],99);
+  slow.next_layer().close();fast.next_layer().close();
+}
+TEST(HttpTransport, MappingMultiClientDoesNotChangeInspectExclusivePolicy) {
+  HttpServer inspection("127.0.0.1",18129,[](const HttpRequest&){return HttpResponse{};},[](const auto &,const auto &){});
+  HttpServer mapping("127.0.0.1",18130,[](const HttpRequest&){return HttpResponse{};},[](const auto &,const auto &){},ControlPolicy::MultiClient);
+  mapping.set_inspect_upstream("127.0.0.1",18129);
+  asio::io_context io;websocket::stream<tcp::socket> first(io),second(io),inspect(io),other_inspect(io);
+  for(auto * socket:{&first,&second}){
+    socket->next_layer().connect({asio::ip::make_address("127.0.0.1"),18130});socket->handshake("127.0.0.1:18130","/ws/control");
+    beast::flat_buffer buffer;socket->read(buffer);ASSERT_TRUE(json::parse(beast::buffers_to_string(buffer.data())).contains("session"));
+  }
+  inspect.next_layer().connect({asio::ip::make_address("127.0.0.1"),18130});inspect.handshake("127.0.0.1:18130","/inspect/ws/control");
+  beast::flat_buffer buffer;inspect.read(buffer);EXPECT_TRUE(json::parse(beast::buffers_to_string(buffer.data())).contains("session"));
+  other_inspect.next_layer().connect({asio::ip::make_address("127.0.0.1"),18130});
+  EXPECT_THROW(other_inspect.handshake("127.0.0.1:18130","/inspect/ws/control"),boost::system::system_error);
+  EXPECT_EQ(mapping.diagnostics()["control_clients"],2);EXPECT_EQ(inspection.diagnostics()["control_clients"],1);
+  first.next_layer().close();second.next_layer().close();inspect.next_layer().close();other_inspect.next_layer().close();
 }
 TEST(HttpTransport, InspectPrefixReachesUpstreamAndMissingUpstreamIsVisible) {
   asio::io_context io;

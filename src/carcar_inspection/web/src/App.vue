@@ -75,7 +75,9 @@ const route = reactive({
   yaw: 0,
 });
 const initialPose = reactive({ x: 0, y: 0, yaw: 0 });
-const sliderTarget = ref(null), sliderDirty = ref(false), sliderRunning = ref(false);
+const sliderTarget = ref(null),
+  sliderDirty = ref(false),
+  sliderRunning = ref(false);
 const initialPoseChosen = ref(false);
 const editTarget = computed(() =>
   page.value === "overview"
@@ -97,32 +99,68 @@ const goalReason = computed(
       : ""),
 );
 const navigationRequest = reactive({ phase: "IDLE", message: "" });
-const navigationLayers = reactive({ global_costmap: true, local_costmap: true, global_path: true, local_path: true });
-const navigationLayerNames = {global_costmap:"全局障碍与膨胀（紫）",local_costmap:"局部障碍与膨胀（橙）",global_path:"全局路径（青）",local_path:"局部路径（亮黄）"};
+const navigationLayers = reactive({
+  global_costmap: true,
+  local_costmap: true,
+  global_path: true,
+  local_path: true,
+});
+const navigationLayerNames = {
+  global_costmap: "全局障碍与膨胀（紫）",
+  local_costmap: "局部障碍与膨胀（橙）",
+  global_path: "全局路径（青）",
+  local_path: "局部路径（亮黄）",
+};
 const navigationImages = {};
 const navigationDownloads = new Set();
-const navigateReason = computed(() => !connected.value ? "请等待控制连接建立" : !draftPoseChosen.value ? "请先在地图上选择停车位置与车头方向，或填写候选坐标" : trialActive.value ? "已有导航正在执行，请等待或取消" : goalReason.value);
+const navigateReason = computed(() =>
+  !connected.value
+    ? "请等待控制连接建立"
+    : !draftPoseChosen.value
+      ? "请先在地图上选择停车位置与车头方向，或填写候选坐标"
+      : trialActive.value
+        ? "已有导航正在执行，请等待或取消"
+        : goalReason.value,
+);
 function navigationLayerStatus(layer) {
-  const info=state.value.navigation_debug?.[layer];
+  const info = state.value.navigation_debug?.[layer];
   if (!info?.available) return info?.error || "尚未收到数据";
-  const seconds=Math.max(0,info.source_age_seconds||0);
-  return `${info.source_frame}→map · ${seconds.toFixed(1)}秒前${seconds>2?" · 历史数据":""}${layer.endsWith("path")?` · ${info.points?.length||0}个显示点`:""}`;
+  const seconds = Math.max(0, info.source_age_seconds || 0);
+  return `${info.source_frame}→map · ${seconds.toFixed(1)}秒前${seconds > 2 ? " · 历史数据" : ""}${layer.endsWith("path") ? ` · ${info.points?.length || 0}个显示点` : ""}`;
 }
 async function loadNavigationImages(value) {
-  for (const key of ["global_costmap","local_costmap"]) {
-    const meta=value.navigation_debug?.[key];
-    if (!navigationLayers[key]||!meta?.available||navigationDownloads.has(key)||navigationImages[key]?.meta.sequence===meta.sequence) continue;
+  for (const key of ["global_costmap", "local_costmap"]) {
+    const meta = value.navigation_debug?.[key];
+    if (
+      !navigationLayers[key] ||
+      !meta?.available ||
+      navigationDownloads.has(key) ||
+      navigationImages[key]?.meta.sequence === meta.sequence
+    )
+      continue;
     navigationDownloads.add(key);
     try {
-      const response=await fetch(site(`/api/navigation/${key.replaceAll("_","-")}.png`));
+      const response = await fetch(
+        site(`/api/navigation/${key.replaceAll("_", "-")}.png`),
+      );
       if (!response.ok) continue;
-      const paired=JSON.parse(response.headers.get("X-Navigation-Layer")||"{}");
-      const url=URL.createObjectURL(await response.blob());
-      const image=new Image();
-      image.onload=()=>{navigationImages[key]={image,meta:paired};URL.revokeObjectURL(url);draw();};
-      image.onerror=()=>URL.revokeObjectURL(url);image.src=url;
-    } catch { /* 状态栏保留实际消息更新时间；不伪造空闲栅格。 */ }
-    finally { navigationDownloads.delete(key); }
+      const paired = JSON.parse(
+        response.headers.get("X-Navigation-Layer") || "{}",
+      );
+      const url = URL.createObjectURL(await response.blob());
+      const image = new Image();
+      image.onload = () => {
+        navigationImages[key] = { image, meta: paired };
+        URL.revokeObjectURL(url);
+        draw();
+      };
+      image.onerror = () => URL.revokeObjectURL(url);
+      image.src = url;
+    } catch {
+      /* 状态栏保留实际消息更新时间；不伪造空闲栅格。 */
+    } finally {
+      navigationDownloads.delete(key);
+    }
   }
 }
 const pointSaved = computed(
@@ -131,7 +169,8 @@ const pointSaved = computed(
 const pointCanConfirm = computed(
   () =>
     confirmable.value &&
-    !sliderRunning.value && !sliderDirty.value &&
+    !sliderRunning.value &&
+    !sliderDirty.value &&
     trialArrived.value &&
     state.value.health.localization &&
     state.value.health.map_matches,
@@ -159,20 +198,34 @@ const teaching = computed(() => state.value.teaching),
       state.value.health.rgb,
   );
 const servoSlider = createServoSlider({
-  read: () => ({ connected: connected.value, visible: !document.hidden,
-    allowed: !stopped && page.value === "points" && trialArrived.value && !trialActive.value,
-    held: state.value.motion_held, still: state.value.health.still, rgb: state.value.health.rgb,
-    teaching: teaching.value }),
+  read: () => ({
+    connected: connected.value,
+    visible: !document.hidden,
+    allowed:
+      !stopped &&
+      page.value === "points" &&
+      trialArrived.value &&
+      !trialActive.value,
+    held: state.value.motion_held,
+    still: state.value.health.still,
+    rgb: state.value.health.rgb,
+    teaching: teaching.value,
+  }),
   send: async (target, revision) => {
     rendered.sequence = 0;
     await post("/api/teach/step", { revision, target_degrees: target });
   },
-  onRunning: (value) => { sliderRunning.value = value; },
+  onRunning: (value) => {
+    sliderRunning.value = value;
+  },
 });
 function cancelSlider() {
   servoSlider.stop();
-  sliderTarget.value = null; sliderDirty.value = false;
-  if (sliderRunning.value) notice.value = "已停止追加调角命令；已发送的一小步可能完成，停车保持继续生效。";
+  sliderTarget.value = null;
+  sliderDirty.value = false;
+  if (sliderRunning.value)
+    notice.value =
+      "已停止追加调角命令；已发送的一小步可能完成，停车保持继续生效。";
 }
 function previewSlider(event) {
   sliderTarget.value = Number(event.target.value);
@@ -180,15 +233,20 @@ function previewSlider(event) {
 }
 async function commitSlider() {
   const target = Number(sliderTarget.value ?? teaching.value.target_degrees);
-  sliderDirty.value = true; rendered.sequence = 0;
-  notice.value = "正在按滑块目标逐步调角；可改目标或停止，完成前不能保存旧画面。";
+  sliderDirty.value = true;
+  rendered.sequence = 0;
+  notice.value =
+    "正在按滑块目标逐步调角；可改目标或停止，完成前不能保存旧画面。";
   try {
     const result = await servoSlider.start(target);
     if (result.completed && Number(sliderTarget.value) === result.target) {
-      sliderTarget.value = null; sliderDirty.value = false;
+      sliderTarget.value = null;
+      sliderDirty.value = false;
       notice.value = "滑块调角已完成，请检查本次新画面后确认保存。";
     }
-  } catch (error) { notice.value = error.message; }
+  } catch (error) {
+    notice.value = error.message;
+  }
 }
 const points = computed(() =>
   state.value.points.filter((p) => p.map_id === state.value.map?.id),
@@ -392,10 +450,19 @@ async function poll() {
     // 刷新只恢复当前实车已到达的候选编辑值，不重发目标或角度。
     if (restoreArrivalOnLoad) {
       restoreArrivalOnLoad = false;
-      if (!draftPoseChosen.value && page.value === "points" && value.navigation_trial?.phase === "ARRIVED" &&
-          value.navigation_trial.map_id === value.map?.id && value.navigation_trial.target) {
+      if (
+        !draftPoseChosen.value &&
+        page.value === "points" &&
+        value.navigation_trial?.phase === "ARRIVED" &&
+        value.navigation_trial.map_id === value.map?.id &&
+        value.navigation_trial.target
+      ) {
         const target = value.navigation_trial.target;
-        Object.assign(draft, { x: target.x, y: target.y, yaw: target.yaw * 180 / Math.PI });
+        Object.assign(draft, {
+          x: target.x,
+          y: target.y,
+          yaw: (target.yaw * 180) / Math.PI,
+        });
         draftPoseChosen.value = true;
       }
     }
@@ -559,19 +626,34 @@ async function startTrialCapture() {
 }
 async function navigateDraft() {
   if (navigateReason.value) {
-    navigationRequest.phase="REJECTED";navigationRequest.message=navigateReason.value;
+    navigationRequest.phase = "REJECTED";
+    navigationRequest.message = navigateReason.value;
     throw new Error(navigateReason.value);
   }
   if (
     !window.confirm(
       `让小车前往候选停车位：X ${Number(draft.x).toFixed(2)}米、Y ${Number(draft.y).toFixed(2)}米、朝向 ${Number(draft.yaw).toFixed(1)}°。请确认行驶区域安全，并在旁看护。`,
     )
-  ) { navigationRequest.phase="CANCELED";navigationRequest.message="已取消确认，尚未向车端发送目标";return; }
-  navigationRequest.phase="SUBMITTING";navigationRequest.message="正在向车端提交目标……";
+  ) {
+    navigationRequest.phase = "CANCELED";
+    navigationRequest.message = "已取消确认，尚未向车端发送目标";
+    return;
+  }
+  navigationRequest.phase = "SUBMITTING";
+  navigationRequest.message = "正在向车端提交目标……";
   try {
-    await post("/api/teach/navigate", { request_id: requestId(), pose: poseOf(draft) });
-    navigationRequest.phase="ACCEPTED";navigationRequest.message="车端已接受目标，正在准备导航；请查看下面的实时阶段";
-  } catch (error) { navigationRequest.phase="REJECTED";navigationRequest.message=`目标未被接受：${error.message}`;throw error; }
+    await post("/api/teach/navigate", {
+      request_id: requestId(),
+      pose: poseOf(draft),
+    });
+    navigationRequest.phase = "ACCEPTED";
+    navigationRequest.message =
+      "车端已接受目标，正在准备导航；请查看下面的实时阶段";
+  } catch (error) {
+    navigationRequest.phase = "REJECTED";
+    navigationRequest.message = `目标未被接受：${error.message}`;
+    throw error;
+  }
   notice.value = "目标已提交。到达并停稳后，核对实际位置，再开始调整相机。";
 }
 function nudgeCoordinate(key, delta) {
@@ -718,21 +800,39 @@ async function startTask(t) {
 function drawNavigationLayers(ctx, map, density, scale) {
   for (const key of ["global_costmap", "local_costmap"]) {
     const layer = navigationImages[key];
-    if (!navigationLayers[key] || !layer?.meta.available || !state.value.navigation_debug?.[key]?.available) continue;
-    const meta = layer.meta, origin = mapToPixel(meta.origin, map), ratio = meta.resolution / map.resolution;
+    if (
+      !navigationLayers[key] ||
+      !layer?.meta.available ||
+      !state.value.navigation_debug?.[key]?.available
+    )
+      continue;
+    const meta = layer.meta,
+      origin = mapToPixel(meta.origin, map),
+      ratio = meta.resolution / map.resolution;
     ctx.save();
     ctx.translate(origin.u, origin.v);
     ctx.rotate(-(meta.origin.yaw - map.origin.yaw));
-    ctx.drawImage(layer.image, 0, -meta.height * ratio, meta.width * ratio, meta.height * ratio);
+    ctx.drawImage(
+      layer.image,
+      0,
+      -meta.height * ratio,
+      meta.width * ratio,
+      meta.height * ratio,
+    );
     ctx.restore();
   }
-  for (const [key, color] of [["global_path", "#00a8bd"], ["local_path", "#ffe000"]]) {
+  for (const [key, color] of [
+    ["global_path", "#00a8bd"],
+    ["local_path", "#ffe000"],
+  ]) {
     const layer = state.value.navigation_debug?.[key];
-    if (!navigationLayers[key] || !layer?.available || !layer.points?.length) continue;
+    if (!navigationLayers[key] || !layer?.available || !layer.points?.length)
+      continue;
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = (key === "local_path" ? 4 : 3) * density / scale;
-    if (layer.source_age_seconds > 2) ctx.setLineDash([6 * density / scale, 4 * density / scale]);
+    ctx.lineWidth = ((key === "local_path" ? 4 : 3) * density) / scale;
+    if (layer.source_age_seconds > 2)
+      ctx.setLineDash([(6 * density) / scale, (4 * density) / scale]);
     ctx.beginPath();
     layer.points.forEach(([x, y], index) => {
       const p = mapToPixel({ x, y }, map);
@@ -1174,11 +1274,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <a class="skip-link" href="#inspection-main">跳到巡检工作区</a>
   <div class="shell">
     <aside>
       <a class="brand" href="/" aria-label="巡检首页"
         ><span class="brand-mark"><ConsoleIcon name="drive" /></span
-        ><span>巡检<small>小车工作空间</small></span></a
+        ><span>巡检<small>机器人工作空间</small></span></a
       >
       <div class="workspace-switch" aria-label="工作空间">
         <a href="/"><ConsoleIcon name="map" />随行建图</a>
@@ -1209,20 +1310,22 @@ onBeforeUnmount(() => {
         }}<small>任务与照片保存在车端</small>
       </div>
     </aside>
-    <main :aria-busy="busy">
-      <header>
-        <div>
-          <p class="eyebrow">室内巡检工作台</p>
-          <h1>
-            {{ navItems.find((i) => i[0] === page)?.[1] || "高级规划草图" }}
-          </h1>
-          <p class="page-description">{{ pageDescriptions[page] }}</p>
+    <main id="inspection-main" tabindex="-1" :aria-busy="busy">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <span>工作空间</span><span aria-hidden="true">/</span
+          ><strong>巡检工作台</strong>
         </div>
         <button class="stop" @click="action(stopEverything)">
-          <ConsoleIcon name="stop" />
-          停车并取消当前行驶
+          <ConsoleIcon name="stop" />停车并取消当前行驶
         </button>
       </header>
+      <div class="page-intro">
+        <h1>
+          {{ navItems.find((i) => i[0] === page)?.[1] || "高级规划草图" }}
+        </h1>
+        <p class="page-description">{{ pageDescriptions[page] }}</p>
+      </div>
       <div v-if="notice || state.error" class="notice" role="status">
         {{ notice || state.error }}
       </div>
@@ -1247,7 +1350,8 @@ onBeforeUnmount(() => {
         <article class="card">
           <h2>下一次巡检</h2>
           <p>
-            先确认当前定位，再到“录入巡检点”下发单点导航。行驶时镜头固定为 140.5°（板端 94 档）。所有点位实车试拍确认后，才安排整轮巡检。
+            先确认当前定位，再到“录入巡检点”下发单点导航。行驶时镜头固定为
+            140.5°（板端 94 档）。所有点位实车试拍确认后，才安排整轮巡检。
           </p>
           <button class="primary" @click="setPage('tasks')">
             安排整轮巡检
@@ -1290,21 +1394,55 @@ onBeforeUnmount(() => {
             <ConsoleIcon name="plus" />新建任务</button
           ><span>当前图 {{ state.map?.id || "未选择" }}</span>
         </div>
-        <section v-if="state.navigation_speed?.enabled" class="card speed-controls" aria-label="导航速度档位">
+        <section
+          v-if="state.navigation_speed?.enabled"
+          class="card speed-controls"
+          aria-label="导航速度档位"
+        >
           <h2>导航速度</h2>
           <div class="speed-options">
             <button
               v-for="option in state.navigation_speed.options"
               :key="option.mps"
               :aria-pressed="state.navigation_speed.applied_mps === option.mps"
-              :class="{ primary: state.navigation_speed.applied_mps === option.mps }"
-              :disabled="busy || !connected || trialActive || !state.health.still || state.navigation_speed.pending || ['RUNNING','PAUSED'].includes(state.run?.status)"
-              @click="action(() => post('/api/navigation/speed', { max_linear_mps: option.mps }))"
-            >{{ option.label }}</button>
+              :class="{
+                primary: state.navigation_speed.applied_mps === option.mps,
+              }"
+              :disabled="
+                busy ||
+                !connected ||
+                trialActive ||
+                !state.health.still ||
+                state.navigation_speed.pending ||
+                ['RUNNING', 'PAUSED'].includes(state.run?.status)
+              "
+              @click="
+                action(() =>
+                  post('/api/navigation/speed', { max_linear_mps: option.mps }),
+                )
+              "
+            >
+              {{ option.label }}
+            </button>
           </div>
-          <p role="status" :class="state.navigation_speed.ready ? 'status-good' : 'status-wait'">{{ state.navigation_speed.message }}</p>
-          <p class="caption">前进上限 {{ state.navigation_speed.applied_mps?.toFixed(2) ?? '待确认' }} m/s · 当前下发 {{ state.motion?.command_linear_mps?.toFixed(2) ?? '—' }} m/s · 轮式反馈 {{ state.motion?.wheel_linear_mps?.toFixed(2) ?? '—' }} m/s</p>
-          <p class="caption">停车后点击切档，确认后用于下一次导航。上限不是匀速命令；转向、避障会减速。3、4档供现场实验，注意观察抖动和停车距离。</p>
+          <p
+            role="status"
+            :class="
+              state.navigation_speed.ready ? 'status-good' : 'status-wait'
+            "
+          >
+            {{ state.navigation_speed.message }}
+          </p>
+          <p class="caption">
+            前进上限
+            {{ state.navigation_speed.applied_mps?.toFixed(2) ?? "待确认" }} m/s
+            · 当前下发
+            {{ state.motion?.command_linear_mps?.toFixed(2) ?? "—" }} m/s ·
+            轮式反馈 {{ state.motion?.wheel_linear_mps?.toFixed(2) ?? "—" }} m/s
+          </p>
+          <p class="caption">
+            停车后点击切档，确认后用于下一次导航。上限不是匀速命令；转向、避障会减速。3、4档供现场实验，注意观察抖动和停车距离。
+          </p>
         </section>
         <p class="position-guide">
           {{
@@ -1393,26 +1531,56 @@ onBeforeUnmount(() => {
                 <p>载入已保存的场地地图，规划巡检停车位。</p>
               </div>
             </div>
-            <p class="caption">
-              保存地图 · map坐标系{{
-                state.map ? ` · ${state.map.resolution.toFixed(3)} 米/格` : ""
-              }}。
-              白：空闲　黑：占用　灰：未知　蓝：当前定位估计　粉：编辑目标　绿：已确认点　黄：草稿。箭头为车头朝向。
-            </p>
-            <p class="caption">
-              地图按原比例显示，屏幕大小不改变米制坐标。请在白色区域选停车位，并现场核对车身空间；保存地图不代表当前障碍状态。
-            </p>
-            <details class="navigation-debug" open>
+            <details class="map-reading">
+              <summary>地图坐标与颜色说明</summary>
+              <p class="caption">
+                保存地图 · map坐标系{{
+                  state.map
+                    ? ` · ${state.map.resolution.toFixed(3)} 米/格`
+                    : ""
+                }}。
+                白：空闲　黑：占用　灰：未知　蓝：当前定位估计　粉：编辑目标　绿：已确认点　黄：草稿。箭头为车头朝向。
+              </p>
+              <p class="caption">
+                地图按原比例显示，屏幕大小不改变米制坐标。请在白色区域选停车位，并现场核对车身空间；保存地图不代表当前障碍状态。
+              </p>
+            </details>
+            <details class="navigation-debug">
               <summary>导航调试图层与数据状态</summary>
-              <p class="caption">来自车端真实话题；全局／局部代价图包含障碍与膨胀安全余量，红色为高代价障碍，透明部分不表示已确认安全。局部数据按当前TF转换到map；显示刷新最多2Hz，路径仅抽样显示，不修改规划。旧路径用虚线。</p>
-              <label v-for="(name,key) in navigationLayerNames" :key="key" class="navigation-layer-option">
-                <input type="checkbox" v-model="navigationLayers[key]" @change="draw" />
-                <span>{{ name }}<small>{{ navigationLayerStatus(key) }}</small></span>
+              <p class="caption">
+                来自车端真实话题；全局／局部代价图包含障碍与膨胀安全余量，红色为高代价障碍，透明部分不表示已确认安全。局部数据按当前TF转换到map；显示刷新最多2Hz，路径仅抽样显示，不修改规划。旧路径用虚线。
+              </p>
+              <label
+                v-for="(name, key) in navigationLayerNames"
+                :key="key"
+                class="navigation-layer-option"
+              >
+                <input
+                  type="checkbox"
+                  v-model="navigationLayers[key]"
+                  @change="draw"
+                />
+                <span
+                  >{{ name
+                  }}<small>{{ navigationLayerStatus(key) }}</small></span
+                >
               </label>
-              <p :class="state.health.perception?'status-good':'status-wait'">深度避障：{{ state.health.perception?'当前有效':'当前未放行；下发后仍会检查新点云与图层重建' }}</p>
+              <p
+                :class="state.health.perception ? 'status-good' : 'status-wait'"
+              >
+                深度避障：{{
+                  state.health.perception
+                    ? "当前有效"
+                    : "当前未放行；下发后仍会检查新点云与图层重建"
+                }}
+              </p>
             </details>
           </article>
-          <article v-if="page === 'points'" class="card editor">
+          <article
+            v-if="page === 'points'"
+            class="card editor"
+            aria-label="巡检点位编辑"
+          >
             <h2>2. 下发目标，让小车前往</h2>
             <label
               >点位名称<input
@@ -1483,22 +1651,48 @@ onBeforeUnmount(() => {
             </p>
             <button
               class="primary big"
-              :disabled="
-                busy ||
-                trialActive
-              "
+              :disabled="busy || trialActive"
               @click="action(navigateDraft)"
             >
               {{
                 trialArrived ? "按调整后的目标重新导航" : "下发目标，让小车前往"
               }}
             </button>
-            <p v-if="navigateReason && !trialActive" class="status-wait" role="status">尚未下发：{{ navigateReason }}</p>
-            <p v-if="navigationRequest.message && (trialActive || navigationRequest.phase !== 'ACCEPTED')" :class="navigationRequest.phase==='ACCEPTED'?'status-good':'status-wait'" role="status">{{ navigationRequest.message }}</p>
+            <p
+              v-if="navigateReason && !trialActive"
+              class="status-wait"
+              role="status"
+            >
+              尚未下发：{{ navigateReason }}
+            </p>
+            <p
+              v-if="
+                navigationRequest.message &&
+                (trialActive || navigationRequest.phase !== 'ACCEPTED')
+              "
+              :class="
+                navigationRequest.phase === 'ACCEPTED'
+                  ? 'status-good'
+                  : 'status-wait'
+              "
+              role="status"
+            >
+              {{ navigationRequest.message }}
+            </p>
             <p class="phase" role="status">{{ trialLabel(trial.phase) }}</p>
             <p v-if="trial.error" class="status-wait">{{ trial.error }}</p>
-            <p v-if="trial.nav2_result" class="caption">导航器结果：{{ trial.nav2_result }}。到达后还需停车、核对实物位置并试拍确认。</p>
-            <p v-if="trial.arrival_error" class="caption">停车时与候选目标的定位估计差：{{ (trial.arrival_error.distance_m * 100).toFixed(1) }}厘米／{{ (trial.arrival_error.yaw_rad * 180 / Math.PI).toFixed(1) }}°。此数值用于对照，保存的是确认时的实际定位估计。</p>
+            <p v-if="trial.nav2_result" class="caption">
+              导航器结果：{{
+                trial.nav2_result
+              }}。到达后还需停车、核对实物位置并试拍确认。
+            </p>
+            <p v-if="trial.arrival_error" class="caption">
+              停车时与候选目标的定位估计差：{{
+                (trial.arrival_error.distance_m * 100).toFixed(1)
+              }}厘米／{{
+                ((trial.arrival_error.yaw_rad * 180) / Math.PI).toFixed(1)
+              }}°。此数值用于对照，保存的是确认时的实际定位估计。
+            </p>
             <button
               v-if="trialActive"
               class="stop"
@@ -1976,7 +2170,13 @@ onBeforeUnmount(() => {
             }}</span>
           </div>
           <div class="video-surface">
-            <img v-if="videoUrl" :src="videoUrl" alt="相机实时RGB画面" />
+            <img
+              v-if="videoUrl"
+              :src="videoUrl"
+              alt="相机实时RGB画面"
+              width="640"
+              height="480"
+            />
             <div v-else class="surface-empty">
               <ConsoleIcon name="camera" />
               <h3>等待相机画面</h3>
@@ -1989,7 +2189,8 @@ onBeforeUnmount(() => {
             }}。参考照片是历史画面。
           </p>
           <p v-if="page === 'overview'" class="caption">
-            行驶时镜头固定为 140.5°（板端 94 档）。启动时已经下发，不用再点确认。到点后如果要改拍摄角度，再到「录入巡检点」里调。
+            行驶时镜头固定为 140.5°（板端 94
+            档）。启动时已经下发，不用再点确认。到点后如果要改拍摄角度，再到「录入巡检点」里调。
           </p>
         </article>
         <article v-if="page === 'points'" class="card">
@@ -2033,25 +2234,64 @@ onBeforeUnmount(() => {
           </button>
           <div class="angle-readout">
             <strong
-              >{{ (sliderTarget ?? teaching.target_degrees)?.toFixed(1) }}<small>°</small></strong
+              >{{ (sliderTarget ?? teaching.target_degrees)?.toFixed(1)
+              }}<small>°</small></strong
             ><span
-              >{{ sliderDirty || sliderRunning ? '滑块目标' : 'S1俯仰目标' }} · 已下发目标 {{ teaching.target_degrees?.toFixed(1) }}° · 板端命令
+              >{{ sliderDirty || sliderRunning ? "滑块目标" : "S1俯仰目标" }} ·
+              已下发目标 {{ teaching.target_degrees?.toFixed(1) }}° · 板端命令
               {{ teaching.board_command ?? "—" }} 档</span
             >
           </div>
-          <label class="servo-slider-label" for="servo-angle-slider">相机俯仰目标</label>
-          <input id="servo-angle-slider" class="servo-angle-slider" type="range" min="85" max="160" step="0.5"
+          <label class="servo-slider-label" for="servo-angle-slider"
+            >相机俯仰目标</label
+          >
+          <input
+            id="servo-angle-slider"
+            class="servo-angle-slider"
+            type="range"
+            min="85"
+            max="160"
+            step="0.5"
             :value="sliderTarget ?? teaching.target_degrees"
-            :disabled="busy || !connected || !trialArrived || !state.motion_held || !state.health.still || !['READY','SENDING','WAITING_FRAME','AWAITING_CONFIRMATION'].includes(teaching.phase)"
-            @input="previewSlider" @change="commitSlider" @pointercancel="cancelSlider" @keydown.esc.prevent="cancelSlider" />
-          <div class="servo-slider-scale"><span>85° 抬头方向</span><span>140.5° 平视参考</span><span>160° 低头方向</span></div>
-          <button :disabled="!sliderRunning && !sliderDirty" @click="cancelSlider">停止滑块调角</button>
-          <p v-if="sliderRunning" class="status-wait" role="status">正在逐步调到滑块目标；可拖动改目标。等待本次发送及新画面，完成前不能保存。</p>
-          <p v-else-if="sliderDirty" class="status-wait" role="status">滑块目标尚未完成；松手提交，或停止调角后按当前画面重新确认。</p>
+            :disabled="
+              busy ||
+              !connected ||
+              !trialArrived ||
+              !state.motion_held ||
+              !state.health.still ||
+              ![
+                'READY',
+                'SENDING',
+                'WAITING_FRAME',
+                'AWAITING_CONFIRMATION',
+              ].includes(teaching.phase)
+            "
+            @input="previewSlider"
+            @change="commitSlider"
+            @pointercancel="cancelSlider"
+            @keydown.esc.prevent="cancelSlider"
+          />
+          <div class="servo-slider-scale">
+            <span>85° 抬头方向</span><span>140.5° 平视参考</span
+            ><span>160° 低头方向</span>
+          </div>
+          <button
+            :disabled="!sliderRunning && !sliderDirty"
+            @click="cancelSlider"
+          >
+            停止滑块调角
+          </button>
+          <p v-if="sliderRunning" class="status-wait" role="status">
+            正在逐步调到滑块目标；可拖动改目标。等待本次发送及新画面，完成前不能保存。
+          </p>
+          <p v-else-if="sliderDirty" class="status-wait" role="status">
+            滑块目标尚未完成；松手提交，或停止调角后按当前画面重新确认。
+          </p>
           <div class="step-buttons">
             <button
               :disabled="
-                busy || sliderRunning ||
+                busy ||
+                sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(-1))"
@@ -2059,7 +2299,8 @@ onBeforeUnmount(() => {
               目标 −1°</button
             ><button
               :disabled="
-                busy || sliderRunning ||
+                busy ||
+                sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(1))"
@@ -2067,7 +2308,8 @@ onBeforeUnmount(() => {
               目标 +1°</button
             ><button
               :disabled="
-                busy || sliderRunning ||
+                busy ||
+                sliderRunning ||
                 !['READY', 'AWAITING_CONFIRMATION'].includes(teaching.phase)
               "
               @click="action(() => step(0))"
@@ -2090,8 +2332,8 @@ onBeforeUnmount(() => {
             :disabled="busy || !pointCanConfirm || !draft.id"
             @click="action(() => confirm('approach'))"
           >
-            把当前位置存为备选停车位</button
-          >
+            把当前位置存为备选停车位
+          </button>
           <p class="caption">
             每个拍摄目标最多3个停车位，各自保存朝向和俯仰。某一位到不了就试下一位；三位都失败则记为未拍并继续后面的目标。保存后继续保持停车。支架异常时立即断开执行器电源。
           </p>

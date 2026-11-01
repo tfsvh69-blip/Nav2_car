@@ -1,0 +1,5 @@
+<library path="carcar_subcell_smac_planner">
+  <class name="carcar_mapping_autonomy/SubcellSmacPlanner" type="carcar_mapping_autonomy::SubcellSmacPlanner" base_class_type="nav2_core::GlobalPlanner">
+    <description>保留原图与安全包络的Smac连续起点衔接。</description>
+  </class>
+</library>

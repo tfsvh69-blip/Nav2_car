@@ -29,7 +29,9 @@ struct HttpServer::Impl {
   // 只有一个HTTP工作线程，保持原接口串行语义；磁盘/JSON工作不占控制事件循环。
   asio::thread_pool http_worker{1};
   Handler handler; Control control; std::thread thread;
-  std::weak_ptr<Ws> controller;
+  ControlPolicy control_policy;
+  // 只在io线程上增删；每个连接继续独立管理写队列、compact和RTC状态。
+  std::vector<std::weak_ptr<Ws>> control_sessions;
   std::atomic<unsigned> clients{0};
   std::vector<std::weak_ptr<Http>> connections;
   std::string inspect_host = "127.0.0.1";
@@ -64,7 +66,7 @@ struct HttpServer::Impl {
     bool rtc_active=false;uint64_t rtc_generation=0;double rtc_rx_at=0;
     std::optional<http::request<http::string_body>> handshake;
     asio::steady_timer stats_timer;
-    bool closed = false, compact = false;double last_rx = 0, wire_rx = 0;
+    bool closed = false, compact = false, accepted = false;double last_rx = 0, wire_rx = 0;
     uint64_t pings_received=0,pongs_received=0;
     explicit Ws(tcp::socket socket, Impl & impl) : stream(std::move(socket)), owner(impl), rtc_flush(stream.get_executor()), stats_timer(stream.get_executor()) {}
     ~Ws() {owner.clients--; if (!closed) owner.control(id, "");}
@@ -90,10 +92,11 @@ struct HttpServer::Impl {
       handshake.emplace(std::move(request));
       stream.async_accept(*handshake, [self = shared_from_this()](beast::error_code ec) {
         if (ec||self->closed) return self->close("handshake",ec);
-        self->handshake.reset();self->wire_rx=steady();
-        {std::lock_guard<std::mutex> lock(self->owner.stats_mutex);self->owner.stats["connected"]=true;
+        self->handshake.reset();self->accepted=true;self->wire_rx=steady();
+        {std::lock_guard<std::mutex> lock(self->owner.stats_mutex);
           self->owner.stats["compact_profile"]=false;
           self->owner.stats["last_rx_gap_ms"]=0;self->owner.stats["control_last_rx_gap_ms"]=0;}
+        self->owner.update_connections();
         self->owner.count("connection_generation");
         self->owner.control(self->id, "{\"action\":\"connect\"}");
         self->signal({{"session",self->id},{"transport_protocol",1},{"rtc_protocol",RtcControl::available()?1:0}});
@@ -108,6 +111,7 @@ struct HttpServer::Impl {
       if(!active)++rtc_generation;
       {std::lock_guard<std::mutex> lock(owner.stats_mutex);
         owner.stats["control_transport"]=active?"webrtc_udp":"websocket";}
+      owner.update_connections();
       signal({{"rtc_status",active?"active":"fallback"},{"reason",why}});
       if(!active&&rtc){rtc->close();rtc.reset();}
     }
@@ -152,6 +156,7 @@ struct HttpServer::Impl {
         owner.stats["tcp_send_queue_bytes"]=queued;owner.stats["tcp_notsent_bytes"]=not_sent;
         if(valid){owner.stats["tcp_rtt_ms"]=info.tcpi_rtt/1000.0;owner.stats["tcp_unacked"]=info.tcpi_unacked;
           owner.stats["tcp_retransmits"]=info.tcpi_total_retrans;}}
+      owner.update_connections();
       stats_timer.expires_after(std::chrono::milliseconds(100));
       stats_timer.async_wait([self=shared_from_this()](beast::error_code ec){if(!ec)self->sample_tcp();});
     }
@@ -161,7 +166,8 @@ struct HttpServer::Impl {
       auto rtc_stats=rtc?rtc->diagnostics():json{{"available",RtcControl::available()},{"active",false}};
       const auto was_rtc_active=rtc_active;rtc_active=false;++rtc_generation;
       if(rtc){rtc->close();rtc.reset();}
-      if(auto current=owner.controller.lock();current.get()==this)owner.controller.reset();
+      owner.control_sessions.erase(std::remove_if(owner.control_sessions.begin(),owner.control_sessions.end(),
+        [this](const auto & entry){auto session=entry.lock();return !session||session.get()==this;}),owner.control_sessions.end());
       std::string reason=stage;
       if(error==beast::error::timeout)reason=stage=="handshake"?"websocket_handshake_timeout":"websocket_idle_timeout";
       else if(error==websocket::error::closed)reason="peer_close";
@@ -178,6 +184,8 @@ struct HttpServer::Impl {
           {"ws_last_rx_age_ms",wire_rx?(steady()-wire_rx)*1000:-1},
           {"ws_pings_received",pings_received},{"ws_pongs_received",pongs_received},
           {"server_steady",steady()},{"connection_generation",owner.stats.value("connection_generation",uint64_t{0})}};}
+      // 观察端断开不能把其他仍连接页面的聚合状态改成离线。
+      owner.update_connections();
       // 先完成诊断快照，网关的断开事件才能保存本次首个错误，而不是上一次断开原因。
       owner.control(id, "");
       beast::error_code ec;stats_timer.cancel(ec);rtc_flush.cancel(ec);rtc_deferred.reset();beast::get_lowest_layer(stream).socket().close(ec);
@@ -239,7 +247,9 @@ struct HttpServer::Impl {
       if(rtc->send(compact_control(value).dump()))rtc_deferred.reset();
     }
     void send(State state) {
-      if (closed) return;
+      // 会话提前登记，但握手完成前禁止与握手响应并发写。
+      // 这期间的状态可丢弃，下一次广播会带来新状态；会话欢迎包始终先发送。
+      if (closed||!accepted) return;
       // 过期挑战不能占住发送位，也不能覆盖已经排队的更新挑战。
       if(!state.reliable&&control_expired(state)){
         owner.count("states_expired_before_write");
@@ -275,6 +285,17 @@ struct HttpServer::Impl {
       });
     }
   };
+  void update_connections() {
+    std::size_t connected=0;bool any_rtc=false,any_ws=false;
+    for(const auto & entry:control_sessions)if(auto session=entry.lock())if(session->accepted&&!session->closed){
+      ++connected;if(session->rtc_active)any_rtc=true;else any_ws=true;
+    }
+    std::lock_guard<std::mutex> lock(stats_mutex);
+    stats["connected"]=connected>0;stats["control_clients"]=connected;
+    stats["control_policy"]=control_policy==ControlPolicy::MultiClient?"multi_client":"single_client";
+    stats["control_transport"]=any_rtc?(any_ws?"mixed":"webrtc_udp"):(any_ws?"websocket":"disconnected");
+    if(stats.contains("rtc")&&stats["rtc"].is_object())stats["rtc"]["active"]=any_rtc;
+  }
   struct Http : std::enable_shared_from_this<Http> {
     beast::tcp_stream stream; beast::flat_buffer buffer;
     std::optional<http::request_parser<http::string_body>> parser;
@@ -390,10 +411,12 @@ struct HttpServer::Impl {
           }
         }
         if (websocket::is_upgrade(request) && request.target() == "/ws/control" && same_origin) {
-          if (self->owner.controller.expired()) {
+          auto & sessions=self->owner.control_sessions;
+          sessions.erase(std::remove_if(sessions.begin(),sessions.end(),[](const auto & entry){return entry.expired();}),sessions.end());
+          if (self->owner.control_policy==ControlPolicy::MultiClient||sessions.empty()) {
             auto ws = std::make_shared<Ws>(self->stream.release_socket(), self->owner);
             self->counted = false;
-            self->owner.controller = ws; ws->accept(std::move(request)); return;
+            sessions.push_back(ws);ws->accept(std::move(request));return;
           }
           // 升级失败不复用HTTP连接，让客户端及时结束失败握手并重试。
           self->keep_alive=false;
@@ -428,8 +451,9 @@ struct HttpServer::Impl {
       });
     }
   };
-  Impl(const std::string & address, unsigned short port, Handler h, Control c)
-    : acceptor(io), handler(std::move(h)), control(std::move(c)) {
+  Impl(const std::string & address, unsigned short port, Handler h, Control c,ControlPolicy policy)
+    : acceptor(io), handler(std::move(h)), control(std::move(c)),control_policy(policy) {
+    update_connections();
     const tcp::endpoint endpoint(asio::ip::make_address(address), port);
     acceptor.open(endpoint.protocol()); acceptor.set_option(asio::socket_base::reuse_address(true));
     acceptor.bind(endpoint); acceptor.listen(); accept(); thread = std::thread([this] {io.run();});
@@ -450,7 +474,10 @@ struct HttpServer::Impl {
     stopped=true;
     std::promise<void> closed;auto done=closed.get_future();
     asio::post(io, [this,&closed] {
-      if (auto ws = controller.lock()) ws->close("server_shutdown");
+      // close会移除集合成员，先持有快照，确保每个会话只回报一次断开。
+      std::vector<std::shared_ptr<Ws>> sessions;
+      for(const auto & entry:control_sessions)if(auto ws=entry.lock())sessions.push_back(std::move(ws));
+      for(const auto & ws:sessions)ws->close("server_shutdown");
       beast::error_code ec; acceptor.close(ec);
       for (auto & connection : connections) if (auto client = connection.lock()) client->stream.socket().close(ec);
       closed.set_value();
@@ -462,7 +489,9 @@ struct HttpServer::Impl {
   ~Impl() {shutdown();}
 };
 HttpServer::HttpServer(const std::string & a, unsigned short p, Handler h, Control c)
-  : impl_(std::make_unique<Impl>(a, p, std::move(h), std::move(c))) {}
+  : HttpServer(a,p,std::move(h),std::move(c),ControlPolicy::SingleClient) {}
+HttpServer::HttpServer(const std::string & a, unsigned short p, Handler h, Control c,ControlPolicy policy)
+  : impl_(std::make_unique<Impl>(a, p, std::move(h), std::move(c),policy)) {}
 HttpServer::~HttpServer() = default;
 void HttpServer::stop(){impl_->shutdown();}
 void HttpServer::set_inspect_upstream(const std::string & host, unsigned short port) {
@@ -480,7 +509,11 @@ void HttpServer::broadcast(const std::string & value) {
     std::string latest;double queued_at;
     {std::lock_guard<std::mutex> guard(owner->broadcast_mutex); latest = owner->broadcast_value;
       queued_at=owner->broadcast_at;owner->broadcast_pending = false;}
-    if (auto ws = owner->controller.lock()) ws->send({std::move(latest),queued_at});
+    // 只共享输入快照，每个连接仍按自己的背压和签发截止处理。
+    // send可能因信令溢出关闭本连接，遍历快照避免失效的集合迭代器。
+    std::vector<std::shared_ptr<Impl::Ws>> sessions;
+    for(const auto & entry:owner->control_sessions)if(auto ws=entry.lock())sessions.push_back(std::move(ws));
+    for(const auto & ws:sessions)ws->send({latest,queued_at});
   });
 }
 }  // namespace carcar_mapping_console

@@ -114,24 +114,25 @@ TEST_F(MappingSmoother, IndependentAxesReproduceWiderStartingTurn)
   smoother->stop();
 }
 
-TEST_F(MappingSmoother, TransitionsAndTimeoutRemainInsideExistingLimits)
+TEST_F(MappingSmoother, RuntimeSpeedEnvelopePreservesAccelerationAndTimeoutLimits)
 {
   auto smoother = make();
   Twist previous;
   const auto check = [&previous](const Twist & value) {
       EXPECT_GE(value.linear.x, -1e-9);
-      EXPECT_LE(value.linear.x, 0.10 + 1e-9);
+      EXPECT_LE(value.linear.x, 0.18 + 1e-9);
       EXPECT_LE(std::abs(value.angular.z), 0.36 + 1e-9);
       EXPECT_LE(std::abs(value.linear.x - previous.linear.x), 0.20 * kDt + 1e-9);
       EXPECT_LE(std::abs(value.angular.z - previous.angular.z), 0.80 * kDt + 1e-9);
       previous = value;
     };
-  for (const auto & target : {command(.10, 0), command(0, -.36),
-      command(.05, .33), command(.10, .36)})
+  for (const auto & target : {command(.18, 0), command(0, -.36),
+      command(.05, .33), command(.18, .36)})
   {
     for (int tick = 0; tick < 20; ++tick) {check(smoother->step(target));}
   }
-  for (int tick = 0; tick < 11; ++tick) {check(smoother->timeoutStep());}
+  // 0.18m/s以原0.20m/s²减速需0.90s；给一个采样余量，不能沿用0.10的0.55s窗口。
+  for (int tick = 0; tick < 19; ++tick) {check(smoother->timeoutStep());}
   EXPECT_DOUBLE_EQ(previous.linear.x, 0.0);
   EXPECT_DOUBLE_EQ(previous.angular.z, 0.0);
   smoother->stop();

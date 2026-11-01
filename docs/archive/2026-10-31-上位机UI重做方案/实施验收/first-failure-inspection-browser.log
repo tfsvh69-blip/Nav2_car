@@ -1,0 +1,178 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+Note: Google Test filter = ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ConsoleTest
+[ RUN      ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+浏览器已加载巡检网页
+网页四档速度已验证升档、降档及控制器确认；切档未下发导航目标
+主录入地图已验证两张代价图、两条路径及开关隐藏
+地图选择位置与朝向→保存草稿→刷新读回→手机选择最终停车位通过；无硬件请求
+页面状态： {
+  hidden: false,
+  text: '跳到巡检工作区\n' +
+    '巡检\n' +
+    '机器人工作空间\n' +
+    '随行建图\n' +
+    '巡检工作台\n' +
+    '\n' +
+    '工作空间\n' +
+    '\n' +
+    '准备车辆\n' +
+    '录入巡检点\n' +
+    '安排巡检\n' +
+    '任务进度\n' +
+    '照片与记录\n' +
+    '操作者已连接\n' +
+    '任务与照片保存在车端\n' +
+    '工作空间\n' +
+    '/\n' +
+    '巡检工作台\n' +
+    '停车并取消当前行驶\n' +
+    '录入巡检点\n' +
+    '\n' +
+    '先导航到候选停车位，再以实车停靠结果调整位置和拍摄角度。\n' +
+    '\n' +
+    '请先在地图上选择停车位置与车头方向，或填写候选坐标\n' +
+    '定位\n' +
+    '已就绪\n' +
+    '地图一致\n' +
+    '已就绪\n' +
+    '轮式反馈\n' +
+    '已就绪\n' +
+    '雷达\n' +
+    '已就绪\n' +
+    '相机\n' +
+    '已就绪\n' +
+    '角度接口\n' +
+    '已就绪\n' +
+    '场地地图\n' +
+    '请选择\n' +
+    'testmap\n' +
+    '载入地图\n' +
+    '新增点位\n' +
+    '当前图 testmap\n' +
+    '导航速度\n' +
+    '1档 · 0.10 m/s\n' +
+    '2档 · 0.18 m/s\n' +
+    '3档 · 0.25 m/s（实验）\n' +
+    '4档 · 0.30 m/s（实验）\n' +
+    '\n' +
+    '速度档位已确认：0.18m/s；只修改上限，没有下发目标或启动行驶\n' +
+    '\n' +
+    '前进上限 0.18 m/s · 当前下发 0.00 m/s · 轮式反馈 0.00 m/s\n' +
+    '\n' +
+    '停车后点击切档，确认后用于下一次导航。上限不是匀速命令；转向、避障会减速。3、4档供现场实验，注意观察抖动和停车距离。\n' +
+    '\n' +
+    '选候选目标 → 下发导航到点 → 实车坐标与相机微调 → 试拍确认并保存\n' +
+    '\n' +
+    '1\n' +
+    '选候选目标\n' +
+    '2\n' +
+    '导航到点\n' +
+    '3\n' +
+    '实车微调与试拍\n' +
+    '4\n' +
+    '保存确认结果\n' +
+    '1. 选择候选停车位\n' +
+    '地图坐标 · 米\n' +
+    '在地图上选择巡检位置\n' +
+    '\n' +
+    '点击上方选点按钮，或记录小车当前位置与朝向。选点只编辑配置，不会移动车辆。\n' +
+    '\n' +
+    '地图坐标与颜色说明\n' +
+    '导航调试图层与数据状态\n' +
+    '2. 下发目标，让小车前往\n' +
+    '点位名称\n' +
+    '\n' +
+    '下面是候选导航目标。修改数字不会立即移动车辆，点击下发后才行驶。\n' +
+    '\n' +
+    'X / 米\n' +
+    'Y / 米\n' +
+    '车头朝向 / °\n' +
+    '微调候选坐标与方向\n' +
+    '下发目标，让小车前往\n' +
+    '\n' +
+    '尚未下发：请先在地图上选择停车位置与车头方向，或填写候选坐标\n' +
+    '\n' +
+    '请先在地图上选择停车位置与车头方向，或填写候选坐标\n' +
+    '\n' +
+    '尚未下发目标\n' +
+    '\n' +
+    '候选目标与实车定位估计（map坐标）\n' +
+    '来源\tX / 米\tY / 米\t朝向 / °\n' +
+    '候选目标\t0.00\t0.00\t0.0\n' +
+    '实车当前估计\t1.00\t1.00\t0.0\n' +
+    '\n' +
+    '最终确认保存的是实车当时的定位估计、舵机命令和新照片；候选坐标保留作对照，不当作实际到达值。\n' +
+    '\n' +
+    '仅保存计划草稿（尚未实车确认）\n' +
+    '已保存点位\n' +
+    '地图选点草稿\n' +
+    '计划草稿，待导航验证 · 1个停车位\n' +
+    '相机实时画面\n' +
+    '当前源帧有效\n' +
+    '\n' +
+    'RGB原始流预览；窗口大小不改变镜头视场。图像时间戳：19:49:45。参考照片是历史画面。\n' +
+    '\n' +
+    '3. 实车到点后，调整镜头并试拍\n' +
+    '\n' +
+    '请先完成上方单点导航并停稳。修改候选坐标后，需要重新导航验证，才能确认保存。\n' +
+    '\n' +
+    '保持停车并等待轮式反馈停稳\n' +
+    '拖动滑块选角度，松手后自动小步调整并等待新画面\n' +
+    '确认画面合适，保存固定角度与参考照片\n' +
+    '\n' +
+    '尚未开始\n' +
+    '\n' +
+    '开始停车调角\n' +
+    '140.5°\n' +
+    'S1俯仰目标 · 已下发目标 140.5° · 板端命令 94 档\n' +
+    '相机俯仰目标\n' +
+    '85° 抬头方向\n' +
+    '140.5° 平视参考\n' +
+    '160° 低头方向\n' +
+    '停止滑块调角\n' +
+    '目标 −1°\n' +
+    '目标 +1°\n' +
+    '下发当前目标\n' +
+    '\n' +
+    '拖动只预览目标，松手后自动分成最多1°的小步，每步等待车端结果与新画面；停止、断连或离开页面后不再追加，已发送的一小步可能完成。±1°按钮保留作微调。目标减小为抬头、增大为低头，以实物核对；板端整数档会量化，没有实际角度反馈。\n' +
+    '\n' +
+    '4. 确认实车位置与画面，保存巡检点\n' +
+    '\n' +
+    '每个拍摄目标最多3个停车位，各自保存朝向和俯仰。某一位到不了就试下一位；三位都失败则记为未拍并继续后面的目标。保存后继续保持停车。支架异常时立即断开执行器电源。\n' +
+    '\n' +
+    '高级：手动遥控（首次录入优先使用单点导航）\n' +
+    '实车确认点位 · 照片保存在小车，可网页查看和下载 · 地图与点位按版本关联'
+}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByText(/^尚未下发：请先在地图上选择停车位置/) to be visible[22m
+
+    at /home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/test/browser.mjs:264:46 {
+  log: [ '  - waiting for getByText(/^尚未下发：请先在地图上选择停车位置/) to be visible' ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2
+/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/test/test_console.cpp:344: Failure
+Expected equality of these values:
+  (((status) & 0xff00) >> 8)
+    Which is: 1
+  0
+测试证据保留："/tmp/carcar-inspection-console-SoARbY"
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone (16586 ms)
+[----------] 1 test from ConsoleTest (16586 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (16586 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConsoleTest.RealBrowserCompletesStepwiseTeachingOnTabletAndPhone
+
+ 1 FAILED TEST

@@ -3,6 +3,7 @@ explore_node:
     robot_base_frame: base_footprint
     navigation_action: /mapping/explore_navigate_to_pose
     candidate_rejection_topic: /mapping/explore_candidate_rejection
+    navigation_generation_topic: /mapping/navigation_generation
     costmap_topic: /map
     unknown_border_cells: 1
     costmap_updates_topic: /mapping/unused_map_updates
@@ -14,7 +15,8 @@ explore_node:
     region_radius: 0.40
     region_cooldown: 60.0
     potential_scale: 0.001
-    orientation_scale: 0.0
+    # 实验方向代价参与前沿收益排序；不会禁止为更大未知区域掉头，权重待实车验收。
+    orientation_scale: 0.8
     gain_scale: 1.0
     min_frontier_size: 0.20
     return_to_init: false

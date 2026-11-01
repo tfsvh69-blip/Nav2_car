@@ -10,6 +10,7 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/u_int64.hpp>
 #include <explore_lite_msgs/msg/explore_status.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
 extern char **environ;
@@ -21,12 +22,13 @@ protected:
  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr maps;
  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr resume;
  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr rejections;
+ rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr generation;
  rclcpp::Subscription<explore_lite_msgs::msg::ExploreStatus>::SharedPtr status;
  rclcpp_action::Server<Nav>::SharedPtr server;
  std::shared_ptr<rclcpp_action::ServerGoalHandle<Nav>> active;
  rclcpp::TimerBase::SharedPtr timer;
  pid_t pid=-1;size_t goals=0;std::vector<geometry_msgs::msg::Point> targets;
- bool publish_map=true,narrow=false,progress=false,fully_known=false,closed_walls=false;int frontier_x=70,border=0;double timeout=30,frequency=10;
+ bool publish_map=true,narrow=false,progress=false,fully_known=false,closed_walls=false,dual_frontier=false;int frontier_x=70,border=0;double timeout=30,frequency=10,robot_yaw=0,orientation_scale=0;
  std::string last_status;
  static void SetUpTestSuite(){int argc=0;rclcpp::init(argc,nullptr);}
  static void TearDownTestSuite(){rclcpp::shutdown();}
@@ -37,13 +39,15 @@ protected:
   maps=node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local());
   resume=node->create_publisher<std_msgs::msg::Bool>("/explore/resume",rclcpp::QoS(1).reliable().transient_local());
   rejections=node->create_publisher<std_msgs::msg::String>("/test_candidate_rejection",10);
+  generation=node->create_publisher<std_msgs::msg::UInt64>("/test_navigation_generation",rclcpp::QoS(1).reliable().transient_local());
   status=node->create_subscription<explore_lite_msgs::msg::ExploreStatus>("/explore/status",rclcpp::QoS(10).reliable().transient_local(),[this](const explore_lite_msgs::msg::ExploreStatus&m){last_status=m.status;});
   server=rclcpp_action::create_server<Nav>(node,"/test_explore_nav",[](const auto&,auto){return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},[](auto){return rclcpp_action::CancelResponse::ACCEPT;},[this](auto h){active=h;++goals;targets.push_back(h->get_goal()->pose.pose.position);});
   timer=node->create_wall_timer(std::chrono::milliseconds(50),[this]{
-   geometry_msgs::msg::TransformStamped t;t.header.frame_id="map";t.child_frame_id="base_footprint";t.header.stamp=node->now();t.transform.rotation.w=1;tf->sendTransform(t);
+   geometry_msgs::msg::TransformStamped t;t.header.frame_id="map";t.child_frame_id="base_footprint";t.header.stamp=node->now();t.transform.rotation.z=std::sin(robot_yaw/2);t.transform.rotation.w=std::cos(robot_yaw/2);tf->sendTransform(t);
    if(publish_map){nav_msgs::msg::OccupancyGrid m;m.header=t.header;m.info.width=m.info.height=100;m.info.resolution=.05;
     m.info.origin.position.x=m.info.origin.position.y=-2.5;m.info.origin.orientation.w=1;m.data.assign(10000,0);
     if(!fully_known)for(int y=0;y<100;++y)for(int x=frontier_x;x<100;++x)m.data[y*100+x]=narrow?(y>=49&&y<=53?-1:100):-1;
+    if(dual_frontier)for(int y=0;y<100;++y)for(int x=0;x<30;++x)m.data[y*100+x]=-1;
     if(closed_walls)for(int i=0;i<100;++i){m.data[i]=100;m.data[9900+i]=100;m.data[i*100]=100;m.data[i*100+99]=100;}
     maps->publish(m);}
    if(progress&&active&&!active->is_canceling()){
@@ -52,14 +56,16 @@ protected:
   char executable[]=EXPLORE_EXE,ros[]="--ros-args",p[]="-p",map[]="costmap_topic:=/map",base[]="robot_base_frame:=base_footprint",action[]="navigation_action:=/test_explore_nav",rejection[]="candidate_rejection_topic:=/test_candidate_rejection",min[]="min_frontier_size:=0.15";
   std::string rate="planner_frequency:="+std::to_string(frequency);
   std::string seconds="progress_timeout:="+std::to_string(timeout),padding="unknown_border_cells:="+std::to_string(border);
-  char*args[]={executable,ros,p,map,p,base,p,action,p,rate.data(),p,min,p,seconds.data(),p,padding.data(),p,rejection,nullptr};
+  std::string orientation="orientation_scale:="+std::to_string(orientation_scale);
+  char epoch[]="navigation_generation_topic:=/test_navigation_generation";
+  char*args[]={executable,ros,p,map,p,base,p,action,p,rate.data(),p,min,p,seconds.data(),p,padding.data(),p,rejection,p,orientation.data(),p,epoch,nullptr};
   ASSERT_EQ(posix_spawn(&pid,executable,nullptr,nullptr,args,environ),0);
   ASSERT_TRUE(until([this]{return last_status=="exploration_paused";},5));
  }
  void enable(bool value){std_msgs::msg::Bool m;m.data=value;resume->publish(m);}
  void TearDown()override{
   if(pid>0){kill(pid,SIGINT);for(int i=0;i<100;++i){if(waitpid(pid,nullptr,WNOHANG)==pid){pid=-1;break;}std::this_thread::sleep_for(std::chrono::milliseconds(20));}if(pid>0){kill(pid,SIGKILL);waitpid(pid,nullptr,0);}}
-  timer.reset();server.reset();active.reset();maps.reset();resume.reset();rejections.reset();status.reset();tf.reset();node.reset();
+  timer.reset();server.reset();active.reset();maps.reset();resume.reset();rejections.reset();generation.reset();status.reset();tf.reset();node.reset();
  }
 };
 TEST_F(GoalLifecycle, SuccessWaitsForFreshMapAndResumeKeepsRegionMemory){
@@ -75,6 +81,32 @@ TEST_F(GoalLifecycle, TwoFailuresFallbackInsideSameConnectedFrontier){
  active->abort(std::make_shared<Nav::Result>());active.reset();ASSERT_TRUE(until([this]{return goals==3;},3));
  EXPECT_GT(std::hypot(targets[2].x-targets[0].x,targets[2].y-targets[0].y),.39);
  EXPECT_NE(last_status,"exploration_complete");
+}
+class DirectionalExploration:public GoalLifecycle {void SetUp()override{
+ dual_frontier=true;robot_yaw=std::acos(-1.0);orientation_scale=.8;GoalLifecycle::SetUp();
+}};
+TEST_F(DirectionalExploration, ComparableFrontierContinuesCurrentHeadingInsteadOfTurningBack){
+ enable(true);ASSERT_TRUE(until([this]{return goals==1;},3));
+ EXPECT_LT(targets.front().x,-.5)<<"同等前沿不应无故从朝西切换到朝东";
+ const auto&q=active->get_goal()->pose.pose.orientation;
+ EXPECT_LT(std::cos(2*std::atan2(q.z,q.w)),-.9)<<"探索目标不得固定为地图+X朝向";
+}
+TEST_F(DirectionalExploration, TurningToEastChangesComparableFrontierSelection){
+ robot_yaw=0;until([]{return false;},.15);enable(true);
+ ASSERT_TRUE(until([this]{return goals==1;},3));EXPECT_GT(targets.front().x,.5);
+}
+TEST_F(DirectionalExploration, BackwardFrontierRemainsSelectableWhenItIsTheOnlyCandidate){
+ dual_frontier=false;until([]{return false;},.15);enable(true);
+ ASSERT_TRUE(until([this]{return goals==1;},3));EXPECT_GT(targets.front().x,.5);
+}
+TEST_F(GoalLifecycle, CoordinateGenerationDropsOldVisitedRegions){
+ enable(true);ASSERT_TRUE(until([this]{return goals==1;},3));const auto first=targets.front();
+ publish_map=false;until([]{return false;},.1);
+ active->succeed(std::make_shared<Nav::Result>());active.reset();until([]{return false;},.15);enable(false);
+ ASSERT_TRUE(until([this]{return last_status=="exploration_paused";},1));
+ std_msgs::msg::UInt64 next;next.data=1;generation->publish(next);until([]{return false;},.15);publish_map=true;enable(true);
+ ASSERT_TRUE(until([this]{return goals==2;},3));
+ EXPECT_LT(std::hypot(first.x-targets.back().x,first.y-targets.back().y),.01);
 }
 class ShortProgress:public GoalLifecycle {void SetUp()override{timeout=1.;GoalLifecycle::SetUp();}};
 TEST_F(ShortProgress, FrontierJitterCannotResetRealGoalProgress){

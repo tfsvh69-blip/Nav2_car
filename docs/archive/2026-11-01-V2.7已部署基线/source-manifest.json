@@ -1,0 +1,1219 @@
+{
+  "version": "V2.7",
+  "base_commit": "8895df0f2fc871a539adb37924999eab23c27f88",
+  "source_baseline": "/home/jetson/luhao/my_nav_carcar_scan_multiclient",
+  "deployed_release": "/home/jetson/luhao/my_nav_carcar_return_nearby_release",
+  "source_count": 297,
+  "files": [
+    {
+      "path": "src/carcar_mapping_autonomy/CMakeLists.txt",
+      "sha256": "4f01ae0d497b6ce37648409f3ee7530726a16d74a5fd0fab9b80cc1367f772b0"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/README.md",
+      "sha256": "7252fa64b1d1313109b5387a49262d09be84b19bc3b564ca5604373c1994be5e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/behavior_trees/navigate_through_poses_exploration.xml",
+      "sha256": "79d83059716feea9c8b7003034c9eae49068fb0092960bce1287f1b3a9982b71"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/behavior_trees/navigate_to_pose_exploration.xml",
+      "sha256": "4cb05853d2404a92a439f1d5dd14762549e46947fc0dbe56433a356e00f930ab"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/behavior_trees/navigate_to_pose_mapping.xml",
+      "sha256": "9a779a835030b00383fa166da83af88a543edde32197b605e503f1c5424f8e06"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/collision.yaml",
+      "sha256": "37f81086e824f370f6e52fe5fdcc8febda79efb4affc9a8026b737e2ae017a33"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/controller_rpp.yaml",
+      "sha256": "1e4daedc58f3dbc5f330fdec2af30e17f33a575273dad1c4810b3560cf5f60a3"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/explore.yaml",
+      "sha256": "ccc7b6dc7b24c03d067c57f52dcf168114d2af24bb87c7019d67a0af9fed22f0"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/laser_distance.yaml",
+      "sha256": "47063a7e0f6f94952c0c8a8ec936b2e85a4283a5a14664adf671b0bf145232e9"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/nav2_continuous.yaml",
+      "sha256": "211d17d1495f03acb58c94ef881a605432c0f5ec22f164ceb90389fa414d233f"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/nav2_mapping.yaml",
+      "sha256": "a8766a9e811971858527aeccfc43cc96c63d137aca28d1d58deb5576ff519c32"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/config/relocalizer.yaml",
+      "sha256": "8f0aa4d48af0f7b2467a16c4d6730d90ae45a4c7f1028213b888bb931e661587"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/continuous_exploration.hpp",
+      "sha256": "cce2abf354aaeb330b63bf9a3e15f818520622476ee30045c924b59454dd909f"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/costmap_rebuild.hpp",
+      "sha256": "541770b49d08f9020017f84d57dd6afd00788cd8d707f93f1f11f67de84a6247"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/exploration_route.hpp",
+      "sha256": "57e272bbdf316302768239163af2957910a710ff61362ce2758fe04a46a8a32e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/graph_snapshot.hpp",
+      "sha256": "9c0229e398194c126c4a89761acd39ece0b4c7e8aac220aacf6125d8415c92a1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/loop_guard.hpp",
+      "sha256": "4100d9c3156c44cac0adc118b985b776caa24d4d20132b0999e92630a9326a66"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/map_fingerprint.hpp",
+      "sha256": "2599c304941629515275d48047c0721d8208615ab1f3c882163f2f411caa588a"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/map_geometry.hpp",
+      "sha256": "8ecae443ecbc0e6819cd8a7e2000cb2a8bada3e66fa8bfd58483f88bbe22a648"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp",
+      "sha256": "0b955c8777ab6d6f12c03e69711e31b1f5d6d655f5cadb3825c03b41503217da"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/near_field.hpp",
+      "sha256": "91e071f80508c59658b95c82047dba259af7b8a0d34ee4024817180bdda2cea1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/observation_selector.hpp",
+      "sha256": "8e58c04b26e5c3a27ec2eef328b575a39a436c67eb1ff26158710bcffd547941"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/online_snapshot.hpp",
+      "sha256": "b4e1ce6cd70aeb093317b2c550b8e9c559ed7706cdcc9710397cc5ac6212d921"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/planning_departure.hpp",
+      "sha256": "d8836fe5c867a6f7af60d775f59235e5c57381373f2fc75ea32098135a94353d"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/rasterization.hpp",
+      "sha256": "55c04530191cd7bdc8388ebfdfa6d6d92794af82530efa16b1eebc0be03a86d7"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_artifact.hpp",
+      "sha256": "d4f5bc8353556b1370a6d043a3df66745bc55f3dd4720faed68c02fc4dfd8d89"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_commit_guard.hpp",
+      "sha256": "739cba4b980bb4cf6af09b07538839f0eaa59a7755a53548d124c401949d2d42"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_core.hpp",
+      "sha256": "8f61401dfcf504ba3f00edbebaa4a157f0f526a5435d92b4369b81672dc78ef7"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_initializer.hpp",
+      "sha256": "da14b236a8edd5b390c42c0f86caeb92da150771e1759e509cfa715cdcaf7ef1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/return_selector.hpp",
+      "sha256": "74954673c209ade45dadc1d3247840339216c2bb18554f2570100da952db22e4"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/route_validation.hpp",
+      "sha256": "4b9d6035cdea663ea65c491c5eacf7bb2ec6413a260496b7eb328bc8402e465f"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/scan_pose.hpp",
+      "sha256": "e31e3bddf220a41962e59b01f4e1f6e91ce3bc3e2a464091a6fe0b646f214203"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/snapshot_process.hpp",
+      "sha256": "c6487a09cebc7841345dfd498505f545112a5692eb968476a746a7f0c4cfa14e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/snapshot_protocol.hpp",
+      "sha256": "6d107ce57b99dfe6014b5095b9aa3e2fa8f4bc6cee150fbf07acf78546d69294"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/startup_accumulation.hpp",
+      "sha256": "a843e83a375cc6cdea804ae944908c659a0dc4e29526714445ce5038fc144ae2"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/subcell_departure.hpp",
+      "sha256": "991cb0358168e4f14b11b108486a8f3ab0a218f05b958a4943ef8f9f68db68d1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/subcell_smac_planner.hpp",
+      "sha256": "3b0d7063735a5b987c1932fac75c95d54e7a24097b597c85d7c92550054694fb"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/supervisor_output.hpp",
+      "sha256": "c1c70d1e5c930edf73eed8c53212cfe04f5689082a8f5883a7f71d9ade0a3326"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/task.hpp",
+      "sha256": "3f1329724892f7a032f2d5451cb9f2d214b715477f395f3adf4a5ca08add3384"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/topology_monitor.hpp",
+      "sha256": "377091281b247aad12fd7ea8ac629fdf1610817dad2c00350502c7406a9354e9"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/launch/navigation.launch.xml",
+      "sha256": "b2be8d73ddc7123c1cd0c2fceff04de87c6e95b7364b20cdc89da64334f03d06"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/launch/recovery.launch.xml",
+      "sha256": "06806a9c831529d7141513dee38b4dc5a1556076f1e15bc63714ced2d40988c0"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/package.xml",
+      "sha256": "12f7d56e9f88e602cda1aea232e3eda691be2c2bed84857c2febee1d93a29d55"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/checked_path_bt.cpp",
+      "sha256": "e539f7112d51b7095a1c36ea8acca4fa08424efee837b7d67f276f0367fe9be8"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/continuous_exploration.cpp",
+      "sha256": "d095c9f7c007e1bb9a10573db4c6cbc1237809f400fb3e1a05a2c57d31fa7a92"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/exploration_route.cpp",
+      "sha256": "246e349418c131dec844558b4705b2e460dee03a1ad4780ab14d85857de38a79"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/known_space.cpp",
+      "sha256": "6629e93cb5a17b711cb215bc59e725c4f26ce3e93b6b62fca701dd64af035470"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/lifecycle_main.cpp",
+      "sha256": "e6bb800b4f0beedaea3d30bad6b4c1558ac478a93dcdef2d16871e6842c2c8cd"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/lifecycle_transition.cpp",
+      "sha256": "4f897c14f598f7a62fa6548766f5aeaa9dd11f674004bc2b268f38483092955d"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/recovery.cpp",
+      "sha256": "a335a0216a7fb847ebe1da892bd6962c8bf0ecdf6041af85305475b7f1166eb5"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/slam_adapter.cpp",
+      "sha256": "a37594feecf0034f2a6f0fd4061e68015614b648f2c23994f6367f003e6edfc2"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/slam_raster.cpp",
+      "sha256": "27a577255fee862565caf7ae768d575d77eddb39539aa1082748c1f506ac2a2d"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/snapshot_worker.cpp",
+      "sha256": "cd25f4d4a64da83bdbacbfe9050d45f2214b0d59eb68a65f6bfab203db567e98"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/subcell_smac_planner.cpp",
+      "sha256": "b8a8a5b5b47a97525632b9cb03107b3b421a86afa46f4da3cd56b9c5afd2f26a"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/src/supervisor.cpp",
+      "sha256": "7cf3798f575b369e0026bdba770a1538b5df9341a241a25dada466675c8f1897"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/subcell_planner_plugin.xml",
+      "sha256": "8f7ab186fd1af3ce80c44cf86e64684d92edefe3abd1e94082a9dd2e41b410f3"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/corridor.cpp",
+      "sha256": "870affc6f43a2089257082c4e9e79c7e4d39bac2ea2ec6f5ac65b05db62f4a35"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/checkpoint_failure_20261101.json",
+      "sha256": "da4f7dd544fb9af5651a6844c813f5c80068ff11eee067ad721bc3350728c9eb"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/exploration_corridor_start.json",
+      "sha256": "f126d064c4b967efde667231bb81d5389e26bff1d5b2200bc6fae3c21f5412bb"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/exploration_symmetric_after_step.json",
+      "sha256": "aaf04d7860b880a4238e8863a61754bc0e26ebc93485b34b39ba22bdd9148408"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/exploration_symmetric_start.json",
+      "sha256": "75507ac6d3b0ac19e6a264f573e7808369bda20b40b4f2a68acb6bc0ef254d34"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/loop_guard_20261101.md",
+      "sha256": "b96414d842c243453a531e6d3431eb1db4e8358dd2606a6289b32c474351028a"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/loop_guard_20261101.tar.xz",
+      "sha256": "6caf726c5c810edbedbfbd961b039f4a202c173c4b6cd8d9d912db0987991b3b"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/recovery_commit_stationary_20261101.json",
+      "sha256": "f3e0169db963a19beeda38047a69c8e3efd8044fed43dd4b2cd6e45e2968820f"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/recovery_grid_border_20261101.json",
+      "sha256": "560c039dad1f988da3afe4c215c52b8e4b337b6d0cc90b5031962d47c572dcb3"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/recovery_turn_20261101.json",
+      "sha256": "04f8dcdbce9cfcccf49e61b070292c7b7e86f7a06dcadb8317a6aaab09dd0aed"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/start_block_20261101.json",
+      "sha256": "86bd76ddb605970e9ccc62deed9dc7123073714dfd190acf8b424d49f32a47a9"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/startup_observation.json",
+      "sha256": "ae12e7fc4de9d246e2dc71343b5ba10416d4d6e4e103f6412f3027e8278ae4b6"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/startup_observation.yaml",
+      "sha256": "0806d30053c6583bb380f0b96f8c1bdc132dee31de097b6ebc377c383a541b19"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/data/stop_subcell_20261031.json",
+      "sha256": "8744525ddcefe0839b2e86adae9795630055a19a60aca5e8e9f0ca08bf9d9d89"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/exploration_evaluation.cpp",
+      "sha256": "887211fb0cec459277b13355f856f22b1e58d06bf0e3c6677a37d3e65ff4b065"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/navigation_snapshot.cpp",
+      "sha256": "b579c08d2cf7c8b92d6d2e9109eb7fc0fd45745e29f2778edd918fad1dede6e2"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/observation_snapshot.cpp",
+      "sha256": "2f6e42cac918fc591151f10e90dc05355cd416aa4769382681e37dd723fd8ba1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/recorded_graph_replay.cpp",
+      "sha256": "aa0fe13e0680a27a052e7c5471d1cb210fa25caca5c460067bb5d583d22e638e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/recorded_map_probe.cpp",
+      "sha256": "eacd0e22582caee9ba011d98c07259493919af84dda78ace4c6523fc9a253049"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/run_recorded_loop.cmake",
+      "sha256": "66776dce2f8c4b8a580b3cdad1b769b9254482d3aecfb90a8e665007604bb702"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/slow_graph.cpp",
+      "sha256": "94604f7cf132c49e7bf38fd26a60af8ed0a70678c28f346f9130e5daf61048aa"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/slow_telemetry.cpp",
+      "sha256": "8cb1eff078e9993e7c5f5f9737e93b78ccdf7d09b8e7b085ec0fac5cc9fb0cb8"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/snapshot_benchmark.cpp",
+      "sha256": "cc1b0d9ac844261c4bd5dcd8a154c5dc6846aad0b313d45d6e5cdd79c3937195"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/snapshot_stalled_worker.cpp",
+      "sha256": "f244fe6ec2e531c1522aa22057abbbafd34fd6527c4521c2c07de353515abd1e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_autonomy.cpp",
+      "sha256": "8b1dd8b4cbc72f0a58c73fce082bd84447d9409daec30917e314c07cecfd80cd"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_checked_path_bt.cpp",
+      "sha256": "e00a2f299e0b55d50ab379ff238f45f3f7a04113de6d398cf45efa37b8ae3f19"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_continuous_navigation.cpp",
+      "sha256": "cc79be3419682f2722cce407f98fe925af8482317dfe303448b7afbc465b7541"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_continuous_supervisor.cpp",
+      "sha256": "6c0064649f35b11a28822487ee12626752a506a8766782068ec90c574e72ed9c"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_costmap_rebuild.cpp",
+      "sha256": "a18a9dd27671af95981db5fc66bb2d4dd66dbc0b253877bf7f69a4969fea563d"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_exploration_route.cpp",
+      "sha256": "6191e481f7247f1a5d00916c3bf545ebe4b9560116083d73993fd0804f14cdae"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_goal_policy.cpp",
+      "sha256": "5f174d5a725ddcaa6ca5e68bc7b5ce5881103649f3610477def24ad9c4d31739"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_graph_snapshot.cpp",
+      "sha256": "e82c05b3109aa7b4cd69fa05eff9e7f0c4353269452fec713b38a8000a0ea848"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_laser_filter.cpp",
+      "sha256": "7315c314ede5cd2a778747382c2482c54b57da6b24c099a2ce25c967f9ede516"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_lifecycle_transition.cpp",
+      "sha256": "397cc0b9422bf9383333c29d06ceb23c224d12f3ec07d024c4073ff78b9f84fe"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_loop_guard.cpp",
+      "sha256": "f65061499c784fa54d3aa44b32faf87eb2335e4585cc6ac4a5df483c6f11d67f"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_mapping_bt.cpp",
+      "sha256": "96dd8f9abae7d05fec329a1ed08bd4c70fed7248cde999618b5e81b024250c3e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_navigation_speed.cpp",
+      "sha256": "909403ce7577cbf8a8249e46ee4e82de8763393bcc5a9400b1c95f72b6d8edd4"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_observation_selector.cpp",
+      "sha256": "7c4155729eb7aad5cb09598778874e18ed06465e791be72ab5a10989c75e3189"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_online_snapshot.cpp",
+      "sha256": "bcc694ade0f19f72e8d6367f7feea0ee15947d2e6ef4ce1227c708cb5e94b224"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_operator_recovery.cpp",
+      "sha256": "3ae1113d2142935f7f6ea68a97eaa91f5a4bfb304aa0b76260626279d53da69b"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_planner_diagnostics.cpp",
+      "sha256": "3595e37513fb2c75ebda7bb2d116695c44462c55ce4c74da7033e3fdbaeb55ca"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_rasterization.cpp",
+      "sha256": "9969319c9a45f92ea7b93327cb8ef0bb5e8d40629b4c25697b1877f9a7951f0b"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_recovery_core.cpp",
+      "sha256": "c8a65996a7058b199bb27de06a0ad7afe8391fba5a4c7835fa6142723f20cec0"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_recovery_initializer.cpp",
+      "sha256": "6803bebd7aee133250f48fc906264e19216b1cc09d6c8a2e596634215bb9851b"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_recovery_process.cpp",
+      "sha256": "5d05f64467010edfa14f90ed30ceb3e89207f74734c215b509a629c91874b550"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_return_navigation.cpp",
+      "sha256": "b3bf8d8819862389a0d4ebf55e4d6509f2cafea6881a9faddfb2fe28e0c92608"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_return_nearby.cpp",
+      "sha256": "593c8cd7bdb63f5e33c021ae4e2ecc04b97cb695c01b0cbdab5ede8c12418bcf"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_return_nearby_edges.cpp",
+      "sha256": "718843ad0043106d1be79e6f16ad2a7a5d8b391444729d99a2c2dfea33d83a6c"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_return_selector.cpp",
+      "sha256": "95b829ffa7cacf349a56414d0e8bf6beef99fe7ffed8bb21314853fbf2d83039"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_route_validation.cpp",
+      "sha256": "f8743e351fc67500f814f5ee563bc59840f50f3638e60d106d9db3494c7afef9"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_scan_pose.cpp",
+      "sha256": "106248d88926623739f0ee31da718b488d08bc55e75cc0fe73164b4a4cf85827"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_snapshot_process.cpp",
+      "sha256": "3ca8fa2683c23a377df78e6b7ca9d0b63bdf188c50f97c4fd498cdb2ed066172"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_snapshot_supervisor.cpp",
+      "sha256": "d6ef6dd800684f4938bdbc35e85533eddbb7a02b2d040e71ec53f7deea4342d4"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_start_block.cpp",
+      "sha256": "8af268c5bb1bd7b8853918f2ec6c59fb41ec32f992e9c7feaad4c5988f204102"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_startup_slam.cpp",
+      "sha256": "abebd6d90fbda2abbcd895ef2a30db6a8bc16bfa54f9b557d619de805bb36ccb"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_subcell_departure.cpp",
+      "sha256": "2d1c8cdcd68fcc692565bc1ce0a0eb6dcbfe74cf7c98263ad6f5ffbda92acf3e"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_subcell_navigation.cpp",
+      "sha256": "a32b62b54458250f53127d9e7386eb3f4d0624ec2180227044af1bc77568ebac"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_subcell_planner.cpp",
+      "sha256": "4e3af6a2ddf169a323c04437e95472801a94996a4bf584a86e9b87cbd69122f2"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_supervisor.cpp",
+      "sha256": "49ff3d6a8507ecca359021f99df749450f41897e43383216d8cec43cbaee5b8b"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_supervisor_telemetry.cpp",
+      "sha256": "327011cf33e02439d8d38bfca29f36106e52b226317098c76809b22ab661ca15"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/test_velocity_smoother.cpp",
+      "sha256": "2b57a7d30b099923910212c82e66e21f89c28da316f65230fb4b1f2e371540e1"
+    },
+    {
+      "path": "src/carcar_mapping_autonomy/test/virtual_room.cpp",
+      "sha256": "1c55de47883df7ade459c1399986ceeafb7435d0021d9dff2bbb49aaa10e58dd"
+    },
+    {
+      "path": "src/carcar_mapping_console/CMakeLists.txt",
+      "sha256": "c720a9c94fd855c68cbd0b5ab0b7da434b6024cf03be5609eaed52860931069b"
+    },
+    {
+      "path": "src/carcar_mapping_console/README.md",
+      "sha256": "c39781f769c00dfce54d37eb40f47886ec6955f4705c43b046bf47e473597470"
+    },
+    {
+      "path": "src/carcar_mapping_console/cmake/WebRtc.cmake",
+      "sha256": "418dc92e400d3e415d46f4d0ccc2b8f11450bf0b24cd79418f2e1e3863e8ef55"
+    },
+    {
+      "path": "src/carcar_mapping_console/config/mapping-tablet.service",
+      "sha256": "abd47e621364d72d7fa78aa6b8239d710e7a2ec6ca2ccbf325952a448224b63f"
+    },
+    {
+      "path": "src/carcar_mapping_console/config/mapping_limits_candidate.yaml",
+      "sha256": "128cafde01268c0e08a1610a2b71e0b7736e3f9db05eb1e1fc2d3e972341fdc6"
+    },
+    {
+      "path": "src/carcar_mapping_console/config/slam_cauchy_candidate.yaml",
+      "sha256": "05e81cd624cf9cad03f709278176463d8783a7af3c29bd03e373d8222f4f1a5b"
+    },
+    {
+      "path": "src/carcar_mapping_console/config/slam_range6_candidate.yaml",
+      "sha256": "83ad0cae88eb5dbb1be5444f34c3f78dbe6a09be746805a7466e4020fd422830"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/common.hpp",
+      "sha256": "f14a31e0d9d17c438045f69878d803060f7e6f161bb8c5d7522905cfac8febe6"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/data_flow.hpp",
+      "sha256": "c1b5c83fe57dbcae6e461d0d6d0787b4ef1867f24fe88878d9d7a6077e4ec638"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/http_server.hpp",
+      "sha256": "03c07f7d1a1de814856c9f4ba720360744e13c17920c7a587226023d462e6b7d"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/navigation_view.hpp",
+      "sha256": "4bfcd9fb225a3e2c35e7a720cf8a7a8bb5c7c33239c16e50143679c4b3e876f9"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/operator_sessions.hpp",
+      "sha256": "da6978fe3be1285438a3deee3238ab50741deae4346740329fc60197e35ca3f5"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/profile_backup.hpp",
+      "sha256": "dade4af5e3a6f20153864719e534c185fd12e604753e50b49c042bd20fae24f4"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/publication.hpp",
+      "sha256": "2c52723a1c5a9c6e454e3da04739a0ca5fb287c47f1121a1a63cd90816588780"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/rtc_control.hpp",
+      "sha256": "ef145fd78db08020b3bdfe3b66af068a06a609489d148d857be41a4a58c94ccb"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/safety.hpp",
+      "sha256": "bae398a91f96a5c02cd98321d8f39e1c54a1285f61627d4dad77cbc201c05629"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/serial_preflight.hpp",
+      "sha256": "c696cba0e1c7951d05b3a7e4e0e97f6ab706441c3d674e82d7b976bb9ee0319c"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/storage.hpp",
+      "sha256": "affe424acd6490bddfc625c7fa3fdac78a4d87d36d3b5da4499a24af19762576"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/tablet_wifi_trial.hpp",
+      "sha256": "52b9a5d1cdc8013c8bd73be151f8f3ea3d35661fb16fcfb76af9c8d1345e60eb"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/task_process.hpp",
+      "sha256": "4b4bbfcee915753c5522f108a284f525549b3b24850a925d7beeb10f5157c9dd"
+    },
+    {
+      "path": "src/carcar_mapping_console/include/carcar_mapping_console/task_requests.hpp",
+      "sha256": "6ccdbd3dc261da38f1fdc85353b0af14f0bf86ae9c212fcad9d914733a386c02"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/mapping.launch.xml",
+      "sha256": "b54908705fcf4474f692b8f862ab933bd133a4ca960f5d331cd5ee0349c6e09b"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/mapping_autonomous.launch.xml",
+      "sha256": "1d49841c046ba39dc4c7bcfb06728c4781ff58c1657dce639f5fcab1179d1417"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/mapping_continuous_software.launch.xml",
+      "sha256": "be1ae7be941389e41c1e5125088f4872e4de7ec4e53b6aa82c6c469c40c18f27"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/tablet.launch.xml",
+      "sha256": "93c58231271f7b04e1165502c0bf63e80914466714d7e98ba9b805873c253b8c"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/tablet_cauchy_candidate.launch.xml",
+      "sha256": "0a0deba3e888103ff25d8ccd156097a27c1ffb5ae7127d7ff9f52b2c1badfdfd"
+    },
+    {
+      "path": "src/carcar_mapping_console/launch/tablet_range6_candidate.launch.xml",
+      "sha256": "95069386247ef6fc08764691cddad58d0032ab72bf2e841d329d772eac9fd1db"
+    },
+    {
+      "path": "src/carcar_mapping_console/package.xml",
+      "sha256": "7f995ac741e9fd87bc1b810dc7f7b0bed0ddab470e51d56ad58624b430163dd4"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/hotspot.cpp",
+      "sha256": "890d7aab30da216046627042065097e9d969e197b0585bb7d6b755e0725bb49c"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/http_server.cpp",
+      "sha256": "cb837cd6923dfa34a84eeb68e390e4825a5adde1384122e91cf0f7863a8f06af"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/navigation_view.cpp",
+      "sha256": "f79c5bba6bc3dcc855698c93b6be97214f74ec6ab98fa221c71203d9de45fb65"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/prepare.cpp",
+      "sha256": "1109132d45805ec742b718f6f4f116cd82bb2e2ae0b0fc0338a55f0be5074b47"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/rtc_control.cpp",
+      "sha256": "9c07cbee3b8c953545a0fa740ff470014e3d40211f2d27059f13f6f69115cb10"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/slam_loss_benchmark.cpp",
+      "sha256": "8ecac6445a97b965fb00edf547577db5171063e3cb8763f03ce5fc22e8ad3c3c"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/tablet_wifi_trial.cpp",
+      "sha256": "436784f38ae75fef822f35d990f2469d3814401c4170637c6549fba4cb3f17f2"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/teleop_guard.cpp",
+      "sha256": "53320d05300fc1045f2d68b60abe06a3728be02fea29011b1de1efa199850e0a"
+    },
+    {
+      "path": "src/carcar_mapping_console/src/web_gateway.cpp",
+      "sha256": "ea0cdc8be1660016cce439cd7302272f80a6d1260acf689cdf8d302739d00ba7"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/chromium_runtime.cpp",
+      "sha256": "ce28751963973597b6446ca135b193799237fdb3509049471dd2f7eb180a8bcf"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_control.js",
+      "sha256": "aca6668c948bf690e8665e224c823ce3d2ad6cad7ccd47bab1f29bef3228ec77"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_multiclient.js",
+      "sha256": "391539487d6e78c58c8fe4547ed377d743dab7db25f689a45b005198516bb807"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_protocol.js",
+      "sha256": "1689b60f8851993db479aac0a7f5728a2724a78a2d2899607a3f01cf39680c9f"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_rtc.js",
+      "sha256": "7ac7176e1d3d4d190fe0dceb53b525e78dfde754db872b05602f3302f3e23c61"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_task_state.js",
+      "sha256": "b428ad5f7c105d8dd6b6abbb1a0fb3bc65ecde09807a6d5d997693089ca2a000"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_browser_touch.js",
+      "sha256": "1ad80ee058d2cc1749b2137f5c4d5a1c357c75f78dcf2643287a4337312f2e5b"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_gateway_startup.js",
+      "sha256": "d27c5f0789bad7f960ecfcf4f17947cdf403f3442491fc7e47dbb71794a1bf3f"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_http.cpp",
+      "sha256": "6e9c4803e1e4e0fa1f7e868d0bc06cb0b88ccca0ec4d7694bad84bd69b888e16"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_integration.cpp",
+      "sha256": "827931a6df571fed44af1d526384dbf2ad468c604a0b8b249f64c2ec68574d66"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_logic.cpp",
+      "sha256": "f21874bd10c5be6841ef836df62b75949293672facbf71a58edc4130c7a9dfbc"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_operator_controls.js",
+      "sha256": "39df65fa3d99bcb340be789e5bb996cc11db24c4f4fab1cee62cb92cca67aeae"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_publication.cpp",
+      "sha256": "b27752770bcda83af3935807202805824bc932a47eb03ce24d01efa98409ee80"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_shared_operations.cpp",
+      "sha256": "d6776804ad2058d58a2d5212bca9fbb86dd067b36facb1760fa770f0eb36ec8f"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_tablet_wifi_trial.cpp",
+      "sha256": "78ee7bd56ac8b58c8c949085964322848542515e0415b693ba3e6f4a09984b0d"
+    },
+    {
+      "path": "src/carcar_mapping_console/test/test_tools.cpp",
+      "sha256": "b010fcc030bed00cb465d02008b5c9715b4439a285c7c3d0cf8b3513f50bf739"
+    },
+    {
+      "path": "src/carcar_mapping_console/web/app.js",
+      "sha256": "775718c2a7400512f362ecc0ae65676ef1918a3719d480ee59db9822044afc9c"
+    },
+    {
+      "path": "src/carcar_mapping_console/web/index.html",
+      "sha256": "7012c8b7381ea94b8cb394e7bf8011ba28764d74e57a44d9590e0115d6923589"
+    },
+    {
+      "path": "src/carcar_mapping_console/web/rtc_control.js",
+      "sha256": "ae587d4121e1539e48b3e53f4a5c86fd8b415b9a5b63c4f43616c6e27f9995f2"
+    },
+    {
+      "path": "src/carcar_mapping_console/web/style.css",
+      "sha256": "68f5df2d793fef16676d70a762380105c5de791e550b7d0ccdca64f90f35d41e"
+    },
+    {
+      "path": "src/third_party/SOURCES.md",
+      "sha256": "18c553aef1da9e923353a46ad94d1147224433d7c593883e4ab78abc53b6389c",
+      "snapshot_sha256": "53c8db9807c7b3ce0480887265a17a2489ab57abf21be2d8bb365294a0daa3f2",
+      "snapshot_note": "原选取文件与正式源码的sha256保留；快照仅补记已存在frontier_ordering源码的来源和许可证，snapshot_sha256为补记后的文档指纹。"
+    },
+    {
+      "path": "src/third_party/explore_lite/CHANGELOG.rst",
+      "sha256": "40bb8adf4d18dba0641cd320f640933fa797ae4e40a697ac5690f7cdef82ab91"
+    },
+    {
+      "path": "src/third_party/explore_lite/CMakeLists.txt",
+      "sha256": "2aaabda0f17e06a375e3bc159a88c3f34064b13192eedf734f0c2ca710e15add"
+    },
+    {
+      "path": "src/third_party/explore_lite/LICENSE",
+      "sha256": "e367066f53f3bc9deeeeb66634d9db04bd9bf0de2cbee1c771c91b2f252b63e6"
+    },
+    {
+      "path": "src/third_party/explore_lite/config/params.yaml",
+      "sha256": "7a50c73f988b4b22d9becb732fa250fd9efb2c7bad90a1b31f6e3eebc6bbb3dc"
+    },
+    {
+      "path": "src/third_party/explore_lite/config/params_costmap.yaml",
+      "sha256": "30ca8729144cb88b8a0af6c942aa0b513f4a54c0b1dd4bfc15c73c4797aa5e9d"
+    },
+    {
+      "path": "src/third_party/explore_lite/doc/architecture.dia",
+      "sha256": "9945e1aaaa4fb1fe09c045747bdee65d1b64b181fcf6f239d73019fdf4e7ecac"
+    },
+    {
+      "path": "src/third_party/explore_lite/doc/screenshot.png",
+      "sha256": "ea811f155e84488a2d2bf56e727ee6c571211068f0cdf61ad6347846ffe02176"
+    },
+    {
+      "path": "src/third_party/explore_lite/doc/wiki_doc.txt",
+      "sha256": "17ca5ca54e0f508536f54404dd14477ec2dda0cf1cbed5eb2d4e86fc553b842c"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/costmap_client.h",
+      "sha256": "0b2a7c35f0ee2ca20496f93d26b29360e07c2fdd1886097d3456ae529222a31d"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/costmap_tools.h",
+      "sha256": "bfd1b6424451214d206263ca96fefdc4ff1be62463a9311acd2ab804d02b8e5d"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/direction_preference.h",
+      "sha256": "6a292767748f02054261452eb862c2e00f39df4e8279ed16d4a451678547d468"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/explore.h",
+      "sha256": "938d213a488eab1d01eb603b66e7dd71d84bef1ed220ea539c1f995fef699a1a"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/frontier_search.h",
+      "sha256": "87f71bacf5f8aa09d516ecc1363de0a27cc5910c7d99eb373cc033295e441b8b"
+    },
+    {
+      "path": "src/third_party/explore_lite/include/explore/goal_memory.h",
+      "sha256": "356a0912465d01f7358ad78b041d6b18fc6a42b735c5088e4a6945cf31ef20dd"
+    },
+    {
+      "path": "src/third_party/explore_lite/launch/explore.launch.py",
+      "sha256": "0f69f04f0f54eebd3dd87d977f4e4a7b525d0c1424cf48f4435c6ae8f434ef87"
+    },
+    {
+      "path": "src/third_party/explore_lite/package.xml",
+      "sha256": "3f87345429d5a435988d4eb3c315efe28176d7261b18cfc0b8a89a302b5827d7"
+    },
+    {
+      "path": "src/third_party/explore_lite/src/costmap_client.cpp",
+      "sha256": "e931c283e46ad1506a0a6b8ac769ad878d8a537936fbf82daef7033d060a9426"
+    },
+    {
+      "path": "src/third_party/explore_lite/src/explore.cpp",
+      "sha256": "35e4f328c1e5591cac2bb432a4e8042d35c52a9fc3ba22a81b22a82b06947949"
+    },
+    {
+      "path": "src/third_party/explore_lite/src/frontier_search.cpp",
+      "sha256": "d3ad7f7842ad3914157c35348ef7731549b6097910af51d3c447892a723b2213"
+    },
+    {
+      "path": "src/third_party/explore_lite/test/test_explore.cpp",
+      "sha256": "5cb68880ee5486600a3a75b50705e0483a630c77bb45a8a5ba48d8bcc391c658"
+    },
+    {
+      "path": "src/third_party/explore_lite/test/test_goal_lifecycle.cpp",
+      "sha256": "d585c0053adc44dc5b68c1c663a881ecf31964149aa079c20d35d0f8678bcc62"
+    },
+    {
+      "path": "src/third_party/explore_lite_msgs/CMakeLists.txt",
+      "sha256": "4b9effaa4a7ab0ae2b49a727aeefb9b0a75347f969e4f64e862297b8b395feee"
+    },
+    {
+      "path": "src/third_party/explore_lite_msgs/msg/ExploreStatus.msg",
+      "sha256": "b48fac739a8108e1f2d01c853eb7bab60d17af17fa7b0fa21e5efcb0eeb5cd2b"
+    },
+    {
+      "path": "src/third_party/explore_lite_msgs/package.xml",
+      "sha256": "863e314054943118cffdbfe3defd268b93fc839af9bdb1cf544cd4de685f4e60"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/LICENSE",
+      "sha256": "4458503dd48e88c4e0b945fb252a08b93c40ec757309b8ffa7c594dfa1e35104"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/include/frontier_exploration_ros2/frontier_types.hpp",
+      "sha256": "1af4032c491b0616003bb2a8128eed1c8690f6e0a9b34273aa8c9371a96d4cc6"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/include/frontier_exploration_ros2/mrtsp_ordering.hpp",
+      "sha256": "317254e9ffe8d07642361681f7967e709e7e2cd656d3b765e13e393f28ef8a34"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/include/frontier_exploration_ros2/mrtsp_solver.hpp",
+      "sha256": "388a44def692833c3d1f013cb10a7001cc4a86664b41600efd2a6c27d02a0ff6"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/src/mrtsp_ordering.cpp",
+      "sha256": "82033936e8d40061abf705a142e92fcdb04908301e0aadabb750c26a814d6827"
+    },
+    {
+      "path": "src/third_party/frontier_ordering/src/mrtsp_solver.cpp",
+      "sha256": "628bd8108cfdde76e1cd186230c9d396ecb0d44d755233ba61cb74694da54a08"
+    },
+    {
+      "path": "src/third_party/laser_filters/.github/workflows/ros2_ci.yml",
+      "sha256": "90de75b1c4f2a096dee38bd2c53fc1e84fd3a1e47ecde596cc62263fafebd762"
+    },
+    {
+      "path": "src/third_party/laser_filters/.gitignore",
+      "sha256": "06785cc16d369e37366610b2c0eacfedcdce5dbffbf3ec89c50502c5c13f1013"
+    },
+    {
+      "path": "src/third_party/laser_filters/.travis.yml",
+      "sha256": "1f3055cb6e023ceb24de497c0b2550c6ccf45175c0ea10740aa09f09eb9acd95"
+    },
+    {
+      "path": "src/third_party/laser_filters/CHANGELOG.rst",
+      "sha256": "4032d5d24a9d57c5fe1a0604a82f38f1e287ca367730248ec46a702700f4d062"
+    },
+    {
+      "path": "src/third_party/laser_filters/CMakeLists.txt",
+      "sha256": "a49b7c94f26235e96242f2cf4456b67db6dc047c8ac1c1bafd3d390295b6eaa9"
+    },
+    {
+      "path": "src/third_party/laser_filters/LICENSE",
+      "sha256": "e62e44a02d2046810b72c46a1d9eb10144449bb8bfcf67dfccf1ea38f6c1c556"
+    },
+    {
+      "path": "src/third_party/laser_filters/cfg/SpeckleFilter.cfg",
+      "sha256": "d445e330f3b0a913a411346ae03476d4d3be065051c2a543562510cb08007ce0"
+    },
+    {
+      "path": "src/third_party/laser_filters/doc/node_organization.svg",
+      "sha256": "6f8f0843c2f3aba79b8e12a58c19ff77dc0cb87d2fd039cbca3c25196602ca11"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/angular_filter_example.launch.py",
+      "sha256": "6d4bfbc39455ab607d00c1cd3583c39810576d604bbb46dc12800b6fbfcf847e"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/angular_filter_example.yaml",
+      "sha256": "36841894e70e7946258a7fcc241e94a2a11d89d8d75e999a66ea0cfeda78e4c1"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/angular_filter_in_place_example.launch.py",
+      "sha256": "e85112a262e3c66d865c56fc526ee589790274eecc9a4d03a3fea7603df88bf0"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/angular_filter_in_place_example.yaml",
+      "sha256": "7e7ced22296448325ad5c558d8b586cfbbc67cb3d5fc13a69d19ddedab96f116"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/bin_filter_example.launch.py",
+      "sha256": "3c2a4d7f3d8f660fd68b8f47f9cb3e9280ad57c756f7b4fe44d701d22e9473ac"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/bin_filter_example.yaml",
+      "sha256": "422f2fa00a467634de1762db6162b97ce9263efb387fd6fc97a47a8f7185f0a6"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/box_filter_example.launch.py",
+      "sha256": "deb446966c6534e287da87c6656f0e6ac77b33a77a93397d666f27e01a6ca1e7"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/box_filter_example.yaml",
+      "sha256": "d09e70df5378de1ee3f67488f0260fde33196237062581ca5666e34117e6eeae"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/footprint_filter_example.launch.py",
+      "sha256": "da2a0eecfd554e7aa77e182b59a44f270399ca58d498b164c3f466c47cb98346"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/footprint_filter_example.yaml",
+      "sha256": "146fb6198708d2d7a44a691ce6514c2a3629bca2b6ff2a69f2884314e94aacfd"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/intensity_filter_example.launch.py",
+      "sha256": "838091260acc0324ef58068fc07bf46b0b965a6ae1b29b3f2a64e25feca750fa"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/intensity_filter_example.yaml",
+      "sha256": "fdac42b2445834b922e0ffea6a4c759c307e6ed42c1f3abc37bd3371446b4e95"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/mask_filter_example.launch.py",
+      "sha256": "989700b2d6ed7514f313601b9b0e046d6cf03f2719ff6defb90ad2b7f36d88d3"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/mask_filter_example.yaml",
+      "sha256": "1aa5c4d411f106023fd865f45914404fe7e9090ecef1eb1328fd5b92dad32aaf"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/median_filter_example.launch.py",
+      "sha256": "834b1c4729bcc73c971a2cb4d155dd9444fa87a70f173fa971e58de1dc6619a8"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/median_filter_example.yaml",
+      "sha256": "dc055e16b73f304d3cc399e8e9c6888fd9145fc39636d4514680397fe8d21065"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/median_spatial_filter.launch.py",
+      "sha256": "fad694d4d2e49d8f0c18cccc8808e02d90b95dcf2945b928eb71acec5ffe7249"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/median_spatial_filter.launch.xml",
+      "sha256": "2257fa375156956de7066e5aa8a41bd0189cbe4523e3cb8624da798b34d58386"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/median_spatial_filter_example.yaml",
+      "sha256": "bf8f9e6316963b09a2e456bb213794e5c0427a1a37dbb474ba50a68ad49ce6db"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/multiple_filters_example.launch.py",
+      "sha256": "f5673fed0f6d4da5781b7de7071047f929c3afa7fd9a784f30a2b73db3a976ed"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/multiple_filters_example.yaml",
+      "sha256": "48ba3a4263834cb45d06c9bc36bbbaf805de7306860d3e7b9d5408e2df521254"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/pass_through_example.launch.py",
+      "sha256": "36019df099b596d8cd09c1132846361bca0206a1761c3ab877f68706ea330431"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/pass_through_example.yaml",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/polygon_filter_example.launch.py",
+      "sha256": "6ef367469ed870f59cdd409f262e40ff43798031f8b99a9e55a5beffa04c0f52"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/polygon_filter_example.yaml",
+      "sha256": "92556085240a9c4febce7e5306b4020afb5bf8bfd3229ee67cd3c292b135b5a4"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/range_filter_example.launch.py",
+      "sha256": "c444fdfd22fa30483e30c8ea077284c1fc938a53e6d727e1080586ecc83b7f5e"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/range_filter_example.yaml",
+      "sha256": "3cc3833c799cb84864ebe812baaa58ce507caf9d00992c23db2e05d475fbdea9"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/scan_blob_filter_example.launch.py",
+      "sha256": "1426b11904ce9e326af0621b9a6b1d02a54ac94fd6c64113eabca71b240289bc"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/scan_blob_filter_example.yaml",
+      "sha256": "92e62babab1adec95ce53d5ca60594b0ddfa5ca72b161ad9c5a9e310f00637a5"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/sector_filter_example.launch.py",
+      "sha256": "d64b78cb3a62cb7f479c9cc3ae8f9a6c9dd687d9f574493ee510803dada86beb"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/sector_filter_example.yaml",
+      "sha256": "1c15109cf406ac806529b9d787fd158c28197dd14fb264610e91f6a8d33ddaaf"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/shadow_filter_example.launch.py",
+      "sha256": "8e4043e320fb182fe66698e70282fbe59b3123eda24d3a45e4fd75dc182948f5"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/shadow_filter_example.yaml",
+      "sha256": "96696b1662329a6f05d53667e1612d1bd36026b7cdace22fe6546b894c7d3994"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/speckle_filter_example.launch",
+      "sha256": "3ec1c2107d3ca53edf8d9d7e6b155793daf505634699717627bcd7dad6f9909c"
+    },
+    {
+      "path": "src/third_party/laser_filters/examples/speckle_filter_example.yaml",
+      "sha256": "bcb00f41cab1626ab439d99c5895d3566e17418418e5406c84fd9ab170a0658b"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/angular_bounds_filter.h",
+      "sha256": "e6bc99e2c964a6428f33c2eb0fdc7496f23725632bf3d75de7578155cdcdfeba"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/angular_bounds_filter_in_place.h",
+      "sha256": "67cdef5fd8aad4a472fdc546fe386b1f077eb2bbc1ea08e555e7d7a3c90b9452"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/array_filter.h",
+      "sha256": "c2e304329b50cdaeb929d53eb3f3ac4d4569df6ad9545f59759bcc436ee9271a"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/binning_filter.h",
+      "sha256": "f249cbe065fbbabb476aa3dab8f9f3e8a1911b076cb6623e84270c1e3db68afa"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/box_filter.h",
+      "sha256": "8f5b7e99ac20b6256dcf28a574d58905fc8bca5c7833b5df19e12a72d5344c38"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/footprint_filter.h",
+      "sha256": "7a372eea3e6343dbe80d75947e5c7bc4960388093f17bba98d9cfdcde88f986c"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/intensity_filter.h",
+      "sha256": "35626fa15829cd75f4c7a916cf4d9de2111921a9c9e274414d9d8a037b2f2187"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/interpolation_filter.h",
+      "sha256": "0bd1b753d1c7d364f447acc8bb39a508c96240e160c55f5f2d3e5e48b2dfb4d4"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/median_filter.h",
+      "sha256": "062cb9d5993de4fd5792072323d8bde81c97934d2bcf73d27eeb3218f8b8c42a"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/median_spatial_filter.h",
+      "sha256": "bec73d0c5f263282669daf63bcd5006fe186422113025c5e61765fe1f37c3c5c"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/polygon_filter.h",
+      "sha256": "00de9558d8dd128e906a4e356a9c12ea5be46f11fd6a61226f645ad1c5ed8bbf"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/range_filter.h",
+      "sha256": "b9ee3d62fa5d705bd162bbb22c90a56467d00281fbd18becc0bece25444fbd64"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/scan_blob_filter.h",
+      "sha256": "da09e35028f411f528daf56cea31b6e86a6ada4c44cad642ed835f78968153be"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/scan_mask_filter.h",
+      "sha256": "1cc51df082d6c389fa850e33d03ecec3df57d2c429de2480f5a07be15adbbf0b"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/scan_shadow_detector.h",
+      "sha256": "d96b7ef07c2b99d1889a5f884710c770f31fed15651c1d78e3c6738134a5c094"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/scan_shadows_filter.h",
+      "sha256": "960daee214118ffa1f8af8a484f3bffaa0de2f0303f667c6b45d491bf4613068"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/sector_filter.h",
+      "sha256": "a0709a48d0b005d60fcbaafde3b17f54fbd75258b8c19a006f64a76122604ccf"
+    },
+    {
+      "path": "src/third_party/laser_filters/include/laser_filters/speckle_filter.h",
+      "sha256": "4cab4d29ebf19c983a7867c08a06da602609be6d9e7e2bb420be38579d0db89a"
+    },
+    {
+      "path": "src/third_party/laser_filters/laser_filters_plugins.xml",
+      "sha256": "8edfccfee2df4c8013ba955a1a25ea4890a77dcd2efc4000042a841dedb4e333"
+    },
+    {
+      "path": "src/third_party/laser_filters/mainpage.dox",
+      "sha256": "68217fb81b96b97f69adaa5f9e2c4aa8708a4d4b6bf2eb865c146662fd6d4604"
+    },
+    {
+      "path": "src/third_party/laser_filters/package.xml",
+      "sha256": "814cc108b261f273af64ebf8aae817bd968320c80b66a7b2281ef269ea3179db"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/generic_laser_filter_node.cpp",
+      "sha256": "4c8aa3ba4345d7187225cb7dc3d542db3b4b3689553c5ee1803feb21be5ff7bc"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/laser_scan_filters.cpp",
+      "sha256": "8a1fa4b0ea7a5b6a4a6708d46f347febbd25a2bf2d234536ecb4fd387b20a2d4"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/scan_to_cloud_filter_chain.cpp",
+      "sha256": "408b5ea5e63ff4ec7ac41f3d13f2f17060f122e6e6eba35126854fe0105ab616"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/scan_to_cloud_filter_chain.hpp",
+      "sha256": "3f7bd1a1396991ad82af080ac9d763da7671c60037a9c5f4da51cff85b3d7759"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/scan_to_scan_filter_chain.cpp",
+      "sha256": "fbab8be5be1b25dbaf0023598c07242eba13ee486f34789b6a605b2365227be5"
+    },
+    {
+      "path": "src/third_party/laser_filters/src/scan_to_scan_filter_chain.hpp",
+      "sha256": "3413805113d8bc2ec3ca9599acebffe3103f663c248ce3ad0f021ce7859af403"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/fake_laser.py",
+      "sha256": "2c4af0db2c6d26fc27e1e671ef4a7b29104095f911bf4738c28c894c0727b4c1"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_angular_bounds_filter.cpp",
+      "sha256": "e4fc363592889c00619c7ed5d9e71cedf47007d83add39c5f989a0147e96d719"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_polygon_filter.test.py",
+      "sha256": "3178319be716a6b8388f121a715cb8df0a8c25e48f1dfd1531ad51fc7a9cf800"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_polygon_filter.yaml",
+      "sha256": "7946ed9a8e2223c05e51bc1e8aa3d999cd973e027310c10f82842db7dda7570e"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_scan_filter_chain.cpp",
+      "sha256": "225899e6de7a22721dae5b77ad9aeba53a1c92b087428c239ba3c196de9ac62c"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_scan_filter_chain.launch",
+      "sha256": "92040232e34c210ff7892cad177e8eb4635bd431a735861d949fdbb715e681b4"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_scan_filter_chain.yaml",
+      "sha256": "0e8108bccd9248cfc102c01af8dd60e451d6925347f138ce3f72dc0af1a55f66"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_scan_shadows_filter.cpp",
+      "sha256": "d24a277f23b4b5869a2ed9cdc21a6788eb9f2ddfbe5d4f26727bc0104bf7413c"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_shadow_detector.cpp",
+      "sha256": "2e99bc69e167fcdbb6b3c89d8d0e311f3b2261e450590d0411a64f36f44a3a9c"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_speckle_filter.cpp",
+      "sha256": "50853ae3e0083ca663cd9cc44728db206068599580095ba0d86580b6a0e3d5fd"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_speckle_filter.test.py",
+      "sha256": "050945414ac55ca086cb867fbf393063706478ab99e12bb21a85b6262225faab"
+    },
+    {
+      "path": "src/third_party/laser_filters/test/test_speckle_filter.yaml",
+      "sha256": "2f2c6d4623ac1a1e6c78e40e31c7853c85f28c59def6297702b92a5a9a263298"
+    }
+  ],
+  "documentation_source": "/home/jetson/luhao/my_nav_carcar/docs",
+  "documentation_files": 300,
+  "additional_sources": [
+    {
+      "path": "src/carcar_navigation/behavior_trees/navigate_through_poses_no_recovery.xml",
+      "source": "/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/behavior_trees/navigate_through_poses_no_recovery.xml",
+      "sha256": "a3c25af2899794c6ad8302ab53d2e1c583d4747337ea02ca8bdc76a20d6fd95d"
+    },
+    {
+      "path": "src/carcar_navigation/src/nav_event_logger.cpp",
+      "source": "/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/src/nav_event_logger.cpp",
+      "sha256": "7ccb99231a087636f9c28fe217f4e12bf3ebbcb3158b8ef0271ddc0fa1f123bd"
+    },
+    {
+      "path": "src/carcar_inspection/web/index.html",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/index.html",
+      "sha256": "31dc15938141927b344337ad7b626f9877073ea1c5871b6b841de8259795d30c"
+    },
+    {
+      "path": "src/carcar_inspection/web/src/App.vue",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/src/App.vue",
+      "sha256": "37543d91b53598742fec65b6cbb997465b27a2a20fc3f6c9ec29dfcfa0385fb4"
+    },
+    {
+      "path": "src/carcar_inspection/web/src/style.css",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/src/style.css",
+      "sha256": "e02d6e222b59211bffb8cfa757e96a41047b51572803cc9d923d821b55e1fc48"
+    },
+    {
+      "path": "src/carcar_inspection/web/test/browser.mjs",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/test/browser.mjs",
+      "sha256": "5ec483bdfe8a5c4e2a7e7a3aecb9374457bb5602334d75a16068ac85fa408224"
+    },
+    {
+      "path": "src/carcar_inspection/web/test/mapping-workflow.mjs",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/test/mapping-workflow.mjs",
+      "sha256": "e943e7d12d05358622c1d529fc74b6c60998326f9b88283af9030acbc1acd517"
+    },
+    {
+      "path": "src/carcar_inspection/web/test/mapping-autonomy.mjs",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/test/mapping-autonomy.mjs",
+      "sha256": "cf2ca23b73a56eb3c7e9f113c22dec4315141e9b1dfa14e69c8013ce4c050292"
+    },
+    {
+      "path": "src/carcar_inspection/web/test/mapping-start-lifecycle.mjs",
+      "source": "/home/jetson/luhao/my_nav_carcar_ui_redesign/src/carcar_inspection/web/test/mapping-start-lifecycle.mjs",
+      "sha256": "f5583d4a3e476acb4c8bfd705986cfef5d96adbe4836055496eb72b8985e7365"
+    }
+  ],
+  "scope_notes": [
+    "建图源码288项与正式src逐项一致；包括默认关闭的历史连续探索源码，不代表启用。",
+    "导航目录原为绝对路径软链接，快照保留仓库实体目录并同步其2项已生效修改。",
+    "巡检网页采用已发布UI对应的7项源码/测试，dist与node_modules不纳入Git。",
+    "代理脚本、根目录独有R27实验夹具、备份及新增运行地图不纳入本次增量。",
+    "历史Git已跟踪地图仍由基线继承；不改动原工作区或生产地图。"
+  ]
+}

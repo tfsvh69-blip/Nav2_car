@@ -1,6 +1,7 @@
 #include "carcar_mapping_console/common.hpp"
 #include "carcar_mapping_console/serial_preflight.hpp"
 #include "carcar_mapping_console/publication.hpp"
+#include "carcar_mapping_console/storage.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <unistd.h>
 #include <iostream>
@@ -36,6 +37,7 @@ int main(int argc, char ** argv) {
     root = std::filesystem::absolute(root).string(); if (mode == "resume") {
       if(autonomy)validate_autonomy_bundle(root,bundle);else validate_bundle(root,bundle);
     }
+    require_storage(root);
     rclcpp::init(0, nullptr); auto node = std::make_shared<rclcpp::Node>("mapping_preflight");
     const auto until = steady() + 1.0;
     while (steady() < until) {rclcpp::spin_some(node); usleep(20000);}

@@ -1,0 +1,158 @@
+{
+  "error": "",
+  "frame_sequence": 0,
+  "goal_navigation_block_reason": "请先连接实车",
+  "goal_navigation_enabled": false,
+  "hardware_enabled": false,
+  "health": {
+    "hardware_interface": false,
+    "localization": false,
+    "map_matches": false,
+    "odom": false,
+    "perception": false,
+    "rgb": false,
+    "scan": false,
+    "still": false,
+    "velocity_topology": false
+  },
+  "map": null,
+  "map_activation": {
+    "phase": "IDLE"
+  },
+  "maps": [
+    {
+      "id": "nav002_20260909_164237",
+      "name": "nav002_20260909_164237"
+    },
+    {
+      "id": "nav004_20260914_093032",
+      "name": "nav004_20260914_093032"
+    },
+    {
+      "id": "20261019_223449_1e336f2f",
+      "name": "20261019_223449_1e336f2f"
+    },
+    {
+      "id": "20261014_162654_db59f27d",
+      "name": "20261014_162654_db59f27d"
+    },
+    {
+      "id": "20261014_200505_1933aa00",
+      "name": "20261014_200505_1933aa00"
+    },
+    {
+      "id": "20261019_223507_5ec7cfe3",
+      "name": "20261019_223507_5ec7cfe3"
+    },
+    {
+      "id": "20261019_223428_554ad0d6",
+      "name": "20261019_223428_554ad0d6"
+    },
+    {
+      "id": "20261015_084123_98957241",
+      "name": "20261015_084123_98957241"
+    },
+    {
+      "id": "20261014_162415_b8950284",
+      "name": "20261014_162415_b8950284"
+    }
+  ],
+  "motion": {
+    "command_linear_mps": 0.0,
+    "wheel_linear_mps": null
+  },
+  "motion_held": false,
+  "navigation_debug": {
+    "global_costmap": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": "",
+      "transform": "latest"
+    },
+    "global_path": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "points": [],
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": "",
+      "transform": "latest"
+    },
+    "local_costmap": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": "",
+      "transform": "latest"
+    },
+    "local_path": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "points": [],
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": "",
+      "transform": "latest"
+    }
+  },
+  "navigation_enabled": false,
+  "navigation_speed": {
+    "applied_mps": null,
+    "enabled": false,
+    "message": "当前入口未启用导航速度调档",
+    "options": [
+      {
+        "label": "1档 · 0.10 m/s",
+        "mps": 0.1
+      },
+      {
+        "label": "2档 · 0.18 m/s",
+        "mps": 0.18
+      },
+      {
+        "label": "3档 · 0.25 m/s（实验）",
+        "mps": 0.25
+      },
+      {
+        "label": "4档 · 0.30 m/s（实验）",
+        "mps": 0.3
+      }
+    ],
+    "pending": false,
+    "phase": "DISABLED",
+    "ready": true,
+    "requested_mps": 0.18
+  },
+  "navigation_trial": {
+    "active": false,
+    "phase": "IDLE"
+  },
+  "navigation_view": null,
+  "points": [],
+  "pose": null,
+  "require_depth": true,
+  "run": null,
+  "runs": [],
+  "tasks": [],
+  "teaching": {
+    "board_command": 94,
+    "error": "",
+    "phase": "IDLE",
+    "position_feedback": false,
+    "revision": 0,
+    "target_degrees": 140.5
+  },
+  "ui_version": "inspection-20261021-5",
+  "uploads": []
+}

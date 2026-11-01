@@ -49,7 +49,7 @@ try{
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(300);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'手机页面不应横向溢出');
   await page.screenshot({path:path.join(directory,'phone-manual.png'),fullPage:true});
-  await page.locator('#site-confirmed').check();await page.locator('#auto-start').click();
+  await page.locator('#auto-start').click();
   s=await waitForPhase('EXPLORING');assert.deepEqual(s.autonomy.origin,origin);
   await page.getByText('辅助工具与诊断',{exact:true}).click();
   await page.getByRole('button',{name:'重新连接',exact:true}).click();await page.waitForTimeout(700);

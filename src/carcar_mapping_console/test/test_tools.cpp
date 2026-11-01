@@ -25,7 +25,8 @@ int run(std::vector<std::string> args, const fs::path & capture = {}, const std:
     if (!capture.empty()) {
       setenv("PATH", (capture.parent_path().string() + ":" + getenv("PATH")).c_str(), 1);
       setenv("MAPPING_CAPTURE_OUTPUT", capture.c_str(), 1);
-      setenv("ROS_DOMAIN_ID", "217", 1); setenv("ROS_LOCALHOST_ONLY", "1", 1);
+      // 预检替身使用独立域，避免并发回放的地图被误认为真实入口冲突。
+      setenv("ROS_DOMAIN_ID", "223", 1); setenv("ROS_LOCALHOST_ONLY", "1", 1);
       if (!fuser_mode.empty()) setenv("MAPPING_FUSER_MODE", fuser_mode.c_str(), 1);
       if (fuser_mode == "missing") setenv("PATH", capture.parent_path().c_str(), 1);
     }

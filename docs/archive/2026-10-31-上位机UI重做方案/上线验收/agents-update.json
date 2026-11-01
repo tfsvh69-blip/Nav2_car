@@ -1,0 +1,12 @@
+{
+  "/home/jetson/.codex/AGENTS.md": {
+    "backup": "/home/jetson/.codex/AGENTS.md.20261031-202653.backup",
+    "old_sha256": "c16b9b799649dcf52fd438df6a7f5f046198641d912bf4b5e317ce91be9db5f0",
+    "new_sha256": "bf06331e70bfe6f1ecd693d300bd126dd45b89d0e031dfbfeccf79286c5f48e1"
+  },
+  "/home/jetson/luhao/my_nav_carcar/AGENTS.md": {
+    "backup": "/home/jetson/luhao/my_nav_carcar/AGENTS.md.20261031-202653.backup",
+    "old_sha256": "0fc15b0a7d55d5bffabbfc09c2086f35e9c7af6e1ac05deb5a485e7baf719d69",
+    "new_sha256": "79a80a30d51f024df7674506ab6a74c8a331d9ffd81bad06733827ef73c7c151"
+  }
+}

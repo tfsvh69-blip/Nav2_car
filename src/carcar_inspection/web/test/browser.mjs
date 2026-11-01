@@ -122,6 +122,7 @@ try {
   );
   const canvas = page.getByLabel("场地地图，点击设置停车位置并拖动设置朝向");
   // 断言主录入地图的真实像素，不能仅凭图层状态“收到数据”判断已绘制。
+  await page.locator(".navigation-debug > summary").click();
   const layerOptions = page.locator(".navigation-layer-option input");
   for (let index=0;index<4;index++) await layerOptions.nth(index).uncheck();
   const samples = [
@@ -260,7 +261,7 @@ try {
   await page.getByRole("button", { name: "录入巡检点", exact: true }).click();
   await page.getByRole("button", { name: "新增点位", exact: true }).click();
   await page.getByRole("button", { name: "下发目标，让小车前往", exact: true }).click();
-  await page.getByText(/^尚未下发：请先在地图上选择停车位置/).waitFor();
+  await page.getByText(/^\s*尚未下发：请先在地图上选择停车位置/).waitFor();
   assert.equal((await (await fetch(`${url}/api/state`)).json()).navigation_trial.phase,"IDLE","目标未选择时必须明确提示，并且不能发送导航");
   await page
     .locator('input[placeholder="例如：走廊仪表"]')
@@ -353,11 +354,24 @@ try {
   await page.screenshot({ path: `${directory}/phone.png`, fullPage: true });
   assert.equal(
     await page.evaluate(
-      () => document.documentElement.scrollWidth > innerWidth + 1,
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     ),
     false,
     "手机页面出现横向溢出",
   );
+  if (process.env.UI_REDESIGN_EVIDENCE) {
+    const output = process.env.UI_REDESIGN_EVIDENCE;
+    await fs.mkdir(output, { recursive: true });
+    await fs.writeFile(`${output}/inspection-state.json`, JSON.stringify(await (await fetch(`${url}/api/state`)).json(), null, 2));
+    await fs.copyFile(`${directory}/tablet.png`, `${output}/inspection-tablet.png`);
+    await fs.copyFile(`${directory}/phone.png`, `${output}/inspection-phone.png`);
+    // 保存正式候选的可见视口，避免超长截图缩小后难以阅读。
+    for (const [name, width, height] of [["desktop", 1440, 1100], ["tablet", 1024, 900], ["phone", 390, 844]]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: `${output}/inspection-${name}-viewport.png` });
+    }
+  }
   assert.deepEqual(errors, []);
   console.log(
     "真实浏览器完成导航到点→修改坐标再导航→调角新画面→按实车位置保存；平板与手机截图已保存",

@@ -39,6 +39,8 @@
 #include <explore/explore.h>
 
 #include <thread>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace explore
 {
@@ -78,7 +80,15 @@ Explore::Explore()
   goal_memory_.cooldown=declare_parameter<double>("region_cooldown",60.0);
   if(!(std::isfinite(planner_frequency_)&&planner_frequency_>0&&planner_frequency_<=100&&
        std::isfinite(progress_timeout_)&&progress_timeout_>0&&std::isfinite(progress_epsilon_)&&progress_epsilon_>0&&
-       std::isfinite(goal_memory_.radius)&&goal_memory_.radius>0&&std::isfinite(goal_memory_.cooldown)&&goal_memory_.cooldown>0))throw std::invalid_argument("探索参数必须为有限正数且频率不超过100Hz");
+       std::isfinite(goal_memory_.radius)&&goal_memory_.radius>0&&std::isfinite(goal_memory_.cooldown)&&goal_memory_.cooldown>0&&
+       std::isfinite(orientation_scale_)&&orientation_scale_>=0))throw std::invalid_argument("探索参数必须为有限正数且频率不超过100Hz，方向权重须为非负有限数");
+  const auto generation_topic=declare_parameter<std::string>("navigation_generation_topic","");
+  if(!generation_topic.empty())navigation_generation_sub_=create_subscription<std_msgs::msg::UInt64>(
+    generation_topic,rclcpp::QoS(1).reliable().transient_local(),[this](const std_msgs::msg::UInt64&m){
+      if(m.data==navigation_generation_)return;
+      navigation_generation_=m.data;goal_memory_.clear();direction_.clear();waiting_success_map_=false;
+      RCLCPP_INFO(logger_,"地图坐标增代 generation=%lu；清理旧坐标中的区域和方向记忆",navigation_generation_);
+    });
   // 显式接口参数避免Humble中action内部服务/话题重映射差异绕过监督器。
   const auto navigation_action = this->declare_parameter<std::string>("navigation_action", ACTION_NAME);
   move_base_client_ =
@@ -252,30 +262,41 @@ void Explore::makePlan()
     waiting_success_map_=false;
   }
   const auto pose=costmap_client_.getRobotPose();
+  const double yaw=tf2::getYaw(pose.orientation);
   auto frontiers=search_.searchFrom(pose.position);
-  if(visualize_)visualizeFrontiers(frontiers);
   if(frontiers.empty()){
+    if(visualize_)visualizeFrontiers(frontiers);
     auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_complete";status_pub_->publish(status);stop(true);return;
   }
   geometry_msgs::msg::Point target_position;bool found=false;
-  for(const auto&f:frontiers){
+  double best=std::numeric_limits<double>::infinity();
+  for(auto&f:frontiers){
     double nearest=std::numeric_limits<double>::infinity();
+    geometry_msgs::msg::Point candidate;
     auto consider=[&](const geometry_msgs::msg::Point&p){
       const auto d=std::hypot(p.x-pose.position.x,p.y-pose.position.y);
-      if(d>.25&&d<nearest&&!goalOnBlacklist(p)){nearest=d;target_position=p;found=true;}
+      const auto cost=d+direction_.penalty(pose.position,yaw,p,orientation_scale_);
+      if(d>.25&&cost<nearest&&!goalOnBlacklist(p)){nearest=cost;candidate=p;}
     };
     consider(f.middle);
     for(const auto&p:f.points)consider(p);
-    if(found)break;
+    if(!std::isfinite(nearest))continue;
+    f.cost+=direction_.penalty(pose.position,yaw,candidate,orientation_scale_);
+    if(f.cost<best){best=f.cost;target_position=candidate;found=true;}
   }
+  std::stable_sort(frontiers.begin(),frontiers.end(),[](const auto&a,const auto&b){return a.cost<b.cost;});
+  if(visualize_)visualizeFrontiers(frontiers);
   if(!found){
     auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_waiting_candidates";status_pub_->publish(status);
     RCLCPP_INFO_THROTTLE(logger_,*get_clock(),5000,"前沿仍存在，但观测候选正在暂避或过近；保持未完成，等待地图及冷却");return;
   }
   last_failed_goal_.clear();
-  prev_goal_=target_position;last_progress_=this->now();feedback_seen_=false;timeout_cancel_=false;
+  prev_goal_=target_position;dispatch_start_=pose.position;dispatch_navigation_generation_=navigation_generation_;
+  last_progress_=this->now();feedback_seen_=false;timeout_cancel_=false;
   auto goal=nav2_msgs::action::NavigateToPose::Goal();goal.pose.pose.position=target_position;
-  goal.pose.pose.orientation.w=1.;goal.pose.header.frame_id=costmap_client_.getGlobalFrameID();goal.pose.header.stamp=this->now();
+  const double approach=std::atan2(target_position.y-pose.position.y,target_position.x-pose.position.x);
+  goal.pose.pose.orientation.z=std::sin(approach/2);goal.pose.pose.orientation.w=std::cos(approach/2);
+  goal.pose.header.frame_id=costmap_client_.getGlobalFrameID();goal.pose.header.stamp=this->now();
   goal_active_=true;
   const auto dispatch=++dispatch_generation_;
   RCLCPP_INFO(logger_,"探索选点 dispatch=%lu frontier=[%.3f,%.3f]；固定目标执行至终态",dispatch,target_position.x,target_position.y);
@@ -358,11 +379,13 @@ void Explore::reachedGoal(const NavigationGoalHandle::WrappedResult& result,
   goal_active_=false;navigation_goal_handle_.reset();
   const bool success=result.code==rclcpp_action::ResultCode::SUCCEEDED;
   const bool failure=result.code==rclcpp_action::ResultCode::ABORTED||timeout_cancel_;
-  if(success||failure)goal_memory_.record(frontier_goal,success,this->now().seconds());
+  const bool same_coordinates=dispatch_navigation_generation_==navigation_generation_;
+  if((success||failure)&&same_coordinates)goal_memory_.record(frontier_goal,success,this->now().seconds());
   RCLCPP_INFO(logger_,"探索目标 goal_id=%s result=%s reason=%s；保留区域记忆",rclcpp_action::to_string(result.goal_id).c_str(),
     success?"succeeded":(failure?"failed":"canceled"),timeout_cancel_?"配置窗口内无有效路径进展":"导航终态");
   timeout_cancel_=false;
-  if(success){waiting_success_map_=true;success_map_sequence_=costmap_client_.mapSequence();}
+  if(success&&same_coordinates){direction_.succeeded(dispatch_start_,costmap_client_.getRobotPose().position);
+    waiting_success_map_=true;success_map_sequence_=costmap_client_.mapSequence();}
   last_failed_goal_=result.code==rclcpp_action::ResultCode::ABORTED?rclcpp_action::to_string(result.goal_id):"";
   retryRejectedCandidate(last_failed_goal_);
   // 等下次timer；成功还必须等终态之后的新地图，禁止递归重选。

@@ -1,0 +1,93 @@
+{
+  "autonomy": {},
+  "autonomy_age_ms": -1.0,
+  "autonomy_enabled": true,
+  "bundle": "",
+  "busy": false,
+  "completed_operation": 0,
+  "control": {},
+  "control_age": 1000025135.1959983,
+  "control_mode": "manual",
+  "dataflow_protocol": 1,
+  "dirty": false,
+  "error": "",
+  "halt_pending": false,
+  "inspection_running": false,
+  "last_save_age": 19955.134338521,
+  "last_saved_bundle": "",
+  "managed": true,
+  "map_age": 1000025135.1959978,
+  "map_version": "live-0",
+  "navigation": {
+    "global_costmap": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": ""
+    },
+    "global_path": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "points": [],
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": ""
+    },
+    "local_costmap": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": ""
+    },
+    "local_path": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "points": [],
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": ""
+    },
+    "prediction": {
+      "age_seconds": 0.0,
+      "available": false,
+      "error": "尚未收到数据",
+      "frame": "map",
+      "points": [],
+      "sequence": 0,
+      "source_age_seconds": 0.0,
+      "source_frame": ""
+    }
+  },
+  "odom_age": 1000025135.1959977,
+  "operation": 0,
+  "phase": "STANDBY",
+  "result": "",
+  "save_failed": false,
+  "save_reminder": true,
+  "scan_age": 1000025135.1959972,
+  "scan_version": "562240f05b3dda64ad805bbe3f68bc0e-0",
+  "storage": {
+    "available_bytes": 81820397568,
+    "capacity_bytes": 249367060480,
+    "reason": "",
+    "save_allowed": true,
+    "start_allowed": true,
+    "valid": true,
+    "warning": false
+  },
+  "task_age": 0.0,
+  "task_state": "STANDBY",
+  "video_age": 1000025135.1959981,
+  "video_requested": false,
+  "video_running": false
+}

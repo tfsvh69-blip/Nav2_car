@@ -37,6 +37,7 @@
 #include <gtest/gtest.h>
 #include <geometry_msgs/msg/point.hpp>
 #include <cmath>
+#include <explore/direction_preference.h>
 
 #define private public
 
@@ -68,6 +69,37 @@ TEST(Explore, testSameGoal)
     goal2.z = goal1.z;
     same_goal = same_point(goal1, goal2);
     EXPECT_TRUE(same_goal);
+}
+
+geometry_msgs::msg::Point point(double x, double y)
+{
+  geometry_msgs::msg::Point p;p.x=x;p.y=y;return p;
+}
+TEST(DirectionPreference, ComparableFrontiersFavorFacingDirection)
+{
+  explore::DirectionPreference preference;
+  EXPECT_LT(preference.penalty(point(0,0),0,point(1,0),.8),
+    preference.penalty(point(0,0),0,point(-1,0),.8));
+  EXPECT_LT(preference.penalty(point(0,0),std::acos(-1.0),point(-1,0),.8),
+    preference.penalty(point(0,0),std::acos(-1.0),point(1,0),.8));
+}
+TEST(DirectionPreference, SuccessfulTravelKeepsGlobalContinuityAcrossLocalTurns)
+{
+  explore::DirectionPreference preference;
+  preference.succeeded(point(0,0),point(0,1));
+  EXPECT_LT(preference.penalty(point(0,1),0,point(0,2),.8),
+    preference.penalty(point(0,1),0,point(1,1),.8));
+  // 坐标校正后旧全局方向不再参与判断，重新以当前车头建立偏好。
+  preference.clear();
+  EXPECT_GT(preference.penalty(point(0,1),0,point(0,2),.8),
+    preference.penalty(point(0,1),0,point(1,1),.8));
+}
+TEST(DirectionPreference, NegligibleMotionAndDisabledScaleDoNotCreateDirectionEvidence)
+{
+  explore::DirectionPreference preference;
+  preference.succeeded(point(0,0),point(0,.10));
+  EXPECT_DOUBLE_EQ(preference.penalty(point(0,0),0,point(1,0),.8),0);
+  EXPECT_DOUBLE_EQ(preference.penalty(point(0,0),0,point(-1,0),0),0);
 }
 
 int main(int argc, char** argv)

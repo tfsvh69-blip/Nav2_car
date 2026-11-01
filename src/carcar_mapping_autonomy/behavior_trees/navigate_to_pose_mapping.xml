@@ -13,7 +13,7 @@
           </Delay>
         </RecoveryNode>
       </RateController>
-      <FollowPath name="mapping_FollowPath" path="{path}" controller_id="FollowPath"/>
+      <FollowPath name="mapping_FollowPath" path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"/>
     </PipelineSequence>
   </BehaviorTree>
 </root>

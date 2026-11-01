@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>巡检工作空间 · 设计预览</title>
+  <style>
+    /* 独立设计稿：数据仅用于排版，不连接车端接口。 */
+    :root{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#252c36;background:#f5f6f8;font-size:14px;line-height:1.6;font-synthesis:none;-webkit-font-smoothing:antialiased;--ink:#252c36;--muted:#687380;--line:#e1e5eb;--blue:#285bd4;--soft:#edf2fc;--green:#267453}
+    *{box-sizing:border-box}body{margin:0}button,select{font:inherit}button,a,summary{touch-action:manipulation}button{cursor:pointer}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #285bd4;outline-offset:3px}button:disabled{cursor:default;opacity:.45}button{border:1px solid var(--line);background:white;color:var(--ink);padding:8px 13px;border-radius:6px;min-height:40px;transition:background .15s}button:hover:enabled{background:#eef2f7}button.primary{background:var(--blue);border-color:var(--blue);color:white}button.primary:hover:enabled{background:#204bb0}.muted{color:var(--muted)}.small{font-size:12px}.icon{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.row{display:flex;align-items:center;gap:9px}.spread{justify-content:space-between}.preview{height:32px;background:#eaf0fb;color:#3f567f;display:flex;align-items:center;justify-content:center;font-size:12px;gap:10px;border-bottom:1px solid #dce5f5}.preview b{font-weight:600}.shell{display:grid;grid-template-columns:196px minmax(0,1fr);min-height:calc(100dvh - 32px)}.sidebar{background:#eff1f4;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:25px 16px 20px}.brand{display:flex;align-items:center;gap:10px;padding:0 8px 28px;font-size:20px;font-weight:700;letter-spacing:2px}.brand-mark{width:31px;height:31px;background:#25364e;color:white;border-radius:8px;display:grid;place-items:center}.brand-mark svg{width:22px;height:22px}.nav-label{font-size:11px;color:#727d8b;letter-spacing:.08em;margin:8px 12px}.nav-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:0;background:none;color:#5b6675;margin:3px 0;padding:11px 12px;border-radius:6px}.nav-item.active{background:#fff;color:#244fbc;box-shadow:0 1px 3px #172b4510;font-weight:600}.nav-item .end{margin-left:auto;font-size:11px}.nav-divider{border-top:1px solid #dce1e8;margin:18px 10px}.device{margin-top:auto;padding:15px 8px 0;border-top:1px solid #dce1e8}.device-name{font-weight:600}.status-dot{width:6px;height:6px;display:inline-block;background:var(--green);border-radius:50%}.device .muted{font-size:11px;margin-top:3px}.body{min-width:0;display:flex;flex-direction:column}.topbar{height:68px;padding:0 28px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}.breadcrumb{font-size:13px;display:flex;gap:12px;align-items:center;color:var(--muted)}.breadcrumb strong{font-weight:600;color:var(--ink)}.topbar .right{display:flex;gap:20px;align-items:center}.stop{border-color:#ecd2d4;background:#fff6f6;color:#a42e36;font-weight:600;display:flex;align-items:center;gap:7px}.stop:hover:enabled{background:#fce7e8}.stop-mark{width:9px;height:9px;border-radius:2px;background:#b23a42}.main{padding:26px 28px 20px;flex:1;display:flex;flex-direction:column;gap:21px}.heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.heading h1{font-size:25px;letter-spacing:-.5px;margin:0 0 5px;font-weight:650}.heading p{margin:0;color:var(--muted);font-size:13px}.heading .project{font-size:12px;text-align:right;padding-top:5px}.project strong{color:var(--ink);font-weight:500}.stage{display:flex;align-items:center;gap:10px;font-size:12px;color:#7b8491;margin-top:15px}.stage i{font-style:normal;width:19px;height:19px;border-radius:50%;border:1px solid #ccd3dd;display:grid;place-items:center;font-size:10px}.stage .current{color:#285bd4;font-weight:600}.stage .current i{color:white;background:#285bd4;border-color:#285bd4}.stage-line{width:34px;height:1px;background:#d4dae4;margin:0 3px}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:stretch;flex:1;min-height:540px}.map-panel{background:white;border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0}.panel-head{min-height:56px;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:10px}.panel-title{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}.tag{font-size:11px;color:#536b9a;background:#f0f4fb;border:1px solid #e1e8f5;border-radius:4px;padding:2px 6px;font-weight:400}.panel-tools{display:flex;gap:8px;align-items:center}.panel-tools button{min-height:32px;font-size:12px;padding:4px 9px;border-color:transparent;background:#f6f7f9}.map-canvas{position:relative;background:#edf0f3;flex:1;min-height:360px;display:grid;place-items:center;overflow:hidden}.map-canvas svg.floor{width:100%;height:100%;max-height:520px;padding:24px}.map-overlay{position:absolute;left:15px;top:15px;background:#ffffffef;border:1px solid #e0e5eb;padding:5px 9px;border-radius:5px;font-size:11px;display:flex;gap:7px;align-items:center}.map-orientation{position:absolute;right:18px;bottom:18px;font-size:11px;color:#7c8793;display:grid;place-items:center;gap:4px}.map-orientation b{font-size:20px;line-height:1;font-weight:400}.map-footer{display:flex;flex-wrap:wrap;align-items:center;gap:15px;padding:10px 16px;min-height:42px;font-size:11px;color:#6b7583;border-top:1px solid var(--line)}.legend-key{width:7px;height:7px;display:inline-block;background:#536471;margin-right:5px}.legend-key.free{background:white;border:1px solid #c3cbd2}.legend-key.unknown{background:#d6dce2}.legend-key.path{background:#3f7199}.map-note{margin-left:auto}.right-panel{display:flex;flex-direction:column;background:white;border:1px solid var(--line);border-radius:9px;overflow:hidden}.section{padding:20px;border-bottom:1px solid var(--line)}.section:last-child{border-bottom:0}.section h2{font-size:13px;margin:0 0 15px;font-weight:650}.task-title{display:flex;align-items:center;justify-content:space-between}.badge{font-size:11px;border-radius:4px;color:#446d58;background:#ecf4ef;padding:2px 7px}.task-name{font-size:19px;font-weight:600;margin:0 0 3px}.task-caption{font-size:12px;color:var(--muted);margin:0 0 18px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:18px;font-variant-numeric:tabular-nums}.fact-label{color:var(--muted);font-size:11px;margin-bottom:2px}.fact-value{font-size:18px;font-weight:550}.fact-value span{font-size:11px;color:var(--muted);font-weight:400}.buttons{display:flex;gap:8px}.buttons button{flex:1;font-size:12px}.full{width:100%;margin-top:8px;font-size:12px}.status-row{display:flex;justify-content:space-between;align-items:center;margin:10px 0;font-size:12px}.status-value{color:var(--green);display:flex;align-items:center;gap:6px}.time-note{font-size:11px;color:#7a8491;margin-top:14px}.events{margin:0;padding:0;list-style:none;font-size:12px}.events li{position:relative;padding:0 0 16px 17px;border-left:1px solid #e4e8ed;margin-left:3px}.events li:before{content:"";position:absolute;left:-3px;top:6px;width:5px;height:5px;background:#a8b5c4;border-radius:50%}.events li:first-child:before{background:#4674c8}.events li:last-child{padding-bottom:0}.events time{font-size:10px;color:#7d8793;display:block;font-variant-numeric:tabular-nums}.section details summary{font-size:12px;cursor:pointer;color:#637183;min-height:32px}.section details p{font-size:12px;color:#6b7482}.foot{font-size:11px;color:#75808d;display:flex;align-items:center;justify-content:space-between;gap:12px}.mode-select{border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--muted);padding:5px 10px;font-size:12px;min-height:34px}.point-list{list-style:none;margin:0;padding:0}.point-list li{padding:10px 0;border-bottom:1px solid #edf0f3;display:flex;gap:10px;align-items:center;font-size:12px}.point-number{background:#eff3fb;color:#315db3;border-radius:4px;width:25px;height:25px;display:grid;place-items:center}.point-list li:last-child{border:0}.point-list small{display:block;color:var(--muted);font-size:10px}.point-check{margin-left:auto;color:#438064}.notice{padding:10px 12px;background:#f3f6fb;color:#4d658b;font-size:12px;border-left:2px solid #86a5d9;margin-top:14px}.preview-feedback{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#283a50;color:#fff;border-radius:7px;padding:11px 18px;font-size:13px;box-shadow:0 5px 20px #172b4520;z-index:5}.preview-feedback:empty{display:none}.skip{position:absolute;left:-10000px;top:0}.skip:focus{left:10px;z-index:10;background:white;padding:12px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}[hidden]{display:none!important}
+    @media(min-width:1600px){.main{padding:32px 38px}.workspace{grid-template-columns:minmax(0,1fr) 330px}.map-canvas{min-height:500px}}
+    @media(max-width:1150px){.shell{grid-template-columns:168px minmax(0,1fr)}.sidebar{padding:22px 10px}.main{padding:22px 20px}.topbar{padding:0 20px}.workspace{grid-template-columns:minmax(0,1fr) 270px;gap:14px}.section{padding:16px}.map-note{display:none}.topbar .right{gap:10px}.topbar .connection-label{display:none}}
+    @media(max-width:800px){.shell{display:flex;flex-direction:column}.sidebar{padding:10px 16px;display:flex;flex-direction:row;align-items:center;gap:10px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0;margin-right:auto;font-size:17px}.brand-mark{width:27px;height:27px}.nav-item{width:auto;padding:8px 10px;min-height:44px;font-size:12px;margin:0}.sidebar .nav-label,.sidebar .nav-divider,.sidebar .secondary,.device,.nav-item .end{display:none}.sidebar nav{display:flex;gap:4px}.nav-item .icon{display:none}.topbar{height:56px;padding:0 16px}.topbar .connection-label,.topbar .status-preview{display:none}.main{padding:20px 16px;gap:17px}.heading h1{font-size:23px}.heading .project{display:none}.workspace{grid-template-columns:1fr;gap:16px}.map-canvas{min-height:330px}.map-panel{min-height:420px}.map-canvas svg.floor{padding:15px}.right-panel{display:grid;grid-template-columns:1fr 1fr}.right-panel .section{border-bottom:1px solid var(--line)}.right-panel .section:nth-child(odd){border-right:1px solid var(--line)}.foot{align-items:flex-start}.foot span:last-child{display:none}.preview{font-size:11px}.preview .extra{display:none}.panel-head{padding:10px 13px}.panel-tools button{min-height:36px}.stop{min-height:44px}.mode-select{min-height:44px}}
+    @media(max-width:480px){.right-panel{display:flex}.right-panel .section:nth-child(odd){border-right:0}.main{padding:18px 12px}.topbar{padding:0 12px}.breadcrumb{font-size:12px;gap:8px}.sidebar{padding:9px 12px;gap:5px}.brand{font-size:16px;gap:7px;letter-spacing:1px}.nav-item{padding:7px 9px}.stage{gap:7px;font-size:11px}.stage-line{width:20px}.heading p{font-size:12px}.map-panel{min-height:380px}.map-canvas{min-height:280px}.map-canvas svg.floor{padding:5px}.map-footer{gap:10px;padding:9px 12px}.panel-tools .tool-label{display:none}.section{padding:18px}.buttons button,.full{min-height:44px}.preview-feedback{max-width:calc(100% - 24px);width:max-content}.status-preview{display:none}}
+    /* 长页面滚动时，停车入口仍保留在视口顶部。 */
+    .topbar{position:sticky;top:0;z-index:4}
+    html{scroll-padding-top:78px}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">跳到工作区</a>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+  <symbol id="map-icon" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/></symbol>
+  <symbol id="route-icon" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h9a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8"/></symbol>
+  <symbol id="layers-icon" viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8Zm-9 10 9 5 9-5M3 18l9 5 9-5"/></symbol>
+  <symbol id="settings-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6M10 15v6"/></symbol>
+  <symbol id="history-icon" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7m2-5v6l4 2"/></symbol>
+  <symbol id="fit-icon" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/></symbol>
+  <symbol id="logo-icon" viewBox="0 0 24 24"><path d="M4 9V5h4m8 0h4v4M4 15v4h4m8 0h4v-4M8 12l4-5 4 5-4 5Z"/></symbol>
+</defs></svg>
+<div class="preview"><b>设计预览</b><span>仅展示界面方向，全部数据为示意</span><span class="extra">｜未连接设备</span></div>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#logo-icon"/></svg></span>巡检</div>
+    <div class="nav-label">工作空间</div>
+    <nav aria-label="设计预览页面">
+      <a class="nav-item active" id="mapping-nav" href="?view=mapping" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#map-icon"/></svg>随行建图<span class="end">›</span></a>
+      <a class="nav-item" id="inspect-nav" href="?view=inspect"><svg class="icon" aria-hidden="true"><use href="#route-icon"/></svg>巡检工作台<span class="end">›</span></a>
+    </nav>
+    <div class="nav-divider"></div><div class="nav-label secondary">管理</div>
+    <button class="nav-item secondary" data-preview="地图管理入口"><svg class="icon" aria-hidden="true"><use href="#layers-icon"/></svg>地图与工程</button>
+    <button class="nav-item secondary" data-preview="任务记录入口"><svg class="icon" aria-hidden="true"><use href="#history-icon"/></svg>任务记录</button>
+    <button class="nav-item secondary" data-preview="设备诊断入口"><svg class="icon" aria-hidden="true"><use href="#settings-icon"/></svg>设备诊断</button>
+    <div class="device"><div class="row device-name"><span class="status-dot"></span>巡检小车</div><div class="muted">单车工作空间 · 界面示意</div></div>
+  </aside>
+  <div class="body">
+    <header class="topbar"><div class="breadcrumb">工作空间<span>/</span><strong id="crumb">随行建图</strong></div><div class="right"><span class="row small muted status-preview"><span class="status-dot"></span><span class="connection-label">设备状态</span>示意</span><button class="stop" data-preview="停车操作"><span class="stop-mark"></span>立即停车</button></div></header>
+    <main class="main" id="main">
+      <div class="heading"><div><h1 id="page-title">随行建图</h1><p id="page-description">掌握探索进度，逐步建立可用于巡检的地图。</p><div class="stage" aria-label="建图流程"><span class="row"><i>1</i>准备任务</span><span class="stage-line"></span><span class="row current"><i>2</i><span id="stage-title">探索建图</span></span><span class="stage-line"></span><span class="row"><i>3</i><span id="last-stage">审核地图</span></span></div></div><div class="project muted">当前工程<br><strong>室内巡检场地</strong><br><span class="small">界面布局示例</span></div></div>
+      <div class="workspace">
+        <section class="map-panel" aria-label="示意地图"><div class="panel-head"><div class="panel-title">空间视图<span class="tag">示意地图</span></div><div class="panel-tools"><button data-preview="地图图层面板"><span class="row"><svg class="icon" aria-hidden="true"><use href="#layers-icon"/></svg><span class="tool-label">图层</span></span><span class="sr-only">地图图层</span></button><button aria-label="查看全图" data-preview="查看全图"><svg class="icon" aria-hidden="true"><use href="#fit-icon"/></svg></button></div></div>
+          <div class="map-canvas"><div class="map-overlay"><span class="status-dot"></span><span id="overlay-label">自动探索 · 状态示意</span></div>
+            <svg class="floor" viewBox="0 0 720 500" role="img" aria-label="人工绘制的房间轮廓、示意路径与估计车位，不代表现场地图">
+              <path d="M100 91H605V405H420V438H100Z" fill="#dce2e8" stroke="#d1d8e0" stroke-width="14"/>
+              <path d="M111 102H594V394H408V427H111Z" fill="#fff"/>
+              <path d="M111 102H594V394H408V427H111ZM290 103V216m0 57v154M111 272h179M401 102v132m1 59v100M402 233h105m48 0h40" fill="none" stroke="#586773" stroke-width="5" stroke-linejoin="round"/>
+              <path d="M405 297h184v92H409Z" fill="#e8edf1"/><path d="M405 297h184" stroke="#c0cad4" stroke-width="2" stroke-dasharray="3 5"/>
+              <g fill="#e6ebef" stroke="#b6c1cb" stroke-width="1"><rect x="144" y="132" width="77" height="40" rx="2"/><rect x="144" y="310" width="42" height="73" rx="2"/><rect x="457" y="130" width="85" height="38" rx="2"/></g>
+              <path d="M203 353H245V238H347V170H366V266H495" fill="none" stroke="#94b4d1" stroke-width="10" stroke-linejoin="round" opacity=".15"/>
+              <path d="M203 353H245V238H347V170H366V266H495" fill="none" stroke="#527fa8" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M495 266H548V204" fill="none" stroke="#7f9ebd" stroke-width="2" stroke-dasharray="5 5"/>
+              <g fill="#fff" stroke="#6485a5" stroke-width="2"><circle cx="203" cy="353" r="5"/><circle cx="245" cy="238" r="4"/><circle cx="347" cy="170" r="4"/></g>
+              <circle cx="495" cy="266" r="40" fill="#3672db" opacity=".06"/><circle cx="495" cy="266" r="19" fill="#fff" stroke="#c4d5ed"/>
+              <g transform="translate(495 266) rotate(90)"><rect x="-8" y="-11" width="16" height="22" rx="4" fill="#285bd4"/><path d="m-4-4 4-4 4 4" fill="none" stroke="white" stroke-width="1.5"/></g>
+              <g fill="#8b97a3" font-size="11" font-family="sans-serif"><text x="204" y="201" text-anchor="middle">已探索区域</text><text x="496" y="350" text-anchor="middle">未知区域</text></g>
+              <g id="inspection-points" hidden fill="#fff" stroke="#285bd4" stroke-width="2"><circle cx="203" cy="353" r="12"/><circle cx="347" cy="170" r="12"/><circle cx="548" cy="204" r="12"/><g fill="#285bd4" stroke="none" font-size="11" text-anchor="middle"><text x="203" y="357">1</text><text x="347" y="174">2</text><text x="548" y="208">3</text></g></g>
+            </svg><div class="map-orientation" aria-hidden="true"><b>↑</b>示意方向</div>
+          </div>
+          <div class="map-footer"><span><i class="legend-key"></i>占用</span><span><i class="legend-key free"></i>空闲</span><span><i class="legend-key unknown"></i>未知</span><span><i class="legend-key path"></i>路径</span><span class="map-note">俯视示意 · 无物理比例</span></div>
+        </section>
+        <aside class="right-panel" aria-label="任务与状态">
+          <section class="section" id="mapping-task"><div class="task-title"><h2>当前任务</h2><span class="badge">状态示意</span></div><p class="task-name">正在探索空间</p><p class="task-caption">机器人沿可达区域逐步拓展地图。</p><div class="facts"><div><div class="fact-label">运行时间</div><div class="fact-value">08:24</div></div><div><div class="fact-label">已探索面积</div><div class="fact-value">42.6 <span>m²</span></div></div></div><div class="buttons"><button class="primary" data-preview="暂停探索">暂停探索</button><button data-preview="返程操作">返回起点</button></div><button class="full" data-preview="结束建图操作">结束并审核地图</button></section>
+          <section class="section" id="inspection-task" hidden><div class="task-title"><h2>巡检点位</h2><span class="tag">3 个示意点位</span></div><ul class="point-list"><li><span class="point-number">1</span><span>入口观察点<small>位置与拍摄角度已确认 · 示意</small></span><span class="point-check">✓</span></li><li><span class="point-number">2</span><span>设备观察点<small>位置与拍摄角度已确认 · 示意</small></span><span class="point-check">✓</span></li><li><span class="point-number">3</span><span>通道观察点<small>待现场确认 · 示意</small></span></li></ul><div class="notice">先前往点位核对取景，再保存确认结果。</div><button class="full primary" data-preview="点位示教操作">前往选中点位</button></section>
+          <section class="section"><h2>设备状态</h2><div class="status-row"><span>激光数据</span><span class="status-value"><span class="status-dot"></span>正常（示意）</span></div><div class="status-row"><span>定位状态</span><span class="status-value"><span class="status-dot"></span>可信（示意）</span></div><div class="status-row"><span>控制连接</span><span class="status-value"><span class="status-dot"></span>已连接（示意）</span></div><div class="time-note">以上状态仅用于展示信息层级。</div></section>
+          <section class="section"><h2>最近动态</h2><ol class="events"><li>开始探索下一片区域<time>14:32:18 · 示例事件</time></li><li>地图检查点已保存<time>14:31:42 · 示例事件</time></li></ol></section>
+          <section class="section"><details><summary>诊断详情与辅助工具</summary><p>正式实现将在此保留数据新鲜度、故障原因、控制恢复和诊断入口。停车入口始终位于顶部。</p></details></section>
+        </aside>
+      </div>
+      <footer class="foot"><span>地图为人工绘制的布局示意，不对应现场坐标、尺寸或当前状态。</span><span>浅色精密工作台 / 设计提案</span></footer>
+    </main>
+  </div>
+</div>
+<div class="preview-feedback" role="status" aria-live="polite"></div>
+<script>
+  // 仅切换设计稿内容；按钮不调用网络或设备接口。
+  const inspect=new URLSearchParams(location.search).get('view')==='inspect';
+  if(inspect){
+    document.title='巡检工作台 · 设计预览';
+    document.querySelector('#mapping-nav').classList.remove('active');
+    document.querySelector('#mapping-nav').removeAttribute('aria-current');
+    document.querySelector('#inspect-nav').classList.add('active');
+    document.querySelector('#inspect-nav').setAttribute('aria-current','page');
+    document.querySelector('#crumb').textContent='巡检工作台';
+    document.querySelector('#page-title').textContent='巡检点位';
+    document.querySelector('#page-description').textContent='在地图中组织点位，逐一确认停车位置与拍摄角度。';
+    document.querySelector('#stage-title').textContent='点位示教';
+    document.querySelector('#last-stage').textContent='执行巡检';
+    document.querySelector('#overlay-label').textContent='点位与路线 · 示意';
+    document.querySelector('#mapping-task').hidden=true;
+    document.querySelector('#inspection-task').hidden=false;
+    document.querySelector('#inspection-points').removeAttribute('hidden');
+  }
+  let timer;
+  document.querySelectorAll('[data-preview]').forEach(button=>button.addEventListener('click',()=>{
+    clearTimeout(timer);
+    document.querySelector('.preview-feedback').textContent=button.dataset.preview+'：仅为设计预览，未下发任何指令。';
+    timer=setTimeout(()=>document.querySelector('.preview-feedback').textContent='',3500);
+  }));
+</script>
+</body>
+</html>

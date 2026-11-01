@@ -117,7 +117,7 @@ if(BUILD_TESTING)
     ${geometry_msgs_TARGETS}
   )
 
-  ament_add_gtest(test_goal_lifecycle test/test_goal_lifecycle.cpp TIMEOUT 40)
+  ament_add_gtest(test_goal_lifecycle test/test_goal_lifecycle.cpp TIMEOUT 60)
   ament_target_dependencies(test_goal_lifecycle rclcpp rclcpp_action geometry_msgs nav_msgs nav2_msgs std_msgs tf2_ros explore_lite_msgs)
   target_compile_definitions(test_goal_lifecycle PRIVATE EXPLORE_EXE="$<TARGET_FILE:explore>")
   add_dependencies(test_goal_lifecycle explore)

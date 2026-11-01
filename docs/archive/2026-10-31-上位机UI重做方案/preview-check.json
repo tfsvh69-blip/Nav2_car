@@ -1,0 +1,51 @@
+{
+  "scope": "设计稿隔离渲染检查，不代表功能或实车验收",
+  "beforeErrors": [],
+  "views": [
+    {
+      "view": "mapping",
+      "name": "desktop",
+      "viewport": 1440,
+      "content": 1440,
+      "stopVisible": true
+    },
+    {
+      "view": "mapping",
+      "name": "tablet",
+      "viewport": 1024,
+      "content": 1024,
+      "stopVisible": true
+    },
+    {
+      "view": "mapping",
+      "name": "phone",
+      "viewport": 390,
+      "content": 390,
+      "stopVisible": true
+    },
+    {
+      "view": "inspect",
+      "name": "desktop",
+      "viewport": 1440,
+      "content": 1440,
+      "stopVisible": true
+    },
+    {
+      "view": "inspect",
+      "name": "tablet",
+      "viewport": 1024,
+      "content": 1024,
+      "stopVisible": true
+    },
+    {
+      "view": "inspect",
+      "name": "phone",
+      "viewport": 390,
+      "content": 390,
+      "stopVisible": true
+    }
+  ],
+  "errors": [],
+  "onlyGet": true,
+  "previewNetworkRequests": 6
+}

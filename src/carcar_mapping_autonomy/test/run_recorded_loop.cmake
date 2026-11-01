@@ -1,0 +1,20 @@
+# 只在隔离域重放归档内的Karto图和21帧扫描，禁止从外部参数启动机器人。
+file(MAKE_DIRECTORY "${FIXTURE_DIR}")
+execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xf "${FIXTURE_ARCHIVE}"
+  WORKING_DIRECTORY "${FIXTURE_DIR}" RESULT_VARIABLE unpack_result)
+if(NOT unpack_result EQUAL 0)
+  message(FATAL_ERROR "回环回归夹具解压失败")
+endif()
+execute_process(COMMAND "${REPLAY_EXE}" "${REPLAY_MODE}" "${FIXTURE_DIR}/graph" "${FIXTURE_DIR}/tail.json"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 30)
+file(WRITE "${FIXTURE_DIR}/${REPLAY_MODE}.log" "${output}\n${errors}")
+if(REPLAY_MODE STREQUAL "baseline")
+  if(NOT result EQUAL 1 OR NOT output MATCHES "\"failed_geometry\":true")
+    message(FATAL_ERROR "旧算法未复现已登记的几何失败：${result}\n${output}\n${errors}")
+  endif()
+else()
+  if(NOT result EQUAL 0 OR NOT output MATCHES "\"failed_geometry\":false" OR NOT output MATCHES "\"rolled_back\":true")
+    message(FATAL_ERROR "回环撤销未通过原始录包回归：${result}\n${output}\n${errors}")
+  endif()
+endif()
+message(STATUS "${REPLAY_MODE}原始图档回归符合预期，原日志完整保留")

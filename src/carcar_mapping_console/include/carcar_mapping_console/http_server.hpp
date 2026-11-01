@@ -13,12 +13,16 @@ struct HttpResponse {
   std::vector<unsigned char> body;
   std::map<std::string, std::string> headers;
 };
+// 传输连接策略与任务授权、手动摇杆持有者分别维护。
+enum class ControlPolicy { SingleClient, MultiClient };
 class HttpServer {
 public:
   using Handler = std::function<HttpResponse(const HttpRequest &)>;
   // 第二参数为空表示断开；会话 ID 仅由服务端产生。
   using Control = std::function<void(const std::string &, const std::string &)>;
+  // 保留原构造及独占语义，巡检共享库的既有调用无需重新链接。
   HttpServer(const std::string & address, unsigned short port, Handler, Control);
+  HttpServer(const std::string & address, unsigned short port, Handler, Control, ControlPolicy);
   ~HttpServer();
   void broadcast(const std::string & state);
   void set_inspect_upstream(const std::string & host, unsigned short port);

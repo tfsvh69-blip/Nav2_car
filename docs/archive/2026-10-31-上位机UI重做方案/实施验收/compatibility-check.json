@@ -1,0 +1,25 @@
+{
+  "mapping_missing_ids": [],
+  "mapping_added_ids": [],
+  "mapping_duplicate_ids": [],
+  "production_http": {
+    "index.html": {
+      "sha256": "5ef08af6c033bed0f26e55ead26a09ba9ba51e232afdb9dc8417d446432cddca",
+      "unchanged": true
+    },
+    "style.css": {
+      "sha256": "9fa4c658529f7db3c3e0021f5eed381babe1c8adfd9aee1153c62d911e8dbaa7",
+      "unchanged": true
+    },
+    "app.js": {
+      "sha256": "5c97325326dd760d15d5a839426710d96b133556451e9afe5fc6bfbdcaf30d15",
+      "unchanged": true
+    },
+    "rtc_control.js": {
+      "sha256": "ae587d4121e1539e48b3e53f4a5c86fd8b415b9a5b63c4f43616c6e27f9995f2",
+      "unchanged": true
+    }
+  },
+  "original_changes": [],
+  "mapping_logic_unchanged": true
+}

@@ -8,6 +8,7 @@ const base=`http://127.0.0.1:${port}`,latency=Number(process.argv[4]||0);
 const burst=process.argv[5]==='burst';let networkBlockedUntil=0;
 let suspended=false,closed=false;const elements={},listeners={},trace=[];
 const context2d=new Proxy({},{get:()=>()=>{}});
+const redact=(key,value)=>['session','challenge','controller_session'].includes(key)?'<REDACTED>':value;
 function element(id){return elements[id]||=( {id,style:{},hidden:false,disabled:false,value:'slow',
   classList:{toggle(){},add(){},remove(){}},getContext:()=>context2d,
   clientWidth:900,clientHeight:600,setPointerCapture(){},replaceChildren(){},append(){},
@@ -34,7 +35,7 @@ const context={document,window:{devicePixelRatio:1,addEventListener:(name,fn)=>{
 vm.createContext(context);vm.runInContext(fs.readFileSync(process.argv[2],'utf8'),context);
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const read=expr=>vm.runInContext(expr,context);
-async function wait(test,label,ms=6000){const end=performance.now()+ms;while(performance.now()<end){if(test())return;await sleep(10);}throw Error(label+': '+JSON.stringify(read('({control:latestControl,events:clientEvents.slice(-10)})')));}
+async function wait(test,label,ms=6000){const end=performance.now()+ms;while(performance.now()<end){if(test())return;await sleep(10);}throw Error(label+': '+JSON.stringify(read('({control:latestControl,events:clientEvents.slice(-10)})'),redact));}
 async function hold(ms,label){const end=performance.now()+ms;while(performance.now()<end){
   assert(read('latestControl.armed'),label+': '+read('latestControl.reason'));await sleep(10);
 }}
@@ -87,4 +88,4 @@ async function hold(ms,label){const end=performance.now()+ms;while(performance.n
   assert(!trace.slice(oldCount).some(v=>v.action==='drive'),'挂起测试意外继续发送运动');
   console.log(`网页点击使能→闲置→推杆→松手→再推→挂起停车通过，双向注入${latency}ms/单程`);
   closed=true;process.exit(0);
-})().catch(error=>{console.error(error.stack);console.error(JSON.stringify({trace:trace.slice(-15),control:read('latestControl')},null,2));closed=true;process.exit(1);});
+})().catch(error=>{console.error(error.stack);console.error(JSON.stringify({trace:trace.slice(-15),control:read('latestControl')},redact,2));closed=true;process.exit(1);});

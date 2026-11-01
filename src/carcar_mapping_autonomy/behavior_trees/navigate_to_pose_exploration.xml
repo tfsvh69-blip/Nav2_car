@@ -1,0 +1,18 @@
+<!-- 自动探索专用树：路径切线决定终点朝向，到达观测位置即可完成本次目标。
+     返程仍使用navigate_to_pose_mapping.xml，保留起点朝向验收。
+     规划失败只等待一次代价地图更新，不调用清图/Spin/BackUp等运动恢复。 -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="exploration_NavigateWithReplanning">
+      <RateController name="exploration_RateController" hz="1.0">
+        <RecoveryNode name="exploration_PlannerRetry" number_of_retries="1">
+          <ComputePathToPose name="exploration_ComputePathToPose" goal="{goal}" path="{path}" planner_id="ExplorationGrid"/>
+          <Delay name="exploration_AwaitCostmapPeriod" delay_msec="400">
+            <AlwaysSuccess name="exploration_AllowOneRetry"/>
+          </Delay>
+        </RecoveryNode>
+      </RateController>
+      <FollowPath name="exploration_FollowPath" path="{path}" controller_id="FollowPath" goal_checker_id="exploration_goal_checker"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

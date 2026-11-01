@@ -41,6 +41,7 @@
 #include <explore/costmap_client.h>
 #include <explore/frontier_search.h>
 #include <explore/goal_memory.h>
+#include <explore/direction_preference.h>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
@@ -48,6 +49,7 @@
 #include <cmath>
 #include <deque>
 #include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/u_int64.hpp>
 #include <explore_lite_msgs/msg/explore_status.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -136,6 +138,11 @@ private:
   void resumeCallback(const std_msgs::msg::Bool::SharedPtr msg);
 
   GoalMemory goal_memory_;
+  DirectionPreference direction_;
+  geometry_msgs::msg::Point dispatch_start_;
+  rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr navigation_generation_sub_;
+  uint64_t navigation_generation_=0;
+  uint64_t dispatch_navigation_generation_=0;
   bool timeout_cancel_=false,waiting_success_map_=false,feedback_seen_=false;
   uint64_t success_map_sequence_=0;
   double progress_epsilon_=.10;

@@ -1,0 +1,16 @@
+# /run/user/1000/systemd/transient/carcar-inspection-ui-preview.service
+# This is a transient unit file, created programmatically via the systemd API. Do not edit.
+[Unit]
+Description=Carcar inspection UI configuration preview (hardware disabled)
+
+[Service]
+WorkingDirectory=/home/jetson/luhao/my_nav_carcar
+KillSignal=INT
+TimeoutStopSec=20s
+Restart=on-failure
+RestartSec=3s
+StandardOutput=append:/home/jetson/luhao/my_nav_carcar/log/ui-redesign-20261031/deployment/inspection-preview.log
+StandardError=append:/home/jetson/luhao/my_nav_carcar/log/ui-redesign-20261031/deployment/inspection-preview.log
+Environment="ROS_DOMAIN_ID=229" "ROS_LOCALHOST_ONLY=1" "RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
+ExecStart=
+ExecStart="/bin/bash" "-c" "source /home/jetson/luhao/my_nav_carcar/install/setup.bash && exec /home/jetson/luhao/my_nav_carcar/install/carcar_inspection/lib/carcar_inspection/inspection_console --ros-args --params-file /home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/config/console.yaml -p bind_address:=127.0.0.1 -p port:=8081 -p data_root:=/home/jetson/.local/share/carcar_inspection_ui_preview -p map_root:=/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps -p web_root:=/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web -p enable_hardware:=false -p enable_navigation:=false -p enable_goal_navigation:=false"

@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "hardware": false,
+  "mocked_http_responses": true,
+  "mocked_control_messages": true,
+  "real_browser": true,
+  "checked": [
+    "startup-without-redundant-confirmation",
+    "startup-deduplication",
+    "startup-progress",
+    "runtime-speed-confirmed-state",
+    "speed-keeps-pause-available",
+    "mode-specific-controls",
+    "desktop-tablet-phone",
+    "mobile-no-overflow",
+    "online-snapshot-navigation-status-separated",
+    "snapshot-failure-continues-valid-navigation",
+    "expired-snapshot-protection-pause",
+    "checkpoint-hold-and-resume",
+    "recovery-stage-with-stop-available",
+    "request-acceptance-versus-stop-completion",
+    "late-http-cannot-override-confirmed-state",
+    "persistent-feedback",
+    "offline-recovery-no-replay",
+    "saved-next-step",
+    "candidate-selection-and-review-prerequisites",
+    "fault-exit-without-resume"
+  ],
+  "errors": []
+}

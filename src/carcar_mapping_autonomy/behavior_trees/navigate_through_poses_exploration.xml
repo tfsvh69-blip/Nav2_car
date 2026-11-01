@@ -1,0 +1,22 @@
+<!-- 中间点不结束FollowPath；每次重规划先审查实际路径，不清图或调用运动恢复。 -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="continuous_Pipeline">
+      <ExplorationReplan name="continuous_ReplanRate">
+        <ReactiveSequence name="continuous_CheckedPlanning">
+          <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.25" global_frame="map" robot_base_frame="base_footprint" name="continuous_RemovePassed"/>
+          <RecoveryNode name="continuous_PlannerRetry" number_of_retries="1">
+            <ComputePathThroughPoses goals="{goals}" path="{candidate_path}" planner_id="ExplorationGrid" name="continuous_Plan"/>
+            <Delay name="continuous_AwaitCostmapPeriod" delay_msec="400">
+              <AlwaysSuccess name="continuous_AllowOneRetry"/>
+            </Delay>
+          </RecoveryNode>
+          <CheckedMappingPath path="{candidate_path}" checked_path="{path}" name="continuous_CheckActualPath"/>
+        </ReactiveSequence>
+      </ExplorationReplan>
+      <ExplorationFollow path="{path}" name="continuous_VerifyCompletion">
+        <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="exploration_goal_checker" name="continuous_Follow"/>
+      </ExplorationFollow>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

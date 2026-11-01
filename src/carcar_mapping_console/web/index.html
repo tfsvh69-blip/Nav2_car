@@ -6,12 +6,13 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
-    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="theme-color" content="#f5f6f8" />
     <meta name="color-scheme" content="light" />
     <title>巡检 · 随行建图</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
+    <a class="skip-link" href="#mapping-workspace">跳到地图与任务</a>
     <!-- 项目自绘图标；本地SVG，无外部图标字体依赖。 -->
     <svg
       class="icon-defs"
@@ -72,27 +73,26 @@
       <aside class="sidebar">
         <a class="brand" href="/" aria-label="巡检首页"
           ><span class="brand-mark"
-            ><svg class="icon"><use href="#i-drive" /></svg></span
-          ><span>巡检<small>小车工作空间</small></span></a
+            ><svg class="icon" aria-hidden="true">
+              <use href="#i-drive" /></svg></span
+          ><span>巡检<small>机器人工作空间</small></span></a
         >
         <p class="aside-label">工作空间</p>
         <nav class="modes" aria-label="工作空间">
           <a href="/" aria-current="page"
-            ><svg class="icon"><use href="#i-map" /></svg>随行建图<svg
+            ><svg class="icon" aria-hidden="true"><use href="#i-map" /></svg
+            >随行建图<svg
               class="nav-chevron"
+              aria-hidden="true"
               viewBox="0 0 24 24"
             >
               <path d="m9 5 7 7-7 7" /></svg
           ></a>
           <a href="/inspect/"
-            ><svg class="icon"><use href="#i-points" /></svg>巡检工作台</a
+            ><svg class="icon" aria-hidden="true"><use href="#i-points" /></svg
+            >巡检工作台</a
           >
         </nav>
-        <div class="sidebar-note">
-          <svg class="icon"><use href="#i-shield" /></svg
-          ><strong>随行，目视，慢行。</strong>
-          <p>地图随探索逐步生成。<br />行驶时请始终目视小车。</p>
-        </div>
         <div class="aside-foot">
           <span class="local-dot"></span>本地工作空间<small
             >地图与工程保存在车端</small
@@ -101,88 +101,68 @@
       </aside>
       <div class="workspace-body">
         <header class="page-header">
-          <div class="page-title">
-            <p class="eyebrow">探索空间 · 构建地图</p>
-            <h1>随行建图<span class="section-badge">MAPPING</span></h1>
-            <p id="task-summary">网页待命</p>
+          <div class="breadcrumb">
+            <span>工作空间</span><span aria-hidden="true">/</span
+            ><strong>随行建图</strong>
           </div>
           <div class="header-actions">
             <button id="enable" class="enable" disabled>
-              <svg class="icon"><use href="#i-play" /></svg>启用遥控</button
+              <svg class="icon" aria-hidden="true"><use href="#i-play" /></svg
+              >启用遥控</button
             ><button id="stop" class="stop">
-              <svg class="icon"><use href="#i-stop" /></svg>停车并锁定
+              <svg class="icon" aria-hidden="true"><use href="#i-stop" /></svg
+              >停车并锁定
             </button>
           </div>
         </header>
+        <div class="page-intro">
+          <div>
+            <h1>随行建图</h1>
+            <p>探索、核对与保存，让地图服务于下一次巡检。</p>
+          </div>
+          <p id="task-summary">网页待命</p>
+        </div>
         <div class="status-strip" role="status">
           <span id="connection">正在连接</span><span id="phase">等待数据</span
-          ><span class="status-caption" id="status-caption">保持目视 · 松手停车</span>
+          ><span class="status-caption" id="status-caption"
+            >保持目视 · 松手停车</span
+          >
         </div>
         <section class="workflow-strip" aria-label="建图操作流程">
           <ol class="workflow-steps" aria-label="流程阶段">
-            <li id="workflow-prepare">1 准备</li><li id="workflow-mapping">2 建图</li><li id="workflow-review">3 结束与审核</li>
+            <li id="workflow-prepare">1 准备</li>
+            <li id="workflow-mapping">2 建图</li>
+            <li id="workflow-review">3 结束与审核</li>
           </ol>
-          <div class="workflow-status" role="status" aria-live="polite" aria-atomic="true">
-            <strong id="workflow-title">准备本轮建图</strong><p id="workflow-next">选择新建或续建，再选择控制方式。</p>
+          <div
+            class="workflow-status"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <strong id="workflow-title">准备本轮建图</strong>
+            <p id="workflow-next">选择新建或续建，再选择控制方式。</p>
           </div>
         </section>
-        <section id="task-panel" class="task-panel" aria-label="建图工程">
-          <div class="task-heading">
-            <span class="tile-icon"
-              ><svg class="icon"><use href="#i-map" /></svg
-            ></span>
-            <div>
-              <strong>开始一次探索</strong
-              ><span>新建地图，或接着上次的工程继续</span>
-            </div>
-          </div>
-          <div class="task-controls">
-            <label class="sr-only" for="mode">工程类型</label
-            ><select id="mode">
-              <option value="new">新建地图</option>
-              <option value="resume">继续已有工程</option></select
-            ><label class="sr-only" for="control-mode">控制方式</label><select id="control-mode">
-              <option value="manual">手动建图</option><option id="automatic-mode-option" value="automatic" disabled>自动建图（实验）</option></select
-            ><select id="bundle" aria-label="续建工程" hidden></select
-            ><button
-              id="refresh-bundles"
-              class="icon-button"
-              aria-label="刷新工程"
-              title="刷新工程"
-            >
-              <svg class="icon"><use href="#i-refresh" /></svg></button
-            ><button id="start" class="primary" aria-describedby="task-info">
-              <svg class="icon"><use href="#i-play" /></svg>检查并启动硬件
-            </button>
-          </div>
-          <div id="startup-site-slot"><label class="site-check" id="site-check" hidden><input type="checkbox" id="site-confirmed"/>已核对本轮场地封闭、无落差，并排除激光扫描高度之外的障碍</label></div>
-          <span id="task-info" role="status" aria-live="polite">网页待命，硬件未启动</span>
-        </section>
-        <main id="mapping-workspace">
+        <main id="mapping-workspace" tabindex="-1">
           <section class="map-panel" aria-label="建图视图">
             <div class="panel-heading">
               <div>
-                <span class="eyebrow">空间视图</span>
-                <h2>建图画布</h2>
+                <h2>空间视图</h2>
               </div>
               <span class="subtle-badge">俯视 · map 坐标系</span>
             </div>
             <div class="toolbar map-tools">
               <button id="fit">
-                <svg class="icon"><use href="#i-fit" /></svg>查看全图</button
+                <svg class="icon" aria-hidden="true"><use href="#i-fit" /></svg
+                >查看全图</button
               ><button id="center">
-                <svg class="icon"><use href="#i-center" /></svg>车辆居中</button
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-center" /></svg
+                >车辆居中</button
               ><button id="hint">选择续建位置与朝向</button
               ><button id="try">试匹配</button
               ><button id="confirm">墙体与朝向已对齐</button>
-            </div>
-            <div class="nav-layers" id="nav-layers">
-              <label><input id="layer-global-cost" type="checkbox" checked />全局代价</label>
-              <label><input id="layer-local-cost" type="checkbox" checked />局部代价</label>
-              <label><input id="layer-global-path" type="checkbox" checked />全局路径</label>
-              <label><input id="layer-local-path" type="checkbox" checked />局部跟随</label>
-              <label><input id="layer-prediction" type="checkbox" checked />预测弧</label>
-              <label><input id="layer-body" type="checkbox" checked />车身停车框</label>
             </div>
             <div class="map-view">
               <canvas
@@ -191,9 +171,11 @@
               ></canvas>
               <div id="map-empty" class="map-empty">
                 <div class="empty-map-icon">
-                  <svg class="icon"><use href="#i-map" /></svg>
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-map" />
+                  </svg>
                 </div>
-                <h3>让空间，慢慢清晰。</h3>
+                <h3>等待地图</h3>
                 <p>新建或载入工程后，地图将在这里呈现。</p>
                 <span>激光扫描 + 轮式里程计</span>
               </div>
@@ -205,15 +187,63 @@
             <div class="map-status">
               <span id="health">等待传感器数据</span
               ><span class="map-key"
-                ><i></i>激光<span><i></i>估计车位</span><span><i class="swatch-global"></i>全局代价</span
-                ><span><i class="swatch-local"></i>局部代价</span><span><i class="swatch-plan"></i>全局路径</span
-                ><span><i class="swatch-follow"></i>局部跟随</span><span><i class="swatch-arc"></i>预测弧</span></span
+                ><i></i>激光<span><i></i>估计车位</span
+                ><span><i class="swatch-global"></i>全局代价</span
+                ><span><i class="swatch-local"></i>局部代价</span
+                ><span><i class="swatch-plan"></i>全局路径</span
+                ><span><i class="swatch-follow"></i>局部跟随</span
+                ><span><i class="swatch-arc"></i>预测弧</span></span
               >
             </div>
             <p id="nav-layer-note"></p>
             <p id="hint-info"></p>
             <details class="legend">
-              <summary>读懂地图与图像</summary>
+              <summary>图层与地图说明</summary>
+              <div class="nav-layers" id="nav-layers">
+                <label
+                  ><input
+                    id="layer-global-cost"
+                    type="checkbox"
+                    checked
+                  />全局代价</label
+                >
+                <label
+                  ><input
+                    id="layer-local-cost"
+                    type="checkbox"
+                    checked
+                  />局部代价</label
+                >
+                <label
+                  ><input
+                    id="layer-global-path"
+                    type="checkbox"
+                    checked
+                  />全局路径</label
+                >
+                <label
+                  ><input
+                    id="layer-local-path"
+                    type="checkbox"
+                    checked
+                  />局部跟随</label
+                >
+                <label
+                  ><input
+                    id="layer-prediction"
+                    type="checkbox"
+                    checked
+                  />预测弧</label
+                >
+                <label
+                  ><input
+                    id="layer-body"
+                    type="checkbox"
+                    checked
+                  />车身停车框</label
+                >
+              </div>
+
               <p id="legend">
                 激光与轮式里程计生成俯视地图，使用 map
                 坐标系：黑色为占用、白色为空闲、灰色为未知；红点为当前激光，蓝色为估计车位示意（非车身外廓），黄色为人工初始位置。默认
@@ -225,81 +255,218 @@
             </details>
           </section>
           <aside class="operate" aria-label="遥控与保存">
-            <section class="autonomy-card" id="autonomy-panel" aria-label="自动建图任务" hidden>
-              <h3>探索任务 <small>二维激光 · 实验验证</small></h3>
-              <p id="autonomy-stage" aria-live="polite">等待车端任务</p>
-              <p id="autonomy-budget">范围20米 · 探索40分钟 · 返程最多10分钟</p>
-              <p id="autonomy-quality"></p>
-              <p id="nav-status" hidden></p>
-              <div id="autonomy-site-slot"></div>
-              <div class="autonomy-actions" id="autonomy-actions">
-                <button id="auto-start" class="primary">开始自动探索</button><button id="auto-pause">暂停自动</button>
-                <button id="auto-manual">停稳后手动接管</button><button id="auto-finish">结束探索并返程</button>
+            <section id="task-panel" class="task-panel" aria-label="建图工程">
+              <div class="task-heading">
+                <span class="tile-icon"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-map" /></svg
+                ></span>
+                <div>
+                  <strong>准备建图</strong><span>选择工程与控制方式</span>
+                </div>
               </div>
-              <p class="muted" id="autonomy-hint">自动任务在网页断连后继续；停止请点停车并核对车端状态。手动断连仍停车。</p>
+              <div class="task-controls">
+                <label class="sr-only" for="mode">工程类型</label
+                ><select id="mode">
+                  <option value="new">新建地图</option>
+                  <option value="resume">继续已有工程</option></select
+                ><label class="sr-only" for="control-mode">控制方式</label
+                ><select id="control-mode">
+                  <option value="manual">手动建图</option>
+                  <option id="automatic-mode-option" value="automatic" disabled>
+                    自动建图（实验）
+                  </option></select
+                ><select id="bundle" aria-label="续建工程" hidden></select
+                ><button
+                  id="refresh-bundles"
+                  class="icon-button"
+                  aria-label="刷新工程"
+                  title="刷新工程"
+                >
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-refresh" />
+                  </svg></button
+                ><button
+                  id="start"
+                  class="primary"
+                  aria-describedby="task-info"
+                >
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-play" /></svg
+                  >检查并启动硬件
+                </button>
+              </div>
+              <span id="task-info" role="status" aria-live="polite"
+                >网页待命，硬件未启动</span
+              >
             </section>
-            <section class="autonomy-card" id="publication-panel" aria-label="地图审核与发布" hidden>
+
+            <section
+              class="autonomy-card"
+              id="autonomy-panel"
+              aria-label="自动建图任务"
+              hidden
+            >
+              <h3>任务控制</h3>
+              <p id="autonomy-stage" aria-live="polite">等待车端任务</p>
+              <p id="autonomy-quality"></p>
+              <p id="storage-warning" role="status" hidden></p>
+              <div class="autonomy-actions" id="autonomy-actions">
+                <button id="auto-recheck" class="primary" hidden>
+                  重新检查
+                </button>
+                <button id="auto-start" class="primary">开始自动探索</button
+                ><button id="auto-pause">暂停自动</button>
+                <button id="auto-return" hidden>返回起点</button
+                ><button id="auto-manual">手动接管</button
+                ><button id="auto-finish">结束探索并返程</button>
+              </div>
+              <p class="muted" id="autonomy-hint">等待车端任务状态。</p>
+              <details class="task-details">
+                <summary>任务详情与速度</summary>
+                <p id="autonomy-budget">
+                  范围20米 · 探索40分钟 · 返程最多10分钟
+                </p>
+                <p
+                  id="recovery-status"
+                  class="muted"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+                <p
+                  id="snapshot-status"
+                  class="muted"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+                <p id="nav-status" hidden></p>
+                <div id="auto-speed-controls" class="auto-speed-controls">
+                  <label for="auto-speed"
+                    >速度上限
+                    <output id="auto-speed-value" for="auto-speed"
+                      >0.10 m/s</output
+                    ></label
+                  >
+                  <div class="auto-speed-input">
+                    <input
+                      id="auto-speed"
+                      type="range"
+                      min="0.05"
+                      max="0.18"
+                      step="0.01"
+                      value="0.10"
+                      aria-describedby="auto-speed-status"
+                    /><button id="auto-speed-apply" disabled>应用速度</button>
+                  </div>
+                  <p id="auto-speed-status" role="status" aria-live="polite">
+                    等待车端速度上限；探索和返程中均可调整。
+                  </p>
+                </div>
+                <p id="action-reasons"></p>
+              </details>
+            </section>
+            <section
+              class="autonomy-card"
+              id="publication-panel"
+              aria-label="地图审核与发布"
+              hidden
+            >
               <h3>地图版本</h3>
               <select id="review-bundle" aria-label="候选与正式工程"></select>
-              <input id="review-note" aria-label="现场核对结论" placeholder="填写墙线、尺寸与现场核对结论" maxlength="300"/>
-              <p id="publication-help" class="muted">选择候选并填写现场核对结论后，可审核发布。</p>
-              <div class="autonomy-actions"><button id="review-approve">审核并发布</button><button id="review-reject">标记未通过</button><button id="map-activate">启用已发布地图</button></div>
-              <p id="publication-result" aria-live="polite">保存完整与审核发布是两个结果；启用后仍需重新定位，旧点位不迁移。</p>
+              <input
+                name="review-note"
+                autocomplete="off"
+                id="review-note"
+                aria-label="现场核对结论"
+                placeholder="填写墙线、尺寸与现场核对结论"
+                maxlength="300"
+              />
+              <p id="publication-help" class="muted">
+                选择候选并填写现场核对结论后，可审核发布。
+              </p>
+              <div class="autonomy-actions">
+                <button id="review-approve">审核并发布</button
+                ><button id="review-reject">标记未通过</button
+                ><button id="map-activate">启用已发布地图</button>
+              </div>
+              <p id="publication-result" aria-live="polite">
+                保存完整与审核发布是两个结果；启用后仍需重新定位，旧点位不迁移。
+              </p>
             </section>
-            <section id="manual-controls" class="manual-controls" aria-label="手动遥控" hidden>
-            <div class="panel-heading">
-              <div>
-                <span class="eyebrow">车辆控制</span>
-                <h2>从容掌控</h2>
-              </div>
-              <span class="control-symbol"
-                ><svg class="icon"><use href="#i-drive" /></svg
-              ></span>
-            </div>
-            <label class="field-label" for="gear"
-              >行驶档位<span>命令上限</span></label
+            <section
+              id="manual-controls"
+              class="manual-controls"
+              aria-label="手动遥控"
+              hidden
             >
-            <select id="gear" aria-label="速度档位">
-              <option value="slow">慢速 · 0.05 m/s · 0.10 rad/s</option>
-              <option value="normal">常速 · 0.10 m/s · 0.20 rad/s</option>
-              <option id="fast-option" value="fast" disabled>
-                快速 · 0.18 m/s · 0.36 rad/s
-              </option>
-            </select>
-            <div class="joystick-area">
-              <div
-                id="joystick"
-                class="disabled"
-                role="application"
-                aria-label="按住摇杆：向上前进，向下后退，向左左转，向右右转"
-              >
-                <span class="stick-north"
-                  ><svg class="icon"><use href="#i-arrow" /></svg>前进</span
-                ><span class="stick-south"
-                  >后退<svg class="icon"><use href="#i-arrow" /></svg></span
-                ><span class="stick-west"
-                  ><svg class="icon"><use href="#i-left" /></svg></span
-                ><span class="stick-east"
-                  ><svg class="icon"><use href="#i-right" /></svg
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">车辆控制</span>
+                  <h2>手动控制</h2>
+                </div>
+                <span class="control-symbol"
+                  ><svg class="icon" aria-hidden="true">
+                    <use href="#i-drive" /></svg
                 ></span>
-                <div id="stick"><span></span></div>
               </div>
-              <p class="gesture-help">按住行驶 <span>·</span> 松手停车</p>
-            </div>
-            <p id="motion" aria-live="polite">尚未启用遥控</p>
-            <p id="fault-summary"></p>
+              <div id="manual-authority" class="manual-authority" hidden>
+                <p id="manual-owner" role="status" aria-live="polite">正在核对遥控持有者</p>
+                <button id="manual-claim" aria-describedby="manual-owner">接管遥控</button>
+              </div>
+              <label class="field-label" for="gear"
+                >行驶档位<span>命令上限</span></label
+              >
+              <select id="gear" aria-label="速度档位">
+                <option value="slow">慢速 · 0.05 m/s · 0.10 rad/s</option>
+                <option value="normal">常速 · 0.10 m/s · 0.20 rad/s</option>
+                <option id="fast-option" value="fast" disabled>
+                  快速 · 0.18 m/s · 0.36 rad/s
+                </option>
+              </select>
+              <div class="joystick-area">
+                <div
+                  id="joystick"
+                  class="disabled"
+                  role="application"
+                  aria-label="按住摇杆：向上前进，向下后退，向左左转，向右右转"
+                >
+                  <span class="stick-north"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow" /></svg
+                    >前进</span
+                  ><span class="stick-south"
+                    >后退<svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow" /></svg></span
+                  ><span class="stick-west"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-left" /></svg></span
+                  ><span class="stick-east"
+                    ><svg class="icon" aria-hidden="true">
+                      <use href="#i-right" /></svg
+                  ></span>
+                  <div id="stick"><span></span></div>
+                </div>
+                <p class="gesture-help">按住行驶 <span>·</span> 松手停车</p>
+              </div>
+              <p id="motion" aria-live="polite">尚未启用遥控</p>
+              <p id="fault-summary"></p>
             </section>
             <div class="save-actions" id="save-actions">
               <button id="save" class="primary">
-                <svg class="icon"><use href="#i-save" /></svg>停车并保存</button
+                <svg class="icon" aria-hidden="true"><use href="#i-save" /></svg
+                >停车并保存</button
               ><button id="finish">
-                <svg class="icon"><use href="#i-check" /></svg><span id="finish-label">保存并结束</span>
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-check" /></svg
+                ><span id="finish-label">保存并结束</span>
               </button>
             </div>
-            <p id="save-age"></p>
             <p id="result" aria-live="polite"></p>
             <details class="more">
               <summary>辅助工具与诊断</summary>
+              <p id="save-age"></p>
               <label class="field-label" for="transport">控制通道</label
               ><select id="transport">
                 <option value="websocket" selected>WebSocket 可靠控制</option>
@@ -318,7 +485,7 @@
           </aside>
         </main>
         <footer>
-          <svg class="icon"><use href="#i-shield" /></svg
+          <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg
           ><span id="safety-note"
             >遥控无自动避障。速度为命令上限，实物是否停稳须目视确认；紧急时切断轮动力。</span
           ><span class="footer-end">随行建图 / 巡检</span>

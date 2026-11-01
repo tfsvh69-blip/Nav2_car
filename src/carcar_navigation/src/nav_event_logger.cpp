@@ -743,9 +743,12 @@ private:
       record_options.topics = {
         "/scan",
         "/scan/filtered", "/mapping/slam_scan", "/pose", "/mapping/slam/status", "/mapping/autonomy/state",
+        "/imu/data_raw", "/mapping/recovery/state", "/mapping/recovery/request", "/mapping/navigation_generation",
+        "/mapping/recovery/amcl_pose", "/mapping/relocalizer/particle_cloud",
+        "/mapping/recovery/reference_map", "/mapping/recovery/scan", "/mapping/recovery/initialpose",
         "/mapping/cmd_vel", "/mapping/manual_cmd_vel", "/mapping/auto_cmd_vel",
         "/mapping/nav_raw", "/mapping/collision_input", "/mapping/collision_output",
-        "/mapping/known_space_mask", "/mapping/known_space_filter_info",
+        "/mapping/known_space_mask", "/mapping/known_space_filter_info", "/mapping/known_space/state",
         "/explore/resume", "/explore/status",
         "/mapping/explore_navigate_to_pose/_action/status",
         "/mapping/explore_navigate_to_pose/_action/feedback",

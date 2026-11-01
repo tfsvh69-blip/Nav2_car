@@ -13,7 +13,9 @@ controller_server:
       use_velocity_scaled_lookahead_dist: true
       lookahead_time: 1.5
       use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.785
+      # 现场格心衔接时净空余量很小；先对准前视方向，避免带大角差前进切入未知区。
+      # 仅建图使用0.10rad，速度、前视距离与0.22米路径审查保持。
+      rotate_to_heading_min_angle: 0.10
       rotate_to_heading_angular_vel: 0.36
       # 内部可行速度计算采用Humble默认候选，避免与基于实测速度的限幅重复卡住。
       # 最终velocity_smoother仍限0.80rad/s²及0.36rad/s；R10实车6点及返程验证，仍属实验配置。

@@ -15,13 +15,14 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 await fs.mkdir(directory,{recursive:true});
 const temporary=await fs.mkdtemp(path.join(os.tmpdir(),'carcar-mapping-lifecycle-'));
 const profile=path.join(temporary,'browser');
-const children=[],handles=[],events=[],rounds=[],errors=[];
+const children=[],handles=[],events=[],rounds=[],errors=[],dialogs=[],speedRequests=[],speedConfirmations=[],networkChecks=[];
 let browser,page,lastState,interrupted=false,maxLinear=0,maxAngular=0;
 const interrupt=()=>{interrupted=true;if(page)void page.close().catch(()=>{});};
 process.on('SIGINT',interrupt);process.on('SIGTERM',interrupt);
 function brief(s){return s&&{phase:s.phase,task_state:s.task_state,busy:s.busy,error:s.error,result:s.result,
   auto:s.autonomy&&{phase:s.autonomy.phase,error:s.autonomy.error,reason:s.autonomy.reason,health_reason:s.autonomy.health_reason,
-    start_ready:s.autonomy.automatic_start_ready,start_reason:s.autonomy.automatic_start_reason,return_result:s.autonomy.return_result}};}
+    start_ready:s.autonomy.automatic_start_ready,start_reason:s.autonomy.automatic_start_reason,return_result:s.autonomy.return_result,
+    speed:s.autonomy.speed,recovery:s.autonomy.recovery,output:s.autonomy.output}};}
 async function status(){lastState=await(await fetch(url+'/api/status',{signal:AbortSignal.timeout(2000)})).json();
   const output=lastState.autonomy?.output;if(Array.isArray(output)){maxLinear=Math.max(maxLinear,Math.abs(output[0]));maxAngular=Math.max(maxAngular,Math.abs(output[1]));}
   return lastState;
@@ -53,35 +54,66 @@ try{
   let port;for(let i=0;i<200&&!port;i++){try{port=(await fs.readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0];}catch{await sleep(50);}}
   assert(port,`Chromium未启动，pid=${browserChild.pid}`);browser=await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const context=await browser.newContext({viewport:{width:1024,height:850}});page=await context.newPage();
-  page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+  page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>{dialogs.push(d.message());void d.accept();});
   const starts=[];page.on('request',r=>{if(r.method()==='POST'&&r.url()===url+'/api/start')starts.push(r.postDataJSON());});
+  page.on('request',r=>{if(r.method()==='POST'&&r.url()===url+'/api/autonomy'){
+    const body=r.postDataJSON();if(body?.action==='set_speed')speedRequests.push(body);
+  }});
   page.on('response',r=>{if(r.request().method()==='POST')events.push({path:new URL(r.url()).pathname,status:r.status()});});
   await page.goto(url);
   for(let round=1;round<=2;round++){
     await page.waitForFunction(()=>!document.getElementById('start').disabled);
     await page.selectOption('#mode','new');await page.selectOption('#control-mode','automatic');
-    assert(await page.locator('#task-panel #site-confirmed').isVisible(),'启动条件未出现在启动区');
-    assert.equal(await page.locator('#site-confirmed').isChecked(),false,'新一轮沿用旧场地确认');
-    const prior=starts.length;await page.click('#start');await sleep(100);assert.equal(starts.length,prior,'未确认场地却提交启动');
-    await page.check('#site-confirmed');await page.click('#start');
+    assert.equal(await page.locator('#site-confirmed').count(),0,'仍保留场地勾选');
+    const prior=starts.length;await page.click('#start');
     await waitFor(()=>starts.length===prior+1,'网页未向真实后端提交启动');
     const duplicate=await page.evaluate(async body=>{const r=await fetch('/api/start',{method:'POST',headers:{'Content-Type':'application/json','X-Mapping-Console':'1'},body:JSON.stringify(body)});return r.status;},starts.at(-1));
     assert.equal(duplicate,409,'重复启动没有被真实后端拒绝');
     let s=await waitFor(s=>s.task_state==='RUNNING'&&s.autonomy?.phase==='EXPLORING','真实后台未进入自动探索',40);
     const task=s.autonomy.task_id;assert(!rounds.some(r=>r.task_id===task),'第二轮复用旧任务');
+    if(round===1){
+      await page.waitForFunction(()=>!document.getElementById('auto-speed-apply').disabled);
+      await page.locator('#auto-speed').evaluate(input=>{input.value='0.18';input.dispatchEvent(new Event('input'));});await page.locator('#auto-speed-apply').click();
+      const adjusted=await waitFor(s=>s.autonomy?.speed?.phase==='READY'&&s.autonomy.speed.cap_mps===.18&&
+        s.autonomy.speed.request_id===speedRequests.at(-1)?.request_id,'行驶中上调速度没有通过同一请求的实际参数读回');
+      speedConfirmations.push({task_phase:adjusted.autonomy.phase,...adjusted.autonomy.speed});
+      assert(await page.locator('#auto-pause').isEnabled(),'调速阻止暂停');
+    }
     const firstWheel=s.autonomy.wheel_position;assert(Array.isArray(firstWheel),'缺少独立轮式位移反馈');
+    // 首轮留出足够返程距离，让网页能在真实RETURNING阶段完成下调与读回。
+    const minimumTravel=round===1?.45:.15;
     s=await waitFor(s=>s.autonomy?.accepted_sequence>=3&&Array.isArray(s.autonomy.wheel_position)&&
-      Math.hypot(s.autonomy.wheel_position[0]-firstWheel[0],s.autonomy.wheel_position[1]-firstWheel[1])>=.15,
+      Math.hypot(s.autonomy.wheel_position[0]-firstWheel[0],s.autonomy.wheel_position[1]-firstWheel[1])>=minimumTravel,
       '探索没有实际平移；静止补帧序号不能代替运动闭环',30);
     const observedTravel=Math.hypot(s.autonomy.wheel_position[0]-firstWheel[0],s.autonomy.wheel_position[1]-firstWheel[1]);
-    if(round===1){await page.reload();await sleep(500);assert.equal((await status()).autonomy.task_id,task);}
+    await page.screenshot({path:path.join(directory,`round-${round}-exploring.png`),fullPage:true});
+    if(round===1){
+      // 只切断浏览器网络；独立HTTP观察车端，证明浏览器心跳不是自动运动前提。
+      const before=(await status()).autonomy.wheel_position;
+      await context.setOffline(true);
+      const continued=await waitFor(s=>s.autonomy?.task_id===task&&s.autonomy.phase==='EXPLORING'&&
+        Math.hypot(s.autonomy.wheel_position[0]-before[0],s.autonomy.wheel_position[1]-before[1])>=.03,
+        '网页断网后车端任务没有继续探索',12);
+      networkChecks.push({task_id:task,browser_offline:true,continued_phase:continued.autonomy.phase,
+        displacement_m:Math.hypot(continued.autonomy.wheel_position[0]-before[0],continued.autonomy.wheel_position[1]-before[1])});
+      await context.setOffline(false);await page.reload();await sleep(500);assert.equal((await status()).autonomy.task_id,task);
+    }
     await page.locator('#auto-pause').click();
     s=await waitFor(s=>s.autonomy?.phase==='PAUSED'&&s.autonomy.still&&s.autonomy.navigation_terminal,'暂停未完成取消和停稳');
     assert.deepEqual(s.autonomy.output,[0,0]);
     await page.locator('#auto-manual').click();await waitFor(s=>s.autonomy?.phase==='MANUAL','未进入手动接管');
-    await page.check('#site-confirmed');await page.locator('#auto-start').click();
+    await page.locator('#auto-start').click();
     await waitFor(s=>s.autonomy?.phase==='EXPLORING','接管后恢复自动失败');
     await page.locator('#auto-finish').click();
+    if(round===1){
+      await waitFor(s=>s.autonomy?.phase==='RETURNING','没有进入返程调速阶段');
+      await page.waitForFunction(()=>!document.getElementById('auto-speed-apply').disabled);
+      await page.locator('#auto-speed').evaluate(input=>{input.value='0.05';input.dispatchEvent(new Event('input'));});await page.locator('#auto-speed-apply').click();
+      const adjusted=await waitFor(s=>s.autonomy?.speed?.phase==='READY'&&s.autonomy.speed.cap_mps===.05&&
+        s.autonomy.speed.request_id===speedRequests.at(-1)?.request_id,'返程中下调速度没有通过同一请求的实际参数读回');
+      speedConfirmations.push({task_phase:adjusted.autonomy.phase,...adjusted.autonomy.speed});
+      await page.screenshot({path:path.join(directory,'round-1-returning.png'),fullPage:true});
+    }
     s=await waitFor(s=>s.autonomy?.phase==='REVIEW_REQUIRED'&&!!s.last_saved_bundle,'返程保存未完成',70);
     assert.equal(s.autonomy.return_result,'succeeded','软件房间返程失败');assert.deepEqual(s.autonomy.output,[0,0]);
     const manifest=JSON.parse(await fs.readFile(path.join(temporary,'maps',s.last_saved_bundle,'manifest.json'),'utf8'));
@@ -98,16 +130,18 @@ try{
     rounds.push({task_id:task,candidate:s.last_saved_bundle,return_result:s.autonomy.return_result,manifest_complete:manifest.complete,observed_exploration_displacement:observedTravel});
     await page.locator('#auto-finish').click();await waitFor(s=>s.task_state==='STANDBY'&&!s.busy,'结束后未回待命');
     await page.waitForFunction(()=>!document.getElementById('task-panel').hidden);
-    // 页面刷新后下拉框安全地回到默认手动；新一轮显式选择自动再检查对应条件。
+    // 页面刷新后下拉框回到默认手动；新一轮显式选择自动，不要求重复场地勾选。
     await page.selectOption('#control-mode','automatic');
-    assert(await page.locator('#task-panel #site-confirmed').isVisible(),'结束后旧终态隐藏下一轮确认');
-    assert.equal(await page.locator('#site-confirmed').isChecked(),false);
+    assert.equal(await page.locator('#site-confirmed').count(),0);
     console.log(`ROUND ${round} passed`);
   }
-  assert.deepEqual(errors,[]);assert(maxLinear<=.100001&&maxAngular<=.360001,'软件最终速度超出原运动包络');
+  assert.deepEqual(errors,[]);assert.deepEqual(dialogs,[],'普通启动或已保存任务结束仍弹出重复确认');
+  assert(maxLinear<=.180001&&maxAngular<=.360001,'软件最终速度超出已批准运动包络');
   assert.equal(events.filter(e=>e.path==='/api/start'&&e.status===202).length,2);
   const result={success:true,hardware:false,real_browser:true,real_backend:true,mocked_http_responses:false,
-    rounds,events,errors,max_observed_linear:maxLinear,max_observed_angular:maxAngular,map_root:path.join(temporary,'maps'),final:brief(await status())};
+    rounds,events,errors,speed_requests:speedRequests.map(({action,speed_mps,request_id})=>({action,speed_mps,request_id})),
+    speed_confirmations:speedConfirmations,network_checks:networkChecks,
+    max_observed_linear:maxLinear,max_observed_angular:maxAngular,map_root:path.join(temporary,'maps'),final:brief(await status())};
   await fs.writeFile(path.join(directory,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }catch(error){
   if(page)await page.screenshot({path:path.join(directory,'failure.png'),fullPage:true}).catch(()=>{});

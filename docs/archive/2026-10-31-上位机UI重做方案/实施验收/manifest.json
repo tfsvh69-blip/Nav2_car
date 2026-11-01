@@ -1,0 +1,42 @@
+{
+  "version": "20261031-ui-precision-candidate",
+  "candidate": "/home/jetson/luhao/my_nav_carcar_ui_redesign",
+  "mapping_baseline": "my_nav_carcar_return_nearby_release",
+  "inspection_baseline": "implementation/checkpoint/root-inspection",
+  "changed_files": [
+    "src/carcar_mapping_console/web/style.css",
+    "src/carcar_mapping_console/web/index.html",
+    "src/carcar_inspection/web/index.html",
+    "src/carcar_inspection/web/test/browser.mjs",
+    "src/carcar_inspection/web/test/mapping-workflow.mjs",
+    "src/carcar_inspection/web/src/style.css",
+    "src/carcar_inspection/web/src/App.vue"
+  ],
+  "assets": {
+    "mapping/app.js": "5c97325326dd760d15d5a839426710d96b133556451e9afe5fc6bfbdcaf30d15",
+    "mapping/index.html": "d326204b79c0763879d40bce6395b77e245cbcf172c87959694ae28f137a59b2",
+    "mapping/rtc_control.js": "ae587d4121e1539e48b3e53f4a5c86fd8b415b9a5b63c4f43616c6e27f9995f2",
+    "mapping/style.css": "c7f7a374f582784d8a0c5034fe383a220f992856a1d6c32fe87fea5d08a07721",
+    "inspection/CARCAR-LICENSE.txt": "e0133205932bd4403aa7d3e959be6f2a97148ec25f12ec2614e77418cb941a1e",
+    "inspection/THIRD_PARTY_NOTICES.txt": "154e63a1ad67beb196445d0f964d9b70a2417c1005c5631f1e0a28928f2b59d2",
+    "inspection/VUE-LICENSE.txt": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+    "inspection/assets/index-CEJP08wH.css": "d7d3d10993f9b58e0e230c2199a9c6928653ae40eecdad634be401efd078084b",
+    "inspection/assets/index-CjThPkQx.js": "9601ec6b977609ba3dcb5dddb631b2021877a7e6b7944896c1492c54919afa1a",
+    "inspection/index.html": "b2b4bb4911baa57ed179e568dc7eb0e4e976610c042683a893ae788a16460175"
+  },
+  "packages": {
+    "ui-assets.tar.gz": "bc9ac2d0178e89d67d872d2188f7b0daa8431923e1b6ce3da26b277508b3ff7d",
+    "ui-source.tar.gz": "fa8798e4463ef2a06ff3782537547e1ef1abf8ef214fcc1d5a06794ac681783a",
+    "ui-changes.patch": "0a345eb01fdac14378c95d2aa6eb858d03a290526f1b206cc2ee8a0f38da6f05"
+  },
+  "validation": {
+    "inspection_unit_tests": 11,
+    "inspection_browser_cpp": 1,
+    "inspection_layout_cases": 26,
+    "mapping_workflow_checks": 20,
+    "mapping_return_scenarios": 9,
+    "mapping_fault_touch_sizes": 3,
+    "deployment": false,
+    "hardware_test": false
+  }
+}

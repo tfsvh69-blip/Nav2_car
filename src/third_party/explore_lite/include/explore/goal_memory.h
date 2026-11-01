@@ -11,6 +11,7 @@ class GoalMemory {
 public:
   double radius=.40,cooldown=60.;
   unsigned failure_limit=2;
+  void clear(){regions_.clear();}
   bool blocked(const geometry_msgs::msg::Point&p,double now)const{
     for(const auto&r:regions_)if(std::hypot(r.point.x-p.x,r.point.y-p.y)<=radius&&now<r.until&&
       (r.visited||r.failures>=failure_limit))return true;

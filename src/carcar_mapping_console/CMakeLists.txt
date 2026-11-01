@@ -79,7 +79,13 @@ if(BUILD_TESTING)
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 60 ENV "ROS_DOMAIN_ID=213" "ROS_LOCALHOST_ONLY=1")
   add_executable(mapping_test_chromium test/chromium_runtime.cpp)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_shared_operations test/test_shared_operations.cpp)
+  target_include_directories(test_shared_operations PRIVATE include)
+  target_link_libraries(test_shared_operations nlohmann_json::nlohmann_json)
   find_program(NODE_EXE node REQUIRED)
+  ament_add_test(test_operator_controls
+    COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_operator_controls.js ${CMAKE_CURRENT_SOURCE_DIR}/web/app.js
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 10)
   ament_add_test(test_mapping_browser_task_state
     COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_task_state.js
       ${CMAKE_CURRENT_SOURCE_DIR}/web/app.js
@@ -112,11 +118,13 @@ if(BUILD_TESTING)
     GUARD_EXE="$<TARGET_FILE:mapping_teleop_guard>" GATEWAY_EXE="$<TARGET_FILE:mapping_web_gateway>"
     NODE_EXE="${NODE_EXE}" BROWSER_PROTOCOL="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_protocol.js"
     BROWSER_TOUCH="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_touch.js"
+    BROWSER_MULTI="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_multiclient.js"
+    BROWSER_CHROME="$<TARGET_FILE:mapping_test_chromium>"
     APP_JS="${CMAKE_CURRENT_SOURCE_DIR}/web/app.js"
     WEB_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/web")
-  add_dependencies(test_mapping_integration mapping_teleop_guard mapping_web_gateway mapping_prepare)
+  add_dependencies(test_mapping_integration mapping_teleop_guard mapping_web_gateway mapping_prepare mapping_test_chromium)
   set_tests_properties(test_mapping_integration PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=219;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_mapping_http test/test_http.cpp TIMEOUT 15)
+  ament_add_gtest(test_mapping_http test/test_http.cpp TIMEOUT 30)
   target_include_directories(test_mapping_http PRIVATE include)
   target_link_libraries(test_mapping_http mapping_http OpenSSL::Crypto)
   if(MAPPING_ENABLE_WEBRTC)

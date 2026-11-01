@@ -5,6 +5,13 @@
   <arg name="start_hardware" default="false"/><arg name="mode" default="new"/>
   <arg name="explore_seconds" default="2400.0"/>
   <arg name="control_mode" default="manual"/><arg name="task_id" default=""/>
+  <arg name="recovery_enabled" default="true"/>
+  <arg name="continuous_exploration" default="false"/>
+  <!-- 普通逐目标探索也维护近期可信图；连续路线保持独立关闭。 -->
+  <arg name="online_snapshots" default="true"/>
+  <arg name="snapshot_interval_seconds" default="10.0"/>
+  <arg name="bt_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_mapping.yaml"/>
+  <arg name="checkpoint_root" default="/home/jetson/luhao/my_nav_carcar/log/mapping_recovery"/>
   <arg name="bundle_id" default=""/><arg name="start_gateway" default="true"/>
   <arg name="start_camera" default="false"/><arg name="require_video" default="false"/>
   <arg name="serial_port" default="/dev/myserial"/>
@@ -32,17 +39,33 @@
   </node>
   <node pkg="carcar_mapping_autonomy" exec="mapping_slam" name="slam_toolbox" output="screen">
     <param from="$(var slam_params_file)"/><param name="scan_topic" value="/mapping/slam_scan"/><param name="use_map_saver" value="false"/>
+    <!-- 静止首帧加最多12个新扫描；原通行计数、占用和运动接纳门槛不变。 -->
+    <param name="startup_stationary_scans" value="12"/>
+    <param name="startup_stationary_window" value="5.0"/>
+    <param name="online_snapshots" value="$(var online_snapshots)"/>
+    <param name="snapshot_root" value="$(var checkpoint_root)"/>
   </node>
   <node pkg="carcar_mapping_console" exec="mapping_teleop_guard" name="mapping_teleop_guard" output="screen">
     <param name="require_video" value="false"/><remap from="/mapping/cmd_vel" to="/mapping/manual_cmd_vel"/>
   </node>
   <include file="$(find-pkg-share carcar_mapping_autonomy)/launch/navigation.launch.xml">
     <arg name="controller_params" value="$(var controller_params)"/>
+    <arg name="bt_params" value="$(var bt_params)"/>
   </include>
   <node pkg="carcar_mapping_autonomy" exec="mapping_autonomy" name="mapping_autonomy" output="screen">
     <param name="control_mode" value="$(var control_mode)"/><param name="task_id" value="$(var task_id)" type="str"/>
     <param name="explore_seconds" value="$(var explore_seconds)"/>
+    <param name="recovery_enabled" value="$(var recovery_enabled)"/>
+    <param name="continuous_exploration" value="$(var continuous_exploration)"/>
+    <param name="online_snapshots" value="$(var online_snapshots)"/>
+    <param name="exploration_behavior_tree" value="$(find-pkg-share carcar_mapping_autonomy)/behavior_trees/navigate_to_pose_exploration.xml"/>
+    <param name="snapshot_interval_seconds" value="$(var snapshot_interval_seconds)"/>
   </node>
+  <include if="$(var recovery_enabled)" file="$(find-pkg-share carcar_mapping_autonomy)/launch/recovery.launch.xml">
+    <arg name="task_id" value="$(var task_id)"/>
+    <arg name="checkpoint_root" value="$(var checkpoint_root)"/>
+    <arg name="online_snapshots" value="$(var online_snapshots)"/>
+  </include>
   <node pkg="explore_lite" exec="explore" name="explore_node" output="screen">
     <param from="$(find-pkg-share carcar_mapping_autonomy)/config/explore.yaml"/>
   </node>

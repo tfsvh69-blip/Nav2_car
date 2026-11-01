@@ -1,0 +1,134 @@
+{
+  "readOnly": true,
+  "controlConnectionsBlocked": true,
+  "checks": [
+    {
+      "name": "mapping",
+      "size": "desktop",
+      "width": 1425,
+      "scroll": 1425,
+      "heading": "随行建图",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 1265,
+        "y": 12,
+        "width": 132,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 1265,
+        "y": 12,
+        "width": 132,
+        "height": 44
+      }
+    },
+    {
+      "name": "mapping",
+      "size": "tablet",
+      "width": 1009,
+      "scroll": 1009,
+      "heading": "随行建图",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 857,
+        "y": 12,
+        "width": 132,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 857,
+        "y": 12,
+        "width": 132,
+        "height": 44
+      }
+    },
+    {
+      "name": "mapping",
+      "size": "phone",
+      "width": 375,
+      "scroll": 375,
+      "heading": "随行建图",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 235,
+        "y": 71,
+        "width": 128,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 235,
+        "y": 8,
+        "width": 128,
+        "height": 44
+      }
+    },
+    {
+      "name": "inspection",
+      "size": "desktop",
+      "width": 1425,
+      "scroll": 1425,
+      "heading": "录入巡检点",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 1227,
+        "y": 12,
+        "width": 170,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 1227,
+        "y": 12,
+        "width": 170,
+        "height": 44
+      }
+    },
+    {
+      "name": "inspection",
+      "size": "tablet",
+      "width": 1009,
+      "scroll": 1009,
+      "heading": "录入巡检点",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 819,
+        "y": 12,
+        "width": 170,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 819,
+        "y": 12,
+        "width": 170,
+        "height": 44
+      }
+    },
+    {
+      "name": "inspection",
+      "size": "phone",
+      "width": 375,
+      "scroll": 375,
+      "heading": "录入巡检点",
+      "bg": "rgba(0, 0, 0, 0)",
+      "coarse": true,
+      "stopBefore": {
+        "x": 209,
+        "y": 144,
+        "width": 154,
+        "height": 44
+      },
+      "stopAfter": {
+        "x": 209,
+        "y": 8,
+        "width": 154,
+        "height": 44
+      }
+    }
+  ],
+  "errors": [],
+  "blockedWrites": []
+}

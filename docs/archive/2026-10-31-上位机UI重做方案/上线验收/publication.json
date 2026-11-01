@@ -1,0 +1,292 @@
+{
+  "time": "20261031-202845",
+  "hostname": "xiaozhu",
+  "version": "20261031-ui-precision-candidate",
+  "before_status": {
+    "autonomy": {},
+    "autonomy_age_ms": -1.0,
+    "autonomy_enabled": true,
+    "bundle": "",
+    "busy": false,
+    "completed_operation": 0,
+    "control": {},
+    "control_age": 1000025109.6955577,
+    "control_mode": "manual",
+    "dataflow_protocol": 1,
+    "dirty": false,
+    "error": "",
+    "halt_pending": false,
+    "inspection_running": false,
+    "last_save_age": 19929.633878294997,
+    "last_saved_bundle": "",
+    "managed": true,
+    "map_age": 1000025109.6955569,
+    "map_version": "live-0",
+    "navigation": {
+      "global_costmap": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "global_path": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "local_costmap": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "local_path": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "prediction": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      }
+    },
+    "odom_age": 1000025109.6955565,
+    "operation": 0,
+    "phase": "STANDBY",
+    "result": "",
+    "save_failed": false,
+    "save_reminder": true,
+    "scan_age": 1000025109.695555,
+    "scan_version": "562240f05b3dda64ad805bbe3f68bc0e-0",
+    "storage": {
+      "available_bytes": 81821257728,
+      "capacity_bytes": 249367060480,
+      "reason": "",
+      "save_allowed": true,
+      "start_allowed": true,
+      "valid": true,
+      "warning": false
+    },
+    "task_age": 0.0,
+    "task_state": "STANDBY",
+    "video_age": 1000025109.6955572,
+    "video_requested": false,
+    "video_running": false
+  },
+  "before_service": "MainPID=22598\nNRestarts=0\nActiveState=active\n",
+  "roots": {
+    "mapping": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web",
+    "inspection": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web"
+  },
+  "backups": {
+    "mapping": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web.20261031-202845.backup",
+    "inspection": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web.20261031-202845.backup"
+  },
+  "files": [
+    {
+      "asset": "mapping/app.js",
+      "path": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web/app.js",
+      "new_sha256": "5c97325326dd760d15d5a839426710d96b133556451e9afe5fc6bfbdcaf30d15",
+      "existed": true,
+      "old_link": null,
+      "old_sha256": "5c97325326dd760d15d5a839426710d96b133556451e9afe5fc6bfbdcaf30d15",
+      "changed": false
+    },
+    {
+      "asset": "mapping/index.html",
+      "path": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web/index.html",
+      "new_sha256": "d326204b79c0763879d40bce6395b77e245cbcf172c87959694ae28f137a59b2",
+      "existed": true,
+      "old_link": null,
+      "old_sha256": "5ef08af6c033bed0f26e55ead26a09ba9ba51e232afdb9dc8417d446432cddca",
+      "changed": true
+    },
+    {
+      "asset": "mapping/rtc_control.js",
+      "path": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web/rtc_control.js",
+      "new_sha256": "ae587d4121e1539e48b3e53f4a5c86fd8b415b9a5b63c4f43616c6e27f9995f2",
+      "existed": true,
+      "old_link": null,
+      "old_sha256": "ae587d4121e1539e48b3e53f4a5c86fd8b415b9a5b63c4f43616c6e27f9995f2",
+      "changed": false
+    },
+    {
+      "asset": "mapping/style.css",
+      "path": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/share/carcar_mapping_console/web/style.css",
+      "new_sha256": "c7f7a374f582784d8a0c5034fe383a220f992856a1d6c32fe87fea5d08a07721",
+      "existed": true,
+      "old_link": null,
+      "old_sha256": "9fa4c658529f7db3c3e0021f5eed381babe1c8adfd9aee1153c62d911e8dbaa7",
+      "changed": true
+    },
+    {
+      "asset": "inspection/CARCAR-LICENSE.txt",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/CARCAR-LICENSE.txt",
+      "new_sha256": "e0133205932bd4403aa7d3e959be6f2a97148ec25f12ec2614e77418cb941a1e",
+      "existed": true,
+      "old_link": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/CARCAR-LICENSE.txt",
+      "old_sha256": "e0133205932bd4403aa7d3e959be6f2a97148ec25f12ec2614e77418cb941a1e",
+      "changed": false
+    },
+    {
+      "asset": "inspection/THIRD_PARTY_NOTICES.txt",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/THIRD_PARTY_NOTICES.txt",
+      "new_sha256": "154e63a1ad67beb196445d0f964d9b70a2417c1005c5631f1e0a28928f2b59d2",
+      "existed": true,
+      "old_link": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/THIRD_PARTY_NOTICES.txt",
+      "old_sha256": "154e63a1ad67beb196445d0f964d9b70a2417c1005c5631f1e0a28928f2b59d2",
+      "changed": false
+    },
+    {
+      "asset": "inspection/VUE-LICENSE.txt",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/VUE-LICENSE.txt",
+      "new_sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+      "existed": true,
+      "old_link": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/VUE-LICENSE.txt",
+      "old_sha256": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+      "changed": false
+    },
+    {
+      "asset": "inspection/assets/index-CEJP08wH.css",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/assets/index-CEJP08wH.css",
+      "new_sha256": "d7d3d10993f9b58e0e230c2199a9c6928653ae40eecdad634be401efd078084b",
+      "existed": false,
+      "old_link": null,
+      "changed": true
+    },
+    {
+      "asset": "inspection/assets/index-CjThPkQx.js",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/assets/index-CjThPkQx.js",
+      "new_sha256": "9601ec6b977609ba3dcb5dddb631b2021877a7e6b7944896c1492c54919afa1a",
+      "existed": false,
+      "old_link": null,
+      "changed": true
+    },
+    {
+      "asset": "inspection/index.html",
+      "path": "/home/jetson/luhao/my_nav_carcar/install/carcar_inspection/share/carcar_inspection/web/index.html",
+      "new_sha256": "b2b4bb4911baa57ed179e568dc7eb0e4e976610c042683a893ae788a16460175",
+      "existed": true,
+      "old_link": "/home/jetson/luhao/my_nav_carcar/src/carcar_inspection/web/dist/index.html",
+      "old_sha256": "6164a63c2ffa295bf227a4aaa76e93d58f1ced75876fd179bd361ea0c6e401fd",
+      "changed": true
+    }
+  ],
+  "completed": true,
+  "after_status": {
+    "autonomy": {},
+    "autonomy_age_ms": -1.0,
+    "autonomy_enabled": true,
+    "bundle": "",
+    "busy": false,
+    "completed_operation": 0,
+    "control": {},
+    "control_age": 1000025109.7955166,
+    "control_mode": "manual",
+    "dataflow_protocol": 1,
+    "dirty": false,
+    "error": "",
+    "halt_pending": false,
+    "inspection_running": false,
+    "last_save_age": 19929.733836273997,
+    "last_saved_bundle": "",
+    "managed": true,
+    "map_age": 1000025109.7955163,
+    "map_version": "live-0",
+    "navigation": {
+      "global_costmap": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "global_path": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "local_costmap": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "local_path": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      },
+      "prediction": {
+        "age_seconds": 0.0,
+        "available": false,
+        "error": "尚未收到数据",
+        "frame": "map",
+        "points": [],
+        "sequence": 0,
+        "source_age_seconds": 0.0,
+        "source_frame": ""
+      }
+    },
+    "odom_age": 1000025109.795516,
+    "operation": 0,
+    "phase": "STANDBY",
+    "result": "",
+    "save_failed": false,
+    "save_reminder": true,
+    "scan_age": 1000025109.7955148,
+    "scan_version": "562240f05b3dda64ad805bbe3f68bc0e-0",
+    "storage": {
+      "available_bytes": 81821257728,
+      "capacity_bytes": 249367060480,
+      "reason": "",
+      "save_allowed": true,
+      "start_allowed": true,
+      "valid": true,
+      "warning": false
+    },
+    "task_age": 0.0,
+    "task_state": "STANDBY",
+    "video_age": 1000025109.7955164,
+    "video_requested": false,
+    "video_running": false
+  },
+  "after_service": "MainPID=22598\nNRestarts=0\nActiveState=active\n"
+}

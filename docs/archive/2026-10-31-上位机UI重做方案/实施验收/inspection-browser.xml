@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="1" failures="0" disabled="0" errors="0" time="16.775" timestamp="2026-10-31T19:56:59" name="AllTests">
+  <testsuite name="ConsoleTest" tests="1" failures="0" disabled="0" errors="0" time="16.775" timestamp="2026-10-31T19:56:59">
+    <testcase name="RealBrowserCompletesStepwiseTeachingOnTabletAndPhone" status="run" result="completed" time="16.774" timestamp="2026-10-31T19:56:59" classname="ConsoleTest" />
+  </testsuite>
+</testsuites>

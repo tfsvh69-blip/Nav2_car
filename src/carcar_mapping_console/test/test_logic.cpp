@@ -1,8 +1,23 @@
 #include <gtest/gtest.h>
 #include "carcar_mapping_console/safety.hpp"
 #include "carcar_mapping_console/common.hpp"
+#include "carcar_mapping_console/storage.hpp"
 #include <fstream>
 using namespace carcar_mapping_console;
+TEST(Storage, PreservesEmergencySaveBeforeRejectingMotion){
+  constexpr uintmax_t gib=1024ULL*1024*1024;
+  auto state=storage_status(std::filesystem::space_info{10*gib,3*gib,2*gib-1});
+  EXPECT_FALSE(state["start_allowed"]);EXPECT_TRUE(state["save_allowed"]);EXPECT_TRUE(state["warning"]);
+  state=storage_status(std::filesystem::space_info{10*gib,gib,gib/4-1});
+  EXPECT_FALSE(state["start_allowed"]);EXPECT_FALSE(state["save_allowed"]);
+  state=storage_status(std::filesystem::space_info{10*gib,6*gib,5*gib});
+  EXPECT_TRUE(state["start_allowed"]);EXPECT_TRUE(state["save_allowed"]);EXPECT_FALSE(state["warning"]);
+}
+TEST(Storage, NewMapDirectoryUsesExistingFilesystem){
+  const auto state=storage_status(std::filesystem::path("/tmp/carcar-r27-nonexistent/path/maps"));
+  EXPECT_TRUE(state["valid"]);EXPECT_GT(state["available_bytes"].get<uintmax_t>(),0U);
+  EXPECT_FALSE(std::filesystem::exists("/tmp/carcar-r27-nonexistent"));
+}
 static Safety ready(double now = 10) {
   Safety s; s.require_video=true; s.connect("operator"); s.gateway_at=s.scan_at=s.odom_at=now;
   s.session_ready=true; s.frame("frame",now); s.challenge("token",now);
