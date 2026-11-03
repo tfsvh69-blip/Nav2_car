@@ -24,6 +24,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include "carcar_mapping_autonomy/map_geometry.hpp"
 #include "carcar_mapping_autonomy/map_fingerprint.hpp"
+#include "carcar_mapping_autonomy/task_walls.hpp"
 extern char **environ;
 using Json=nlohmann::json;
 using Nav=nav2_msgs::action::NavigateToPose;
@@ -48,6 +49,13 @@ protected:
   std::shared_ptr<rclcpp_action::ServerGoalHandle<Plan>> stalled_plan;
   bool nav2_active=true;rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr lifecycle;
   bool recovery_mode=false,online_snapshot_mode=false,closed_outer_walls=false,fail_checkpoints=false;size_t plan_failures=0;
+  bool live_mode=false,live_map=true,live_state=true,live_mask=true,live_requests=true,live_reject=false;
+  Json tuning_state={{"ready",true},{"pending",false},{"requires_stop",false}};
+  std::unique_ptr<carcar_mapping_autonomy::TaskScene>live_scene;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr navigation_map_pub;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr wall_state_pub,tuning_state_pub;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr wall_requests;
+  std::vector<Json>wall_commands;
   Json recovery_state={{"phase","CHECKPOINT_READY"},{"checkpoint_id","fixture-stable"},{"imu_ready",true},{"imu_stable",true},{"gate_write",false},{"requires_stop",false},{"generation",0}};
   std::vector<std::string> recovery_actions,nav_trees;
   std::vector<geometry_msgs::msg::PoseStamped> nav_poses;
@@ -59,7 +67,7 @@ protected:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr mask_status_pub;
   rclcpp::Publisher<nav2_msgs::msg::Costmap>::SharedPtr global_raw_pub,local_raw_pub;
   std::vector<rclcpp::Service<nav2_msgs::srv::ClearEntireCostmap>::SharedPtr>clear_services;
-  double last_velocity=0;size_t nonzero=0;std::string task_id;
+  double last_velocity=0;size_t nonzero=0;std::string task_id,manual_owner_id="fixture-owner";
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scan,filtered;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map;
@@ -81,6 +89,7 @@ protected:
   static void SetUpTestSuite(){int argc=0;rclcpp::init(argc,nullptr);}
   static void TearDownTestSuite(){rclcpp::shutdown();}
   void SetUp()override{
+    if(live_mode){ASSERT_STREQ(std::getenv("ROS_DOMAIN_ID"),"228");ASSERT_STREQ(std::getenv("ROS_LOCALHOST_ONLY"),"1");}
     n=std::make_shared<rclcpp::Node>("mapping_fixture");tf=std::make_unique<tf2_ros::TransformBroadcaster>(*n);fixed=std::make_unique<tf2_ros::StaticTransformBroadcaster>(*n);
     lifecycle=n->create_service<std_srvs::srv::Trigger>("/lifecycle_manager_navigation/is_active",[this](std_srvs::srv::Trigger::Request::SharedPtr,std_srvs::srv::Trigger::Response::SharedPtr response){response->success=nav2_active;});
     geometry_msgs::msg::TransformStamped s;s.header.frame_id="base_footprint";s.child_frame_id="laser_frame";s.transform.rotation.w=1;s.transform.translation.z=.217;fixed->sendTransform(s);
@@ -96,13 +105,25 @@ protected:
     nav_velocity=n->create_publisher<geometry_msgs::msg::Twist>("/mapping/auto_cmd_vel",1);collision=n->create_publisher<geometry_msgs::msg::Twist>("/mapping/collision_output",1);
     status=n->create_subscription<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local(),[this](const std_msgs::msg::String&m){state=Json::parse(m.data);task_id=state.value("task_id","");});
     candidate_rejections=n->create_subscription<std_msgs::msg::String>("/mapping/explore_candidate_rejection",10,[this](const std_msgs::msg::String&m){rejected_candidates.push_back(m.data);});
+    if(live_mode){
+      const auto latched=rclcpp::QoS(1).reliable().transient_local();
+      task_id="live-supervisor-fixture";live_scene=std::make_unique<carcar_mapping_autonomy::TaskScene>(task_id);
+      navigation_map_pub=n->create_publisher<nav_msgs::msg::OccupancyGrid>("/mapping/navigation_map",latched);
+      wall_state_pub=n->create_publisher<std_msgs::msg::String>("/mapping/walls/state",latched);
+      tuning_state_pub=n->create_publisher<std_msgs::msg::String>("/mapping/tuning/state",latched);
+      wall_requests=n->create_subscription<std_msgs::msg::String>("/mapping/walls/request",10,[this](const std_msgs::msg::String&m){
+        const auto j=Json::parse(m.data);wall_commands.push_back(j);
+        if(live_requests){if(live_reject){auto invalid=j;invalid["expected_revision"]=99999;live_scene->request(invalid);}
+          else live_scene->request(j);}
+      });
+    }
     if(recovery_mode){
       const auto latched=rclcpp::QoS(1).reliable().transient_local();
       mask_pub=n->create_publisher<nav_msgs::msg::OccupancyGrid>("/mapping/known_space_mask",latched);
       mask_status_pub=n->create_publisher<std_msgs::msg::String>("/mapping/known_space/state",latched);
       global_raw_pub=n->create_publisher<nav2_msgs::msg::Costmap>("/global_costmap/costmap_raw",latched);
       local_raw_pub=n->create_publisher<nav2_msgs::msg::Costmap>("/local_costmap/costmap_raw",latched);
-      navigation_generation_sub=n->create_subscription<std_msgs::msg::UInt64>("/mapping/navigation_generation",latched,[this](const std_msgs::msg::UInt64&m){navigation_generation=m.data;});
+      navigation_generation_sub=n->create_subscription<std_msgs::msg::UInt64>("/mapping/navigation_generation",latched,[this](const std_msgs::msg::UInt64&m){navigation_generation=m.data;if(live_scene)live_scene->generation(m.data);});
       for(const auto*name:{"/global_costmap/clear_entirely_global_costmap","/local_costmap/clear_entirely_local_costmap"})
         clear_services.push_back(n->create_service<nav2_msgs::srv::ClearEntireCostmap>(name,[](nav2_msgs::srv::ClearEntireCostmap::Request::SharedPtr,nav2_msgs::srv::ClearEntireCostmap::Response::SharedPtr){}));
       recovery_pub=n->create_publisher<std_msgs::msg::String>("/mapping/recovery/state",rclcpp::QoS(1).reliable().transient_local());
@@ -130,21 +151,23 @@ protected:
     if(delay_initial_odometry)odom_feed_after=n->now().seconds()+1.5;
     timer=n->create_wall_timer(std::chrono::milliseconds(50),[this]{feed();});
     std::string executable_path=std::getenv("CARCAR_RETURN_BASELINE_EXE")?std::getenv("CARCAR_RETURN_BASELINE_EXE"):AUTONOMY_EXE;
-    char* executable=executable_path.data();
-    char ros_args[]="--ros-args",parameter[]="-p";
-    char mode_manual[]="control_mode:=manual",mode_automatic[]="control_mode:=automatic";
-    char recovery_on[]="recovery_enabled:=true",recovery_off[]="recovery_enabled:=false";
-    char continuous_on[]="continuous_exploration:=true",continuous_off[]="continuous_exploration:=false";
-    char snapshot_on[]="online_snapshots:=true",snapshot_off[]="online_snapshots:=false";
-    std::string snapshot_interval="snapshot_interval_seconds:="+std::to_string(snapshot_interval_seconds);
-    char selection_fast[]="selection_stall_seconds:=1.0",selection_normal[]="selection_stall_seconds:=15.0";
-    char restricted_on[]="restricted_manual_enabled:=true",restricted_off[]="restricted_manual_enabled:=false";
-    char* args[]={executable,ros_args,parameter,automatic_on_boot?mode_automatic:mode_manual,parameter,recovery_mode?recovery_on:recovery_off,parameter,continuous_mode?continuous_on:continuous_off,parameter,online_snapshot_mode?snapshot_on:snapshot_off,parameter,snapshot_interval.data(),parameter,fast_selection_timeout?selection_fast:selection_normal,parameter,restricted_manual_enabled?restricted_on:restricted_off,nullptr};
-    ASSERT_EQ(posix_spawn(&pid,executable,nullptr,nullptr,args,environ),0);
-    ASSERT_TRUE(until([this]{return state.value("healthy",false)&&state.value("still",false);},8))<<state.dump();
+    std::vector<std::string>arguments={executable_path,"--ros-args"};
+    auto parameter=[&](const std::string&name,const std::string&value){arguments.push_back("-p");arguments.push_back(name+":="+value);};
+    parameter("control_mode",automatic_on_boot?"automatic":"manual");
+    parameter("recovery_enabled",recovery_mode?"true":"false");
+    parameter("continuous_exploration",continuous_mode?"true":"false");
+    parameter("online_snapshots",online_snapshot_mode?"true":"false");
+    parameter("snapshot_interval_seconds",std::to_string(snapshot_interval_seconds));
+    parameter("selection_stall_seconds",fast_selection_timeout?"1.0":"15.0");
+    parameter("restricted_manual_enabled",restricted_manual_enabled?"true":"false");
+    if(live_mode){parameter("live_controls_enabled","true");parameter("task_id",task_id);parameter("navigation_map_topic","/mapping/navigation_map");}
+    std::vector<char*>args;for(auto&arg:arguments)args.push_back(arg.data());args.push_back(nullptr);
+    ASSERT_EQ(posix_spawn(&pid,executable_path.c_str(),nullptr,nullptr,args.data(),environ),0);
+    ASSERT_TRUE(until([this]{return state.value("healthy",false)&&state.value("still",false)&&(!live_mode||state.value("walls",Json::object()).value("navigation_ready",false));},8))<<state.dump();
   }
   void TearDown()override{
     if(pid>0){kill(pid,SIGINT);for(int i=0;i<50;++i){if(waitpid(pid,nullptr,WNOHANG)==pid){pid=-1;break;}std::this_thread::sleep_for(std::chrono::milliseconds(20));}if(pid>0){kill(pid,SIGKILL);waitpid(pid,nullptr,0);}}
+    navigation_map_pub.reset();wall_state_pub.reset();tuning_state_pub.reset();wall_requests.reset();live_scene.reset();
     timer.reset();lifecycle.reset();recovery_commands.reset();recovery_pub.reset();navigation_generation_sub.reset();
     mask_pub.reset();mask_status_pub.reset();global_raw_pub.reset();local_raw_pub.reset();clear_services.clear();n.reset();
     // 清除该fixture拥有的DDS发布者后，再进入下一用例。
@@ -173,7 +196,16 @@ protected:
     if(closed_outer_walls){for(unsigned x=0;x<m.info.width;++x){m.data[x]=100;m.data[(m.info.height-1)*m.info.width+x]=100;}
       for(unsigned y=0;y<m.info.height;++y){m.data[y*m.info.width]=100;m.data[y*m.info.width+m.info.width-1]=100;}}
     if(feed_map)map->publish(m);
-    if(mask_pub){
+    nav_msgs::msg::OccupancyGrid navigation=m;
+    if(live_scene){
+      if(feed_map)live_scene->map(std::make_shared<nav_msgs::msg::OccupancyGrid>(m));
+      if(live_scene->output())navigation=live_scene->output()->navigation;
+      if(live_map&&live_scene->ready())navigation_map_pub->publish(navigation);
+      std_msgs::msg::String message;if(live_state){message.data=live_scene->state().dump();wall_state_pub->publish(message);}
+      tuning_state["task_id"]=task_id;message.data=tuning_state.dump();tuning_state_pub->publish(message);
+    }
+    if(mask_pub&&(!live_mode||live_mask)){
+      const auto&m=navigation;
       mask_pub->publish(m);std_msgs::msg::String status;status.data=Json{{"source_fingerprint",std::to_string(carcar_mapping_autonomy::map_content_fingerprint(m))},{"navigation_generation",navigation_generation}}.dump();mask_status_pub->publish(status);
       nav2_msgs::msg::Costmap raw;raw.header=m.header;raw.metadata.size_x=m.info.width;raw.metadata.size_y=m.info.height;
       raw.metadata.layer="master";raw.metadata.resolution=m.info.resolution;raw.metadata.origin=m.info.origin;raw.metadata.update_time=now;
@@ -182,7 +214,7 @@ protected:
     geometry_msgs::msg::PoseWithCovarianceStamped p;p.header.frame_id="map";p.header.stamp=now;p.pose.pose.orientation.w=1;p.pose.pose.position.x=pose_x;p.pose.pose.position.y=pose_y;if(feed_pose)pose->publish(p);
     if(!freeze_nav_pose)nav_pose_stamp=now;
     geometry_msgs::msg::PolygonStamped fp;fp.header.stamp=nav_pose_stamp;fp.polygon.points.resize(4);fp.header.frame_id="odom";local_pose->publish(fp);fp.header.frame_id="map";global_pose->publish(fp);
-    std_msgs::msg::String j;j.data=Json{{"admission_enabled",force_slam_admission_open||!recovery_state.value("gate_write",false)},{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"startup_closed",slam_startup_closed},{"loop_generation",loop_generation},{"loop_active",loop_active},{"loop_guard",{{"rejections",loop_rejections},{"rolled_back",loop_rejections>0}}}}.dump();slam->publish(j);j.data=Json{{"ready",session_ready},{"storage",{{"start_allowed",storage_ready},{"reason",storage_ready?"":"磁盘余量不足2 GiB"}}}}.dump();if(publish_session)ready->publish(j);
+    std_msgs::msg::String j;j.data=Json{{"admission_enabled",force_slam_admission_open||!recovery_state.value("gate_write",false)},{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"startup_closed",slam_startup_closed},{"loop_generation",loop_generation},{"loop_active",loop_active},{"loop_guard",{{"rejections",loop_rejections},{"rolled_back",loop_rejections>0}}}}.dump();slam->publish(j);j.data=Json{{"ready",session_ready},{"manual_owner_id",manual_owner_id},{"storage",{{"start_allowed",storage_ready},{"reason",storage_ready?"":"磁盘余量不足2 GiB"}}}}.dump();if(publish_session)ready->publish(j);
     if(recovery_pub&&!task_id.empty()){recovery_state["task_id"]=task_id;j.data=recovery_state.dump();recovery_pub->publish(j);}
     geometry_msgs::msg::Twist v;v.linear.x=.06;nav_velocity->publish(v);
     if(active&&active->is_canceling()&&ack_cancel){active->canceled(std::make_shared<Nav::Result>());active.reset();}
@@ -511,6 +543,88 @@ ASSERT_TRUE(until([this]{return state.value("phase","")=="SAVE_PENDING";},4))<<s
 EXPECT_EQ(state["outcome"],"partial_unreachable");EXPECT_EQ(state["return_result"],"succeeded");EXPECT_TRUE(state["save_required"]);}
 TEST_F(SupervisorIntegration, InactiveNav2CannotKeepDriving){start_goal();nav2_active=false;
 ASSERT_TRUE(until([this]{return state.value("phase","")=="FAULT";},3))<<state.dump();EXPECT_DOUBLE_EQ(last_velocity,0);}
+class Nav2HealthProbeIntegration:public SupervisorIntegration {
+protected:
+  bool withhold_health_replies=false;
+  size_t health_replies=0;
+  double last_health_reply_at=0;
+  std::vector<std::shared_ptr<rmw_request_id_t>> held_health_requests;
+  std::vector<double> held_health_request_times;
+
+  void reply_health(const std::shared_ptr<rmw_request_id_t>&header){
+    std_srvs::srv::Trigger::Response response;response.success=nav2_active;
+    lifecycle->send_response(*header,response);
+    last_health_reply_at=n->now().seconds();++health_replies;
+  }
+
+  void SetUp()override{
+    SupervisorIntegration::SetUp();if(HasFatalFailure())return;
+    lifecycle.reset();
+    // Humble的deferred-response接口只扣住健康服务答复；扫描、TF和速度夹具仍按50ms正常运行。
+    lifecycle=n->create_service<std_srvs::srv::Trigger>("/lifecycle_manager_navigation/is_active",
+      [this](std::shared_ptr<rmw_request_id_t> header,std_srvs::srv::Trigger::Request::SharedPtr){
+        if(withhold_health_replies){
+          held_health_requests.push_back(header);held_health_request_times.push_back(n->now().seconds());return;
+        }
+        reply_health(header);
+      });
+    ASSERT_TRUE(until([this]{return health_replies>0&&state.value("healthy",false);},3))<<state.dump();
+  }
+};
+
+TEST_F(Nav2HealthProbeIntegration, OneExpiredProbeKeepsFreshActiveResponseWithoutLatchingStop){
+  start_goal();if(HasFatalFailure())return;
+  const auto replies_before=health_replies;
+  ASSERT_TRUE(until([&]{return health_replies>replies_before;},1.5));
+  withhold_health_replies=true;
+  // 第二次请求证明第一条无答复请求已在真实监督器里超时并被替换，而非仅制造短暂停顿。
+  ASSERT_TRUE(until([this]{return held_health_requests.size()>=2;},2))<<state.dump();
+  const auto outputs_after_timeout=nonzero;
+  until([]{return false;},.2);
+  const double active_response_age=n->now().seconds()-last_health_reply_at;
+  RecordProperty("active_response_age_after_one_probe_timeout_seconds",std::to_string(active_response_age));
+  RecordProperty("withheld_probe_count",static_cast<int>(held_health_requests.size()));
+  EXPECT_GE(held_health_request_times[1]-held_health_request_times[0],.95);
+  ASSERT_LT(active_response_age,2.0)<<"本用例必须在最后真实active答复的2秒有效期内观察";
+  EXPECT_GE(state.at("nav2_health").at("timeout_count").get<uint64_t>(),1U);
+  EXPECT_TRUE(state.at("nav2_health").at("active").get<bool>());
+  EXPECT_LT(state.at("nav2_health").at("last_response_age_s").get<double>(),2.0);
+  EXPECT_TRUE(state.value("healthy",false))<<state.dump();
+  EXPECT_EQ(state.value("phase",""),"EXPLORING")<<state.dump();
+  EXPECT_GT(nonzero,outputs_after_timeout)<<"单次探针失败不应切断有效期内的持续运动输出";
+  EXPECT_GT(last_velocity,0);
+
+  // 第二条请求仍有效：恢复真实服务答复，确认没有因首个超时留下锁停。
+  withhold_health_replies=false;
+  reply_health(held_health_requests.back());
+  held_health_requests.clear();
+  until([]{return false;},.3);
+  EXPECT_EQ(state.value("phase",""),"EXPLORING")<<state.dump();
+  EXPECT_TRUE(state.value("healthy",false));EXPECT_GT(last_velocity,0);
+}
+
+TEST_F(Nav2HealthProbeIntegration, MissingResponsesPastTwoSecondsLatchFaultAndRejectVelocity){
+  start_goal();if(HasFatalFailure())return;
+  const auto replies_before=health_replies;
+  ASSERT_TRUE(until([&]{return health_replies>replies_before;},1.5));
+  withhold_health_replies=true;
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="FAULT";},2.8))<<state.dump();
+  const double response_age_at_fault=n->now().seconds()-last_health_reply_at;
+  RecordProperty("last_active_response_age_at_fault_seconds",std::to_string(response_age_at_fault));
+  RecordProperty("withheld_probe_count",static_cast<int>(held_health_requests.size()));
+  EXPECT_GE(response_age_at_fault,2.0);
+  EXPECT_LT(response_age_at_fault,2.6)<<"2秒健康期限过后须及时锁停，不能无限沿用旧active";
+  EXPECT_GE(state.at("nav2_health").at("last_response_age_s").get<double>(),2.0);
+  EXPECT_GE(state.at("nav2_health").at("timeout_count").get<uint64_t>(),1U);
+  EXPECT_FALSE(state.value("healthy",true))<<state.dump();
+  EXPECT_NE(state.value("health_reason",std::string()).find("Nav2生命周期"),std::string::npos)<<state.dump();
+  ASSERT_TRUE(until([this]{return last_velocity==0;},.5));
+  const auto stopped_nonzero=nonzero;
+  until([]{return false;},.3);
+  EXPECT_EQ(state.value("phase",""),"FAULT");EXPECT_FALSE(state.value("healthy",true));
+  EXPECT_DOUBLE_EQ(last_velocity,0);
+  EXPECT_EQ(nonzero,stopped_nonzero)<<"其他输入仍新鲜且导航仍持续发速度时，过期健康答复不得放行动作";
+}
 TEST_F(SupervisorIntegration, StalledPlannerCannotReopenLatchedFault){
 stall_plan=true;request("start","start-stalled-plan");
 ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));

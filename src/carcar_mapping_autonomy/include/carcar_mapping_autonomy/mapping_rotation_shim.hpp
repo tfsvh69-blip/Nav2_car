@@ -21,6 +21,8 @@
 #include <nlohmann/json.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <nav2_rotation_shim_controller/nav2_rotation_shim_controller.hpp>
+#include <nav2_controller/plugins/position_goal_checker.hpp>
+#include "carcar_mapping_autonomy/parameter_revision_fence.hpp"
 namespace carcar_mapping_autonomy {
 // 复用Humble 1.1.20的起步对准、碰撞检查与末端朝向；补齐短路径采样及控制位姿时间一致性。
 // RPP自己的rotate_to_heading须关闭，避免路径跟踪时反复进入另一层对准。
@@ -29,11 +31,12 @@ public:
   void configure(const rclcpp_lifecycle::LifecycleNode::WeakPtr&parent,std::string name,
       std::shared_ptr<tf2_ros::Buffer>tf,std::shared_ptr<nav2_costmap_2d::Costmap2DROS>costmap)override{
     RotationShimController::configure(parent,name,tf,costmap);sampling_limit_=forward_sampling_distance_;
+    tuning_fence_.configure(parent,name);
     timing_=parent.lock()->create_publisher<std_msgs::msg::String>("/mapping/controller_timing",rclcpp::QoS(1).best_effort());
     histogram_.fill(0);samples_=overruns_=exceptions_=0;maximum_ms_=total_ms_=0;
   }
-  void activate()override{RotationShimController::activate();timing_->on_activate();}
-  void deactivate()override{timing_->on_deactivate();RotationShimController::deactivate();}
+  void activate()override{RotationShimController::activate();tuning_fence_.activate();timing_->on_activate();}
+  void deactivate()override{tuning_fence_.deactivate();timing_->on_deactivate();RotationShimController::deactivate();}
   void cleanup()override{timing_.reset();RotationShimController::cleanup();}
   geometry_msgs::msg::TwistStamped computeVelocityCommands(const geometry_msgs::msg::PoseStamped&pose,
       const geometry_msgs::msg::Twist&velocity,nav2_core::GoalChecker*checker)override{
@@ -78,7 +81,9 @@ private:
           std::hypot(point.pose.position.x-start.x,point.pose.position.y-start.y));
         forward_sampling_distance_=std::min(sampling_limit_,std::max(.001,extent*.9));
       }
-      if(rotate_to_goal_heading_&&!current_path_.poses.empty()){
+      // 探索只验收位置；普通返程仍保留末端朝向。避免成功判定前一周期多发末端转向。
+      if(rotate_to_goal_heading_&&!current_path_.poses.empty()&&
+         dynamic_cast<nav2_controller::PositionGoalChecker*>(checker)==nullptr){
         const auto goal=at_pose_time(getSampledPathGoal(),pose);
         geometry_msgs::msg::Pose pose_tolerance;geometry_msgs::msg::Twist velocity_tolerance;
         checker->getTolerances(pose_tolerance,velocity_tolerance);
@@ -135,6 +140,7 @@ private:
     }catch(...){/* 诊断输出失败不能改变控制器原有返回或异常语义。 */}
   }
   double sampling_limit_=.30;
+  ParameterRevisionFence tuning_fence_;
   std::array<uint64_t,801>histogram_{};uint64_t samples_=0,overruns_=0,exceptions_=0;
   double maximum_ms_=0,total_ms_=0;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>::SharedPtr timing_;

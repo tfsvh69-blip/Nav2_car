@@ -18,7 +18,7 @@ public:
     [this](const std_msgs::msg::UInt64&m){generation_=m.data;dirty_=true;publish();});
   nav2_msgs::msg::CostmapFilterInfo info;info.header.frame_id="map";info.header.stamp=now();info.type=0;
   info.filter_mask_topic="/mapping/known_space_mask";info.base=0;info.multiplier=1;info_->publish(info);
-  maps_=create_subscription<nav_msgs::msg::OccupancyGrid>("/map",qos,[this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){
+  maps_=create_subscription<nav_msgs::msg::OccupancyGrid>(declare_parameter("navigation_map_topic",std::string("/map")),qos,[this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){
    if(!carcar_mapping_autonomy::grid_valid(*m))return;
    if(previous_&&carcar_mapping_autonomy::same_grid(*previous_,*m))return;
    const auto start=std::chrono::steady_clock::now();

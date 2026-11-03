@@ -4,6 +4,7 @@
 #include "carcar_mapping_console/task_process.hpp"
 #include "carcar_mapping_console/operator_sessions.hpp"
 #include "carcar_mapping_console/task_requests.hpp"
+#include "carcar_mapping_console/live_settings.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ament_index_cpp/get_package_prefix.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -83,6 +84,7 @@ public:
     task_id_=declare_parameter("task_id",std::string(""));
     task_requests_.reset(task_id_);
     control_mode_=declare_parameter("control_mode",std::string("manual"));
+    tuning_defaults_file_=fs::absolute(declare_parameter("tuning_defaults_file",default_tuning_file().string())).lexically_normal();
     slam_params_file_ = declare_parameter("slam_params_file", std::string(""));
     if (!slam_params_file_.empty()) {
       if (!fs::is_regular_file(slam_params_file_)) throw std::runtime_error("候选SLAM参数文件不存在");
@@ -362,10 +364,17 @@ private:
     const bool restricted_ready=restricted_active&&!busy_&&(!managed_||task_state_=="RUNNING")&&
       restricted.value("ready",false)&&restricted.value("map_frozen",false);
     state.data = json{{"ready", ready},{"storage",storage_},{"restricted_manual_active",restricted_active},
+      {"manual_owner_id",manual_handover_.empty()?manual_status_locked().value("owner_id",std::string()):std::string()},
       {"restricted_manual_ready",restricted_ready}}.dump(); session_state_->publish(state);
+    auto displayed_autonomy=autonomy_state_;
+    if(!displayed_autonomy.empty()&&displayed_autonomy.contains("tuning")){
+      displayed_autonomy["tuning"]["defaults_saved_request_id"]=defaults_saved_id_;
+      displayed_autonomy["tuning"]["defaults_error"]=defaults_error_;
+      displayed_autonomy["tuning"]["defaults_saving"]=defaults_save_pending_;
+    }
     json telemetry{{"phase", phase_}, {"busy", busy_}, {"error", error_}, {"result", result_}, {"control", control_},
       {"manual_control",manual_status_locked()},{"task_operations",task_requests_.status()},
-      {"autonomy_enabled",autonomy_enabled_},{"control_mode",control_mode_},{"autonomy",autonomy_state_},{"halt_pending",!pending_halt_id_.empty()},
+      {"autonomy_enabled",autonomy_enabled_},{"control_mode",control_mode_},{"autonomy",displayed_autonomy},{"halt_pending",!pending_halt_id_.empty()},
       {"autonomy_age_ms",autonomy_state_.empty()?-1:(steady()-autonomy_at_)*1000},
       {"scan_age", steady() - scan_at_}, {"odom_age", steady() - odom_at_}, {"map_age", steady() - map_at_},
       {"video_age", steady() - image_at_}, {"control_age", steady() - control_at_}, {"save_reminder", steady() - last_save_at_ >= 300},
@@ -430,15 +439,23 @@ private:
     if(manual_handover_.empty())return;
     if(!operators_.connected(manual_handover_)){manual_handover_.clear();manual_notice_="接管设备已断开，车辆保持停车";return;}
     if(steady()-manual_handover_at_>5){manual_handover_.clear();manual_notice_="接管未完成：未取得持续新鲜停稳反馈，原遥控权保留";return;}
+    const auto wall=autonomy_state_.value("walls",json::object());
+    const auto phase=autonomy_state_.value("phase",std::string());
+    const auto command=autonomy_state_.value("output",json::array());
+    const bool zero=command.is_array()&&command.size()==2&&command[0].is_number()&&command[1].is_number()&&
+      std::abs(command[0].get<double>())<1e-6&&std::abs(command[1].get<double>())<1e-6;
+    // 交接时撤销旁路会令监督器进入PAUSED；须保留复检门槛，不能为完成交接重新启用运动。
+    const bool wall_paused=phase=="PAUSED"&&!wall.value("bypass_enabled",true)&&wall.value("requires_recheck",false);
+    const bool phase_safe=manual_handover_had_wall_bypass_?wall_paused:(phase=="MANUAL"||wall_paused);
     const bool stopped=odom_&&steady()-odom_at_<.5&&std::abs(odom_->twist.twist.linear.x)<.015&&
       std::abs(odom_->twist.twist.linear.y)<.015&&std::abs(odom_->twist.twist.angular.z)<.03&&
       steady()-control_at_<.3&&!control_.value("armed",true)&&std::abs(control_.value("x",1.))<1e-6&&std::abs(control_.value("yaw",1.))<1e-6&&
-      (!autonomy_enabled_||(steady()-autonomy_at_<.5&&!autonomy_state_.value("auto_start_pending",false)&&autonomy_state_.value("phase","")=="MANUAL"&&autonomy_state_.value("still",false)&&autonomy_state_.value("navigation_terminal",false)));
+      (!autonomy_enabled_||(steady()-autonomy_at_<.5&&!autonomy_state_.value("auto_start_pending",false)&&phase_safe&&zero&&autonomy_state_.value("still",false)&&autonomy_state_.value("navigation_terminal",false)));
     if(!stopped){manual_still_at_=-1;return;}
     if(manual_still_at_<0)manual_still_at_=steady();
     if(steady()-manual_still_at_<.3)return;
     const auto next=manual_handover_;manual_handover_.clear();operators_.claim(next);
-    publish_request({{"action","connect"},{"session",next}});manual_notice_="遥控权已交接；请在本页使能后操作摇杆";
+    publish_request({{"action","connect"},{"session",next}});manual_notice_=wall_paused?"遥控权已交接，车辆保持暂停；请重新检查定位，原人工旁路不可沿用":"遥控权已交接；请在本页使能后操作摇杆";
   }
   void publish_request(json value) {
     std_msgs::msg::String msg; msg.data = value.dump();
@@ -551,10 +568,11 @@ private:
         throw std::runtime_error("历史导航地图无法读取");
       png = encode(*reference);
     }
+    if(autonomy_enabled_)(void)load_tuning_defaults(tuning_defaults_file_);
     camera_.stop(); backend_.stop();
     std::vector<std::string> args{prepare_exe_, "--backend-only", "--mode", mode, "--map-root", root_.string()};
     const auto task_id=nonce();
-    if(autonomy_enabled_){args.push_back("--autonomy");args.push_back("--control-mode");args.push_back(control_mode);args.push_back("--task-id");args.push_back(task_id);}
+    if(autonomy_enabled_){args.push_back("--autonomy");args.push_back("--control-mode");args.push_back(control_mode);args.push_back("--task-id");args.push_back(task_id);args.push_back("--tuning-defaults");args.push_back(tuning_defaults_file_.string());}
     if (!slam_params_file_.empty()) {args.push_back("--slam-params"); args.push_back(slam_params_file_);}
     if (backend_hardware_) args.push_back("--hardware");
     if (!id.empty()) {args.push_back("--bundle"); args.push_back(id);}
@@ -564,7 +582,7 @@ private:
       // 重建订阅以重新收到仍在运行的 /tf_static 发布者的保留消息。
       listener_.reset(); listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_);
       mode_ = mode; bundle_id_ = id; bundle_ = directory; reference_ = reference; reference_png_ = std::move(png);
-      task_id_=task_id;task_requests_.reset(task_id_);control_mode_=control_mode;autonomy_state_=json::object();autonomy_at_=-1e9;automatic_saved_=false;recovery_gate_=false;pending_halt_id_.clear();
+      task_id_=task_id;task_requests_.reset(task_id_);defaults_saved_id_.clear();defaults_error_.clear();control_mode_=control_mode;autonomy_state_=json::object();autonomy_at_=-1e9;automatic_saved_=false;recovery_gate_=false;pending_halt_id_.clear();
       phase_ = mode == "resume" ? "REFERENCE" : "WAITING"; task_state_ = "STARTING";
       backend_started_ = false; start_at_ = steady(); last_save_at_ = start_at_;
       dirty_ = save_failed_ = video_requested_ = false; task_log_ = log; camera_log_.clear();
@@ -578,7 +596,7 @@ private:
     camera_.stop(); backend_.stop();
     std::lock_guard<std::mutex> lock(mutex_); clear_inputs_locked();
     phase_ = task_state_ = "STANDBY"; mode_ = "standby"; bundle_id_.clear();
-    task_id_.clear();task_requests_.reset("");autonomy_state_=json::object();autonomy_at_=-1e9;pending_halt_id_.clear();
+    task_id_.clear();task_requests_.reset("");defaults_saved_id_.clear();defaults_error_.clear();autonomy_state_=json::object();autonomy_at_=-1e9;pending_halt_id_.clear();
     if(!status_.empty()){status_["autonomy"]=json::object();status_["halt_pending"]=false;status_["autonomy_age_ms"]=-1;}
     busy_ = dirty_ = save_failed_ = video_requested_ = backend_started_ = false;
     completed_operation_ = operation_; error_.clear(); result_ = "本次任务已结束，硬件任务已退出；网页待命。";
@@ -591,6 +609,11 @@ private:
       if (!managed_) return response({{"error", "旧终端入口不提供任务切换，请使用常驻平板入口"}}, 409);
       if (!operators_.connected(input.value("session", ""))) return response({{"error", "需要已连接的设备会话"}}, 403);
       if (busy_ && !(target == "/api/end" && task_state_ == "STARTING")) return response({{"error", "操作执行中"}}, 409);
+      if(autonomy_enabled_&&(target=="/api/start"||target=="/api/restart")){
+        if(defaults_save_pending_)return response({{"error","新任务尚未启动：等待默认参数保存完成"}},409);
+        try{(void)load_tuning_defaults(tuning_defaults_file_);}
+        catch(const std::exception&e){return response({{"error",std::string("新任务尚未启动：默认配置校验失败；保留原文件，请恢复有效配置：")+e.what()}},409);}
+      }
       if (target == "/api/start") {
         if (inspection_blocks_mapping(inspection_port_)) return response({{"error", "巡检还在进行，请先在巡检页取消或等这轮结束"}}, 409);
         if (task_state_ != "STANDBY") return response({{"error", "请先结束或重启当前任务"}}, 409);
@@ -720,7 +743,11 @@ private:
           if(manual_handover_.empty()){
             task_requests_.cancel_continuations("遥控权交接已撤销待执行的继续请求，车辆保持停车");
             manual_handover_=id;manual_handover_at_=steady();manual_still_at_=-1;
+            manual_handover_had_wall_bypass_=autonomy_state_.value("walls",json::object()).value("bypass_enabled",false);
             manual_notice_="正在停车交接遥控权；等待新鲜停稳反馈";
+            // 立即发布持有者空窗，避免接管端在下一周期前断开而漏掉旁路撤销信号。
+            std_msgs::msg::String gap;gap.data=json{{"ready",false},{"storage",storage_},{"restricted_manual_active",false},
+              {"restricted_manual_ready",false},{"manual_owner_id",""}}.dump();session_state_->publish(gap);
             publish_request({{"action","stop"},{"session",operators_.owner()}});
             record_event_locked("manual_takeover_requested",{{"client_id",operators_.status(id)["client_id"]}});
           }
@@ -730,7 +757,7 @@ private:
       return response({{"client_id",own["client_id"]},{"is_owner",own["is_owner"]},{"manual_control",manual_status_locked(id)}},action=="claim"?202:200);
     }
     if(target=="/api/autonomy") {
-      std::lock_guard<std::mutex> lock(mutex_);
+      std::unique_lock<std::mutex> lock(mutex_);
       if(!operators_.connected(input.value("session","")))return response({{"error","需要已连接的设备会话"}},403);
       const auto action=input.at("action").get<std::string>();
       if(input.contains("restricted")&&!input["restricted"].is_boolean())return response({{"error","restricted必须为布尔值"}},400);
@@ -743,7 +770,7 @@ private:
       if(!autonomy_enabled_||(!TaskRequests::stopping(action)&&(busy_||steady()-autonomy_at_>.5)))return response({{"error","自主建图未就绪，没有下发新目标；检查车端任务状态"}},409);
       if(!TaskRequests::stopping(action)&&!pending_halt_id_.empty())return response({{"error","停车请求尚待车端确认，没有提交新操作；等待导航终态与停稳"}},409);
       if(!TaskRequests::stopping(action)&&action!="recheck"&&!restricted&&!pending_check_id_.empty())return response({{"error","重新检查尚未结束，没有提交新操作；请等待检查结果，也可停车中止"}},409);
-      if(action!="start"&&action!="resume"&&action!="pause"&&action!="manual"&&action!="finish"&&action!="return"&&action!="recheck"&&action!="halt"&&action!="set_speed")return response({{"error","操作无效"}},400);
+      if(action!="start"&&action!="resume"&&action!="pause"&&action!="manual"&&action!="finish"&&action!="return"&&action!="recheck"&&action!="halt"&&action!="set_speed"&&!live_action(action))return response({{"error","操作无效"}},400);
       if(action=="recheck"&&save_failed_)return response({{"error","故障候选尚未保存完成，未开始重新检查；请查看保存错误并恢复磁盘或SLAM保存服务，车端会重试保存。也可结束本次任务"}},409);
       if(action=="recheck"||action=="start"||action=="resume"||action=="return"||action=="manual"){
         if(managed_&&task_state_!="RUNNING")return response({{"error","车端进程未运行，请先结束故障任务并重新启动；未下发目标"}},409);
@@ -758,13 +785,41 @@ private:
         if(!std::isfinite(speed)||speed<.05||speed>.18)return response({{"error","调速未提交：允许范围0.05～0.18米/秒"}},400);
         extra["speed_mps"]=speed;
       }
+      if(live_action(action)){
+        if(!input.contains("task_id")||!input.contains("operation_epoch")||!input.contains("request_id"))return response({{"error","在线操作需要本轮task_id、operation_epoch和request_id；未提交"}},400);
+        try{extra=validate_live_request(action,input);}
+        catch(const std::exception&e){return response({{"error",std::string("网页参数未提交：")+e.what()}},400);}
+        if(managed_&&task_state_!="RUNNING")return response({{"error","本轮任务未运行，在线操作未提交"}},409);
+        if(action=="set_wall_bypass"){
+          const auto session=input.at("session").get<std::string>();
+          if(extra.at("enabled").get<bool>()&&(!manual_handover_.empty()||operators_.owner()!=session))return response({{"error","人工旁路未启用：请先取得遥控权并等待交接完成；关闭旁路仍可由任一已连接设备执行"}},409);
+          extra["bypass_owner_id"]=operators_.status(session).value("client_id",std::string());
+        }
+        if(action=="save_tuning"){
+          if(defaults_save_pending_)return response({{"error","上一次默认参数尚在保存，未重复提交"}},409);
+          try{(void)stable_tuning_defaults(autonomy_state_);}
+          catch(const std::exception&e){return response({{"error",std::string("默认参数未保存：")+e.what()}},409);}
+        }
+      }
       const auto id=input.value("request_id",nonce());
       const auto submission=task_requests_.submit(id,action,extra,steady(),input.value("operation_epoch",json(nullptr)),action=="recheck"?pending_check_id_:std::string());
       if(!submission.error.empty())return response({{"error",submission.error},{"request_id",id}},409);
       if(action=="recheck")pending_check_id_=submission.canonical;
       if(TaskRequests::stopping(action)||restricted)pending_check_id_.clear();
-      if(submission.forward){
-        if(action!="set_speed")publish_request({{"action","stop"},{"session",operators_.owner()}});
+      if(submission.forward&&action=="save_tuning"){
+        const auto snapshot=stable_tuning_defaults(autonomy_state_);const auto saved_task=task_id_;const auto canonical=submission.canonical;
+        defaults_save_pending_=true;defaults_error_.clear();const double started=steady();
+        // 小文件落盘也可能等待磁盘；释放任务锁，避免拖慢控制与停车回调。
+        lock.unlock();std::string failure;
+        try{save_tuning_defaults(tuning_defaults_file_,snapshot);}catch(const std::exception&e){failure=e.what();}
+        lock.lock();defaults_save_pending_=false;
+        record_event_locked("tuning_defaults_saved",{{"task_id",saved_task},{"request_id",id},{"canonical_request_id",canonical},{"elapsed_seconds",steady()-started},{"result",failure.empty()?"accepted":"rejected"},{"reason",failure.empty()?"原任务稳定读回已保存，仅影响以后启动的任务":failure}});
+        if(saved_task!=task_id_)return response({{"error",failure.empty()?"默认参数已保存，但本轮任务已切换；请刷新状态后确认新任务读回":"默认保存失败且任务已切换："+failure},{"request_id",id}},409);
+        if(failure.empty()){defaults_saved_id_=canonical;defaults_error_.clear();task_requests_.acknowledge(canonical,"accepted","已保存稳定读回参数，后续新任务加载；本轮临时墙不保存");}
+        else {defaults_error_="默认参数未保存："+failure;task_requests_.acknowledge(canonical,"rejected",defaults_error_);}
+        if(!failure.empty())return response({{"error",defaults_error_},{"request_id",id}},409);
+      }else if(submission.forward){
+        if(action!="set_speed"&&!online_live_action(action))publish_request({{"action","stop"},{"session",operators_.owner()}});
         // 网页暂停统一走可中止恢复的停车动作，避免旧页面的暂停在恢复阶段被拒绝。
         send_autonomy(action=="pause"?"halt":action,submission.canonical,extra);
       }
@@ -923,7 +978,9 @@ private:
       {"limits", {{"slow", {0.05, 0.10}}, {"normal", {0.10, 0.20}}, {"fast", {0.18, 0.36}}}}, {"range_m", 3.0},
       {"versions", versions_}, {"offline_validation_is_not_hardware_acceptance", true}};
     if(autonomy_enabled_){
-      std::lock_guard<std::mutex> lock(mutex_);manifest["autonomy"]=autonomy_state_;manifest["diagnostic_only"]=diagnostic;
+      std::lock_guard<std::mutex> lock(mutex_);manifest["autonomy"]=autonomy_state_;
+      // 人工墙仅限当前任务；工程元数据也不携带可被误继承的墙状态。
+      manifest["autonomy"].erase("walls");manifest["diagnostic_only"]=diagnostic;
       manifest["review_required"]=true;
       manifest["control_mode"]=control_mode_;manifest["explore_commit"]="326cf8a0b487c34246bb8f3326afbcd69576dc60";
       manifest["filter"]="laser_filters 2.0.10 Speckle Distance";
@@ -963,9 +1020,10 @@ private:
     }
   }
   fs::path web_root_, root_, bundle_, log_root_, task_log_, camera_log_;
+  fs::path tuning_defaults_file_;std::string defaults_saved_id_,defaults_error_;bool defaults_save_pending_=false;
   std::string mode_, bundle_id_, phase_, guard_session_, error_, result_, prepare_exe_, last_saved_bundle_;
   OperatorSessions operators_;TaskRequests task_requests_;
-  std::string manual_handover_,manual_notice_;double manual_handover_at_=-1,manual_still_at_=-1;
+  std::string manual_handover_,manual_notice_;double manual_handover_at_=-1,manual_still_at_=-1;bool manual_handover_had_wall_bypass_=false;
   std::string task_state_ = "STANDBY";
   std::string slam_params_file_;
   TaskProcess backend_, camera_;

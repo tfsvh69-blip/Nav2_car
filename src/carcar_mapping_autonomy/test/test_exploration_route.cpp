@@ -3,6 +3,7 @@
 #include <fstream>
 #include "carcar_mapping_autonomy/exploration_route.hpp"
 #include "carcar_mapping_autonomy/map_geometry.hpp"
+#include "carcar_mapping_autonomy/observation_selector.hpp"
 namespace ca=carcar_mapping_autonomy;
 static ca::ExplorationRouteInput scenario(bool closed=false){
   ca::ExplorationRouteInput j;auto m=std::make_shared<nav_msgs::msg::OccupancyGrid>();
@@ -21,6 +22,40 @@ TEST(ExplorationRoute, CroppedOpenRoomProducesMultipleSafeDistinctWaypoints){
 }
 TEST(ExplorationRoute, ObservedClosedWallsHaveNoFrontiers){
   const auto result=ca::exploration_route(scenario(true));EXPECT_EQ(result.frontiers,0U);EXPECT_TRUE(result.route.empty());
+}
+TEST(ExplorationRoute, TemporaryWallExcludesBlockedFrontiersWithoutChangingRawMap){
+  auto input=scenario();input.observation_map=input.map;
+  auto constrained=std::make_shared<nav_msgs::msg::OccupancyGrid>(*input.map);
+  // 墙连接图框上下边界，右侧只能穿墙到达；允许范围内的前沿仍继续探索。
+  for(unsigned y=0;y<constrained->info.height;++y)constrained->data[y*100+60]=100;
+  input.map=constrained;const auto result=ca::exploration_route(input);
+  ASSERT_TRUE(result.wall_exclusions.is_object())<<result.reason;
+  EXPECT_GT(result.wall_exclusions.at("frontier_cells").get<size_t>(),0U);
+  for(const auto&p:result.route)EXPECT_LT(p.target.x,.5);
+  EXPECT_EQ(input.observation_map->data[60],0);
+}
+TEST(ExplorationRoute, ArtificialKnownCellIsNotCountedAsObservedGain){
+  auto input=scenario();auto raw=std::make_shared<nav_msgs::msg::OccupancyGrid>(*input.map);
+  const auto index=ca::ObservationSelector::Search::cell(*raw,{1.05,.05,0});ASSERT_TRUE(index);
+  raw->data[*index]=-1;input.observation_map=raw;
+  auto constrained=std::make_shared<nav_msgs::msg::OccupancyGrid>(*raw);constrained->data[*index]=100;input.map=constrained;
+  const uint64_t key=uint64_t(10)<<32;
+  input.visits.push_back({{1,.05,0},1.,100.,true,{key},1});
+  const auto result=ca::exploration_route(input);ASSERT_EQ(result.observations.size(),1U);
+  EXPECT_EQ(result.observations[0].at("observed_known_m2"),0.);
+}
+TEST(ExplorationRoute, WallGapTooNarrowForBodyDoesNotKeepUnreachableFrontierAlive){
+  auto input=scenario(true);auto raw=std::make_shared<nav_msgs::msg::OccupancyGrid>(*input.map);
+  for(unsigned y=20;y<80;++y)for(unsigned x=80;x<99;++x)raw->data[y*100+x]=-1;
+  input.observation_map=raw;
+  auto constrained=std::make_shared<nav_msgs::msg::OccupancyGrid>(*raw);
+  // 一格缝隙让点机器人能连通，但车体无法通过；原图对照仍可安全到达右侧观测点。
+  for(unsigned y=1;y<99;++y)if(y!=97)constrained->data[y*100+60]=100;
+  input.map=constrained;const auto result=ca::exploration_route(input);
+  EXPECT_TRUE(result.route.empty())<<result.reason;
+  EXPECT_EQ(result.frontiers,0U)<<result.reason;
+  ASSERT_TRUE(result.wall_exclusions.is_object());
+  EXPECT_GT(result.wall_exclusions.at("frontier_groups").get<size_t>(),0U);
 }
 TEST(ExplorationRoute, NewlyObservedAreaInvalidatesOnlyCommitmentsWithoutRemainingGain){
   const auto initial=ca::exploration_route(scenario());ASSERT_EQ(initial.route.size(),2U);

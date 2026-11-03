@@ -1,0 +1,27 @@
+# 只覆盖在线应用入口；原始SLAM地图仍独立保留。
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      # 墙先作为障碍参与膨胀，末端filter再保留不可穿越约束。
+      plugins: [task_wall_layer, obstacle_layer, inflation_layer]
+      task_wall_layer:
+        plugin: nav2_costmap_2d::StaticLayer
+        map_topic: /mapping/walls/mask
+        map_subscribe_transient_local: true
+        subscribe_to_updates: false
+        track_unknown_space: false
+        use_maximum: true
+      filters: [task_wall_filter]
+      task_wall_filter:
+        plugin: nav2_costmap_2d::KeepoutFilter
+        enabled: true
+        filter_info_topic: /mapping/walls/filter_info
+      inflation_layer:
+        plugin: carcar_mapping_autonomy/RevisionInflationLayer
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      static_layer:
+        map_topic: /mapping/navigation_map
+      inflation_layer:
+        plugin: carcar_mapping_autonomy/RevisionInflationLayer

@@ -7,6 +7,7 @@ struct ExplorationPoint {Pose target,frontier;double gain=0,cost=0;std::vector<u
 struct ExplorationVisit {Pose target;double gain=0,until=0;bool reached=false;std::vector<uint64_t> predicted_cells{};uint64_t revision=0;};
 struct ExplorationRouteInput {
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr map;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr observation_map;
   std::shared_ptr<const nav_msgs::msg::Path> active_path;
   Task task;Pose current;
   uint64_t revision=0,generation=0,navigation_generation=0,epoch=0;
@@ -19,6 +20,7 @@ struct ExplorationRouteResult {
   std::vector<ExplorationPoint> route;
   Json candidates=Json::array();
   Json observations=Json::array();double newly_known_m2=0;
+  Json wall_exclusions=nullptr;
   size_t frontiers=0;bool active_safe=true;std::string reason;
   double computation_ms=0;
 };

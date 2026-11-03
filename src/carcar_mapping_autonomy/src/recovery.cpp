@@ -24,6 +24,7 @@
 #include <nav2_map_server/map_io.hpp>
 #include "carcar_mapping_autonomy/recovery_core.hpp"
 #include "carcar_mapping_autonomy/recovery_commit_guard.hpp"
+#include "carcar_mapping_autonomy/recovery_wall_review.hpp"
 #include "carcar_mapping_autonomy/recovery_artifact.hpp"
 #include "carcar_mapping_autonomy/recovery_initializer.hpp"
 #include "carcar_mapping_autonomy/snapshot_protocol.hpp"
@@ -232,6 +233,7 @@ private:
         try{initializer_future_.get();}catch(const std::exception&){}
       }
       generation_=generation;request_id_=id;++token_;begin_=steady();reason_.clear();failed_stage_.clear();failed_elapsed_=0;verification_.reset();
+      wall_review_wait_.reset();
       pending_commit_request_.clear();commit_anchor_.reset();commit_odometry_.reset();commit_guard_.reset(steady());
       rollback_recovery_=action=="recover_rollback";rollback_candidate_.reset();trial_pose_.reset();localization_verified_frames_=0;
       if(rollback_recovery_&&!slam_state_.value("loop_guard",Json::object()).value("rolled_back",false))
@@ -438,6 +440,7 @@ private:
     open_then("SUCCEEDED");
   }
   void fail(const std::string&why){
+    wall_review_wait_.update(steady(),false);
     if(phase_!="FAILED"){failed_stage_=phase_;failed_elapsed_=std::max(0.,steady()-begin_);}
     phase_="FAILED";reason_=why;freeze_=true;requires_stop_=true;trial_permit_=false;++token_;
     if(!pending_commit_request_.empty())RCLCPP_WARN(get_logger(),"待处理恢复提交已终止 request_id=%s reason=%s；未确认恢复开门",pending_commit_request_.c_str(),why.c_str());
@@ -504,7 +507,11 @@ private:
       return;
     }
     if(phase_=="FAILED"||phase_=="DISTURBED"||idle())return;
-    if(t-begin_>timeout_)throw std::runtime_error("自动恢复总时限已耗尽，未恢复运动");
+    const bool wall_wait=phase_=="VERIFY_READY"&&t-autonomy_at_<.5&&settled()&&scan_&&t-scan_at_<.5&&
+      ca::wall_review_authorized(autonomy_state_,task_id_,generation_);
+    wall_review_wait_.update(t,wall_wait);
+    if(wall_review_wait_.expired(t))throw std::runtime_error("人工墙位置复核超过300秒，恢复关闭并保持锁停，未恢复运动");
+    if(t-begin_-wall_review_wait_.elapsed(t)>timeout_)throw std::runtime_error("自动恢复总时限已耗尽，未恢复运动");
     if(phase_=="WAITING_ROLLBACK_STABLE"){
       if(mapping_range_ready_&&settled()&&map_&&pose_&&t-map_at_<1&&t-slam_at_<1&&
          slam_state_.value("sequence",uint64_t(0))>=3&&!slam_state_.value("loop_active",false))close_then("SAVE_GRAPH");
@@ -650,12 +657,14 @@ private:
     const auto stage=phase_=="FAILED"?failed_stage_:phase_;
     const double elapsed=phase_=="FAILED"?failed_elapsed_:begin_>0?std::max(0.,steady()-begin_):0;
     const double remaining=phase_=="FAILED"?0:stage=="LOCALIZING"?std::max(0.,25-(steady()-localization_begin_)):
-      stage=="INITIALIZING"?std::max(0.,10-(steady()-localization_begin_)):std::max(0.,timeout_-elapsed);
+      stage=="INITIALIZING"?std::max(0.,10-(steady()-localization_begin_)):std::max(0.,timeout_-elapsed+wall_review_wait_.elapsed(steady()));
     j["progress"]={{"stage",stage},{"failed_stage",failed_stage_},{"elapsed_seconds",elapsed},
       {"remaining_seconds",remaining},{"total_limit_seconds",timeout_},
       {"verified_frames",verification_.count},{"required_frames",stage=="LOCALIZING"?6:stage=="VERIFYING"?3:0}};
     j["mapping_range_m"]=mapping_range_;j["mapping_range_ready"]=mapping_range_ready_;j["mapping_range_waits"]=mapping_range_waits_;
     j["snapshot"]=snapshot_state_;j["online_snapshots"]=online_snapshots_;
+    j["wall_review_wait"]={{"active",wall_review_wait_.active()},{"elapsed_seconds",wall_review_wait_.elapsed(steady())},
+      {"limit_seconds",ca::RecoveryWallReviewWait::limit_seconds},{"expired",wall_review_wait_.expired(steady())}};
     const bool commit_ready=phase_=="VERIFY_READY"&&!opening_&&commit_guard_.ready&&scan_&&
       steady()-scan_at_<=.5&&fresh(scan_->header.stamp)&&
       rclcpp::Time(scan_->header.stamp).nanoseconds()==commit_guard_.scan_stamp_ns&&settled();
@@ -674,6 +683,7 @@ private:
   tf2_ros::Buffer tf_;tf2_ros::TransformListener listener_;
   std::filesystem::path root_,pending_path_,suspect_path_;std::string task_id_,scan_topic_,phase_="WARMING",request_id_,reason_,gate_next_;
   std::string failed_stage_;double failed_elapsed_=0;
+  ca::RecoveryWallReviewWait wall_review_wait_;
   uint64_t generation_=0,token_=0,artifact_token_=0,check_token_=0,before_restore_=0,checkpoint_sequence_=0,map_count_=0,checkpoint_map_before_=0,validation_token_=0,suspect_token_=0,initializer_token_=0;
   bool imu_required_=true,still_=false,terminal_=false,freeze_=false,requires_stop_=false,opening_=false,trial_permit_=false,checkpoint_wait_map_=false;
   bool checkpoint_retry_pending_=false;unsigned checkpoint_retry_count_=0;double checkpoint_revalidation_deadline_=-1;

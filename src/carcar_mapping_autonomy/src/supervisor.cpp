@@ -36,6 +36,8 @@
 #include "carcar_mapping_autonomy/costmap_rebuild.hpp"
 #include "carcar_mapping_autonomy/map_fingerprint.hpp"
 #include "carcar_mapping_autonomy/continuous_exploration.hpp"
+#include "carcar_mapping_autonomy/task_walls.hpp"
+#include "carcar_mapping_autonomy/recovery_wall_review.hpp"
 #include "carcar_mapping_autonomy/supervisor_output.hpp"
 namespace ca=carcar_mapping_autonomy;
 using Nav=nav2_msgs::action::NavigateToPose;
@@ -91,7 +93,21 @@ public:
     if(declare_parameter("continuous_exploration",false))continuous_=std::make_unique<ca::ContinuousExploration>(*this,
       declare_parameter("continuous_behavior_tree",ament_index_cpp::get_package_share_directory("carcar_mapping_autonomy")+"/behavior_trees/navigate_through_poses_exploration.xml"));
     obstacle_escape_=std::make_unique<ca::ObstacleEscape>(*this);
-    if(continuous_&&obstacle_escape_->enabled())throw std::runtime_error("自动避障候选尚未接入连续路线，请分开验证");
+    live_controls_enabled_=declare_parameter("live_controls_enabled",false);
+    handoff_distance_=declare_parameter("handoff_distance_m",.25);
+    if(!std::isfinite(handoff_distance_)||handoff_distance_<.15||handoff_distance_>.8)throw std::runtime_error("提前衔接距离须为0.15～0.80米");
+    if(continuous_)continuous_->set_handoff_distance(handoff_distance_);
+    escape_field_validated_=declare_parameter("obstacle_escape_field_validated",false);
+    if(live_controls_enabled_){
+      tuning_requests_=create_publisher<std_msgs::msg::String>("/mapping/tuning/request",rclcpp::QoS(10));
+      wall_requests_=create_publisher<std_msgs::msg::String>("/mapping/walls/request",rclcpp::QoS(10));
+      tuning_sub_=create_subscription<std_msgs::msg::String>("/mapping/tuning/state",rclcpp::QoS(1).reliable().transient_local(),[this](const std_msgs::msg::String&m){try{
+        auto value=ca::Json::parse(m.data);if(value.value("task_id",std::string())==task_id_){tuning_state_=std::move(value);tuning_at_=seconds();}
+      }catch(...){}});
+      wall_sub_=create_subscription<std_msgs::msg::String>("/mapping/walls/state",rclcpp::QoS(1).reliable().transient_local(),[this](const std_msgs::msg::String&m){try{
+        auto value=ca::Json::parse(m.data);if(value.value("task_id",std::string())==task_id_){wall_state_=std::move(value);walls_at_=seconds();}
+      }catch(...){}});
+    }
     auto_sweep_enabled_=declare_parameter("auto_execution_sweep",false);
     navigation_speed_=std::make_unique<ca::MappingNavigationSpeed>(*this);
     direction_min_=declare_parameter("direction_ratio_min",.01);
@@ -193,7 +209,9 @@ public:
         if(strict_still_since_<0)strict_still_since_=seconds();
       }else strict_still_since_=-1;
     });
-    grid_=create_subscription<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local(),[this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){
+    raw_grid_=create_subscription<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local(),
+      [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr map){if(ca::grid_valid(*map)){raw_map_=std::move(map);raw_map_at_=seconds();}});
+    grid_=create_subscription<nav_msgs::msg::OccupancyGrid>(declare_parameter("navigation_map_topic",std::string("/map")),rclcpp::QoS(1).reliable().transient_local(),[this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){
       if(!ca::grid_valid(*m))return;
       if(!map_||!ca::same_grid(*map_,*m)){++map_revision_;map_changed_=true;map_fingerprint_=ca::map_content_fingerprint(*m);}
       map_=m;map_at_=seconds();++map_sequence_;
@@ -227,7 +245,9 @@ public:
       }
       covariance_=q;last_pose_=p;last_pose_wheel_=wheel_;have_pose_=true;
     });
-    ready_=create_subscription<std_msgs::msg::String>("/mapping/session/state",rclcpp::QoS(1),[this](const std_msgs::msg::String&m){try{auto j=ca::Json::parse(m.data);session_ready_=j.value("ready",false);const auto storage=j.value("storage",ca::Json::object());storage_reason_=storage.value("start_allowed",true)?"":storage.value("reason",std::string("磁盘空间检查未通过"));session_at_=seconds();}catch(...){session_ready_=false;}});
+    ready_=create_subscription<std_msgs::msg::String>("/mapping/session/state",rclcpp::QoS(1),[this](const std_msgs::msg::String&m){try{auto j=ca::Json::parse(m.data);session_ready_=j.value("ready",false);session_manual_owner_=j.value("manual_owner_id",std::string());
+      if(wall_bypass_&&session_manual_owner_!=wall_bypass_owner_)revoke_wall_bypass("遥控持有者已改变或交接中，人工墙旁路已撤销，须重新检查定位");
+      const auto storage=j.value("storage",ca::Json::object());storage_reason_=storage.value("start_allowed",true)?"":storage.value("reason",std::string("磁盘空间检查未通过"));session_at_=seconds();}catch(...){session_ready_=false;session_manual_owner_.clear();if(wall_bypass_)revoke_wall_bypass("遥控会话无效，人工墙旁路已撤销，须重新检查定位");}});
     manual_=create_subscription<geometry_msgs::msg::Twist>("/mapping/manual_cmd_vel",rclcpp::QoS(1),[this](const geometry_msgs::msg::Twist&m){if(finite_twist(m)){manual_velocity_=m;manual_at_=seconds();}});
     automatic_=create_subscription<geometry_msgs::msg::Twist>("/mapping/auto_cmd_vel",rclcpp::QoS(1),[this](const geometry_msgs::msg::Twist&m){if(finite_twist(m)){auto_velocity_=m;auto_at_=seconds();}});
     collision_=create_subscription<geometry_msgs::msg::Twist>("/mapping/collision_output",rclcpp::QoS(1),[this](const geometry_msgs::msg::Twist&m){if(finite_twist(m)){protected_velocity_=m;collision_at_=seconds();}});
@@ -262,7 +282,7 @@ public:
     proxy_server_=rclcpp_action::create_server<Nav>(this,"/mapping/explore_navigate_to_pose",
       [this](const rclcpp_action::GoalUUID&,std::shared_ptr<const Nav::Goal> g){
         if(continuous_||task_.phase!="EXPLORING"||operation_||obstacle_escape_->active()||loop_waiting_map_||checkpoint_requested_||recovery_pending_||
-           (recovery_enabled_&&recovery_state_.value("gate_write",false))||!healthy()||g->pose.header.frame_id!="map")return rclcpp_action::GoalResponse::REJECT;
+           (recovery_enabled_&&recovery_state_.value("gate_write",false))||!live_start_block().empty()||!healthy()||g->pose.header.frame_id!="map")return rclcpp_action::GoalResponse::REJECT;
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},
       [this](std::shared_ptr<Proxy> h){if(operation_&&operation_->proxy==h){
         if(operation_->cancel_reason.empty())operation_->cancel_reason="探索Action客户端请求取消；进展超时或暂停原因见同goal_id探索日志";
@@ -300,6 +320,36 @@ private:
     std::string message(static_cast<size_t>(length)+1,'\0');std::snprintf(message.data(),message.size(),format,args...);
     message.resize(length);telemetry_->event(severity,std::move(message));
   }
+  // DEBUG-health-20261103：只记录探测事实；不修改1秒请求重试、2秒答复有效期或inactive判定。
+  void nav2_probe_event(const std::string&type,uint64_t generation,int64_t request_id,double at,
+      ca::Json success=nullptr,double latency=0,bool ignored=false){
+    ca::Json event{{"event",type},{"generation",generation},{"requestid",request_id},{"steady_s",at},
+      {"success",success},{"elapsed_s",latency},{"ignored",ignored}};
+    nav2_health_events_.push_back(event);while(nav2_health_events_.size()>16)nav2_health_events_.pop_front();
+    nav2_health_log_pending_.push_back(std::move(event));
+    if(nav2_health_log_pending_.size()>16){nav2_health_log_pending_.pop_front();++nav2_health_log_dropped_;}
+  }
+  void flush_nav2_probe_events(double at){
+    if(nav2_health_log_pending_.empty()||at-nav2_health_log_at_<.5)return;
+    ca::Json events=ca::Json::array();bool negative=false;
+    for(const auto&event:nav2_health_log_pending_){events.push_back(event);
+      negative=negative||event.value("event",std::string())=="timeout"||
+        (event.contains("success")&&event["success"].is_boolean()&&!event["success"].get<bool>());}
+    nav2_health_log_pending_.clear();nav2_health_log_at_=at;
+    queue_log(negative?30:20,"DEBUG-health-20261103 events=%s",events.dump().c_str());
+  }
+  ca::Json nav2_health_state()const{
+    const double at=seconds();ca::Json events=ca::Json::array();for(const auto&event:nav2_health_events_)events.push_back(event);
+    return {{"active",nav2_active_},{"last_response_age_s",nav2_health_accepted_?ca::Json(at-nav2_ready_at_):ca::Json(nullptr)},
+      {"last_probe_age_s",nav2_health_sends_?ca::Json(at-nav2_probe_at_):ca::Json(nullptr)},
+      {"pending",nav2_ready_request_>=0},{"probe_generation",nav2_probe_generation_},
+      {"requestid",nav2_health_sends_?ca::Json(nav2_health_request_id_):ca::Json(nullptr)},
+      {"service_ready",nav2_health_service_observed_?ca::Json(nav2_health_service_ready_):ca::Json(nullptr)},
+      {"send_count",nav2_health_sends_},{"response_count",nav2_health_responses_},{"timeout_count",nav2_health_timeouts_},
+      {"accepted_response_count",nav2_health_accepted_},{"ignored_response_count",nav2_health_ignored_},
+      {"last_result",nav2_health_last_result_},{"last_response_latency_s",nav2_health_accepted_?ca::Json(nav2_health_response_latency_):ca::Json(nullptr)},
+      {"steady_s",at},{"events",events},{"log_dropped",nav2_health_log_dropped_}};
+  }
   bool fresh(const builtin_interfaces::msg::Time&s)const{const double a=(now()-rclcpp::Time(s)).seconds();return std::isfinite(a)&&a>=-.1&&a<=.5;}
   bool still()const{return seconds()-odom_at_<.5&&still_since_>=0&&seconds()-still_since_>=.3;}
   std::string local_manual_block(){
@@ -328,11 +378,11 @@ private:
       recovery_state_.value("gate_write",false)&&recovery_state_.value("phase",std::string())=="FAILED"&&
       slam_at_>=restricted_cancel_at_&&seconds()-slam_at_<.5&&!slam_status_.value("admission_enabled",true);
   }
-  void start_restricted_manual(){
+  void start_restricted_manual(bool allow_manual=false){
     obstacle_escape_->cancel("受限人工接管取消自动避障");
     const auto blocked=local_manual_block();
     if(!blocked.empty())throw std::runtime_error("受限接管未执行："+blocked+"；保持停车");
-    if(task_.phase!="FAULT"&&task_.phase!="PAUSED"&&task_.phase!="RECOVERING"&&task_.phase!="CHECKING")
+    if(task_.phase!="FAULT"&&task_.phase!="PAUSED"&&task_.phase!="RECOVERING"&&task_.phase!="CHECKING"&&!(allow_manual&&task_.phase=="MANUAL"))
       throw std::runtime_error("请先暂停自动任务，再请求受限接管");
     operator_hold_=true;requested_auto_=false;operator_recovery_=false;recovery_pending_=false;
     checkpoint_requested_=false;checkpoint_verified_=false;
@@ -381,15 +431,17 @@ private:
   bool healthy(bool ignore_quality=false,bool checking_session=false){
     const double t=seconds();
     auto reject=[this](const std::string&why){health_reason_=why;return false;};
+    const bool raw_check=live_controls_enabled_&&ignore_quality&&checking_session;
     if(!observation_healthy(checking_session))return false;
+    if(!ignore_quality&&wall_recheck_required_)return reject("临时墙旁路后须重新检查定位，未恢复自动运动");
     if(!ignore_quality&&restricted_freeze_hold_)return reject("受限接管后地图保持冻结，须重新检查定位");
     if(!ignore_quality&&!quality_fault_.empty())return reject(quality_fault_);
     if(!ignore_quality&&recovery_enabled_&&(recovery_state_.value("gate_write",false)||recovery_state_.value("requires_stop",false)))
       return reject("地图写入已冻结，位置尚待验证；保持停车，可在暂停后重新检查");
-    if(t-map_at_>10||!map_)return reject("地图缺失或超过10秒未更新");
+    if(raw_check?(!raw_map_||t-raw_map_at_>10):(!map_||t-map_at_>10))return reject("地图缺失或超过10秒未更新");
     if(!have_pose_)return reject("尚无有效SLAM位姿");
     if(!nav2_active_||t-nav2_ready_at_>2)return reject("Nav2生命周期组合尚未全部激活或健康应答过期");
-    if(t-local_pose_at_>1||t-global_pose_at_>1)return reject("Nav2局部／全局代价图使用的车位陈旧；检查内部TF与代价图线程");
+    if(!raw_check&&(t-local_pose_at_>1||t-global_pose_at_>1))return reject("Nav2局部／全局代价图使用的车位陈旧；检查内部TF与代价图线程");
     try{
       const auto map_odom=tf_.lookupTransform("map","odom",tf2::TimePointZero);
       const auto odom_base=tf_.lookupTransform("odom","base_footprint",tf2::TimePointZero);
@@ -412,6 +464,7 @@ private:
   void enable_explore(bool v){std_msgs::msg::Bool m;m.data=v&&!continuous_;explore_pub_->publish(m);}
   void invalidate_navigation(){if(continuous_)continuous_->stop();std_msgs::msg::UInt64 m;m.data=++navigation_generation_;navigation_generation_pub_->publish(m);}
   std::string recovery_request(const std::string&action){
+    if(action=="recover"||action=="recover_rollback")recovery_wall_wait_.reset();
     const auto id=task_id_+"-recovery-"+std::to_string(++recovery_request_sequence_);
     std_msgs::msg::String m;m.data=ca::Json{{"action",action},{"task_id",task_id_},
       {"generation",task_.generation},{"request_id",id},{"navigation_generation",navigation_generation_},
@@ -496,14 +549,22 @@ private:
     auto set=[&](const std::string&name,const std::string&reason){actions[name]={{"enabled",reason.empty()},{"reason",reason}};};
     const auto idle_reason=(!terminal()||!still())?"等待导航取消与轮式停稳":!ok?health:automatic_start_block();
     set("resume",task_.phase=="MANUAL"||task_.phase=="PAUSED"?idle_reason:"请先暂停或重新检查");
-    set("pause",task_.automatic()?"":"当前没有自动行驶任务");
+    const bool startup_waiting=requested_auto_&&task_.phase=="MANUAL";
+    set("pause",task_.automatic()||startup_waiting?"":"当前没有自动行驶任务");
     const bool handoff=task_.automatic()||task_.phase=="PAUSED";
-    set("manual",!handoff?"请先完成重新检查":!ok?health:"");
+    set("manual",startup_waiting?"":!handoff?"请先完成重新检查":!ok?health:live_start_block());
     const bool returnable=handoff||task_.phase=="MANUAL";
-    set("return",task_.phase=="RETURNING"?"返程已在执行，沿用原起点与预算":!returnable?"请先完成重新检查":!task_.anchored?"尚未记录本轮起点":!ok?health:"");
+    set("return",task_.phase=="RETURNING"?"返程已在执行，沿用原起点与预算":!returnable?"请先完成重新检查":!task_.anchored?"尚未记录本轮起点":!ok?health:live_start_block());
     const bool restricted_stage=task_.phase=="FAULT"||task_.phase=="PAUSED"||task_.phase=="RECOVERING"||task_.phase=="CHECKING";
     set("manual_restricted",!restricted_stage?"请先暂停自动任务":local_manual_block());
     set("recheck",recheck_block());set("halt","");
+    if(live_controls_enabled_){
+      const bool review=wall_review_allowed();
+      const bool stage=task_.automatic()||task_.phase=="PAUSED"||task_.phase=="MANUAL"||task_.phase=="FAULT"||review;
+      set("set_walls",!stage?"当前阶段不能修改临时墙":!wall_pending_.empty()?"上一批墙仍在停稳应用":
+        (recovery_pending_&&!review)?"等待原图定位多帧验证完成":tuning_state_.value("pending",false)?"等待参数事务完成":"");
+      set("confirm_walls",!review?"墙位置尚不具备停稳复核资格":!wall_pending_.empty()?"上一批墙仍在应用":"");
+    }
     return actions;
   }
   bool checkpoint_usable()const{
@@ -511,6 +572,7 @@ private:
     return !online_snapshots_||(seconds()-checkpoint_at_>=0&&seconds()-checkpoint_at_<=120);
   }
   std::string automatic_start_block()const{
+    if(const auto block=live_start_block();!block.empty())return block;
     if(!checkpoint_usable()&&!slam_status_.value("startup_closed",true))
       return "自动尚未启动：正在原地累计激光观测，已接纳"+std::to_string(accepted_sequence_)+"帧；补观测结束后检查净空与可信地图，没有下发目标";
     if(recovery_enabled_&&(!checkpoint_usable()||
@@ -553,20 +615,35 @@ private:
         seen_.push_back(id);while(seen_.size()>128)seen_.pop_front();publish_state();return;
       }
       task_.request_id=id;error_.clear();
+      if(action=="halt"||action=="pause"||action=="manual"||action=="return"||action=="finish")live_resume_phase_.clear();
+      if(live_command(j,action,id)){
+        seen_.push_back(id);while(seen_.size()>128)seen_.pop_front();request_result_="accepted";remember_request_result(id);publish_state();return;
+      }
+      const bool cancel_startup=requested_auto_&&task_.phase=="MANUAL"&&(action=="pause"||action=="manual");
+      if(!wall_pending_.empty()&&action!="halt"&&action!="pause"&&!cancel_startup)throw std::runtime_error("临时墙正在停稳应用，未下发其他运动操作；仍可停车");
       if(task_.phase=="FAULT"&&action!="save_done"&&action!="recheck"&&action!="halt"&&!(action=="manual"&&j.value("restricted",false)))throw std::runtime_error("故障锁停：请先重新检查，验证通过后选择后续操作；没有下发目标");
-      if(action=="manual"&&j.value("restricted",false))start_restricted_manual();
-      else if(action=="recheck")start_recheck();
+      if(cancel_startup){
+        // 这里只撤销尚未开始的自动任务；后续手动速度仍须通过健康、参数和墙保护。
+        operator_hold_=true;manual_at_=-1e9;manual_velocity_=geometry_msgs::msg::Twist();
+        begin_stop(action=="manual"?"MANUAL":"PAUSED","操作者取消自动启动等待，保持停车",seconds());
+      }else if(action=="manual"&&j.value("restricted",false))start_restricted_manual();
+      else if(action=="recheck"){start_recheck();wall_recheck_pending_=true;}
       else if(action=="start"||action=="resume"){
         start_automatic(seconds());
       }else if(action=="pause"){
-        if(!task_.automatic())throw std::runtime_error("当前阶段不在自动运动，没有重新启动任务");
-        operator_hold_=true;
-        begin_stop("PAUSED","操作者暂停自动建图",seconds());
+        operator_hold_=true;manual_at_=-1e9;
+        if(recovery_pending_){recovery_request("cancel");recovery_pending_=false;operator_recovery_=false;
+          begin_stop("FAULT","操作者暂停并中止定位恢复，保持冻结",seconds());}
+        else if(task_.automatic()||task_.phase=="STOPPING"||task_.phase=="PAUSED"||!wall_pending_.empty()||tuning_stopped_)
+          begin_stop("PAUSED","操作者暂停自动建图；参数或墙变更完成后仍保持停车",seconds());
+        else throw std::runtime_error("当前阶段不在自动运动，没有重新启动任务");
       }else if(action=="manual"||action=="finish"||action=="return"){
         if(!task_.automatic()&&task_.phase!="PAUSED"&&!(action!="manual"&&task_.phase=="MANUAL"))throw std::runtime_error("当前阶段不允许接管或返程，没有下发新目标");
         if(!healthy())throw std::runtime_error("操作未执行："+health_reason_+"；请先重新检查");
         if(action!="manual"&&!task_.anchored)throw std::runtime_error("尚未记录本轮起点，未下发返程目标");
-        if(action=="manual"){operator_hold_=true;begin_stop("MANUAL","请求手动接管，等待取消与停稳",seconds());}
+        const auto blocked=live_start_block();if(!blocked.empty())throw std::runtime_error(blocked);
+        if(action=="manual"){
+          operator_hold_=true;begin_stop("MANUAL","请求手动接管，等待取消与停稳",seconds());}
         else {
           if(task_.phase=="RETURNING"||(task_.phase=="STOPPING"&&task_.stop_target=="FINISH"))
             throw std::runtime_error("返程已在执行，未重置起点、候选次数或返程预算");
@@ -590,6 +667,171 @@ private:
     remember_request_result(id);
     publish_state();
   }
+  bool wall_map_ready()const{
+    try{
+    if(!map_||!mask_||seconds()-walls_at_>2||wall_state_.value("phase",std::string())!="READY"||
+       wall_state_.value("navigation_fingerprint",std::string())!=std::to_string(map_fingerprint_)||
+       wall_state_.value("applied_navigation_generation",uint64_t{})!=navigation_generation_||
+       wall_state_.value("applied_revision",uint64_t{})!=wall_state_.value("revision",uint64_t{})||
+       mask_status_.value("navigation_generation",uint64_t{})!=navigation_generation_||
+       mask_status_.value("source_fingerprint",std::string())!=std::to_string(map_fingerprint_)||!ca::same_map_geometry(*mask_,*map_))return false;
+    const auto g=wall_state_.value("source_geometry",ca::Json::object());const auto o=g.value("origin",ca::Json::array());
+    return g.value("frame_id",std::string())==map_->header.frame_id&&g.value("width",uint32_t{})==map_->info.width&&g.value("height",uint32_t{})==map_->info.height&&
+      std::abs(g.value("resolution",0.)-map_->info.resolution)<1e-9&&o.is_array()&&o.size()==3&&
+      std::abs(o[0].get<double>()-map_->info.origin.position.x)<1e-8&&std::abs(o[1].get<double>()-map_->info.origin.position.y)<1e-8&&
+      std::abs(o[2].get<double>()-yaw(map_->info.origin.orientation))<1e-8;
+    }catch(const std::exception&){return false;}
+  }
+  std::string live_start_block()const{
+    if(!live_controls_enabled_)return {};
+    if(wall_bypass_||wall_recheck_required_)return "人工墙旁路后须退出旁路并重新检查定位，未允许恢复自动或普通手动";
+    if(!wall_pending_.empty())return "人工墙正在停稳应用，等待约束地图与规划掩膜同步";
+    if(seconds()-tuning_at_>2||!tuning_state_.value("ready",false)||tuning_state_.value("pending",false))
+      return "动态参数尚未完成真实读回与代价图核验，未允许启动运动";
+    if(!wall_map_ready())return "人工墙尚未就绪、位置待复核或约束地图尚未同步，保持停车";
+    return {};
+  }
+  bool wall_review_allowed(){
+    if(!live_controls_enabled_||!has_task_walls()||wall_state_.value("phase",std::string())!="REVIEW_REQUIRED"||
+       seconds()-walls_at_>2||!healthy(true,true)||!raw_map_||!ca::free_footprint(*raw_map_,current_)||!still()||!terminal())return false;
+    if(recovery_pending_)return task_.phase=="RECOVERING"&&recovery_state_.value("phase",std::string())=="VERIFY_READY"&&
+      recovery_state_.value("generation",uint64_t{})==task_.generation&&recovery_state_.value("commit_ready",false);
+    return (task_.phase=="PAUSED"||task_.phase=="MANUAL")&&!wall_bypass_&&!wall_recheck_required_&&
+      !restricted_freeze_hold_&&quality_fault_.empty()&&pending_pose_jump_at_<0&&!slam_status_.value("loop_active",false);
+  }
+  void revoke_wall_bypass(const std::string&reason){
+    wall_bypass_=false;wall_bypass_owner_.clear();wall_recheck_required_=true;wall_recheck_pending_=false;
+    manual_at_=-1e9;manual_velocity_=geometry_msgs::msg::Twist();live_resume_phase_.clear();operator_hold_=true;
+    begin_stop("PAUSED",reason,seconds());
+  }
+  bool has_task_walls()const{return wall_state_.contains("walls")&&wall_state_["walls"].is_array()&&!wall_state_["walls"].empty();}
+  void publish_live(const rclcpp::Publisher<std_msgs::msg::String>::SharedPtr&publisher,const ca::Json&value){std_msgs::msg::String m;m.data=value.dump();publisher->publish(m);}
+  bool live_command(const ca::Json&j,const std::string&action,const std::string&id){
+    const bool tuning=action=="set_tuning"||action=="restore_tuning";
+    const bool wall=action=="set_walls"||action=="confirm_walls";
+    if(!tuning&&!wall&&action!="set_handoff"&&action!="set_escape_enabled"&&action!="set_wall_bypass")return false;
+    if(!live_controls_enabled_)throw std::runtime_error("当前入口未启用在线调参与临时墙");
+    if(tuning){
+      if(!wall_pending_.empty()||recovery_pending_||checkpoint_requested_||
+         (task_.phase!="EXPLORING"&&task_.phase!="RETURNING"&&task_.phase!="MANUAL"&&task_.phase!="PAUSED"))throw std::runtime_error("当前正在停车、恢复或应用墙，未提交参数变更");
+      if(seconds()-tuning_at_>2||!tuning_state_.value("ready",false)||tuning_state_.value("pending",false))throw std::runtime_error("参数事务未就绪或上一批尚未完成");
+      auto request=j;request["action"]=action=="set_tuning"?"apply":"restore";request["generation"]=navigation_generation_;
+      publish_live(tuning_requests_,request);task_.reason="参数请求已转交车端，等待真实读回和代价图更新；车辆按原安全链路行驶";return true;
+    }
+    if(action=="set_handoff"){
+      const double value=j.at("distance_m").get<double>();if(!std::isfinite(value)||value<.15||value>.8)throw std::runtime_error("提前衔接距离须为0.15～0.80米");
+      if(continuous_)continuous_->set_handoff_distance(value);
+      handoff_distance_=value;handoff_request_id_=id;return true;
+    }
+    if(action=="set_escape_enabled"){
+      const bool enabled=j.at("enabled").get<bool>();
+      if(enabled&&!escape_field_validated_)throw std::runtime_error("自动短退尚未完成现场验收；未开放后退，等待受看护专项验证");
+      if(!obstacle_escape_->set_retreat_enabled(enabled))throw std::runtime_error("短退动作正在执行，先停车并等待终态再修改开关");
+      escape_setting_id_=id;return true;
+    }
+    if(action=="set_wall_bypass"){
+      const bool enabled=j.at("enabled").get<bool>();
+      if(enabled&&(task_.automatic()||!terminal()||!still()))throw std::runtime_error("手动旁路未启用：请先暂停并确认停稳");
+      if(enabled&&(seconds()-session_at_>.5||session_manual_owner_.empty()||
+         j.value("bypass_owner_id",std::string())!=session_manual_owner_))
+        throw std::runtime_error("人工墙旁路未启用：请求人不是当前新鲜遥控持有者；请先取得遥控权");
+      if(enabled&&!has_task_walls())throw std::runtime_error("本任务没有人工墙，无需临时旁路");
+      if(enabled){start_restricted_manual(true);wall_recheck_required_=true;live_resume_phase_.clear();}
+      wall_bypass_=enabled;wall_bypass_owner_=enabled?session_manual_owner_:std::string();wall_bypass_id_=id;manual_at_=-1e9;manual_velocity_=geometry_msgs::msg::Twist();
+      task_.reason=enabled?"已明确启用受限手动旁路：人工墙保护不可用，松手停车；退出后须重新检查":"人工墙旁路已退出，等待重新检查定位";
+      if(!enabled){wall_recheck_required_=true;live_resume_phase_.clear();operator_hold_=true;
+        begin_stop("PAUSED",task_.reason,seconds());}
+      return true;
+    }
+    const bool recovery_review=recovery_pending_&&wall_review_allowed();
+    if(!wall_pending_.empty()||tuning_state_.value("pending",false)||(recovery_pending_&&!recovery_review)||checkpoint_requested_)throw std::runtime_error("其他参数、墙或恢复事务尚未结束，未提交临时墙");
+    if(seconds()-walls_at_>2)throw std::runtime_error("临时墙节点状态过期，未提交");
+    if(j.at("navigation_generation").get<uint64_t>()!=navigation_generation_||
+       j.at("wall_revision").get<uint64_t>()!=wall_state_.value("revision",uint64_t{}))throw std::runtime_error("地图坐标或墙版本已经改变；请核对最新地图后重试");
+    if(!recovery_review&&task_.phase!="EXPLORING"&&task_.phase!="RETURNING"&&task_.phase!="PAUSED"&&task_.phase!="MANUAL"&&task_.phase!="FAULT")throw std::runtime_error("当前阶段不能修改临时墙");
+    if(wall&&action=="set_walls")ca::parse_task_walls(j.at("walls"));
+    live_resume_phase_=task_.automatic()?task_.phase:std::string();
+    wall_pending_=j;wall_pending_["action"]=action=="set_walls"?"replace":"confirm";
+    wall_pending_["expected_revision"]=j.at("wall_revision");wall_pending_["revision"]=j.at("wall_revision");wall_sent_=false;wall_invalidated_=false;wall_started_=seconds();wall_bypass_=false;
+    wall_during_recovery_=recovery_review;manual_at_=-1e9;live_motion_hold_=true;
+    if(!recovery_review){operator_hold_=true;
+      begin_stop(task_.phase=="MANUAL"?"MANUAL":"PAUSED","正在取消导航并停稳，随后应用本轮临时墙",seconds());}
+    else task_.reason="原图定位已复验，保持冻结和停稳；应用人工墙后仍须完成导航缓存核验";
+    return true;
+  }
+  void resume_live_task(){
+    const auto resume=live_resume_phase_;live_resume_phase_.clear();
+    if(resume.empty()||task_.phase!="PAUSED")return;
+    try{task_.resume_phase=resume;operator_hold_=false;start_automatic(seconds());}
+    catch(const std::exception&e){operator_hold_=true;task_.reason=std::string("变更已处理，自动继续预检未通过；保持停车：")+e.what();}
+  }
+  void tick_live_controls(double t){
+    if(!live_controls_enabled_)return;
+    if(wall_bypass_&&(t-session_at_>.5||session_manual_owner_.empty()||session_manual_owner_!=wall_bypass_owner_))
+      revoke_wall_bypass("遥控会话断连或持有者改变，人工墙旁路已撤销；保持停车，须重新检查定位");
+    if(wall_recheck_pending_&&operator_check_.value("phase",std::string())=="READY"){
+      wall_recheck_required_=false;wall_recheck_pending_=false;wall_bypass_=false;
+    }
+    const bool strict_ready=wall_map_ready();
+    const bool same_version=wall_verified_&&wall_verified_revision_==wall_state_.value("revision",uint64_t{})&&
+      wall_verified_generation_==navigation_generation_;
+    const bool scene_ready=t-walls_at_<=2&&wall_state_.value("phase",std::string())=="READY"&&
+      wall_state_.value("applied_navigation_generation",uint64_t{})==navigation_generation_;
+    if(strict_ready){wall_verified_=true;wall_verified_revision_=wall_state_.value("revision",uint64_t{});
+      wall_verified_generation_=navigation_generation_;wall_sync_started_=-1;}
+    else if(wall_sync_started_<0)wall_sync_started_=t;
+    const bool review=has_task_walls()&&wall_state_.value("phase",std::string())=="REVIEW_REQUIRED";
+    const bool invalid_version=has_task_walls()&&scene_ready&&!same_version&&!strict_ready;
+    const bool wall_blocked=!strict_ready&&(review||invalid_version||t-walls_at_>2||
+      wall_state_.value("phase",std::string())=="FAILED"||t-wall_sync_started_>2);
+    if(wall_blocked&&wall_pending_.empty()&&task_.automatic()){
+      live_resume_phase_.clear();operator_hold_=true;
+      begin_stop("PAUSED",review?"人工墙坐标需要复核，保持停车；请核对墙位置":
+        "约束地图或规划掩膜未在2秒内同步，已取消目标并保持停车；不是SLAM定位故障",t);
+    }
+    if(tuning_state_.value("requires_stop",false)||t-tuning_at_>2||
+       (!tuning_state_.value("ready",false)&&!tuning_state_.value("pending",false))){
+      if(task_.automatic()){
+        if(live_resume_phase_.empty())live_resume_phase_=task_.phase;
+        operator_hold_=true;begin_stop("PAUSED","参数事务无法确认，停车后回退旧配置并核验",t);
+      }
+      live_motion_hold_=true;tuning_stopped_=true;
+    }else if(tuning_stopped_&&tuning_state_.value("ready",false)&&wall_pending_.empty()&&strict_ready){
+      tuning_stopped_=false;live_motion_hold_=false;resume_live_task();
+    }
+    if(!wall_pending_.empty()){
+      if(!wall_sent_&&terminal()&&still()&&(task_.phase=="PAUSED"||task_.phase=="MANUAL"||task_.phase=="FAULT"||
+         (wall_during_recovery_&&task_.phase=="RECOVERING"&&recovery_state_.value("phase",std::string())=="VERIFY_READY"))){
+        // 修改墙只让旧导航失效；复核已经失效的坐标时不再制造第二次坐标变化。
+        if(wall_pending_.value("action",std::string())=="replace"&&!wall_invalidated_){invalidate_navigation();wall_invalidated_=true;}
+        if(wall_state_.value("navigation_generation",uint64_t{})==navigation_generation_){
+          wall_pending_["navigation_generation"]=navigation_generation_;publish_live(wall_requests_,wall_pending_);wall_sent_=true;
+        }
+      }
+      if(wall_sent_&&wall_state_.value("request_id",std::string())==wall_pending_.value("request_id",std::string())&&
+         (wall_state_.value("request_result",std::string())=="accepted"||wall_state_.value("request_result",std::string())=="rejected")){
+        const bool accepted=wall_state_.value("request_result",std::string())=="accepted";
+        if(accepted&&!wall_map_ready()){
+          if(t-wall_started_>15)finish_wall_transaction(false,"墙已处理但约束地图与掩膜尚未同步，保持停车；检查场景与规划状态");
+          return;
+        }
+        finish_wall_transaction(accepted,accepted?"人工墙已应用，约束地图与规划掩膜同版本核验通过":
+          "人工墙变更被场景节点拒绝，原墙保留并保持停车："+wall_state_.value("request_error",std::string()));
+      }else if(t-wall_started_>15){
+        finish_wall_transaction(false,"人工墙应用或停稳超过15秒，保持停车；检查同request_id车端日志");
+      }
+    }
+    live_motion_hold_=tuning_stopped_||t-tuning_at_>2||!wall_pending_.empty()||(!wall_map_ready()&&!(wall_bypass_&&restricted_manual_));
+  }
+  void finish_wall_transaction(bool accepted,const std::string&reason){
+    const auto id=wall_pending_.value("request_id",std::string());const bool recovery=wall_during_recovery_;
+    wall_pending_=ca::Json::object();wall_during_recovery_=false;live_motion_hold_=!accepted;
+    task_.request_id=id;request_result_=accepted?"accepted":"rejected";error_=accepted?std::string():reason;
+    task_.reason=reason;remember_request_result(id);
+    if(!accepted)live_resume_phase_.clear();
+    else if(!recovery&&!tuning_stopped_)resume_live_task();
+  }
+
   void remember_request_result(const std::string&id){
     if(id.empty())return;
     // 连续请求不能覆盖另一端的确认，同一请求后续拒绝也不能被初次接收结果覆盖。
@@ -692,6 +934,7 @@ private:
   void dispatch(const std::shared_ptr<Operation>&op){
     if(loop_waiting_map_){revalidate(op,"SLAM闭环修正，等待闭环结束后的新地图");return;}
     if(operation_!=op||op->cancel||op->generation!=task_.generation||!task_.automatic()||!healthy()){complete(op,false,"目标已过期或健康失效，没有下发");return;}
+    if(!live_start_block().empty()){complete(op,false,"约束地图或参数尚未同版本就绪，未下发新导航目标");return;}
     if(!op->returning&&op->path&&op->path->poses.size()>1){
       const auto&end=op->path->poses.back().pose.position;
       for(auto it=op->path->poses.rbegin()+1;it!=op->path->poses.rend();++it){
@@ -853,17 +1096,32 @@ private:
     if(costmap_rebuild_)costmap_rebuild_->tick(t);
     if(last_tick_at_>0){tick_gap_ms_=(t-last_tick_at_)*1000;max_tick_gap_ms_=std::max(max_tick_gap_ms_,tick_gap_ms_);}last_tick_at_=t;
     if(nav2_ready_request_>=0&&t-nav2_probe_at_>1){
+      ++nav2_health_timeouts_;nav2_health_last_result_="TIMEOUT";
+      nav2_probe_event("timeout",nav2_probe_generation_,nav2_ready_request_,t,nullptr,t-nav2_probe_at_);
       nav2_ready_->remove_pending_request(nav2_ready_request_);nav2_ready_request_=-1;++nav2_probe_generation_;
       // 单次服务超时不能覆盖上一条已收到的活跃响应；健康门仍以 nav2_ready_at_ 的2秒新鲜度拒绝。
       // 一旦服务真实返回 inactive 则回调立即置false；连续无响应超过2秒同样拒绝运动。
     }
-    if(nav2_ready_request_<0&&t-nav2_probe_at_>.5&&nav2_ready_->service_is_ready()){
-      nav2_probe_at_=t;const auto generation=++nav2_probe_generation_;
-      auto future=nav2_ready_->async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>(),[this,generation](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture f){
-        if(generation!=nav2_probe_generation_)return;
-        nav2_ready_request_=-1;nav2_active_=f.get()->success;nav2_ready_at_=seconds();
-      });nav2_ready_request_=future.request_id;
+    if(nav2_ready_request_<0&&t-nav2_probe_at_>.5){
+      nav2_health_service_observed_=true;nav2_health_service_ready_=nav2_ready_->service_is_ready();
+      if(nav2_health_service_ready_){
+        nav2_probe_at_=t;const auto generation=++nav2_probe_generation_;
+        // 默认单线程回调组在本次tick结束后才派发答复，序号只供关联日志，不参与健康判定。
+        auto trace=std::make_shared<Nav2ProbeTrace>();trace->generation=generation;trace->sent_at=t;
+        auto future=nav2_ready_->async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>(),[this,generation,trace](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture f){
+          ++nav2_health_responses_;const double arrived=seconds();
+          if(generation!=nav2_probe_generation_){++nav2_health_ignored_;
+            nav2_probe_event("response",generation,trace->request_id,arrived,nullptr,arrived-trace->sent_at,true);return;}
+          nav2_ready_request_=-1;nav2_active_=f.get()->success;nav2_ready_at_=seconds();
+          ++nav2_health_accepted_;nav2_health_response_latency_=arrived-trace->sent_at;
+          nav2_health_last_result_=nav2_active_?"ACTIVE":"INACTIVE";
+          nav2_probe_event("response",generation,trace->request_id,arrived,nav2_active_,arrived-trace->sent_at);
+        });nav2_ready_request_=future.request_id;
+        trace->request_id=future.request_id;nav2_health_request_id_=future.request_id;++nav2_health_sends_;
+        nav2_probe_event("send",generation,future.request_id,t);
+      }
     }
+    flush_nav2_probe_events(t);
     // pose与诊断为不同DDS话题，允许闭环事件先后到达；等待期间输出零速度。
     if(pending_pose_jump_at_>=0&&t-pending_pose_jump_at_>.35&&t-loop_at_>2)
       quality_fault_="SLAM出现非闭环大修正，需要核对工程与真实位置";
@@ -964,12 +1222,21 @@ private:
     if(recovery_pending_&&task_.phase=="RECOVERING"){
       if(!recovery_sent_){recovery_sent_=true;recovery_request(recovery_rollback_?"recover_rollback":"recover");}
       const bool matching=recovery_state_.value("generation",uint64_t{0})==task_.generation;
-      if(t-recovery_started_>65||t-recovery_at_>1||(matching&&recovery_phase=="FAILED")){
+      recovery_wall_wait_.update(t,matching&&wall_review_allowed());
+      if(t-recovery_started_-recovery_wall_wait_.elapsed(t)>65||recovery_wall_wait_.expired(t)||
+         t-recovery_at_>1||(matching&&recovery_phase=="FAILED")){
         recovery_request("cancel");recovery_pending_=false;
-        begin_stop("FAULT","受扰恢复未通过："+recovery_state_.value("reason",std::string("恢复超时或心跳陈旧"))+"；保持冻结，保存可信图和故障证据",t);
+        begin_stop("FAULT",recovery_wall_wait_.expired(t)?"人工墙位置复核超过300秒，恢复关闭并保持锁停，未恢复运动":
+          "受扰恢复未通过："+recovery_state_.value("reason",std::string("恢复超时或心跳陈旧"))+"；保持冻结，保存可信图和故障证据",t);
       }else if(matching&&recovery_phase=="VERIFY_READY"){
         // 清质量字符串不是恢复依据：仍在RECOVERING零输出，独立检查新图、TF及代价图车位。
-        if(!costmap_rebuild_started_){costmap_rebuild_started_=true;costmap_rebuild_->begin(t);}
+        const bool constraints_ready=!live_controls_enabled_||wall_map_ready();
+        if(live_controls_enabled_&&!constraints_ready){
+          recovery_valid_since_=-1;
+          task_.reason=wall_review_allowed()?"原图定位和连续新扫描已复验，保持冻结；等待人工墙位置复核（最多300秒）":
+            "原图定位已进入提交复验，保持停车；等待新扫描资格或约束地图与掩膜同步";
+        }
+        if(constraints_ready&&!costmap_rebuild_started_){costmap_rebuild_started_=true;costmap_rebuild_->begin(t);}
         if(costmap_rebuild_->failed()){
           recovery_request("cancel");recovery_pending_=false;
           begin_stop("FAULT","定位已验证但导航代价图重建失败；保持停车保存证据："+costmap_rebuild_->state().value("error",std::string()),t);
@@ -982,7 +1249,8 @@ private:
           mask_status_.value("source_fingerprint",std::string())==std::to_string(map_fingerprint_)&&
           mask_status_.value("navigation_generation",uint64_t{0})==navigation_generation_;
         const auto accepted_stamp=slam_status_.value("accepted_stamp_ns",int64_t{0});
-        const bool ready=recovery_state_.value("commit_ready",false)&&costmap_rebuild_->ready()&&aligned&&mask_ready&&map_sequence_>recovery_map_sequence_&&healthy(true,operator_recovery_)&&still()&&terminal()&&
+        const bool ready=constraints_ready&&(!live_controls_enabled_||(t-tuning_at_<=2&&tuning_state_.value("ready",false)))&&
+          recovery_state_.value("commit_ready",false)&&costmap_rebuild_->ready()&&aligned&&mask_ready&&map_sequence_>recovery_map_sequence_&&healthy(true,operator_recovery_)&&still()&&terminal()&&
           map_&&accepted_stamp>0&&rclcpp::Time(map_->header.stamp).nanoseconds()>=accepted_stamp&&
           ca::free_footprint(*map_,current_)&&t-local_pose_at_<.5&&t-global_pose_at_<.5;
         if(!ready)recovery_valid_since_=-1;
@@ -994,7 +1262,9 @@ private:
         recovery_pending_=false;recovery_sent_=false;loop_waiting_map_=false;loop_revalidation_=false;
         if(operator_recovery_)checked_pause();else task_.recovered();
         selection_wait_at_=0;selection_wait_paused_=false;empty_wait_=false;empty_count_=0;
-        invalidate_navigation();last_closed_=t;return_retry_at_=0;
+        // 有墙时本代次已在人工复核后完成图/掩膜/导航屏障，不能再制造一次虚假的坐标失效。
+        if(!live_controls_enabled_||!has_task_walls())invalidate_navigation();
+        last_closed_=t;return_retry_at_=0;
         enable_explore(task_.phase=="EXPLORING");
       }
     }
@@ -1014,6 +1284,7 @@ private:
         operator_check_["phase"]="FAILED";begin_stop("FAULT","重新检查未通过："+operator_check_.value("reason",std::string("连续健康条件不足")),t);
       }
     }
+    tick_live_controls(t);
     const bool ok=healthy();
     if(task_.phase=="CHECKPOINTING"&&checkpoint_verified_&&ok&&still()&&terminal()&&!recovery_state_.value("gate_write",false)){
       checkpoint_verified_=false;task_.checkpointed();enable_explore(task_.phase=="EXPLORING");last_closed_=t;
@@ -1078,11 +1349,12 @@ private:
     }
     if(continuous_){
       ca::ContinuousExploration::Snapshot snapshot;
-      snapshot.route.map=map_;snapshot.route.current=current_;snapshot.route.task=task_;snapshot.route.now=t;
+      snapshot.route.map=map_;snapshot.route.observation_map=raw_map_;
+      snapshot.route.current=current_;snapshot.route.task=task_;snapshot.route.now=t;
       snapshot.route.revision=map_revision_;snapshot.route.generation=task_.generation;
       snapshot.route.navigation_generation=navigation_generation_;snapshot.route.speed=navigation_speed_->limit();
       snapshot.map_sequence=map_sequence_;snapshot.task_id=task_id_;snapshot.request_id=active_request_id_;
-      snapshot.enabled=task_.phase=="EXPLORING"&&!obstacle_escape_->active()&&!checkpoint_requested_&&!recovery_pending_&&!loop_waiting_map_&&
+      snapshot.enabled=task_.phase=="EXPLORING"&&!live_motion_hold_&&!obstacle_escape_->active()&&!checkpoint_requested_&&!recovery_pending_&&!loop_waiting_map_&&
         !(recovery_enabled_&&recovery_state_.value("gate_write",false));
       snapshot.healthy=ok&&pending_pose_jump_at_<0;snapshot.still=still();continuous_->tick(std::move(snapshot));
       if(task_.phase=="EXPLORING"&&!continuous_->fault().empty())begin_stop("FAULT",continuous_->fault(),t);
@@ -1105,10 +1377,14 @@ private:
     const bool checkpoint_ready=!recovery_enabled_||(checkpoint_usable()&&
       !recovery_state_.value("gate_write",false)&&!recovery_state_.value("requires_stop",false));
     if(requested_auto_&&ok&&still()&&task_.phase=="MANUAL"&&checkpoint_ready){
-      try{start_automatic(t);requested_auto_=false;}
-      catch(const std::exception&e){error_=e.what();requested_auto_=false;task_.mode="manual";task_.reason=error_;request_result_="rejected";
-        remember_request_result(task_.request_id);
-        queue_log(30,"自动启动预检拒绝：%s；保持手动待命，没有下发目标",e.what());}
+      const auto waiting=live_start_block();
+      if(!waiting.empty())task_.reason="自动尚未启动："+waiting+"；保持停车等待初始化完成";
+      else{
+        try{start_automatic(t);requested_auto_=false;}
+        catch(const std::exception&e){error_=e.what();requested_auto_=false;task_.mode="manual";task_.reason=error_;request_result_="rejected";
+          remember_request_result(task_.request_id);
+          queue_log(30,"自动启动预检拒绝：%s；保持手动待命，没有下发目标",e.what());}
+      }
     }
     if(task_.phase=="RETURNING"&&!obstacle_escape_->active()&&!operation_&&terminal()&&t>=return_retry_at_&&
        (return_retries_==0||rclcpp::Time(scan_stamp_)>rclcpp::Time(return_retry_scan_))){
@@ -1135,7 +1411,7 @@ private:
       const auto started=seconds();const auto check=check_manual_motion(input);restricted_check_ms_=(seconds()-started)*1000;
       restricted_reason_=check.reason;if(!check.allowed)input=geometry_msgs::msg::Twist();
     }else if(!restricted_manual_&&ok&&!write_hold&&pending_pose_jump_at_<0&&t-last_closed_>.3){
-      if(task_.phase=="MANUAL"&&!requested_auto_&&t-manual_at_<.3)input=manual_velocity_;
+      if(task_.phase=="MANUAL"&&!requested_auto_&&t-manual_at_<.3&&live_start_block().empty())input=manual_velocity_;
       else if(auto_motion&&t-auto_at_<.3)input=auto_velocity_;
     }
     if(escape_motion){input.linear.x=std::clamp(input.linear.x,-obstacle_escape_->speed(),0.);input.angular.z=0;}
@@ -1145,10 +1421,22 @@ private:
       if(auto_sweep_.scale<.02&&std::abs(auto_velocity_.linear.x)+std::abs(auto_velocity_.angular.z)>.01){
         if(auto_blocked_since_<0)auto_blocked_since_=t;
         if(t-auto_blocked_since_>.8&&obstacle_escape_->trigger(escape_context(t,ok),auto_sweep_.reason)){
+          if(continuous_)continuous_->stop();
           cancel(operation_);enable_explore(false);last_closed_=t;input=geometry_msgs::msg::Twist();
         }
       }else auto_blocked_since_=-1;
     }else auto_blocked_since_=-1;
+    if(live_motion_hold_||(live_controls_enabled_&&t-tuning_at_>2))input=geometry_msgs::msg::Twist();
+    if(task_.phase=="MANUAL"&&has_task_walls()&&!wall_bypass_){
+      // 真实扫描没有虚拟墙回波；正常手动也必须使用新鲜可信map位姿检查预测扫掠。
+      if(!ok||wall_state_.value("phase",std::string())!="READY"){
+        input=geometry_msgs::msg::Twist();restricted_reason_="人工墙保护需要可信定位；先重新检查，或明确启用受限手动旁路";
+      }else{
+        const bool safe=ca::walls_motion_safe(wall_state_.value("walls",ca::Json::array()),current_,input,measured_velocity_);
+        if(!safe){input=geometry_msgs::msg::Twist();restricted_reason_="人工墙进入手动预测扫掠范围，未放行该方向";}
+      }
+    }
+    if(wall_bypass_){input.linear.x=std::clamp(input.linear.x,-.05,.05);input.angular.z=std::clamp(input.angular.z,-.10,.10);}
     input_pub_->publish(input);
     geometry_msgs::msg::Twist output;
     if((restricted_ready_||(!restricted_manual_&&ok&&!write_hold&&pending_pose_jump_at_<0))&&t-last_closed_>.3&&t-collision_at_<.2&&(task_.phase=="MANUAL"||auto_motion)){
@@ -1166,7 +1454,7 @@ private:
     max_tick_work_ms_=std::max(max_tick_work_ms_,(seconds()-t)*1000);
   }
   ca::ObstacleEscape::Context escape_context(double t,bool ok){
-    ca::ObstacleEscape::Context c;c.now=t;c.healthy=ok;
+    ca::ObstacleEscape::Context c;c.now=t;c.healthy=ok&&live_start_block().empty();
     c.still=obstacle_escape_->enabled()?escape_still():still();c.pose=current_;c.wheel=wheel_;
     c.scan=scan_;c.map=map_;c.scan_age=t-scan_at_;c.odom_age=t-odom_at_;c.navigation_terminal=navigation_terminal();
     c.automatic=task_.automatic();c.operator_hold=operator_hold_;c.loop_wait=loop_waiting_map_;
@@ -1221,8 +1509,26 @@ private:
     }catch(const tf2::TransformException&){return {};}
   }
   void publish_state(){auto j=task_.status();j["task_id"]=task_id_;j["healthy"]=healthy();j["quality_fault"]=quality_fault_;
-    j["health_reason"]=health_reason_;
+    j["health_reason"]=health_reason_;j["nav2_health"]=nav2_health_state();
     j["obstacle_escape"]=obstacle_escape_->status();
+    j["obstacle_escape"]["enabled"]=obstacle_escape_->retreat_enabled();
+    j["obstacle_escape"]["field_validated"]=escape_field_validated_;
+    j["obstacle_escape"]["setting_request_id"]=escape_setting_id_;
+    j["live_controls_enabled"]=live_controls_enabled_;
+    j["tuning"]=tuning_state_;j["tuning"]["age_seconds"]=seconds()-tuning_at_;
+    j["handoff"]={{"distance_m",handoff_distance_},{"phase","READY"},{"request_id",handoff_request_id_}};
+    j["walls"]=wall_state_;j["walls"]["bypass_enabled"]=wall_bypass_;
+    j["walls"]["bypass_request_id"]=wall_bypass_id_;j["walls"]["bypass_owner_id"]=wall_bypass_owner_;
+    j["walls"]["requires_recheck"]=wall_recheck_required_;
+    j["walls"]["review_allowed"]=wall_review_allowed();
+    j["walls"]["review_wait_seconds"]=recovery_wall_wait_.elapsed(seconds());
+    j["walls"]["review_wait_limit_seconds"]=ca::RecoveryWallReviewWait::limit_seconds;
+    j["walls"]["review_reason"]=wall_review_allowed()?"定位及连续新扫描已复验，车辆保持停稳；请对照原图复核人工墙，确认后仍需导航保护同步":
+      "墙复核等待原图定位、连续新扫描、导航终态及轮式停稳；没有因此放行运动";
+    j["walls"]["navigation_ready"]=wall_map_ready();
+    if(!wall_pending_.empty())j["walls"].update({{"phase",wall_sent_?"APPLYING":"STOPPING"},{"pending",true},{"request_id",wall_pending_.value("request_id",std::string())}});
+    if(has_task_walls())j["completion_scope"]="人工约束范围内";
+
     j["controller_timing"]=controller_timing_;j["controller_timing"]["age_seconds"]=seconds()-controller_timing_at_;
     j["exploration_ranking"]=ranking_state_;j["exploration_ranking"]["age_seconds"]=seconds()-ranking_at_;
     j["execution_sweep"]={{"enabled",auto_sweep_enabled_},{"scale",auto_sweep_.scale},{"reason",auto_sweep_.reason},{"compute_ms",auto_sweep_.compute_ms}};
@@ -1238,6 +1544,10 @@ private:
     j["fault"]=fault_;j["operator_check"]=operator_check_;j["actions"]=available_actions();
     j["current_pose"]={current_.x,current_.y,current_.yaw};j["speed"]=navigation_speed_->state();
     j["continuous_exploration"]=continuous_?continuous_->status():ca::Json::object();
+    const auto exclusions=j["continuous_exploration"].value("wall_exclusions",ca::Json(nullptr));
+    j["wall_excluded_frontier_cells"]=exclusions.is_object()?exclusions.value("frontier_cells",ca::Json(nullptr)):ca::Json(nullptr);
+    j["walls"]["excluded_frontier_cells"]=j["wall_excluded_frontier_cells"];
+    j["walls"]["excluded_frontier_examples"]=exclusions.is_object()?exclusions.value("examples_map_m",ca::Json::array()):ca::Json::array();
     j["navigation_generation"]=navigation_generation_;
     j["online_snapshots"]=online_snapshots_;j["snapshot_maintenance"]=recovery_state_.value("snapshot",ca::Json::object());
     j["checkpoint_usable"]=!recovery_enabled_||checkpoint_usable();
@@ -1345,7 +1655,14 @@ private:
   ca::Pose wheel_,accepted_wheel_,last_pose_,last_pose_wheel_,current_;
   ca::Json slam_status_=ca::Json::object();
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr nav2_ready_;
+  struct Nav2ProbeTrace{uint64_t generation=0;int64_t request_id=-1;double sent_at=0;};
   int64_t nav2_ready_request_=-1;uint64_t nav2_probe_generation_=0;
+  int64_t nav2_health_request_id_=-1;
+  uint64_t nav2_health_sends_=0,nav2_health_responses_=0,nav2_health_timeouts_=0,nav2_health_accepted_=0,nav2_health_ignored_=0,nav2_health_log_dropped_=0;
+  bool nav2_health_service_observed_=false,nav2_health_service_ready_=false;
+  double nav2_health_response_latency_=0,nav2_health_log_at_=-1e9;
+  std::string nav2_health_last_result_="NONE";
+  std::deque<ca::Json>nav2_health_events_,nav2_health_log_pending_;
   bool nav2_active_=false;double nav2_ready_at_=-1e9,nav2_probe_at_=0;
   std::string storage_reason_;
   bool requested_auto_=false,session_ready_=false,have_pose_=false,accepted_wheel_valid_=false,topology_ok_=false,map_changed_=false,empty_wait_=false,loop_revalidation_=false,loop_waiting_map_=false;
@@ -1353,6 +1670,18 @@ private:
   std::string task_id_,active_request_id_,error_,request_result_,quality_fault_,health_reason_,scan_frame_,filtered_scan_,last_event_,motion_note_,navigation_detail_,last_goal_reason_,exploration_note_;
   double selection_stall_seconds_=15,selection_wait_at_=0;
   bool selection_wait_paused_=false;
+  bool wall_recheck_required_=false,wall_recheck_pending_=false;
+  bool wall_invalidated_=false,wall_during_recovery_=false,wall_verified_=false;
+  std::string session_manual_owner_,wall_bypass_owner_;
+  uint64_t wall_verified_revision_=0,wall_verified_generation_=0;double wall_sync_started_=-1;
+  ca::RecoveryWallReviewWait recovery_wall_wait_;
+  bool live_controls_enabled_=false,wall_bypass_=false,wall_sent_=false,live_motion_hold_=false,tuning_stopped_=false,escape_field_validated_=false;
+  double handoff_distance_=.25,tuning_at_=-1e9,walls_at_=-1e9,wall_started_=0;
+  std::string handoff_request_id_,live_resume_phase_,wall_bypass_id_,escape_setting_id_;
+  ca::Json tuning_state_=ca::Json::object(),wall_state_=ca::Json::object(),wall_pending_=ca::Json::object();
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr tuning_requests_,wall_requests_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr tuning_sub_,wall_sub_;
+
   std::unique_ptr<ca::ContinuousExploration> continuous_;
   ca::RouteValidator validator_;ca::ObservationSelector selector_;uint64_t map_revision_=0,operation_sequence_=0,loop_map_after_=0;
   std::unique_ptr<ca::TopologyMonitor>topology_;ca::TopologyMonitor::Result topology_result_;
@@ -1375,7 +1704,8 @@ private:
   bool auto_sweep_enabled_=false;ca::AutoMotionCheck auto_sweep_;
   geometry_msgs::msg::Twist measured_velocity_;
   geometry_msgs::msg::Twist manual_velocity_,auto_velocity_,protected_velocity_,last_output_;
-  nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_;sensor_msgs::msg::LaserScan::ConstSharedPtr scan_;std::shared_ptr<Operation> operation_;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_,raw_map_;double raw_map_at_=-1e9;
+  sensor_msgs::msg::LaserScan::ConstSharedPtr scan_;std::shared_ptr<Operation> operation_;
   rclcpp_action::Client<Nav>::SharedPtr nav_;rclcpp_action::Client<Plan>::SharedPtr planner_;rclcpp_action::Server<Nav>::SharedPtr proxy_server_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_pub_;rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr explore_pub_;
   std::unique_ptr<ca::SupervisorOutput>telemetry_;
@@ -1385,7 +1715,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr planner_diagnostics_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scans_,filtered_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_;
-  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr grid_;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr grid_,raw_grid_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr manual_,automatic_,collision_;
   rclcpp::Subscription<geometry_msgs::msg::PolygonStamped>::SharedPtr local_pose_,global_pose_;

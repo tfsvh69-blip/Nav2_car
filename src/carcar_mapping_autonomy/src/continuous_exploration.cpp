@@ -1,6 +1,7 @@
 #include "carcar_mapping_autonomy/continuous_exploration.hpp"
 #include "carcar_mapping_autonomy/route_validation.hpp"
 #include <future>
+#include "carcar_mapping_autonomy/handoff.hpp"
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <nav2_msgs/action/navigate_through_poses.hpp>
 #include <nav2_msgs/action/compute_path_through_poses.hpp>
@@ -104,6 +105,7 @@ public:
       nav_pending_=false;record->handle=handle;
       if(!handle){record->done=true;if(terminal()){route_.clear();active_path_.reset();last_selection_=-1e9;}event("route_rejected","导航器拒绝预取路线，未将请求受理误报为执行成功");return;}
       if(stopping_||record->epoch!=epoch_){nav_->async_cancel_goal(handle);return;}
+      if(!active_path_||std::all_of(navs_.begin(),navs_.end(),[&](const auto&r){return r==record||r->done;})){last_progress_=snapshot_.route.now;progress_pose_=snapshot_.route.current;}
       route_=route;active_path_=path;dispatch_stamp_=node_.now();active_id_=record->id;
       event("route_accepted","导航器接受已审查多点路线；通过原生抢占续接，不先取消旧路线");
     };
@@ -123,7 +125,7 @@ public:
   void tick(Snapshot snapshot){
     snapshot_=std::move(snapshot);const double now=snapshot_.route.now;
     nav2_msgs::msg::SpeedLimit limit;limit.header.stamp=node_.now();limit.percentage=true;
-    limit.speed_limit=snapshot_.enabled&&!stopping_&&route_.size()>1&&distance(route_.front().target,snapshot_.route.current)<.60?60.:0.;
+    limit.speed_limit=snapshot_.enabled&&!stopping_&&route_.size()>1&&distance(route_.front().target,snapshot_.route.current)<handoff_distance_+.10?60.:0.;
     limits_->publish(limit);
     const bool generation_changed=snapshot_.route.navigation_generation!=navigation_generation_;
     if(generation_changed){stop();visits_.clear();navigation_generation_=snapshot_.route.navigation_generation;}
@@ -134,7 +136,7 @@ public:
     if(task_generation_!=snapshot_.route.generation){stop();return;}
     if(motion()&&distance(progress_pose_,snapshot_.route.current)>=.10){progress_pose_=snapshot_.route.current;last_progress_=now;}
     if(motion()&&now-last_progress_>30){if(!route_.empty())visit(route_.front(),false);stop();event("no_progress","30秒无真实车位进展，取消后停稳再选点");return;}
-    while(route_.size()>1&&distance(route_.front().target,snapshot_.route.current)<=.25){
+    while(route_.size()>1&&active_path_&&handoff_path_distance(*active_path_,snapshot_.route.current,route_.front().target)<=handoff_distance_){
       visit(route_.front(),true);route_.erase(route_.begin());++passed_;last_progress_=now;
       event("passed","通过中间观测点，保持同一连续导航任务");
     }
@@ -152,7 +154,7 @@ public:
       auto result=worker_.get();compute_ms_=result.computation_ms;
       if(result.input.epoch==epoch_&&result.input.generation==task_generation_&&result.input.navigation_generation==navigation_generation_&&
         same(result.input.prefix,route_)){
-        candidates_=std::move(result.candidates);observations_=std::move(result.observations);newly_known_m2_=result.newly_known_m2;frontiers_=result.frontiers;note_=result.reason;
+        candidates_=std::move(result.candidates);observations_=std::move(result.observations);newly_known_m2_=result.newly_known_m2;frontiers_=result.frontiers;wall_exclusions_=result.wall_exclusions;note_=result.reason;
         if(!result.active_safe&&result.input.revision==snapshot_.route.revision&&result.input.active_path==active_path_){stop();event("route_invalidated",result.reason);return;}
         if(result.input.revision==snapshot_.route.revision&&result.input.active_path==active_path_)validated_revision_=result.input.revision;
         // 地图已经连续确认没有前沿时，剩余承诺点已无扩图收益；交由监督器取消并返程。
@@ -185,7 +187,7 @@ public:
   Json status()const{
     Json goals=Json::array();for(const auto&p:route_)goals.push_back({{"target",{p.target.x,p.target.y}},{"frontier",{p.frontier.x,p.frontier.y}},{"predicted_unknown_m2",p.gain}});
     return {{"enabled",enabled_&&!stopping_},{"motion",motion()},{"terminal",terminal()},{"complete",complete_},{"fault",fault_},{"reason",note_},
-      {"route_id",active_id_},{"route",goals},{"candidates",candidates_},{"raw_frontiers",frontiers_},{"passed_points",passed_},
+      {"route_id",active_id_},{"route",goals},{"candidates",candidates_},{"raw_frontiers",frontiers_},{"wall_exclusions",wall_exclusions_},{"passed_points",passed_},{"handoff_distance_m",handoff_distance_},
       {"prefetch_pending",worker_.valid()||validation_pending_||bool(plan_)||nav_pending_},{"computation_ms",compute_ms_},
       {"visit_observations",observations_},{"observed_new_known_m2",newly_known_m2_},
       {"navigation_generation",navigation_generation_},{"validated_revision",validated_revision_},{"checkpoint_policy","连续导航实验；在线快照未验收，仍保留原维护停车保护"}};
@@ -197,10 +199,11 @@ public:
   std::future<ExplorationRouteResult> worker_;RouteValidator validator_;
   std::vector<std::shared_ptr<NavRecord>>navs_;std::shared_ptr<PlanRecord>plan_;
   std::vector<ExplorationPoint>route_;std::vector<ExplorationVisit>visits_;
-  std::shared_ptr<const nav_msgs::msg::Path>active_path_;Json candidates_=Json::array(),observations_=Json::array();double newly_known_m2_=0;
+  std::shared_ptr<const nav_msgs::msg::Path>active_path_;Json candidates_=Json::array(),observations_=Json::array(),wall_exclusions_=nullptr;double newly_known_m2_=0;
   bool stopping_=true,enabled_=false,validation_pending_=false,nav_pending_=false,complete_=false,confirm_empty_=false;
   uint64_t epoch_=0,serial_=0,active_id_=0,navigation_generation_=0,task_generation_=0,validated_revision_=0,last_empty_sequence_=0;
   size_t frontiers_=0,passed_=0,empty_count_=0;
+  double handoff_distance_=.25;
   double stop_at_=0,last_selection_=-1e9,worker_at_=0,plan_at_=0,nav_at_=0,last_progress_=0,compute_ms_=0;
   Pose progress_pose_;rclcpp::Time dispatch_stamp_{0,0,RCL_ROS_TIME};std::string fault_,note_;
 };
@@ -213,3 +216,5 @@ bool ca::ContinuousExploration::motion()const{return impl_->motion();}
 bool ca::ContinuousExploration::complete()const{return impl_->complete_;}
 std::string ca::ContinuousExploration::fault()const{return impl_->fault_;}
 ca::Json ca::ContinuousExploration::status()const{return impl_->status();}
+
+void ca::ContinuousExploration::set_handoff_distance(double value){if(!std::isfinite(value)||value<.15||value>.8)throw std::runtime_error("提前衔接距离须为0.15～0.80米");impl_->handoff_distance_=value;}

@@ -36,7 +36,7 @@
   <depend>nav2_core</depend>
   <depend>pluginlib</depend>
   <test_depend>nav2_velocity_smoother</test_depend>
-  <test_depend>nav2_controller</test_depend>
+  <depend>nav2_controller</depend>
   <depend>nav2_rotation_shim_controller</depend>
   <test_depend>nav2_mppi_controller</test_depend>
   <export><build_type>ament_cmake</build_type></export>

@@ -46,6 +46,8 @@ public:
       [this](nav2_msgs::msg::Costmap::ConstSharedPtr m){observe(*m,"odom",local_at_,local_stamp_);});
   }
   bool enabled()const{return enabled_;}
+  bool retreat_enabled()const{return retreat_enabled_;}
+  bool set_retreat_enabled(bool value){if(active_||!terminal())return false;retreat_enabled_=value;return true;}
   bool active()const{return active_;}
   // 对外提供监督器交接屏障：真实终态后还须严格停稳；内部取消流程仍使用协议terminal。
   bool terminal()const{return !backup_||backup_->settled();}

@@ -1,6 +1,11 @@
 <launch>
   <!-- NAV-018独立组合；默认不启硬件。不与旧建图或AMCL巡检组合并开。 -->
+  <arg name="async_ros_publication" default="true"/>
   <set_env name="ROS_LOCALHOST_ONLY" value="1"/>
+  <!-- 仅本次应用子进程使用官方异步发包；保持原QoS、短队列与全部时限。 -->
+  <set_env name="RMW_FASTRTPS_USE_QOS_FROM_XML" value="0"/>
+  <set_env if="$(var async_ros_publication)" name="RMW_FASTRTPS_PUBLICATION_MODE" value="ASYNCHRONOUS"/>
+  <set_env unless="$(var async_ros_publication)" name="RMW_FASTRTPS_PUBLICATION_MODE" value="SYNCHRONOUS"/>
   <set_env name="LD_LIBRARY_PATH" value="$(find-pkg-prefix carcar_tf2_compat)/lib/carcar_tf2_compat:$(env LD_LIBRARY_PATH)"/>
   <arg name="start_hardware" default="false"/><arg name="mode" default="new"/>
   <arg name="explore_seconds" default="2400.0"/>
@@ -13,12 +18,18 @@
   <arg name="obstacle_wait_enabled" default="true"/>
   <arg name="obstacle_escape_enabled" default="false"/>
   <arg name="cost_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_clearance.yaml"/>
-  <arg name="continuous_exploration" default="false"/>
-  <!-- 普通逐目标探索也维护近期可信图；连续路线保持独立关闭。 -->
+  <arg name="continuous_exploration" default="true"/>
+  <arg name="live_controls_enabled" default="true"/>
+  <let name="navigation_map_topic" value="/map"/>
+  <let if="$(var live_controls_enabled)" name="navigation_map_topic" value="/mapping/navigation_map"/>
+  <arg name="tuning_defaults_file" default="$(env HOME)/.local/state/carcar_mapping_console/tuning-defaults.json"/>
+  <arg name="handoff_distance_m" default="0.25"/>
+  <arg name="obstacle_escape_field_validated" default="false"/>
+  <!-- 普通与前瞻探索共用近期可信图；可显式关闭连续模式作同条件对照。 -->
   <arg name="online_snapshots" default="true"/>
   <arg name="snapshot_interval_seconds" default="10.0"/>
-  <arg name="bt_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_mapping.yaml"/>
-  <arg name="checkpoint_root" default="/home/jetson/luhao/my_nav_carcar/log/mapping_recovery"/>
+  <arg name="bt_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_continuous.yaml"/>
+  <arg name="checkpoint_root" default="$(env CARCAR_MAPPING_RECOVERY_ROOT /home/jetson/luhao/my_nav_carcar/log/mapping_recovery)"/>
   <arg name="bundle_id" default=""/><arg name="start_gateway" default="true"/>
   <arg name="start_camera" default="false"/><arg name="require_video" default="false"/>
   <arg name="serial_port" default="/dev/myserial"/>
@@ -55,7 +66,13 @@
   <node pkg="carcar_mapping_console" exec="mapping_teleop_guard" name="mapping_teleop_guard" output="screen">
     <param name="require_video" value="false"/><remap from="/mapping/cmd_vel" to="/mapping/manual_cmd_vel"/>
   </node>
+  <node if="$(var live_controls_enabled)" pkg="carcar_mapping_autonomy" exec="mapping_task_scene" name="mapping_task_scene" output="screen"><param name="task_id" value="$(var task_id)" type="str"/></node>
+  <node if="$(var live_controls_enabled)" pkg="carcar_mapping_autonomy" exec="mapping_tuning" name="mapping_tuning" output="screen">
+    <param name="task_id" value="$(var task_id)" type="str"/><param name="defaults_file" value="$(var tuning_defaults_file)"/>
+  </node>
   <include file="$(find-pkg-share carcar_mapping_autonomy)/launch/navigation.launch.xml">
+    <arg name="live_controls_enabled" value="$(var live_controls_enabled)"/>
+    <arg name="navigation_map_topic" value="$(var navigation_map_topic)"/>
     <arg name="controller_params" value="$(var controller_params)"/>
     <arg name="cost_params" value="$(var cost_params)"/>
     <arg name="obstacle_escape_enabled" value="$(var obstacle_escape_enabled)"/>
@@ -63,6 +80,10 @@
   </include>
   <node pkg="carcar_mapping_autonomy" exec="mapping_autonomy" name="mapping_autonomy" output="screen">
     <param name="control_mode" value="$(var control_mode)"/><param name="task_id" value="$(var task_id)" type="str"/>
+    <param name="live_controls_enabled" value="$(var live_controls_enabled)"/>
+    <param name="navigation_map_topic" value="$(var navigation_map_topic)"/>
+    <param name="handoff_distance_m" value="$(var handoff_distance_m)"/>
+    <param name="obstacle_escape_field_validated" value="$(var obstacle_escape_field_validated)"/>
     <param name="explore_seconds" value="$(var explore_seconds)"/>
     <param name="recovery_enabled" value="$(var recovery_enabled)"/>
     <param name="continuous_exploration" value="$(var continuous_exploration)"/>
@@ -86,7 +107,7 @@
   </node>
   <node pkg="explore_lite" exec="explore" name="explore_node" output="screen">
     <param from="$(find-pkg-share carcar_mapping_autonomy)/config/explore.yaml"/>
-    <param name="path_aware_ranking" value="$(var path_aware_ranking)"/>
+    <param name="path_aware_ranking" value="$(var path_aware_ranking)"/><param name="costmap_topic" value="$(var navigation_map_topic)"/>
   </node>
   <node if="$(var record_raw_bag)" pkg="carcar_navigation" exec="nav_event_logger" name="nav_event_logger" output="screen">
     <param name="record_raw_bag" value="true"/><param name="raw_bag_max_duration_s" value="3000.0"/>

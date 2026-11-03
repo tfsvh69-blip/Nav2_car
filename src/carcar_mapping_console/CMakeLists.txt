@@ -78,6 +78,9 @@ if(BUILD_TESTING)
     COMMAND $<TARGET_FILE:mapping_slam_loss_benchmark> --output ${CMAKE_CURRENT_BINARY_DIR}/loss_benchmark_test
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 60 ENV "ROS_DOMAIN_ID=213" "ROS_LOCALHOST_ONLY=1")
   add_executable(mapping_test_chromium test/chromium_runtime.cpp)
+  add_executable(mapping_wall_map_probe test/mapping_wall_map_probe.cpp)
+  ament_target_dependencies(mapping_wall_map_probe rclcpp nav_msgs tf2_ros geometry_msgs tf2)
+  target_link_libraries(mapping_wall_map_probe nlohmann_json::nlohmann_json)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_shared_operations test/test_shared_operations.cpp)
   target_include_directories(test_shared_operations PRIVATE include)
@@ -90,6 +93,12 @@ if(BUILD_TESTING)
     COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_task_state.js
       ${CMAKE_CURRENT_SOURCE_DIR}/web/app.js
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 10)
+  ament_add_gtest(test_live_settings test/test_live_settings.cpp)
+  target_include_directories(test_live_settings PRIVATE include)
+  target_link_libraries(test_live_settings nlohmann_json::nlohmann_json OpenSSL::Crypto)
+  ament_add_test(test_mapping_live_controls
+    COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_live_controls.js ${CMAKE_CURRENT_SOURCE_DIR}/web/app.js
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 15)
   ament_add_gtest(test_tablet_wifi_trial test/test_tablet_wifi_trial.cpp)
   target_include_directories(test_tablet_wifi_trial PRIVATE include)
   target_link_libraries(test_tablet_wifi_trial PkgConfig::GIO)

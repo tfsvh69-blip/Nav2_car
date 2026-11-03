@@ -1,5 +1,5 @@
 'use strict';
-const UI_VERSION='20261101-nav018-shared-operators';
+const UI_VERSION='20261103-nav018-live-controls';
 const $ = id => document.getElementById(id);
 let ws, session = '', challenge = '', sequence = 0, pressed = '', frame = '', frameAt = -Infinity;
 let state = {}, mapImage = null, displayMap = null, mapVersion = '', mapLoading = false, hint = null, choosing = false;
@@ -240,6 +240,7 @@ function renderWorkflow(){
     else if(state.phase==='CURRENT'){title='手动建图已就绪';next=state.autonomy_enabled?'启用遥控后按住摇杆行驶；也可核对场地后开始自动探索。':'启用遥控后按住摇杆行驶，松手停车；完成后保存并结束。';}
     else{title='正在准备地图与导航';next='等待车端数据就绪，车辆保持停车。';}
   }
+  if(!idle&&a.walls?.needs_confirmation&&a.walls?.review_allowed&&liveFresh()){title='定位已复验，等待临时墙位置复核';next=(a.walls.review_reason||'车辆保持停车；核对临时墙与现场位置，可编辑墙或点击复核。')+'复核通过后仍需等待导航保护更新，才允许原任务继续。';}
   $('workflow-title').textContent=title;$('workflow-next').textContent=next;
   ['workflow-prepare','workflow-mapping','workflow-review'].forEach((id,i)=>{
     $(id).classList.toggle('current',i+1===step);$(id).classList.toggle('complete',i+1<step);
@@ -288,7 +289,7 @@ function renderSpeed(auto,fresh,uiBusy,saved){
     speedNotice='未收到本次调速的车端确认；页面未自动重发。请检查连接和执行上限后重试。';speedPending=null;
   }
   const allowed=['MANUAL','PAUSED','EXPLORING','RETURNING'].includes(auto.phase)&&!saved;
-  const reason=!session?'等待控制连接':!fresh?'车端任务状态过期，调速未提交':uiBusy?'正在处理任务':autonomyPending?'正在确认任务操作，请稍后调速':
+  const reason=!session?'等待控制连接':!fresh?'车端任务状态过期，调速未提交':uiBusy?'正在处理任务':livePending?'正在应用运行参数，请稍后调速':autonomyPending?'正在确认任务操作，请稍后调速':
     !auto.speed?'车端尚未提供调速状态':!allowed?'当前阶段不允许调速':speedPending||speed.pending?'等待上一次调速的控制器读回确认':'';
   $('auto-speed-controls').hidden=saved;
   $('auto-speed').disabled=$('auto-speed-apply').disabled=!!reason;
@@ -565,7 +566,7 @@ function ownTaskResult(auto){
 async function autonomyOperation(action){
   const extra=action==='manual'&&needsRestrictedTakeover()?{restricted:true}:{};
   const priority=action==='pause'||action==='halt';
-  if(!priority&&(autonomyPending||taskOperationBusy()))return;
+  if(!priority&&(autonomyPending||livePending||taskOperationBusy()))return;
   if(priority)operatorClaimAfterManual='';
   const request_id=crypto.randomUUID?.()||`mapping-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   autonomyPending={request_id,action,at:performance.now()};autonomyAction={request_id,action,task_id:state.autonomy?.task_id};
@@ -602,7 +603,7 @@ $('auto-return').onclick=()=>autonomyOperation('return');
 // 新车端逐项报告操作资格；旧车端保留原流程，不伪造恢复能力。
 function renderOperatorActions(auto,fresh,uiBusy){
   const handover=sharedOperators()&&state.manual_control.phase==='STOPPING';
-  const current=!!auto.actions,blocked=!session||uiBusy||!!autonomyPending||!fresh||handover;
+  const current=!!auto.actions,blocked=!session||uiBusy||!!autonomyPending||!!livePending||!fresh||handover;
   $('auto-recheck').hidden=$('auto-return').hidden=!current;
   if(!current){$('auto-finish').onclick=()=>savedAutonomy()||state.autonomy?.phase==='FAULT'||state.phase==='FAILED'?endTask():autonomyOperation('finish');return;}
   if(auto.phase==='FAULT')$('phase').textContent='故障锁停 · 等待重新检查';
@@ -665,6 +666,188 @@ $('auto-speed-apply').onclick=async()=>{
     $('auto-speed-status').textContent=speedNotice;
   }
 };
+// 参数与临时墙只经任务请求提交；HTTP受理不能代替车端应用和真实读回。
+const tuningFields={
+  global_inflation_radius:{label:'全局膨胀半径',min:.22,max:1.5,baseline:.5,unit:' m'},
+  global_cost_scaling_factor:{label:'全局递减系数',min:.5,max:15,baseline:3,unit:''},
+  local_inflation_radius:{label:'局部膨胀半径',min:.22,max:1,baseline:.3,unit:' m'},
+  local_cost_scaling_factor:{label:'局部递减系数',min:.5,max:15,baseline:5,unit:''}
+};
+let liveTask='',livePending=null,liveNotice='',liveNoticeKind='',liveNoticeAction='',liveMessages={},tuningDraft={},wallDrawing=false,wallDraft=[],wallDraftContext=null;
+function liveArea(action){return ['set_tuning','restore_tuning','save_tuning'].includes(action)?'tuning':action==='set_handoff'?'handoff':action==='set_escape_enabled'?'escape':'walls';}
+function liveFresh(){return state.autonomy_age_ms>=0&&state.autonomy_age_ms<=500&&performance.now()-lastStateAt<1500;}
+function wallState(){return state.autonomy?.walls||{};}
+function wallItems(){return Array.isArray(wallState().items)?wallState().items:[];}
+function wallRevision(){return wallState().wall_revision??wallState().revision??0;}
+function wallGeneration(){return wallState().navigation_generation??state.autonomy?.navigation_generation;}
+function finitePoint(p){return Array.isArray(p)&&p.length===2&&p.every(Number.isFinite);}
+function wallLength(points){return points.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p[0]-points[i][0],p[1]-points[i][1]),0);}
+function wallDraftValid(){return wallDraft.length>=2&&wallDraft.length<=32&&wallDraft.every(finitePoint)&&wallLength(wallDraft)>=.05;}
+function liveReason(action){
+  const a=state.autonomy||{},cap=a.actions?.[action];
+  if(!session)return '网页未提交：等待控制连接';
+  if(state.task_state!=='RUNNING'||!a.task_id)return '网页未提交：先启动本轮建图任务';
+  if(!liveFresh())return '网页未提交：车端状态过期，请检查连接';
+  if(livePending||autonomyPending||taskOperationBusy()||state.busy)return '等待本次操作的车端确认';
+  const module=liveStatusFor(action,a);
+  if(['set_tuning','restore_tuning','save_tuning'].includes(action)&&(module.ready===false||Number.isFinite(module.age_seconds)&&module.age_seconds>2))return '参数服务尚未就绪或读回已过期，等待车端同步';
+  if(action==='save_tuning'&&(module.ready!==true||!Number.isFinite(module.age_seconds)||module.age_seconds<0||module.age_seconds>2||module.task_id!==a.task_id))return '默认参数未提交：等待本轮调参节点的新鲜、稳定真实读回';
+  if(module.pending||['APPLYING','SETTING','STOPPING','SAVING'].includes(module.phase))return '车端正在处理同类操作，等待真实读回后再提交';
+  if(cap&&cap.enabled===false)return '车端健康检查拒绝：'+(cap.reason||'当前阶段不允许该操作');
+  if(['SAVE_PENDING','REVIEW_REQUIRED'].includes(a.phase))return '本轮已结束，请新建任务后调整';
+  const wallReview=['set_walls','confirm_walls'].includes(action)&&a.walls?.review_allowed===true;
+  if(!wallReview&&!['MANUAL','PAUSED','EXPLORING','RETURNING','FAULT'].includes(a.phase))return '车端正在停车、保存或恢复，稍后再调整';
+  return '';
+}
+function liveStatusFor(action,a=state.autonomy||{}){
+  if(['set_tuning','restore_tuning','save_tuning'].includes(action))return a.tuning||{};
+  if(action==='set_handoff')return a.handoff||{};
+  if(action==='set_escape_enabled')return a.obstacle_escape||{};
+  return a.walls||{};
+}
+function finishLiveRequest(a){
+  if(!livePending||livePending.task_id!==a.task_id)return;
+  const p=livePending,record=state.task_operations?.task_id===a.task_id?state.task_operations.requests?.find(r=>r.request_id===p.request_id):null;
+  const module=liveStatusFor(p.action,a),moduleId=p.action==='set_wall_bypass'?(module.bypass_request_id||module.request_id):p.action==='set_escape_enabled'?(module.setting_request_id||module.request_id):module.request_id;
+  const same=moduleId===p.request_id||moduleId===p.canonical_request_id,setting=['set_wall_bypass','set_escape_enabled'].includes(p.action);
+  const refused=module.rejected_requests?.find(r=>r.request_id===p.request_id||r.request_id===p.canonical_request_id);
+  if(refused){
+    liveNotice='车端未执行：'+(refused.reason||refused.error||'参数请求被拒绝')+'；请检查同一请求的任务日志。';liveNoticeKind='error';livePending=null;return;
+  }
+  if(['rejected','cancelled'].includes(record?.request_result)){
+    liveNotice='车端未执行：'+(record.reason||'请求被拒绝或取消')+'；请检查任务日志。';liveNoticeKind='error';livePending=null;return;
+  }
+  if(same&&!setting&&(['FAILED','REJECTED'].includes(module.phase)||['rejected','cancelled'].includes(module.request_result)||module.error||module.rolled_back)){
+    liveNotice=(module.rolled_back?'本次未应用，车端已恢复旧配置；继续状态以车端阶段为准。':'车端应用未完成：')+(module.error||module.reason||'参数服务或保护检查未通过')+'；请核对真实读回和任务日志。';liveNoticeKind='error';livePending=null;return;
+  }
+  const saved=p.action==='save_tuning'&&module.defaults_saved_request_id===p.request_id;
+  const bypassDone=p.action==='set_wall_bypass'&&same&&record?.request_result==='accepted'&&module.bypass_enabled===p.extra.enabled&&
+    (p.extra.enabled?(a.phase==='MANUAL'&&a.restricted_manual?.active&&a.restricted_manual?.ready):(a.phase==='PAUSED'&&a.still&&a.navigation_terminal&&module.requires_recheck));
+  const confirmed=(!setting&&same&&module.phase==='READY'&&!module.pending)||saved||bypassDone||
+    (p.action==='set_escape_enabled'&&same&&record?.request_result==='accepted'&&module.enabled===p.extra.enabled);
+  if(confirmed){
+    if(p.action==='set_tuning'&&Object.entries(p.extra.values).some(([key,value])=>!Number.isFinite(module.confirmed?.[key])||Math.abs(module.confirmed[key]-value)>1e-6)){
+      liveNotice='车端读回与请求不一致；本次参数尚未确认，请检查参数服务。';liveNoticeKind='error';
+    }else if(p.action==='set_handoff'&&Math.abs(module.distance_m-p.extra.distance_m)>1e-6){
+      liveNotice='提前衔接距离读回不一致；本次调整尚未确认。';liveNoticeKind='error';
+    }else{
+      liveNotice=p.action==='save_tuning'?'已保存为新任务默认；本轮临时墙不会随之保存。':p.action==='set_walls'?'本轮临时墙已由车端应用；保护以车端当前状态为准。':p.action==='confirm_walls'?'车端已确认本轮墙复核。':p.action==='set_wall_bypass'?(module.bypass_enabled?'人工墙保护不可用；人工旁路已开启，仍须按住遥控、松手停车。':'人工旁路已关闭，车辆保持暂停；请重新检查定位后再继续。'):'车端已应用并确认本次调整。';
+      liveNoticeKind='success';
+      if(['set_tuning','restore_tuning'].includes(p.action))tuningDraft={};
+      if(p.action==='set_walls'){wallDraft=[];wallDraftContext=null;wallDrawing=false;}
+    }
+    livePending=null;
+  }else if(performance.now()-p.at>30000){
+    liveNotice='上位机／车端应用等待超过30秒，尚未确认执行结果；不自动重发，请检查同一请求日志：'+p.request_id;liveNoticeKind='error';livePending=null;
+  }
+}
+async function liveRequest(action,extra={}){
+  liveNoticeAction=action;const reason=liveReason(action);if(reason){liveNotice=reason;liveNoticeKind='error';renderLiveControls();return;}
+  const request_id=crypto.randomUUID?.()||`live-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  livePending={action,extra,request_id,task_id:state.autonomy.task_id,at:performance.now()};
+  liveNotice='请求正在提交；等待车端应用与读回确认。';liveNoticeKind='pending';renderLiveControls();
+  let rejected=false;
+  try{
+    const response=await fetchTimed('/api/autonomy',{method:'POST',headers:{'Content-Type':'application/json','X-Mapping-Console':'1'},body:JSON.stringify(taskRequestBody(action,request_id,extra))},5000);
+    const result=await response.json();if(!response.ok){rejected=true;throw Error(result.error||'请求未被上位机受理');}
+    if(livePending?.request_id===request_id){livePending.canonical_request_id=result.canonical_request_id||request_id;liveNotice='上位机已受理，等待车端应用；尚未确认生效。';}
+  }catch(error){
+    if(livePending?.request_id!==request_id)return;
+    liveNotice=rejected?'上位机未受理，本次操作未应用：'+error.message+'；请检查任务状态。':'网页未收到应答；请求可能已到达上位机，等待车端状态，不自动重发。';liveNoticeKind='error';
+    if(rejected)livePending=null;
+  }
+  renderLiveControls();
+}
+function renderLiveControls(){
+  const a=state.autonomy||{},task=state.task_state==='RUNNING'?a.task_id||'':'';
+  if(liveTask!==task){liveTask=task;livePending=null;liveNotice='';liveNoticeKind='';liveNoticeAction='';liveMessages={};tuningDraft={};wallDrawing=false;wallDraft=[];wallDraftContext=null;$('wall-controls').hidden=true;}
+  finishLiveRequest(a);
+  if(liveNotice&&liveNoticeAction)liveMessages[liveArea(liveNoticeAction)]={text:liveNotice,kind:liveNoticeKind};
+  const tuning=a.tuning||{},walls=a.walls||{},tuningSupported=!!a.tuning&&Object.keys(tuningFields).every(key=>Number.isFinite(tuning.confirmed?.[key])),reason=liveReason('set_tuning');
+  for(const [key,spec] of Object.entries(tuningFields)){
+    const number=$('tuning-'+key),range=$('range-'+key),value=tuningDraft[key]??tuning.confirmed?.[key]??spec.baseline;
+    if(document.activeElement!==number)number.value=String(value);range.value=String(value);
+    number.disabled=range.disabled=!!reason||!tuningSupported;
+    number.title=range.title=reason||(!tuningSupported?'车端尚未提供动态调参能力':'');
+    const requested=livePending?.action==='set_tuning'&&key in livePending.extra.values?livePending.extra.values[key]:tuning.requested?.[key];
+    $('readback-'+key).textContent=[Number.isFinite(requested)?`请求 ${requested.toFixed(2)}${spec.unit}`:'',Number.isFinite(tuning.confirmed?.[key])?`真实读回 ${tuning.confirmed[key].toFixed(2)}${spec.unit}`:'等待真实读回'].filter(Boolean).join(' ／ ');
+  }
+  for(const [id,action] of [['tuning-restore','restore_tuning'],['tuning-save','save_tuning']]){
+    const why=liveReason(action)||(!tuningSupported?'车端尚未提供动态调参能力':tuning.pending||tuning.phase!=='READY'?'等待稳定的真实读回':'');
+    $(id).disabled=!!why;$(id).title=why;
+  }
+  $('tuning-status').textContent=(tuning.pending?'车端正在应用参数，等待真实读回。':'')||tuning.error||tuning.defaults_error||liveMessages.tuning?.text||(!tuningSupported?'车端尚未提供动态调参能力。':tuning.pending?'车端正在应用参数，请等待真实读回。':reason||'参数已读回；修改只影响当前任务，保存默认后用于新任务。');
+  $('tuning-status').dataset&&($('tuning-status').dataset.state=liveMessages.tuning?.kind||'');
+  const handoff=a.handoff||{},handoffReason=liveReason('set_handoff')||(!a.handoff?'车端尚未提供提前衔接能力':'');
+  for(const id of ['handoff-distance','handoff-range']){const node=$(id);node.disabled=!!handoffReason;node.title=handoffReason;if(document.activeElement!==node)node.value=String(tuningDraft.handoff??handoff.distance_m??.25);}
+  $('handoff-status').textContent=(liveMessages.handoff?.text?liveMessages.handoff.text+' ':'')+(Number.isFinite(handoff.distance_m)?`车端已确认 ${handoff.distance_m.toFixed(2)} m；只影响探索过点，返程仍核对终点。`:'等待车端提前衔接距离。');
+  const escape=a.obstacle_escape||{},escapeReason=liveReason('set_escape_enabled')||(!a.obstacle_escape?'车端尚未提供短退能力':!escape.field_validated&&!escape.enabled?'尚未完成现场验证，禁止启用自动短退':escape.allowed===false&&!escape.enabled?'车端当前不允许启用短退':'');
+  $('escape-enabled').checked=!!escape.enabled;$('escape-enabled').disabled=!!escapeReason;$('escape-enabled').title=escapeReason;
+  $('escape-status').textContent=(liveMessages.escape?.text?liveMessages.escape.text+' ':'')+(escape.field_validated?(escape.enabled?'已允许有界短退；仍需后方观测、动作取消及停稳验证。':'短退关闭。'):escapeReason||'尚未完成现场验证；可关闭已有开关。');
+  const wallReason=liveReason('set_walls')||(!a.walls?'车端尚未提供临时墙能力':!Number.isInteger(wallGeneration())||wallGeneration()<0||!Number.isInteger(wallRevision())||wallRevision()<0?'等待车端同步墙版本与地图定位代次':'');
+  $('wall-tool').disabled=!!wallReason;$('wall-tool').title=wallReason;
+  $('wall-tool').setAttribute?.('aria-pressed',String(!$('wall-controls').hidden));
+  if(wallDraftContext&&(wallDraftContext.generation!==wallGeneration()||wallDraftContext.revision!==wallRevision())){
+    wallDrawing=false;wallDraft=[];wallDraftContext=null;liveNoticeAction='set_walls';liveNotice='墙版本或地图定位代次已变化，旧草稿已取消；请核对地图后重新画墙。';liveNoticeKind='error';
+  }
+  $('wall-draw').disabled=!!wallReason||!displayMap;$('wall-draw').textContent=wallDrawing?'结束画点':'开始画墙';$('wall-draw').setAttribute?.('aria-pressed',String(wallDrawing));
+  $('wall-cancel').disabled=!wallDraft.length&&!wallDrawing;$('wall-undo').disabled=!wallDraft.length;
+  $('wall-apply').disabled=!!wallReason||!wallDraftValid();$('wall-apply').title=wallReason||(!wallDraftValid()?'至少选择两个不同端点，总长不少于0.05米':'');
+  $('wall-draft').textContent=wallDraft.length?`草稿 ${wallDraft.length} 点 · ${wallLength(wallDraft).toFixed(2)} m · `+wallDraft.map(p=>`(${p[0].toFixed(2)}, ${p[1].toFixed(2)})`).join(' → '):wallDrawing?'点击地图添加端点；Esc取消草稿。':'尚无草稿';
+  const selection=$('wall-selection'),items=wallItems(),signature=JSON.stringify(items.map(w=>[w.id,w.points]));
+  if(selection.wallSignature!==signature&&(items.length||selection.wallSignature)){const previous=selection.value;selection.textContent='';
+    if(!items.length){const option=document.createElement('option');option.value='';option.textContent='暂无临时墙';selection.append(option);}
+    for(const wall of items){const option=document.createElement('option');option.value=wall.id;option.textContent=`${wall.id} · ${Array.isArray(wall.points)?wallLength(wall.points).toFixed(2):'?'} m`;selection.append(option);}
+    if(items.some(w=>w.id===previous))selection.value=previous;selection.wallSignature=signature;
+  }
+  selection.disabled=!!wallReason||!items.length;$('wall-remove').disabled=!!wallReason||!items.some(w=>w.id===selection.value);
+  const reviewReason=liveReason('confirm_walls')||(walls.review_allowed===false?(walls.review_reason||'定位及停稳验证尚未完成，不能复核墙'):'')||(!items.length?'尚无临时墙':!walls.needs_confirmation?'当前墙无需复核':'');
+  $('wall-review').disabled=!!reviewReason;$('wall-review').title=reviewReason;
+  const bypassReason=liveReason('set_wall_bypass')||(sharedOperators()&&!isManualOwner()&&!walls.bypass_enabled?'先取得遥控权，再开启人工旁路':'')||(!a.walls?'车端尚未提供墙保护状态':(!a.still||!a.navigation_terminal)&&!walls.bypass_enabled?'先松开遥控并等待导航终态、轮式停稳，再调整人工旁路':a.phase!=='MANUAL'&&!walls.bypass_enabled?'先完成手动接管，再开启人工旁路':'');
+  $('wall-bypass').disabled=!!bypassReason;$('wall-bypass').title=bypassReason;$('wall-bypass').textContent=walls.bypass_enabled?'关闭人工墙旁路':'开启人工墙旁路';
+  const unprotected=!!walls.bypass_enabled||!!walls.needs_confirmation||!!walls.requires_recheck;
+  $('wall-protection').hidden=!unprotected;$('wall-protection').textContent='人工墙保护不可用'+(walls.bypass_enabled?' · 人工旁路已开启':walls.requires_recheck?' · 人工旁路已退出，等待定位重新检查':' · 定位变化后须复核墙位置');
+  if(liveNotice&&liveNoticeAction)liveMessages[liveArea(liveNoticeAction)]={text:liveNotice,kind:liveNoticeKind};
+  const reviewProgress=walls.needs_confirmation&&Number.isFinite(walls.review_wait_seconds)?`${walls.review_reason||'等待临时墙位置复核'} · 剩余 ${Math.max(0,(walls.review_wait_limit_seconds||300)-walls.review_wait_seconds).toFixed(0)} 秒；车辆保持停车。`:'';
+  $('wall-status').textContent=walls.error||reviewProgress||(['APPLYING','STOPPING'].includes(walls.phase)?'车端正在停稳并应用临时墙，等待保护读回。':'')||liveMessages.walls?.text||wallReason||(walls.needs_confirmation?'核对地图上的墙与现场位置，再点击复核；自动保护尚未恢复。':`已应用 ${items.length} 面临时墙 · 版本 ${wallRevision()}`);
+  canvas.classList.toggle('wall-drawing',wallDrawing);
+}
+function cancelWallDraft(){wallDraft=[];wallDraftContext=null;wallDrawing=false;renderLiveControls();}
+function addWallPoint(p){
+  if(!wallDrawing||liveReason('set_walls')||!finitePoint(p))return;
+  if(wallDraft.length>=32){liveNoticeAction='set_walls';liveNotice='网页未提交：单面墙最多32个端点，请应用当前折线后再新增。';return;}
+  const previous=wallDraft.at(-1);if(previous&&Math.hypot(p[0]-previous[0],p[1]-previous[1])<.01)return;
+  wallDraft.push(p.map(v=>Math.round(v*1000)/1000));renderLiveControls();
+}
+for(const [key,spec] of Object.entries(tuningFields)){
+  const number=$('tuning-'+key),range=$('range-'+key);
+  const preview=(source,other)=>{tuningDraft[key]=Number(source.value);other.value=source.value;};
+  const apply=source=>{const value=Number(source.value);if(!String(source.value).trim()||!Number.isFinite(value)||value<spec.min||value>spec.max){liveNoticeAction='set_tuning';liveNotice=`网页未提交：${spec.label}需在${spec.min}～${spec.max}${spec.unit}范围内。`;liveNoticeKind='error';renderLiveControls();return;}void liveRequest('set_tuning',{values:{[key]:value}});};
+  number.oninput=()=>preview(number,range);range.oninput=()=>preview(range,number);number.onchange=()=>apply(number);range.onchange=()=>apply(range);
+}
+$('tuning-restore').onclick=()=>liveRequest('restore_tuning');$('tuning-save').onclick=()=>liveRequest('save_tuning');
+for(const id of ['handoff-distance','handoff-range']){
+  $(id).oninput=()=>{tuningDraft.handoff=Number($(id).value);$(id==='handoff-distance'?'handoff-range':'handoff-distance').value=$(id).value;};
+  $(id).onchange=()=>{const distance_m=Number($(id).value);if(!String($(id).value).trim()||!Number.isFinite(distance_m)||distance_m<.15||distance_m>.8){liveNoticeAction='set_handoff';liveNotice='网页未提交：提前衔接距离需在0.15～0.80米。';liveNoticeKind='error';renderLiveControls();return;}void liveRequest('set_handoff',{distance_m});};
+}
+$('escape-enabled').onchange=()=>{const enabled=$('escape-enabled').checked;if(enabled&&!state.autonomy?.obstacle_escape?.field_validated){$('escape-enabled').checked=false;liveNoticeAction='set_escape_enabled';liveNotice='网页未提交：短退尚未完成现场验证。';renderLiveControls();return;}void liveRequest('set_escape_enabled',{enabled});};
+$('wall-tool').onclick=()=>{if($('wall-tool').disabled)return;$('wall-controls').hidden=!$('wall-controls').hidden;if($('wall-controls').hidden)cancelWallDraft();else renderLiveControls();};
+$('wall-draw').onclick=()=>{if($('wall-draw').disabled)return;choosing=false;hint=null;$('hint-info').textContent='';wallDrawing=!wallDrawing;if(wallDrawing&&!wallDraftContext)wallDraftContext={generation:wallGeneration(),revision:wallRevision()};renderLiveControls();};
+$('wall-undo').onclick=()=>{wallDraft.pop();renderLiveControls();};$('wall-cancel').onclick=cancelWallDraft;
+$('wall-apply').onclick=()=>{if($('wall-apply').disabled||!wallDraftValid())return;const id='wall-'+Date.now().toString(36);void liveRequest('set_walls',{walls:[...wallItems(),{id,points:wallDraft.map(p=>[...p])}],wall_revision:wallRevision(),navigation_generation:wallGeneration()});};
+$('wall-remove').onclick=()=>{if($('wall-remove').disabled)return;void liveRequest('set_walls',{walls:wallItems().filter(w=>w.id!==$('wall-selection').value),wall_revision:wallRevision(),navigation_generation:wallGeneration()});};
+$('wall-selection').onchange=renderLiveControls;
+$('wall-review').onclick=()=>{if(!$('wall-review').disabled)void liveRequest('confirm_walls',{wall_revision:wallRevision(),navigation_generation:wallGeneration()});};
+$('wall-bypass').onclick=()=>{if(!$('wall-bypass').disabled)void liveRequest('set_wall_bypass',{enabled:!wallState().bypass_enabled});};
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&(wallDrawing||wallDraft.length)){event.preventDefault();cancelWallDraft();}});
+function paintWalls(){
+  if(state.task_state!=='RUNNING'||state.autonomy?.task_id!==liveTask)return;
+  const paint=(points,color,dashed)=>{if(!Array.isArray(points)||points.length<2||!points.every(finitePoint))return;ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=4/scale;if(dashed)ctx.setLineDash([8/scale,5/scale]);ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.stroke();ctx.setLineDash([]);for(const p of points){ctx.beginPath();ctx.arc(...p,3/scale,0,Math.PI*2);ctx.fill();}ctx.restore();};
+  const review=wallState().needs_confirmation||wallState().bypass_enabled||wallState().requires_recheck||!liveFresh();
+  for(const wall of wallItems())paint(wall.points,review?'#a66a18':'#a52e3b',review);
+  paint(wallDraft,'#285bd4',true);
+}
+
 async function reviewMap(approve){
   if(publicationPending)return;
   const bundle=$('review-bundle').value,note=$('review-note').value.trim();
@@ -723,7 +906,7 @@ $('diagnose').onclick = async () => {
 $('export-diagnostics').onclick = () => {const file=new Blob([$('diagnostics').textContent||JSON.stringify({last_stop:lastFault,client_events:clientEvents},null,2)],{type:'application/json'});const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download='mapping-diagnostics-'+Date.now()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('try').onclick = () => {if (hint) operation('/api/resume',{pose:hint});};
 $('confirm').onclick = () => operation('/api/confirm');
-$('hint').onclick = () => {stop(); choosing = !choosing; $('hint-info').textContent = choosing ? '在旧图空闲处按下车体中心，拖动到车头方向后松开。此箭头仅是人工初值。' : '';};
+$('hint').onclick = () => {cancelWallDraft();stop(); choosing = !choosing; $('hint-info').textContent = choosing ? '在旧图空闲处按下车体中心，拖动到车头方向后松开。此箭头仅是人工初值。' : '';};
 function screenToWorld(x,y) {return [cx+(x-canvas.clientWidth/2)/scale,cy-(y-canvas.clientHeight/2)/scale];}
 function fit() {
   const m = displayMap; if (!m) return;
@@ -737,7 +920,8 @@ const pointers=new Map(); let gesture=null;
 function point(event){const r=canvas.getBoundingClientRect();return [event.clientX-r.left,event.clientY-r.top];}
 canvas.onpointerdown=event=>{
   event.preventDefault(); canvas.setPointerCapture(event.pointerId); const p=point(event); pointers.set(event.pointerId,p);
-  if(choosing&&pointers.size===1){const world=screenToWorld(...p);hint=[...world,0];gesture={kind:'hint'};}
+  if(wallDrawing&&pointers.size===1){gesture={kind:'wall',point:p};}
+  else if(choosing&&pointers.size===1){const world=screenToWorld(...p);hint=[...world,0];gesture={kind:'hint'};}
   else if(pointers.size===1) gesture={kind:'pan',point:p,cx,cy};
   else {const a=[...pointers.values()];gesture={kind:'pinch',distance:Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),scale};}
 };
@@ -747,7 +931,8 @@ canvas.onpointermove=event=>{
   else if(pointers.size===2&&gesture.kind==='pinch'){const a=[...pointers.values()];scale=Math.max(2,Math.min(1500,gesture.scale*Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])/Math.max(gesture.distance,1)));}
   else if(gesture.kind==='pan'){cx=gesture.cx-(p[0]-gesture.point[0])/scale;cy=gesture.cy+(p[1]-gesture.point[1])/scale;}
 };
-canvas.onpointerup=canvas.onpointercancel=event=>{pointers.delete(event.pointerId);gesture=null;};
+canvas.onpointerup=event=>{if(gesture?.kind==='wall'&&pointers.size===1){const p=point(event);if(Math.hypot(p[0]-gesture.point[0],p[1]-gesture.point[1])<12)addWallPoint(screenToWorld(...p));}pointers.delete(event.pointerId);gesture=null;};
+canvas.onpointercancel=event=>{pointers.delete(event.pointerId);gesture=null;};
 canvas.onwheel=event=>{event.preventDefault();const p=point(event),before=screenToWorld(...p);scale=Math.max(2,Math.min(1500,scale*Math.exp(-event.deltaY*.001)));const after=screenToWorld(...p);cx+=before[0]-after[0];cy+=before[1]-after[1];};
 function arrow(p,color,dashed=false){
   if(!p)return;ctx.save();ctx.translate(p[0],p[1]);ctx.rotate(p[2]);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=2/scale;if(dashed)ctx.setLineDash([5/scale,4/scale]);
@@ -836,6 +1021,7 @@ function draw(at=performance.now()){
     for(const cell of blocked.cells||[]){const b=cell.bounds;if(b?.length===4){ctx.fillRect(...b);ctx.strokeRect(...b);}}
     ctx.beginPath();ctx.arc(blocked.pose[0],blocked.pose[1],blocked.radius_m,0,2*Math.PI);ctx.stroke();ctx.restore();
   }
+  paintWalls();
   ctx.fillStyle='#ee3038';for(const p of scanFresh()?scanPoints:[])ctx.fillRect(p[0]-1.5/scale,p[1]-1.5/scale,3/scale,3/scale);
   arrow(state.pose,'#087edb');if(choosing||['REFERENCE','LOADING','TRIAL','CANDIDATE'].includes(state.phase))arrow(hint,'#edba28',true);
   ctx.setTransform(ratio,0,0,ratio,0,0);ctx.strokeStyle='#102230';ctx.lineWidth=3;const meters=scale>120?.25:scale>40?1:5;
@@ -890,6 +1076,7 @@ const age=value=>Number.isFinite(value)&&value<10000?`${Math.max(0,value).toFixe
           $('autonomy-budget').textContent='状态过期 · 上次记录：'+$('autonomy-budget').textContent;
         }
         renderSpeed(auto,autonomyFresh,uiBusy,saved);
+        renderLiveControls();
         renderRecovery(auto,autonomyFresh);
         const autoStartBlocked=auto.automatic_start_ready===false;
         const autoStartReason=auto.automatic_start_reason||'自动尚未开始：请检查起点周围整车足迹是否位于已知自由区域';
@@ -1004,6 +1191,7 @@ const age=value=>Number.isFinite(value)&&value<10000?`${Math.max(0,value).toFixe
           const previous=$(id).textContent||'';
           if(!previous.startsWith('状态过期'))$(id).textContent='状态过期 · 上次记录：'+previous;
         }
+        renderLiveControls();
         for(const id of ['start','enable','save','finish','auto-start','auto-pause','auto-manual','auto-finish','auto-recheck','auto-return','auto-speed','auto-speed-apply'])$(id).disabled=true;
       }
     }

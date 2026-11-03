@@ -4,7 +4,7 @@
     <PipelineSequence name="continuous_Pipeline">
       <ExplorationReplan name="continuous_ReplanRate">
         <ReactiveSequence name="continuous_CheckedPlanning">
-          <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.25" global_frame="map" robot_base_frame="base_footprint" name="continuous_RemovePassed"/>
+          <MappingPassedGoals input_goals="{goals}" output_goals="{goals}" path="{path}" name="continuous_RemovePassed"/>
           <RecoveryNode name="continuous_PlannerRetry" number_of_retries="1">
             <ComputePathThroughPoses goals="{goals}" path="{candidate_path}" planner_id="ExplorationGrid" name="continuous_Plan"/>
             <Delay name="continuous_AwaitCostmapPeriod" delay_msec="400">
@@ -12,6 +12,7 @@
             </Delay>
           </RecoveryNode>
           <CheckedMappingPath path="{candidate_path}" checked_path="{path}" name="continuous_CheckActualPath"/>
+          <MappingPassedGoals input_goals="{goals}" output_goals="{goals}" path="{path}" name="continuous_PassFreshChecked"/>
         </ReactiveSequence>
       </ExplorationReplan>
       <ExplorationFollow path="{path}" name="continuous_VerifyCompletion">

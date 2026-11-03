@@ -1,0 +1,5 @@
+<library path="carcar_revision_inflation">
+  <class name="carcar_mapping_autonomy/RevisionInflationLayer" type="carcar_mapping_autonomy::RevisionInflationLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>保留Nav2膨胀计算，追加实际完整重算的参数代次确认。</description>
+  </class>
+</library>

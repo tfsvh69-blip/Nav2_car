@@ -2,7 +2,31 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2_ros/buffer.h>
+#include "carcar_mapping_autonomy/handoff.hpp"
 #include "carcar_mapping_autonomy/route_validation.hpp"
+
+namespace {
+using HandoffClock=std::chrono::steady_clock;
+// 同一黑板会被Nav2抢占复用；过点资格必须绑定实际审查的路径、目标与坐标版本。
+struct CheckedHandoffPath {
+  nav_msgs::msg::Path path;
+  std::vector<geometry_msgs::msg::PoseStamped> goals;
+  std::string task_id;
+  uint64_t navigation_generation=0,map_revision=0;
+  HandoffClock::time_point checked_at;
+};
+constexpr const char* handoff_proof_key="mapping_checked_handoff_path";
+bool handoff_context(const carcar_mapping_autonomy::Json&state,std::string&task,uint64_t&generation,uint64_t&revision){
+  try{
+    if(!state.is_object()||!state.contains("task_id")||!state["task_id"].is_string())return false;
+    task=state["task_id"].get<std::string>();if(task.empty())return false;
+    for(const auto*key:{"navigation_generation","map_revision"})
+      if(!state.contains(key)||!state[key].is_number_integer()||
+         (!state[key].is_number_unsigned()&&state[key].get<int64_t>()<0))return false;
+    generation=state["navigation_generation"].get<uint64_t>();revision=state["map_revision"].get<uint64_t>();return true;
+  }catch(const std::exception&){return false;}
+}
+}
 
 // 审查行为树刚生成的实际路径；只有审查成功的副本能送入FollowPath。
 // 使用独立回调组主动处理地图/任务状态，不依赖Nav2 Action节点的私有executor。
@@ -14,7 +38,9 @@ public:
     group_=node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive,false);
     rclcpp::SubscriptionOptions options;options.callback_group=group_;
     maps_=node_->create_subscription<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local(),
-      [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){map_=m;map_at_=std::chrono::steady_clock::now();},options);
+      [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){raw_map_=m;raw_map_at_=std::chrono::steady_clock::now();},options);
+    constrained_maps_=node_->create_subscription<nav_msgs::msg::OccupancyGrid>("/mapping/navigation_map",rclcpp::QoS(1).reliable().transient_local(),
+      [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){constrained_map_=m;constrained_map_at_=std::chrono::steady_clock::now();},options);
     states_=node_->create_subscription<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local(),
       [this](const std_msgs::msg::String&m){try{state_=carcar_mapping_autonomy::Json::parse(m.data);state_at_=std::chrono::steady_clock::now();}catch(...){state_=nullptr;}},options);
     executor_.add_callback_group(group_,node_->get_node_base_interface());
@@ -22,6 +48,9 @@ public:
   static BT::PortsList providedPorts(){return {BT::InputPort<nav_msgs::msg::Path>("path"),BT::OutputPort<nav_msgs::msg::Path>("checked_path")};}
   BT::NodeStatus tick()override{
     executor_.spin_some();const auto now=std::chrono::steady_clock::now();
+    config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(handoff_proof_key,nullptr);
+    const bool constrained=state_.is_object()&&state_.value("live_controls_enabled",false);
+    map_=constrained?constrained_map_:raw_map_;map_at_=constrained?constrained_map_at_:raw_map_at_;
     if(!map_||state_.is_null()||std::chrono::duration<double>(now-map_at_).count()>10||
       std::chrono::duration<double>(now-state_at_).count()>1||state_.value("phase","")!="EXPLORING")return BT::NodeStatus::FAILURE;
     const auto path=getInput<nav_msgs::msg::Path>("path");if(!path||path.value().poses.empty())return BT::NodeStatus::FAILURE;
@@ -36,16 +65,22 @@ public:
       if(!carcar_mapping_autonomy::RouteValidator::check(job,&reason)){
         RCLCPP_WARN(node_->get_logger(),"实际执行路径审查拒绝：%s",reason.c_str());return BT::NodeStatus::FAILURE;
       }
+      std::vector<geometry_msgs::msg::PoseStamped>goals;std::string task;uint64_t generation=0,revision=0;
+      if(config().blackboard->get("goals",goals)&&!goals.empty()&&handoff_context(state_,task,generation,revision)){
+        auto proof=std::make_shared<CheckedHandoffPath>();proof->path=path.value();proof->goals=std::move(goals);
+        proof->task_id=std::move(task);proof->navigation_generation=generation;proof->map_revision=revision;proof->checked_at=now;
+        config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(handoff_proof_key,std::move(proof));
+      }
       setOutput("checked_path",path.value());return BT::NodeStatus::SUCCESS;
     }catch(const std::exception&e){RCLCPP_WARN(node_->get_logger(),"路径审查数据未就绪：%s",e.what());return BT::NodeStatus::FAILURE;}
   }
 private:
   rclcpp::Node::SharedPtr node_;std::shared_ptr<tf2_ros::Buffer> tf_;
   rclcpp::CallbackGroup::SharedPtr group_;rclcpp::executors::SingleThreadedExecutor executor_;
-  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr maps_;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr maps_,constrained_maps_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr states_;
-  nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_;carcar_mapping_autonomy::Json state_;
-  std::chrono::steady_clock::time_point map_at_,state_at_;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_,raw_map_,constrained_map_;carcar_mapping_autonomy::Json state_;
+  std::chrono::steady_clock::time_point map_at_,state_at_,raw_map_at_,constrained_map_at_;
 };
 // Humble的RateController不会因goals抢占立即重置；仅重启规划子树，继续执行已检查的路径。
 class ExplorationReplan:public BT::DecoratorNode {
@@ -102,7 +137,53 @@ public:
 private:
   rclcpp::Node::SharedPtr node_;std::shared_ptr<tf2_ros::Buffer>tf_;
 };
+// 读取监督器的任务内参数，并使用当前已审查路径的剩余弧长通过中间点。
+class MappingPassedGoals:public BT::SyncActionNode {
+public:
+ MappingPassedGoals(const std::string&name,const BT::NodeConfiguration&config):SyncActionNode(name,config){
+  node_=config.blackboard->get<rclcpp::Node::SharedPtr>("node");tf_=config.blackboard->get<std::shared_ptr<tf2_ros::Buffer>>("tf_buffer");
+  group_=node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive,false);
+  rclcpp::SubscriptionOptions options;options.callback_group=group_;
+  states_=node_->create_subscription<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local(),
+   [this](const std_msgs::msg::String&m){try{state_=carcar_mapping_autonomy::Json::parse(m.data);at_=std::chrono::steady_clock::now();}catch(...){}},options);
+  executor_.add_callback_group(group_,node_->get_node_base_interface());
+ }
+ static BT::PortsList providedPorts(){return {BT::InputPort<std::vector<geometry_msgs::msg::PoseStamped>>("input_goals"),BT::OutputPort<std::vector<geometry_msgs::msg::PoseStamped>>("output_goals"),BT::InputPort<nav_msgs::msg::Path>("path")};}
+ BT::NodeStatus tick()override{
+  executor_.spin_some();auto goals=getInput<std::vector<geometry_msgs::msg::PoseStamped>>("input_goals");
+  if(!goals)return BT::NodeStatus::FAILURE;
+  auto result=goals.value();const auto path=getInput<nav_msgs::msg::Path>("path");
+  std::shared_ptr<const CheckedHandoffPath>proof;std::string task;uint64_t generation=0,revision=0;
+  const auto now=HandoffClock::now();
+  try{
+    const bool qualified=path&&config().blackboard->get(handoff_proof_key,proof)&&proof&&
+      handoff_context(state_,task,generation,revision)&&proof->task_id==task&&
+      proof->navigation_generation==generation&&proof->map_revision==revision&&
+      proof->goals==result&&proof->path==path.value()&&
+      std::chrono::duration<double>(now-proof->checked_at).count()<=1.5&&
+      std::chrono::duration<double>(now-at_).count()<1&&state_.value("phase",std::string())=="EXPLORING";
+    if(qualified){
+      const double radius=state_.value("handoff",carcar_mapping_autonomy::Json::object()).value("distance_m",.25);
+      if(std::isfinite(radius)&&radius>=.15&&radius<=.8){
+        const auto tr=tf_->lookupTransform("map","base_footprint",tf2::TimePointZero);const auto age=(node_->now()-rclcpp::Time(tr.header.stamp)).seconds();
+        if(age>=-.1&&age<=.5)while(result.size()>1){const auto&p=result.front().pose.position;
+          if(carcar_mapping_autonomy::handoff_path_distance(path.value(),{tr.transform.translation.x,tr.transform.translation.y,0},{p.x,p.y,0})>radius)break;
+          result.erase(result.begin());
+        }
+      }
+    }
+  }catch(const std::exception&){}
+  // 资格不匹配时保留全部目标，让后续真实规划和审查先更新路径，不停树、不虚构到达。
+  setOutput("output_goals",result);return BT::NodeStatus::SUCCESS;
+ }
+private:
+ rclcpp::Node::SharedPtr node_;std::shared_ptr<tf2_ros::Buffer>tf_;rclcpp::CallbackGroup::SharedPtr group_;
+ rclcpp::executors::SingleThreadedExecutor executor_;rclcpp::Subscription<std_msgs::msg::String>::SharedPtr states_;
+ carcar_mapping_autonomy::Json state_=carcar_mapping_autonomy::Json::object();std::chrono::steady_clock::time_point at_;
+};
+
 BT_REGISTER_NODES(factory){
+  factory.registerNodeType<MappingPassedGoals>("MappingPassedGoals");
   factory.registerNodeType<CheckedMappingPath>("CheckedMappingPath");
   factory.registerNodeType<ExplorationReplan>("ExplorationReplan");
   factory.registerNodeType<ExplorationFollow>("ExplorationFollow");

@@ -1329,3 +1329,45 @@ footer .icon {
     --line: #aab5c3;
   }
 }
+
+
+/* 运行参数保持任务侧栏的紧凑分组，应用状态与真实读回紧邻控件。 */
+.live-settings > summary { font-weight: 600; }
+.tuning-fields { display: grid; gap: 10px; margin: 12px 0; }
+.tuning-field > label, .handoff-controls > label { display: block; font-size: 12px; font-weight: 500; }
+.tuning-input { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 10px; align-items: center; margin-top: 5px; }
+.tuning-input input { width: 100%; min-width: 0; }
+.autonomy-card .tuning-readback { margin: 3px 0 0; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tuning-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.tuning-actions button { flex: 1; padding-inline: 7px; font-size: 12px; }
+#tuning-status { overflow-wrap: anywhere; }
+#tuning-status[data-state="error"] { color: #a52e3b; }
+.handoff-controls { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
+.escape-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 12px; }
+.escape-toggle input { width: 17px; height: 17px; }
+/* 临时墙工具在地图下方展开，顶部停车入口始终保留。 */
+.wall-controls { border-top: 1px solid var(--line); padding: 14px 18px; background: #fafbfc; }
+.wall-controls-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 5px 12px; }
+.wall-controls-heading strong { font-size: 13px; }
+.wall-controls-heading span, .wall-controls p { font-size: 12px; color: var(--muted); }
+.wall-controls p { margin: 7px 0; line-height: 1.65; }
+.wall-edit-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 9px 0; }
+.wall-edit-actions button { font-size: 12px; }
+.wall-controls .wall-draft { color: #36567c; overflow-wrap: anywhere; max-height: 5.2em; overflow-y: auto; font-variant-numeric: tabular-nums; }
+.wall-existing { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 12px 0; }
+.wall-existing label { font-size: 12px; }
+.wall-existing select { width: 100%; }
+.wall-existing button { padding-inline: 9px; font-size: 12px; }
+.wall-bypass { border-color: #cfa3a8; color: #9b2835; }
+.wall-controls .wall-protection { color: #9b2835; background: #fff0f1; border-left: 3px solid #a52e3b; padding: 9px 11px; font-weight: 650; }
+.wall-controls .wall-scope { margin-top: 10px; font-size: 11px; }
+#wall-status { overflow-wrap: anywhere; }
+#map.wall-drawing { cursor: crosshair; outline: 2px solid #285bd4; outline-offset: -2px; }
+#wall-tool[aria-pressed="true"], #wall-draw[aria-pressed="true"] { color: #204bb0; background: var(--blue-soft); border-color: #9aafe0; }
+@media (max-width: 480px) {
+  .wall-controls { padding: 12px; }
+  .wall-edit-actions button { flex: 1 1 40%; }
+  .wall-existing { grid-template-columns: minmax(0, 1fr) auto; }
+  .wall-existing label { grid-column: 1 / -1; }
+  .tuning-input { grid-template-columns: 82px minmax(0, 1fr); }
+}

@@ -121,7 +121,7 @@ int run_evaluation(int argc,char**argv){
  });
  char temporary[]="/tmp/carcar-exploration-eval-XXXXXX";if(!mkdtemp(temporary))return 2;Child child;
  std::vector<std::string>args{"/opt/ros/humble/bin/ros2","launch","carcar_mapping_console","mapping_autonomous.launch.xml","start_hardware:=false","record_raw_bag:=false","control_mode:=automatic",std::string("port:=")+std::to_string(18127+std::stoi(domain)-231),"task_id:=exploration-evaluation","explore_seconds:=240.0",std::string("map_root:=")+temporary,
-  std::string("checkpoint_root:=")+temporary+"/checkpoints",std::string("continuous_exploration:=")+(mode=="continuous"?"true":"false"),std::string("online_snapshots:=true")};
+  std::string("checkpoint_root:=")+temporary+"/checkpoints",std::string("tuning_defaults_file:=")+temporary+"/isolated-tuning-defaults.json",std::string("continuous_exploration:=")+(mode=="continuous"?"true":"false"),std::string("online_snapshots:=true")};
  if(mode!="continuous"){
   args.push_back(std::string("path_aware_ranking:=")+(mode=="ranked"?"true":"false"));
   args.push_back("prefer_observation_clearance:=true");args.push_back("auto_execution_sweep:=true");args.push_back("obstacle_wait_enabled:=true");

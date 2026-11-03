@@ -16,6 +16,7 @@ public:
   ~ContinuousExploration();
   void tick(Snapshot snapshot);
   void stop();
+  void set_handoff_distance(double value);
   bool terminal()const;
   bool motion()const;
   bool complete()const;

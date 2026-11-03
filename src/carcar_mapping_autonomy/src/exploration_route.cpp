@@ -7,6 +7,7 @@
 #include <queue>
 #include <set>
 #include <unordered_set>
+#include "carcar_mapping_autonomy/map_fingerprint.hpp"
 namespace ca=carcar_mapping_autonomy;
 namespace {
 constexpr double inf=std::numeric_limits<double>::infinity();
@@ -80,8 +81,9 @@ ca::ExplorationRouteResult ca::exploration_route(ExplorationRouteInput input){
     size_t observed=0;
     for(const auto key:visit.predicted_cells){
       const double x=(int32_t(uint32_t(key>>32))+.5)*.1,y=(int32_t(uint32_t(key))+.5)*.1;
-      const auto index=ObservationSelector::Search::cell(map,{x,y,0});
-      if(index&&map.data[*index]>=0){++observed;newly_known.insert(key);}
+      const auto &observation_grid=job.observation_map?*job.observation_map:map;
+      const auto index=ObservationSelector::Search::cell(observation_grid,{x,y,0});
+      if(index&&observation_grid.data[*index]>=0){++observed;newly_known.insert(key);}
     }
     result.observations.push_back({{"target",{visit.target.x,visit.target.y}},
       {"predicted_unknown_m2",visit.gain},{"observed_known_m2",observed*.01}});
@@ -116,10 +118,30 @@ ca::ExplorationRouteResult ca::exploration_route(ExplorationRouteInput input){
   frontier_exploration::FrontierSearch search(&costmap,.001,1.,.20,rclcpp::get_logger("continuous_frontier"));
   geometry_msgs::msg::Point position;position.x=job.current.x;position.y=job.current.y;
   const auto frontiers=search.searchFrom(position);result.frontiers=frontiers.size();
+  // 只对同一原始快照计算人工约束排除，不能把不同时间地图的变化归咎于墙。
+  if(job.observation_map&&job.observation_map->header.stamp==map.header.stamp&&same_map_geometry(*job.observation_map,map)&&job.observation_map->data!=map.data){
+    nav2_costmap_2d::Costmap2D raw(width,height,map.info.resolution,map.info.origin.position.x-map.info.resolution,map.info.origin.position.y-map.info.resolution,255);
+    for(unsigned y=0;y<map.info.height;++y)for(unsigned x=0;x<map.info.width;++x){const auto value=job.observation_map->data[size_t(y)*map.info.width+x];raw.setCost(x+1,y+1,value<0?255:(value>=65?254:0));}
+    frontier_exploration::FrontierSearch original(&raw,.001,1.,.20,rclcpp::get_logger("raw_frontier_scope"));
+    const auto original_frontiers=original.searchFrom(position);
+    std::set<std::pair<int64_t,int64_t>>allowed;
+    for(const auto&f:frontiers)for(const auto&p:f.points)allowed.insert({std::llround(p.x/map.info.resolution),std::llround(p.y/map.info.resolution)});
+    size_t excluded=0;Json examples=Json::array();
+    for(const auto&f:original_frontiers)for(const auto&p:f.points)if(!allowed.count({std::llround(p.x/map.info.resolution),std::llround(p.y/map.info.resolution)})){
+      ++excluded;if(examples.size()<16)examples.push_back({p.x,p.y});
+    }
+    result.wall_exclusions={{"frontier_cells",excluded},{"examples_map_m",examples},{"reason","当前人工约束阻断的前沿；不代表这些区域已经被雷达观测"}};
+  }
+
+  const bool comparable=job.observation_map&&job.observation_map->header.stamp==map.header.stamp&&same_map_geometry(*job.observation_map,map)&&job.observation_map->data!=map.data;
+  std::optional<nav_msgs::msg::OccupancyGrid> raw_mask;std::vector<double> raw_reach;
+  if(comparable){raw_mask=planning_keepout_mask(*job.observation_map);if(raw_mask){allow_planning_departure(*job.observation_map,job.current,*raw_mask);raw_reach=distances(*raw_mask,job.current);}}
+  size_t excluded_groups=0;
   ObservationSelector::Search observations;std::vector<ExplorationPoint> candidates;
   Json rejected={{"无安全观测点",0},{"距离不足",0},{"重复候选",0},{"静态路径不可达",0},{"无未知收益",0},{"到访抑制",0}};
   std::set<std::pair<int,int>> bins;
   for(const auto & frontier:frontiers){
+    bool group_reachable=false;
     // 同一连通前沿可环绕整间房，按空间采样保留多个观测方向，避免只看簇均值。
     std::vector<geometry_msgs::msg::Point> representatives{frontier.middle};
     for(const auto&p:frontier.points){if(bins.insert({int(std::floor(p.x/.8)),int(std::floor(p.y/.8))}).second)representatives.push_back(p);}
@@ -129,6 +151,7 @@ ca::ExplorationRouteResult ca::exploration_route(ExplorationRouteInput input){
       ObservationSelector::Job selected;selected.map=job.map;selected.revision=job.revision;
       selected.current=job.current;selected.frontier={p.x,p.y,0};selected.task=job.task;
       const auto target=observations.select(selected);
+      if(target){const auto cell=ObservationSelector::Search::cell(map,*target);if(cell&&std::isfinite(from_start[*cell]))group_reachable=true;}
       if(!target){rejected["无安全观测点"]=rejected["无安全观测点"].get<int>()+1;continue;}
       // 首步至少覆盖0.15米到点容差、0.10米SLAM移动门槛和半个5厘米栅格余量。
       // 原0.45米过滤会把起点附近唯一安全的约0.30米观测点全部排除。
@@ -157,13 +180,28 @@ ca::ExplorationRouteResult ca::exploration_route(ExplorationRouteInput input){
       candidates.push_back({*target,{p.x,p.y,0},predicted,score,{cells.begin(),cells.end()}});
       if(candidates.size()>=24)break;
     }
+    // 原图曾有安全可达观测点、加墙后才失去连接，才归为人工约束排除。
+    // 不能把本来就无法规划、冷却或暂时无收益的点伪装成探索完成。
+    if(!group_reachable&&raw_mask){
+      ObservationSelector::Search original_observations;
+      const size_t step=std::max(size_t{1},representatives.size()/32);
+      for(size_t i=0;i<representatives.size();i+=step){
+        const auto&p=representatives[i];ObservationSelector::Job proof;proof.map=job.observation_map;proof.revision=job.revision;
+        proof.current=job.current;proof.frontier={p.x,p.y,0};proof.task=job.task;
+        const auto target=original_observations.select(proof);if(!target)continue;
+        const auto cell=ObservationSelector::Search::cell(*raw_mask,*target);
+        if(cell&&std::isfinite(raw_reach[*cell])){++excluded_groups;break;}
+      }
+    }
     if(candidates.size()>=24)break;
   }
+  result.frontiers-=std::min(result.frontiers,excluded_groups);
+  if(result.wall_exclusions.is_object())result.wall_exclusions["frontier_groups"]=excluded_groups;
   std::stable_sort(candidates.begin(),candidates.end(),[](const auto&a,const auto&b){return a.cost<b.cost;});
   if(candidates.size()>8)candidates.resize(8);
   for(const auto&c:candidates)result.candidates.push_back({{"target",{c.target.x,c.target.y}},
     {"frontier",{c.frontier.x,c.frontier.y}},{"predicted_unknown_m2",c.gain},{"start_score",c.cost}});
-  if(candidates.empty())return finish(frontiers.empty()?"没有原始前沿":"前沿仍存在，但本轮无新增可达收益候选；等待新图，未宣布完成；候选拒绝="+rejected.dump());
+  if(candidates.empty())return finish(result.frontiers==0?"当前约束范围内没有可达前沿":"前沿仍存在，但本轮无新增可达收益候选；等待新图，未宣布完成；候选拒绝="+rejected.dump());
   // 只追加一个当前点和一个后续点；扣除已承诺观测区域的重复收益。
   std::unordered_set<uint64_t> covered;
   for(const auto&p:result.route){const auto cells=additional_view(p.target);covered.insert(cells.begin(),cells.end());}

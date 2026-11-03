@@ -160,13 +160,14 @@
                 <svg class="icon" aria-hidden="true">
                   <use href="#i-center" /></svg
                 >车辆居中</button
-              ><button id="hint">选择续建位置与朝向</button
+              ><button id="wall-tool" aria-pressed="false" disabled>临时墙</button><button id="hint">选择续建位置与朝向</button
               ><button id="try">试匹配</button
               ><button id="confirm">墙体与朝向已对齐</button>
             </div>
             <div class="map-view">
               <canvas
                 id="map"
+                tabindex="0"
                 aria-label="激光与轮式里程计生成的俯视地图"
               ></canvas>
               <div id="map-empty" class="map-empty">
@@ -195,6 +196,22 @@
                 ><span><i class="swatch-arc"></i>预测弧</span></span
               >
             </div>
+            <section id="wall-controls" class="wall-controls" aria-label="本轮临时墙" hidden>
+              <div class="wall-controls-heading"><strong>本轮临时墙</strong><span>map 米坐标 · 仅当前任务</span></div>
+              <p id="wall-help">点击地图依次添加折线端点，双指可缩放。应用后车端先停稳、更新保护，再按原任务继续。</p>
+              <p id="wall-draft" class="wall-draft" aria-live="polite">尚无草稿</p>
+              <div class="wall-edit-actions">
+                <button id="wall-draw" aria-pressed="false">开始画墙</button>
+                <button id="wall-undo" disabled>撤销末点</button>
+                <button id="wall-cancel" disabled>取消草稿</button>
+                <button id="wall-apply" class="primary" disabled>应用临时墙</button>
+              </div>
+              <div class="wall-existing"><label for="wall-selection">已应用墙</label><select id="wall-selection" aria-label="选择已应用临时墙"><option value="">暂无临时墙</option></select><button id="wall-remove" disabled>移除所选</button></div>
+              <div class="wall-edit-actions"><button id="wall-review" disabled>位置已核对，复核墙</button><button id="wall-bypass" class="wall-bypass" disabled>开启人工墙旁路</button></div>
+              <p id="wall-protection" class="wall-protection" role="status" hidden>人工墙保护不可用</p>
+              <p id="wall-status" role="status" aria-live="polite">等待车端墙状态</p>
+              <p class="wall-scope">红实线为车端已应用墙，橙虚线须复核，蓝虚线仅为草稿。墙不写入地图工程，也不进入巡检。</p>
+            </section>
             <p id="nav-layer-note"></p>
             <p id="hint-info"></p>
             <details class="legend">
@@ -323,6 +340,36 @@
               </div>
               <p class="muted" id="autonomy-hint">等待车端任务状态。</p>
               <p class="muted" id="recovery-progress" role="status" aria-live="polite" hidden></p>
+              <details id="live-settings" class="task-details live-settings">
+                <summary>运行参数</summary>
+                <p class="muted">输入完成或松开滑块即提交；以车端读回为准。膨胀半径影响绕障偏好，递减系数越大，代价随距离下降越快。</p>
+                <div id="tuning-fields" class="tuning-fields">
+                  <div class="tuning-field">
+                    <label for="tuning-global_inflation_radius">全局膨胀半径（米）</label>
+                    <div class="tuning-input"><input id="tuning-global_inflation_radius" type="number" min=".22" max="1.5" step=".01" value=".50" inputmode="decimal" aria-describedby="readback-global_inflation_radius" disabled><input id="range-global_inflation_radius" type="range" min=".22" max="1.5" step=".01" value=".50" aria-label="全局膨胀半径滑块" disabled></div>
+                    <p id="readback-global_inflation_radius" class="tuning-readback">等待车端真实读回</p>
+                  </div>
+                  <div class="tuning-field">
+                    <label for="tuning-global_cost_scaling_factor">全局递减系数</label>
+                    <div class="tuning-input"><input id="tuning-global_cost_scaling_factor" type="number" min=".5" max="15" step=".1" value="3" inputmode="decimal" aria-describedby="readback-global_cost_scaling_factor" disabled><input id="range-global_cost_scaling_factor" type="range" min=".5" max="15" step=".1" value="3" aria-label="全局递减系数滑块" disabled></div>
+                    <p id="readback-global_cost_scaling_factor" class="tuning-readback">等待车端真实读回</p>
+                  </div>
+                  <div class="tuning-field">
+                    <label for="tuning-local_inflation_radius">局部膨胀半径（米）</label>
+                    <div class="tuning-input"><input id="tuning-local_inflation_radius" type="number" min=".22" max="1" step=".01" value=".30" inputmode="decimal" aria-describedby="readback-local_inflation_radius" disabled><input id="range-local_inflation_radius" type="range" min=".22" max="1" step=".01" value=".30" aria-label="局部膨胀半径滑块" disabled></div>
+                    <p id="readback-local_inflation_radius" class="tuning-readback">等待车端真实读回</p>
+                  </div>
+                  <div class="tuning-field">
+                    <label for="tuning-local_cost_scaling_factor">局部递减系数</label>
+                    <div class="tuning-input"><input id="tuning-local_cost_scaling_factor" type="number" min=".5" max="15" step=".1" value="5" inputmode="decimal" aria-describedby="readback-local_cost_scaling_factor" disabled><input id="range-local_cost_scaling_factor" type="range" min=".5" max="15" step=".1" value="5" aria-label="局部递减系数滑块" disabled></div>
+                    <p id="readback-local_cost_scaling_factor" class="tuning-readback">等待车端真实读回</p>
+                  </div>
+                </div>
+                <div class="tuning-actions"><button id="tuning-restore" disabled>恢复基线</button><button id="tuning-save" disabled>保存为新任务默认</button></div>
+                <p id="tuning-status" role="status" aria-live="polite">等待车端参数服务</p>
+                <div class="handoff-controls"><label for="handoff-distance">提前衔接距离（米）</label><div class="tuning-input"><input id="handoff-distance" type="number" min=".15" max=".8" step=".01" value=".25" inputmode="decimal" disabled><input id="handoff-range" type="range" min=".15" max=".8" step=".01" value=".25" aria-label="提前衔接距离滑块" disabled></div><p id="handoff-status" class="tuning-readback">只影响探索过点；返程仍核对终点。</p></div>
+                <label class="escape-toggle"><input id="escape-enabled" type="checkbox" disabled>允许有界短退解困</label><p id="escape-status" class="muted">现场验证前保持关闭。</p>
+              </details>
               <details class="task-details">
                 <summary>任务详情与速度</summary>
                 <p id="autonomy-budget">

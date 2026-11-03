@@ -24,6 +24,12 @@ int main(int argc,char**argv){
   const bool complete=std::getenv("CARCAR_ROOM_COMPLETE")!=nullptr;
   const bool managed=std::getenv("CARCAR_ROOM_MANAGED")!=nullptr;
   const bool observe=continuous||managed||complete||std::getenv("CARCAR_ROOM_OBSERVE")!=nullptr;
+  const bool external=std::getenv("CARCAR_ROOM_EXTERNAL")!=nullptr;
+  double simulation_limit=continuous?180:managed?240:100;
+  if(const auto value=std::getenv("CARCAR_ROOM_MAX_SECONDS")){
+    try{const double requested=std::stod(value);if(!external||!std::isfinite(requested)||requested<30||requested>420)throw std::runtime_error("越界");simulation_limit=requested;}
+    catch(...){std::cerr<<"外部软件传感器时长须在30～420秒范围内\n";return 2;}
+  }
   const double west=complete?-1.5:-2.5,east=complete?1.5:3.5,south=complete?-1.5:-2.,north=complete?1.5:2.;
   tf2_ros::TransformBroadcaster tf(*n);tf2_ros::StaticTransformBroadcaster fixed(*n);
   geometry_msgs::msg::TransformStamped f;f.header.frame_id="base_footprint";f.child_frame_id="laser_frame";f.transform.translation.x=-.05;f.transform.translation.z=.217;f.transform.rotation.w=1;fixed.sendTransform(f);
@@ -58,7 +64,7 @@ int main(int argc,char**argv){
   char root[]="/tmp/carcar-mapping-room-XXXXXX";if(!mkdtemp(root))return 3;
   std::string map_root=std::string("map_root:=")+root;
   char ros2[]="/opt/ros/humble/bin/ros2",launch[]="launch",pkg[]="carcar_mapping_console",file[]="mapping_autonomous.launch.xml",hw[]="start_hardware:=false",mode[]="mode:=new",control[]="control_mode:=automatic",port[]="port:=18098",record[]="record_raw_bag:=false";
-  std::vector<std::string>arguments{ros2,launch,pkg,file,hw,mode,control,port,record,map_root};
+  std::vector<std::string>arguments{ros2,launch,pkg,file,hw,mode,control,port,record,map_root,"task_id:=virtual-room",std::string("continuous_exploration:=")+(continuous?"true":"false")};
   if(continuous){arguments.insert(arguments.end(),{"continuous_exploration:=true","online_snapshots:=true",
     std::string("bt_params:=")+CONTINUOUS_ROOM_PARAMS,std::string("checkpoint_root:=")+root+"/checkpoints","task_id:=continuous-room"});}
   std::vector<char*>args;for(auto&argument:arguments)args.push_back(argument.data());args.push_back(nullptr);pid_t pid=-1;
@@ -66,7 +72,7 @@ int main(int argc,char**argv){
   if(!std::getenv("CARCAR_ROOM_EXTERNAL")&&posix_spawn(&pid,ros2,nullptr,&attr,args.data(),environ)!=0)return 3;
   posix_spawnattr_destroy(&attr);
   bool pause_sent=false;double last_report=0,review_at=-1;
-  while(rclcpp::ok()&&elapsed()<(continuous?180:managed?240:100)&&!fault){rclcpp::spin_some(n);
+  while(rclcpp::ok()&&elapsed()<simulation_limit&&(external||!fault)){rclcpp::spin_some(n);
     if(elapsed()-last_report>2){last_report=elapsed();std::cerr<<"ROOM_STATUS "<<nlohmann::json{{"t",elapsed()},{"path_m",path},{"yaw",a},{"relays",relays},{"state",state}}.dump()<<'\n';}
     if(!observe&&started&&nonzero>10&&path>.15&&!pause_sent){std_msgs::msg::String m;m.data=nlohmann::json{{"task_id",state.value("task_id","")},{"request_id","virtual-room-pause"},{"action","pause"}}.dump();commands->publish(m);pause_sent=true;}
     if(observe&&state.value("phase","")=="REVIEW_REQUIRED"&&review_at<0)review_at=elapsed();

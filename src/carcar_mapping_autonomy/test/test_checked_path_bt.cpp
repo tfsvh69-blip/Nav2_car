@@ -17,7 +17,8 @@ protected:
  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_pub;
  BT::BehaviorTreeFactory factory;BT::Tree tree;BT::Blackboard::Ptr board;
  nav_msgs::msg::OccupancyGrid map;nav_msgs::msg::Path path;
- int plans=0,follows=0,remaining_failures=0;
+ int plans=0,follows=0,remaining_failures=0;uint64_t changing_revision=0;
+ std::string state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":1,\"handoff\":{\"distance_m\":0.25}";
  static void SetUpTestSuite(){rclcpp::init(0,nullptr);}
  static void TearDownTestSuite(){rclcpp::shutdown();}
  void SetUp()override{
@@ -53,7 +54,8 @@ protected:
    for(int i=0;i<20;++i){
      geometry_msgs::msg::TransformStamped t;t.header.stamp=node->now();t.header.frame_id="map";t.child_frame_id="base_footprint";t.transform.rotation.w=1;tf->setTransform(t,"fixture");
      map.header.stamp=node->now();map_pub->publish(map);
-     std_msgs::msg::String s;s.data="{\"phase\":\""+phase+"\",\"origin\":[0,0,0],\"radius_m\":20}";state_pub->publish(s);
+     if(changing_revision)state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":"+std::to_string(changing_revision++)+",\"handoff\":{\"distance_m\":0.25}";
+     std_msgs::msg::String s;s.data="{\"phase\":\""+phase+"\",\"origin\":[0,0,0],\"radius_m\":20"+state_context+"}";state_pub->publish(s);
      std::this_thread::sleep_for(std::chrono::milliseconds(25));result=tree.tickRoot();
      if(stop_on_terminal&&result!=BT::NodeStatus::RUNNING)break;
    }
@@ -106,4 +108,62 @@ TEST_F(CheckedPathTree, ProductionTreeDoesNotFollowAfterTwoPlannerFailures){
 TEST_F(CheckedPathTree, ProductionTreeCancellationDuringRetrySubmitsNothingElse){
  continuous_tree(1);ASSERT_EQ(tree.tickRoot(),BT::NodeStatus::RUNNING);ASSERT_EQ(plans,1);
  tree.haltTree();std::this_thread::sleep_for(std::chrono::milliseconds(450));EXPECT_EQ(plans,1);EXPECT_EQ(follows,0);
+}
+
+TEST_F(CheckedPathTree, OldBlackboardPathCannotSkipNewGoalsBeforeTheyAreChecked){
+ auto intermediate=path.poses.front();intermediate.pose.position.x=.20;
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{intermediate,path.poses.back()});
+ // 旧路径恰好经过新首点，但新目标尚未获得本轮实际路径审查资格。
+ tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><MappingPassedGoals input_goals='{goals}' output_goals='{goals}' path='{path}'/></BehaviorTree></root>",board);
+ EXPECT_EQ(run(),BT::NodeStatus::SUCCESS);
+ const auto remaining=board->get<std::vector<geometry_msgs::msg::PoseStamped>>("goals");
+ ASSERT_EQ(remaining.size(),2U)<<"新目标不能凭上一条路径先删掉首点，再去规划剩余点";
+ EXPECT_EQ(remaining.front(),intermediate);
+}
+
+TEST_F(CheckedPathTree, FreshCheckedPathHandsOffIntermediateAndKeepsLastGoal){
+ path.poses.back().pose.position.x=.70;board->set("path",path);
+ auto intermediate=path.poses.front();intermediate.pose.position.x=.20;
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{intermediate,path.poses.back()});
+ state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":1,\"handoff\":{\"distance_m\":0.80}";
+ ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+ tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><MappingPassedGoals input_goals='{goals}' output_goals='{goals}' path='{path}'/></BehaviorTree></root>",board);
+ ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+ const auto remaining=board->get<std::vector<geometry_msgs::msg::PoseStamped>>("goals");
+ ASSERT_EQ(remaining.size(),1U);EXPECT_EQ(remaining.front(),path.poses.back());
+}
+
+TEST_F(CheckedPathTree, GoalPathTaskGenerationRevisionAndExpiredProofCannotSkipGoals){
+ const auto context=state_context;const auto original_path=path;
+ for(const std::string change:{"goals","goal_stamp","path","task","generation","revision","missing_context","expired"}){
+   SCOPED_TRACE(change);path=original_path;state_context=context;board->set("path",path);
+   auto intermediate=path.poses.front();intermediate.pose.position.x=.20;
+   const std::vector<geometry_msgs::msg::PoseStamped>goals={intermediate,path.poses.back()};board->set("goals",goals);
+   tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><CheckedMappingPath path='{path}' checked_path='{checked}'/></BehaviorTree></root>",board);
+   ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+   if(change=="goals"){auto updated=goals;updated.front().pose.position.x=.21;board->set("goals",updated);}
+   if(change=="goal_stamp"){auto updated=goals;updated.front().header.stamp=node->now();board->set("goals",updated);}
+   if(change=="path"){auto updated=path;updated.header.stamp=node->now();board->set("path",updated);}
+   if(change=="task")state_context=",\"task_id\":\"different-task\",\"navigation_generation\":1,\"map_revision\":1";
+   if(change=="generation")state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":2,\"map_revision\":1";
+   if(change=="revision")state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":2";
+   if(change=="missing_context")state_context="";
+   if(change=="expired")std::this_thread::sleep_for(std::chrono::milliseconds(1550));
+   tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><MappingPassedGoals input_goals='{goals}' output_goals='{goals}' path='{path}'/></BehaviorTree></root>",board);
+   ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+   EXPECT_EQ(board->get<std::vector<geometry_msgs::msg::PoseStamped>>("goals").size(),2U)
+     <<"缺少本次新鲜完整审查资格时，应先规划而非删除中间点";
+ }
+}
+
+TEST_F(CheckedPathTree, ProductionTreeHandsOffFreshCheckedPathWhileMapRevisionKeepsChanging){
+ continuous_tree(0);path.poses.back().pose.position.x=1;board->set("path",path);
+ auto intermediate=path.poses.front();intermediate.pose.position.x=.20;
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{intermediate,path.poses.back()});
+ changing_revision=2;
+ EXPECT_EQ(run(),BT::NodeStatus::RUNNING)<<"末点尚未到达，不能因通过中间点结束任务";
+ EXPECT_GT(plans,0);EXPECT_GT(changing_revision,10U);
+ const auto remaining=board->get<std::vector<geometry_msgs::msg::PoseStamped>>("goals");
+ ASSERT_EQ(remaining.size(),1U)<<"新版本先规划及审查，再在本轮使用新凭据过点，不能一直等待地图静止";
+ EXPECT_EQ(remaining.front(),path.poses.back());
 }
