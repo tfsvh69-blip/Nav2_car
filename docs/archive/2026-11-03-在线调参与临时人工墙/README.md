@@ -2,15 +2,15 @@
 
 记录编号：NAV-018-LIVE-001。日期：2026-11-03。
 
-状态：软件功能闭环及专项回归已通过，最终软件验收草稿；修正环境判定工具后的纯Native v5／v7两轮已通过，发布及发布后核验仍待补齐。候选安装已更新，**本轮普通8080待发布，实车未验收**。
+状态：软件闭环、专项回归及纯Native v5／v7两轮通过；2026-11-03 15:02:48已受控更新原正式发行并完成正式及独立后验，**普通8080已发布，实车未验收**。
 
 ## 最新结论与证据边界
 
 最新完整网页v5通过，169.475秒、两次新任务、零pageerror：行驶调参、墙提交停稳应用、事务在途人工halt保持停车、清墙、附近返程 `nearby`、保存退出，以及下一轮无墙并读回已保存的四项参数和衔接默认。`nearby`不是精确回原点。真实三图采样仍为原始SLAM图33／33点前后空闲，全局／局部各33个新增致命采样点，局部140个软膨胀单元、14级梯度；软梯度不是新增禁行区域。
 
-v5证据在候选 `log/nav018_live_tuning_20261103/full-stack-v5/`。其中 `production-source-build-install-fingerprints.json` 记录受测20个ELF Build ID及9项资源与候选安装匹配，`wall-map-proof.json` 记录三图核验。该清单不是正式发行publication，不代表8080已经更新。live监督器11项（含初始化等待／取消）与健康边界3项最终证据在候选 `log/nav_live_tuning_20261103/task-walls/startup-wait-final-summary.json`；调参24项在候选 `log/live_controls_20261103/tuning/startup-recovery/summary.json`。旧红例及首次夹具等待竞态失败均原样保留。
+v5证据在候选 `log/nav018_live_tuning_20261103/full-stack-v5/`。其中 `production-source-build-install-fingerprints.json` 记录受测20个ELF Build ID及9项资源与候选安装匹配，`wall-map-proof.json` 记录三图核验。该清单记录候选软件验证；正式发布另由本页末尾的publication及独立后验绑定，不能相互替代。live监督器11项（含初始化等待／取消）与健康边界3项最终证据在候选 `log/nav_live_tuning_20261103/task-walls/startup-wait-final-summary.json`；调参24项在候选 `log/live_controls_20261103/tuning/startup-recovery/summary.json`。旧红例及首次夹具等待竞态失败均原样保留。
 
-两轮仅evaluator及其后代切换ASYNC的诊断负载均 `passed=true`，但属于 `diagnostic_only=true`，不能代替已安装Launch默认值的纯Native验收。当前候选Launch默认只让本次应用进程使用ASYNC，父evaluator、独立录包器及浏览器保持同步。原Native v4任务已完整结束、100%覆盖、无接触，控制计算最大2.660183毫秒、零次超过100毫秒，原v6及新栈门槛通过；原 `summary.json.passed=false` 仍保留，因为新增harness误要求Chromium内部进程保留ROS localhost环境。只读PID树重分类另存 `controller-full-load-final-v4/environment-reclassification-v4.json`，不是重跑，也不改写原结论。修正v4工具后的纯Native v5／v7两轮已在新目录完整通过，原v6、新栈和环境范围检查均true；发布结果仍待补。v6只因上一轮端口TIME_WAIT而在预检拒绝，未创建运行，确认无LISTEN／所属进程并等待释放后才启动新v7。
+两轮仅evaluator及其后代切换ASYNC的诊断负载均 `passed=true`，但属于 `diagnostic_only=true`，不能代替已安装Launch默认值的纯Native验收。当前候选Launch默认只让本次应用进程使用ASYNC，父evaluator、独立录包器及浏览器保持同步。原Native v4任务已完整结束、100%覆盖、无接触，控制计算最大2.660183毫秒、零次超过100毫秒，原v6及新栈门槛通过；原 `summary.json.passed=false` 仍保留，因为新增harness误要求Chromium内部进程保留ROS localhost环境。只读PID树重分类另存 `controller-full-load-final-v4/environment-reclassification-v4.json`，不是重跑，也不改写原结论。修正v4工具后的纯Native v5／v7两轮已在新目录完整通过，原v6、新栈和环境范围检查均true；后续正式受控发布及独立后验见本页末尾。v6只因上一轮端口TIME_WAIT而在预检拒绝，未创建运行，确认无LISTEN／所属进程并等待释放后才启动新v7。
 
 本轮软件结论不覆盖实物轮速、近墙、玻璃定位、制动距离及长期稳定性。自动短退仍现场锁闭；历史r2正式基线、V2.8、地图、标定、录包、备份和原始失败保留。所有完整命令只在[操作手册61节](../../操作手册.md#nav-018-live-001-operation)维护。
 
@@ -105,6 +105,12 @@ v5证据在候选 `log/nav018_live_tuning_20261103/full-stack-v5/`。其中 `pro
 
 该设置没有改变SHM／UDP、ROS域、QoS可靠性、队列深度或健康1秒请求期限／2秒真实ACTIVE有效期／调参单步3秒期限，也没有使用ACTIVE诊断替代健康许可。严格localhost分支会在XML加载后追加UDP与SHM，常见“只列UDP transport”的XML不能移除它；本轮未采用未经验证的UDP locator限制方案，也未清理SHM或修改系统环境。Native工具按实际PID出生时刻及PPID树认定evaluator、唯一ROS launcher和应用后代，再分别检查环境；不能按Mode倒推角色，也不要求无ROS职责的Chrome内部进程保留ROS变量。`/proc`环境读回证明配置范围，不冒充独立测量DDS内部writer QoS。
 
-## 待补齐的最终收口
+## 正式受控发布与独立后验
 
-两轮修正工具后的纯Native结果见主证据目录 `controller-full-load-final-v5/summary.json` 与 `controller-full-load-final-v7/summary.json`，均无preload或外部Mode代设，每轮两个有效WS各观察至少50秒；只读环境证明覆盖应用ASYNC／0与父同步范围。最终源码／安装／发布清单、实际完整备份路径、publication及发布后8080只读核验待根代理追加。当前不填写发布成功、现场通过或RPC根因已解决。正式应用及软件同步模式对照的步骤只见[操作手册61节](../../操作手册.md#nav-018-live-001-operation)。
+两轮修正工具后的纯Native结果见主证据目录 `controller-full-load-final-v5/summary.json` 与 `controller-full-load-final-v7/summary.json`，均无preload或外部Mode代设，每轮两个有效WS各观察至少50秒；只读环境证明覆盖应用ASYNC／0与父同步范围。
+
+本次发布绑定源码提交 `ab07b57f97124cc899ebe5d498f588f372530d71`，publication时间为 `2026-11-03T15:02:48.953810+08:00`。原正式目录 `/home/jetson/luhao/my_nav_carcar_return_nearby_release` 受控更新139项，509项保留文件SHA不变，20个ELF Build ID核对一致；unit、地图与链接未变。发布前同目录完整备份为 `/home/jetson/luhao/my_nav_carcar_return_nearby_release.20261103-150248-953810.backup`，原资产与本轮失败证据保留。
+
+正式postcheck记录 `published=true`，网页为STANDBY/manual、busy/dirty=false、error为空、autonomy为空。15:06独立核验 `passed=true`：实际网关在原正式prefix，PID81033，4项HTTP资源SHA一致，域31／localhost、无preload，未启动硬件。这里只读核验了待命服务，未由代理启动实车；自动短退继续现场锁闭，RPC根因未定及不普遍提效的限制不变。
+
+发布证据在主工作区：[publication.json](/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/publication.json)、[postcheck-final.log](/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/postcheck-final.log)、[independent-postcheck.json](/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/independent-postcheck.json)、[prepare-final.log](/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/prepare-final.log)、[apply-final.log](/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/apply-final.log)。发布前冻结的 `deployment/final-validation.json` 与主目录 `final-software-validation.json` 中 `formal_deployed=false` 是截取时状态，原输入不改，以本次publication及后验追加发布事实。正式核验、回退及软件同步模式对照的完整命令只见[操作手册61节](../../操作手册.md#nav-018-live-001-operation)。
