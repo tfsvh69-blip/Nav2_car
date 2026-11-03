@@ -1,0 +1,851 @@
+[
+  {
+    "time": "2026-11-02T14:47:24.756519+08:00",
+    "phase": "STOPPING",
+    "reason": "错误回环已撤销，停车并冻结；多帧地图、定位及导航检查通过后自动继续建图",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {},
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.014367816091954023,
+        "hit_ratio": 1.0,
+        "mean_residual_m": 0.010357878346213446,
+        "points": 87
+      },
+      "error": "",
+      "largest_translation_m": 1.6381911922847876,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.028735632183908046,
+        "hit_ratio": 0.19540229885057472,
+        "mean_residual_m": 0.17577047460209366,
+        "points": 87
+      },
+      "rejections": 1,
+      "rolled_back": true,
+      "scan_id": 591,
+      "validation_ms": 320.477198
+    }
+  },
+  {
+    "time": "2026-11-02T14:47:25.004151+08:00",
+    "phase": "RECOVERING",
+    "reason": "已取消并停稳，正在验证可信检查点与当前位置",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {},
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.014367816091954023,
+        "hit_ratio": 1.0,
+        "mean_residual_m": 0.010357878346213446,
+        "points": 87
+      },
+      "error": "",
+      "largest_translation_m": 1.6381911922847876,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.028735632183908046,
+        "hit_ratio": 0.19540229885057472,
+        "mean_residual_m": 0.17577047460209366,
+        "points": 87
+      },
+      "rejections": 1,
+      "rolled_back": true,
+      "scan_id": 591,
+      "validation_ms": 320.477198
+    }
+  },
+  {
+    "time": "2026-11-02T14:47:36.006129+08:00",
+    "phase": "FAULT",
+    "reason": "恢复期间再次出现被拒绝的回环，原恢复结果作废；保持锁停并保留证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.11392825426232772,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9886363636363636,
+      "frames": 5,
+      "free_conflict": 0.017045454545454544,
+      "global_sample_margin": 0.03299859971132227,
+      "global_samples": 29012,
+      "hit_ratio": 0.9659090909090909,
+      "mean_residual_m": 0.02402538779160013,
+      "unique": true
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:47:46.593496+08:00",
+    "phase": "RECOVERING",
+    "reason": "正在重新检查，车辆保持停车",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.11392825426232772,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9886363636363636,
+      "frames": 5,
+      "free_conflict": 0.017045454545454544,
+      "global_sample_margin": 0.03299859971132227,
+      "global_samples": 29012,
+      "hit_ratio": 0.9659090909090909,
+      "mean_residual_m": 0.02402538779160013,
+      "unique": true
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:48:11.907213+08:00",
+    "phase": "FAULT",
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.06927015907227695,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9278350515463918,
+      "frames": 0,
+      "free_conflict": 0.02368421052631579,
+      "global_sample_margin": -0.021691872906062018,
+      "global_samples": 28783,
+      "hit_ratio": 0.8969072164948454,
+      "mean_residual_m": 0.05813204500106227,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:48:14.288652+08:00",
+    "phase": "RECOVERING",
+    "reason": "正在重新检查，车辆保持停车",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.06927015907227695,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9278350515463918,
+      "frames": 0,
+      "free_conflict": 0.02368421052631579,
+      "global_sample_margin": -0.021691872906062018,
+      "global_samples": 28783,
+      "hit_ratio": 0.8969072164948454,
+      "mean_residual_m": 0.05813204500106227,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:48:39.609315+08:00",
+    "phase": "FAULT",
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.05846867108124189,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9130434782608695,
+      "frames": 0,
+      "free_conflict": 0.019337016574585635,
+      "global_sample_margin": -0.029297074437693027,
+      "global_samples": 28796,
+      "hit_ratio": 0.8695652173913043,
+      "mean_residual_m": 0.058468054579805924,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:49:02.861647+08:00",
+    "phase": "RECOVERING",
+    "reason": "正在重新检查，车辆保持停车",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.05846867108124189,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9130434782608695,
+      "frames": 0,
+      "free_conflict": 0.019337016574585635,
+      "global_sample_margin": -0.029297074437693027,
+      "global_samples": 28796,
+      "hit_ratio": 0.8695652173913043,
+      "mean_residual_m": 0.058468054579805924,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:49:28.310293+08:00",
+    "phase": "FAULT",
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.04980981467737548,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9130434782608695,
+      "frames": 0,
+      "free_conflict": 0.02197802197802198,
+      "global_sample_margin": -0.023489789208456624,
+      "global_samples": 28778,
+      "hit_ratio": 0.9021739130434783,
+      "mean_residual_m": 0.050449131901505094,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:49:30.665555+08:00",
+    "phase": "RECOVERING",
+    "reason": "正在重新检查，车辆保持停车",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.04980981467737548,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9130434782608695,
+      "frames": 0,
+      "free_conflict": 0.02197802197802198,
+      "global_sample_margin": -0.023489789208456624,
+      "global_samples": 28778,
+      "hit_ratio": 0.9021739130434783,
+      "mean_residual_m": 0.050449131901505094,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:49:56.061297+08:00",
+    "phase": "FAULT",
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.06574424160016032,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9247311827956989,
+      "frames": 0,
+      "free_conflict": 0.016304347826086956,
+      "global_sample_margin": -0.014474235832055427,
+      "global_samples": 28796,
+      "hit_ratio": 0.9032258064516129,
+      "mean_residual_m": 0.04735944653629221,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:50:12.663859+08:00",
+    "phase": "RECOVERING",
+    "reason": "正在重新检查，车辆保持停车",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "当前阶段不需要重新检查"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.06574424160016032,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9247311827956989,
+      "frames": 0,
+      "free_conflict": 0.016304347826086956,
+      "global_sample_margin": -0.014474235832055427,
+      "global_samples": 28796,
+      "hit_ratio": 0.9032258064516129,
+      "mean_residual_m": 0.04735944653629221,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  },
+  {
+    "time": "2026-11-02T14:50:37.916666+08:00",
+    "phase": "FAULT",
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": true,
+        "reason": ""
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "verification": {
+      "ambiguity_margin": 0.06827539491500252,
+      "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+      "coverage": 0.9111111111111111,
+      "frames": 0,
+      "free_conflict": 0.016901408450704224,
+      "global_sample_margin": -0.01954166187772828,
+      "global_samples": 28778,
+      "hit_ratio": 0.9,
+      "mean_residual_m": 0.04808612928979366,
+      "unique": false
+    },
+    "loop_guard": {
+      "accepted": false,
+      "before": {
+        "coverage": 1.0,
+        "free_conflict": 0.016129032258064516,
+        "hit_ratio": 0.978494623655914,
+        "mean_residual_m": 0.014378634752154942,
+        "points": 93
+      },
+      "error": "",
+      "largest_translation_m": 1.6689131103268962,
+      "new_constraints": 1,
+      "proposed": {
+        "coverage": 1.0,
+        "free_conflict": 0.013440860215053764,
+        "hit_ratio": 0.34408602150537637,
+        "mean_residual_m": 0.16065117746431343,
+        "points": 93
+      },
+      "rejections": 2,
+      "rolled_back": true,
+      "scan_id": 592,
+      "validation_ms": 324.128079
+    }
+  }
+]

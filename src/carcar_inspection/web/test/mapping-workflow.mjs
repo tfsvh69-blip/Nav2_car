@@ -96,7 +96,6 @@ try{
   await page.waitForFunction(()=>document.getElementById('workflow-title').textContent==='自动探索中');
   assert.equal(await page.locator('#manual-controls').isVisible(),false);
   assert.equal(await page.locator('#auto-start').isVisible(),false,'自动探索中仍突出开始按钮');
-  await page.locator('.task-details > summary').click();
   await page.waitForFunction(()=>!document.getElementById('auto-speed-apply').disabled);
   await page.locator('#auto-speed').evaluate(input=>{input.value='0.18';input.dispatchEvent(new Event('input'));});
   await page.click('#auto-speed-apply');

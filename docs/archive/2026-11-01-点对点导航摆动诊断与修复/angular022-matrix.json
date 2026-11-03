@@ -1,0 +1,482 @@
+[
+  {
+    "case": "short-return-angular022-delay000",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.0,
+      "closed_loop": true,
+      "desired_linear_vel": 0.1,
+      "final_pose": {
+        "x": -0.05016173838946858,
+        "y": 0.002169734988376347,
+        "yaw": 0.14937403171900854
+      },
+      "first_five_cm_at_s": 15.15,
+      "hardware": false,
+      "manual_ros_progress_clock": true,
+      "max_displacement_m": 0.05020864216619755,
+      "progress_allowance_s": 30.0,
+      "progress_failed": false,
+      "progress_failure_at_s": -1.0,
+      "progress_required_m": 0.05,
+      "reached": true,
+      "reached_at_s": 28.400000000000002,
+      "real_rpp": true,
+      "real_simple_goal_checker": true,
+      "real_simple_progress_checker": true,
+      "real_velocity_smoother": true,
+      "rotate_to_heading_angular_vel": 0.22,
+      "simulated_seconds": 29.1,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "start": [
+        0,
+        0,
+        0
+      ],
+      "stopped_steps": 10,
+      "target": [
+        -0.19,
+        0,
+        0
+      ],
+      "target_distance_m": 0.13985509343665398,
+      "travelled_m": 0.05021130739892607,
+      "yaw_error_rad": 0.14937403171900854
+    }
+  },
+  {
+    "case": "angular022-fixed-delay02",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.1,
+      "actuation_delay_steps": 2,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 0,
+        "rotation_samples": 8,
+        "samples": 43,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": true,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": false,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.03075523027054352,
+      "physical_total_turn_rad": 0.3266902342829399,
+      "planning_calls": 0,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": null,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": false,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.11888903482202767,
+      "simulated_seconds": 4.25,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 85,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.41632699362156833,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-fixed-delay03",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.15000000000000002,
+      "actuation_delay_steps": 3,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 1,
+        "rotation_samples": 11,
+        "samples": 45,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": true,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": false,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.053192485386981896,
+      "physical_total_turn_rad": 0.3815861826576855,
+      "planning_calls": 0,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": null,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": false,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.11081525353697108,
+      "simulated_seconds": 4.5,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 90,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.424680026081931,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-fixed-delay04",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.2,
+      "actuation_delay_steps": 4,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 1,
+        "rotation_samples": 13,
+        "samples": 47,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": true,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": false,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.05325371762210446,
+      "physical_total_turn_rad": 0.3931650882383336,
+      "planning_calls": 0,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": null,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": false,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.10581271454370672,
+      "simulated_seconds": 4.65,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 93,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.429724660851229,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-fixed-delay05",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.25,
+      "actuation_delay_steps": 5,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 1,
+        "rotation_samples": 17,
+        "samples": 52,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": true,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": false,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.07521623025080068,
+      "physical_total_turn_rad": 0.487250958914501,
+      "planning_calls": 0,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": null,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": false,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.09883403020342064,
+      "simulated_seconds": 5.2,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 104,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.43707371318954996,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-smac-delay02",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.1,
+      "actuation_delay_steps": 2,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 0,
+        "rotation_samples": 9,
+        "samples": 44,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": false,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": true,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.05293054388688244,
+      "physical_total_turn_rad": 0.2995825216779241,
+      "planning_calls": 4,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": 0.22,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": true,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.11429693050536208,
+      "simulated_seconds": 4.3500000000000005,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 87,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.42199535541785205,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-smac-delay03",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.15000000000000002,
+      "actuation_delay_steps": 3,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 0,
+        "rotation_samples": 10,
+        "samples": 44,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": false,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": true,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.07473559286073414,
+      "physical_total_turn_rad": 0.3250120471086415,
+      "planning_calls": 4,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": 0.22,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": true,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.11374676040617522,
+      "simulated_seconds": 4.4,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 88,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.4227671433540372,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-smac-delay04",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.2,
+      "actuation_delay_steps": 4,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 0,
+        "rotation_samples": 11,
+        "samples": 46,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": false,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": true,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.08618962730635123,
+      "physical_total_turn_rad": 0.35654885343830706,
+      "planning_calls": 4,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": 0.22,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": true,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.10701526800227426,
+      "simulated_seconds": 4.55,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 91,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.42975966972083796,
+      "zero_cost_local_map": true
+    }
+  },
+  {
+    "case": "angular022-smac-delay05",
+    "exit_code": 0,
+    "result": {
+      "actuation_delay_seconds": 0.25,
+      "actuation_delay_steps": 5,
+      "closed_loop": true,
+      "computed": {
+        "in_place_direction_reversals": 0,
+        "rotation_samples": 11,
+        "samples": 46,
+        "short_forward_bursts": 0
+      },
+      "feedback_delay_seconds": 0.0,
+      "feedback_delay_steps": 0,
+      "fixed_recorded_plan": false,
+      "fixture": "/home/jetson/luhao/my_nav_carcar_point_navigation/src/carcar_mapping_autonomy/test/data/point_navigation_20261101.json",
+      "frozen_recorded_global_costmap": true,
+      "hardware": false,
+      "initial_pose": {
+        "x": 0.9659188439755374,
+        "y": -9.670298513366467,
+        "yaw": -0.8519365252738735
+      },
+      "initial_velocity": [
+        0.1677845232748115,
+        0.005609401209292945
+      ],
+      "kinematic_limits": true,
+      "physical_direction_reversals": 0,
+      "physical_low_translation_threshold_mps": 0.02,
+      "physical_low_translation_turn_rad": 0.08622744295439935,
+      "physical_total_turn_rad": 0.35551409564042147,
+      "planning_calls": 4,
+      "plant_model": "理想指令运动积分，非实物动力学",
+      "raw_map_clearance_m": 0.22,
+      "reached": true,
+      "real_rpp": true,
+      "real_smac": true,
+      "real_velocity_smoother": true,
+      "recorded_input_replay": false,
+      "remaining_m": 0.1001043783038904,
+      "simulated_seconds": 4.6000000000000005,
+      "single_parameter_override": {
+        "name": "FollowPath.rotate_to_heading_angular_vel",
+        "value": 0.22
+      },
+      "steps": 92,
+      "stopped_steps": 10,
+      "trajectory_safe": true,
+      "travelled_m": 0.43680727860650714,
+      "zero_cost_local_map": true
+    }
+  }
+]

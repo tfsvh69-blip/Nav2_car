@@ -98,13 +98,13 @@ planner_server:
   ros__parameters:
     planner_plugins: [GridBased, ExplorationGrid]
     GridBased:
-      plugin: carcar_mapping_autonomy/SubcellSmacPlanner
+      plugin: nav2_smac_planner/SmacPlanner2D
       tolerance: 0.10
       allow_unknown: false
       max_planning_time: 1.0
       use_final_approach_orientation: false
     ExplorationGrid:
-      plugin: carcar_mapping_autonomy/SubcellSmacPlanner
+      plugin: nav2_smac_planner/SmacPlanner2D
       tolerance: 0.10
       allow_unknown: false
       max_planning_time: 1.0

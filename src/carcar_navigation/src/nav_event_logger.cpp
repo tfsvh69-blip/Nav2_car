@@ -739,6 +739,11 @@ private:
       // 静态TF只需发布一次。录包可能先于发布者被发现，不能用volatile订阅错过保留样本。
       // 复用TF2静态监听策略；其余话题继续使用rosbag2原有QoS适配。
       record_options.topic_qos_profile_overrides.emplace("/tf_static", tf2_ros::StaticListenerQoS());
+      // 这两路可在录包启动后才出现；固定best_effort，避免include_unpublished先订成reliable而永久漏包。
+      record_options.topic_qos_profile_overrides.emplace("/mapping/controller_timing", rclcpp::SensorDataQoS());
+      record_options.topic_qos_profile_overrides.emplace("/mapping/slam_scan", rclcpp::SensorDataQoS());
+      // 原始/scan发布为best_effort；录包抢先发现话题时不能用reliable丢掉整段雷达。
+      record_options.topic_qos_profile_overrides.emplace("/scan", rclcpp::SensorDataQoS());
       // 专项录包明确保留 DWB 评分与候选轨迹，便于还原路径换向和无可行轨迹原因。
       record_options.topics = {
         "/scan",
@@ -765,7 +770,9 @@ private:
         "/localization_monitor/ready",
         "/localization_monitor/recovery_allowed",
         "/localization_monitor/diagnostics",
-        "/plan",
+        "/plan", "/unsmoothed_plan", "/lookahead_point", "/lookahead_collision_arc",
+        "/mapping/planner_diagnostic", "/mapping/collision_stop_polygon", "/mapping/controller_timing",
+        "/mapping/exploration/rank_request", "/mapping/exploration/rank_result", "/mapping/exploration/rank_state",
         "/transformed_global_plan",
         "/local_plan",
         "/global_costmap/costmap",

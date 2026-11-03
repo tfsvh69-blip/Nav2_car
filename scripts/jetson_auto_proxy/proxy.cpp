@@ -15,6 +15,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <csignal>
+#include <ctime>
 #include <fstream>
 #include <future>
 #include <iostream>
@@ -45,7 +46,12 @@ struct Fd {
 void log(const std::string& value) {
   static std::mutex mutex;
   std::lock_guard<std::mutex> guard(mutex);
-  std::cerr << value << std::endl;
+  const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::tm local{};
+  char timestamp[40]{};
+  localtime_r(&now, &local);
+  std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S%z", &local);
+  std::cerr << '[' << timestamp << "] " << value << std::endl;
 }
 std::string ip_text(uint32_t host_order) {
   in_addr address{htonl(host_order)};
@@ -62,6 +68,7 @@ struct Upstream {
 struct Config {
   int port = 17892, probe_timeout = 4000, interval = 15000;
   int cooldown = 15000, connect_timeout = 2000, max_clients = 48;
+  int probe_failure_threshold = 3;
   bool gateways = true;
   std::string probe_url = "https://api.openai.com/v1/models", ca_file;
   std::vector<Upstream> fixed;
@@ -92,6 +99,7 @@ Config read_config(const std::string& path) {
       else if (key == "auto_gateways") c.gateways = n != 0;
       else if (key == "probe_timeout_ms") c.probe_timeout = n;
       else if (key == "probe_interval_ms") c.interval = n;
+      else if (key == "probe_failure_threshold") c.probe_failure_threshold = n;
       else if (key == "cooldown_ms") c.cooldown = n;
       else if (key == "connect_timeout_ms") c.connect_timeout = n;
       else if (key == "max_clients") c.max_clients = n;
@@ -101,6 +109,7 @@ Config read_config(const std::string& path) {
   if (c.port < 1 || c.port > 65535 || c.probe_timeout < 100 || c.probe_timeout > 30000 ||
       c.interval < 500 || c.interval > 300000 || c.cooldown < 500 || c.cooldown > 300000 ||
       c.connect_timeout < 100 || c.connect_timeout > 10000 || c.max_clients < 1 || c.max_clients > 128 ||
+      c.probe_failure_threshold < 1 || c.probe_failure_threshold > 10 ||
       c.fixed.size() > 16 || c.probe_url.rfind("https://", 0) != 0)
     throw std::runtime_error("Config out of range (HTTPS probe required)");
   return c;
@@ -168,6 +177,7 @@ std::string no_proxy() {
 struct Health {
   bool ok = false;
   long http = 0;
+  long connect_http = 0;
   CURLcode code = CURLE_FAILED_INIT;
 };
 Health probe(const Upstream& p, const Config& c) {
@@ -188,6 +198,7 @@ Health probe(const Upstream& p, const Config& c) {
   Health result;
   result.code = curl_easy_perform(curl);
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &result.http);
+  curl_easy_getinfo(curl, CURLINFO_HTTP_CONNECTCODE, &result.connect_http);
   result.ok = result.code == CURLE_OK && (result.http == 200 || result.http == 401);
   curl_easy_cleanup(curl);
   return result;
@@ -196,7 +207,37 @@ struct State {
   Health health;
   Clock::time_point checked{}, blocked{};
   unsigned generation = 0;
+  unsigned transient_failures = 0;
 };
+// 仅允许已验证上游短暂网络抖动；证书、CA、代理认证和异常HTTP结果不宽容。
+bool transient_probe_error(const Health& h) {
+  if (h.ok || (h.connect_http != 0 && h.connect_http != 200) ||
+      (h.http != 0 && h.http != 200 && h.http != 401)) return false;
+  switch (h.code) {
+    case CURLE_COULDNT_RESOLVE_PROXY:
+    case CURLE_COULDNT_RESOLVE_HOST:
+    case CURLE_COULDNT_CONNECT:
+    case CURLE_OPERATION_TIMEDOUT:
+    case CURLE_SSL_CONNECT_ERROR:
+    case CURLE_GOT_NOTHING:
+    case CURLE_SEND_ERROR:
+    case CURLE_RECV_ERROR:
+      return true;
+    default:
+      return false;
+  }
+}
+void record_probe(State& s, Health h, int failure_threshold) {
+  const bool previously_usable = s.health.ok;
+  if (h.ok) s.transient_failures = 0;
+  else if (transient_probe_error(h)) {
+    const auto threshold = static_cast<unsigned>(failure_threshold);
+    s.transient_failures = std::min(s.transient_failures + 1, threshold);
+    h.ok = previously_usable && s.transient_failures < threshold;
+  } else s.transient_failures = 0;
+  s.health = h;
+  s.checked = Clock::now();
+}
 class Pool {
   Config config_;
   mutable std::mutex mutex_;
@@ -229,10 +270,17 @@ class Pool {
         auto& s = state_[p.key()];
         // 旧探测不得覆盖探测期间发生的真实连接失败。
         if (s.generation != generation) return;
-        if (s.checked == Clock::time_point{} || s.health.ok != h.ok)
-          log("[health] " + p.name + " " + p.key() + (h.ok ? " OK" : " DOWN") +
-              " curl=" + std::to_string(h.code) + " http=" + std::to_string(h.http));
-        s.health = h; s.checked = Clock::now();
+        const bool first = s.checked == Clock::time_point{};
+        const bool was_usable = s.health.ok;
+        const unsigned previous_failures = s.transient_failures;
+        record_probe(s, h, config_.probe_failure_threshold);
+        if (first || was_usable != s.health.ok || previous_failures != s.transient_failures)
+          log("[health] " + p.name + " " + p.key() +
+              (s.health.ok ? (h.ok ? " OK" : " DEGRADED") : " DOWN") +
+              " curl=" + std::to_string(h.code) + " http=" + std::to_string(h.http) +
+              " connect_http=" + std::to_string(h.connect_http) +
+              " transient_failures=" + std::to_string(s.transient_failures) + "/" +
+              std::to_string(config_.probe_failure_threshold));
       }));
     }
     for (auto& job : jobs) job.get();
@@ -252,7 +300,8 @@ class Pool {
     std::lock_guard<std::mutex> guard(mutex_);
     auto& s = state_[p.key()];
     s.health.ok = false; s.blocked = Clock::now() + Ms(config_.cooldown); ++s.generation;
-    log("[cooldown] " + p.name + " " + p.key());
+    s.transient_failures = 0;
+    log("[cooldown] " + p.name + " " + p.key() + " reason=business_connect_failure");
   }
   std::string status() const {
     std::lock_guard<std::mutex> guard(mutex_);
@@ -266,9 +315,10 @@ class Pool {
       const auto& s = it->second;
       bool fresh = s.checked != Clock::time_point{} && now - s.checked < Ms(config_.interval + config_.probe_timeout + 5000);
       bool usable = fresh && s.health.ok && now >= s.blocked;
-      out << p.name << ' ' << p.key() << (usable ? " OK" : " DOWN")
+      out << p.name << ' ' << p.key() << (usable ? (s.transient_failures ? " DEGRADED" : " OK") : " DOWN")
           << " curl=" << s.health.code << " http=" << s.health.http
           << " age_ms=" << (s.checked == Clock::time_point{} ? -1 : std::chrono::duration_cast<Ms>(now-s.checked).count());
+      if (s.transient_failures) out << " transient_failures=" << s.transient_failures << '/' << config_.probe_failure_threshold;
       if (now < s.blocked) out << " COOLDOWN";
       if (usable && !selected) { out << " SELECTED"; selected = true; }
       out << '\n';

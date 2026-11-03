@@ -1,0 +1,8 @@
+{
+  "fresh_ros_odometry_header": "2026-11-02T14:59:46.311259+08:00",
+  "gateway_sample_time": "2026-11-02T15:00:37.252856+08:00",
+  "gateway_odom_age_seconds": 461.648261027,
+  "scan_probe_seconds": 6,
+  "scan_probe_received": false,
+  "conclusion": "网关旧轮式缓存不等于底盘停止发布；直接话题仍有新轮式消息。雷达独立观察无新帧，停止原因未定。"
+}

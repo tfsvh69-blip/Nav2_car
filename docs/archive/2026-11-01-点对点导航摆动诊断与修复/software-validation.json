@@ -1,0 +1,107 @@
+{
+  "version_baseline": "V2.7",
+  "hardware": false,
+  "final_rotate_to_heading_angular_vel": 0.22,
+  "rotate_to_heading_min_angle": 0.1,
+  "ctest_groups": 10,
+  "gtest_scenarios": 22,
+  "groups": [
+    {
+      "name": "test_point_navigation",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation.gtest.xml"
+    },
+    {
+      "name": "test_point_navigation_fixed_025",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation_fixed_025.gtest.xml"
+    },
+    {
+      "name": "test_point_navigation_smac_020",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation_smac_020.gtest.xml"
+    },
+    {
+      "name": "test_point_navigation_smac_025",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation_smac_025.gtest.xml"
+    },
+    {
+      "name": "test_point_navigation_short_return_000",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation_short_return_000.gtest.xml"
+    },
+    {
+      "name": "test_point_navigation_short_return_slow_000",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_point_navigation_short_return_slow_000.gtest.xml"
+    },
+    {
+      "name": "test_subcell_planner",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_subcell_planner.gtest.xml"
+    },
+    {
+      "name": "test_mapping_velocity_smoother",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_velocity_smoother.gtest.xml"
+    },
+    {
+      "name": "test_mapping_goal_policy",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_goal_policy.gtest.xml"
+    },
+    {
+      "name": "test_subcell_navigation",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "xml": "/home/jetson/luhao/my_nav_carcar_point_navigation/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_subcell_navigation.gtest.xml"
+    }
+  ],
+  "config_sha256": "b384e994b4b492970298ed709cced5bab69e1075dc7e4c673a6827ca98323dfe",
+  "real_nav2_result": {
+    "hardware": false,
+    "last_pose": [
+      0.34227340816427715,
+      -0.05325399664288758,
+      0.35276425272604395
+    ],
+    "moving_samples": 109,
+    "real_nav2": true,
+    "result": 4,
+    "rotate_to_heading_angular_vel_readback": 0.22,
+    "rotate_to_heading_min_angle_readback": 0.1,
+    "safe": true
+  },
+  "production_changes": "仅同一YAML源与安装两份；暂无程序/系统配置变更",
+  "field_acceptance": "尚未开始"
+}

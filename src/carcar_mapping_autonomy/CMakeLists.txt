@@ -4,7 +4,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(ament_cmake REQUIRED)
-find_package(rcl REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 foreach(dep rclcpp rclcpp_action rcl_interfaces std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2 tf2_ros slam_toolbox explore_lite_msgs diagnostic_msgs lifecycle_msgs nav2_util)
   find_package(${dep} REQUIRED)
@@ -15,15 +14,6 @@ find_package(TBB REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(nav2_lifecycle_manager 1.1.20 EXACT REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
-find_package(nav2_smac_planner REQUIRED)
-find_package(nav2_core REQUIRED)
-find_package(pluginlib REQUIRED)
-add_library(carcar_subcell_smac_planner SHARED src/subcell_smac_planner.cpp)
-target_include_directories(carcar_subcell_smac_planner PUBLIC include)
-ament_target_dependencies(carcar_subcell_smac_planner nav2_smac_planner nav2_core pluginlib nav2_costmap_2d rclcpp nav_msgs)
-target_link_libraries(carcar_subcell_smac_planner nlohmann_json::nlohmann_json)
-pluginlib_export_plugin_description_file(nav2_core subcell_planner_plugin.xml)
-install(TARGETS carcar_subcell_smac_planner LIBRARY DESTINATION lib)
 find_package(nav2_map_server REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 add_library(carcar_checked_path_bt_node SHARED src/checked_path_bt.cpp)
@@ -68,67 +58,12 @@ install(DIRECTORY launch config behavior_trees DESTINATION share/${PROJECT_NAME}
 install(FILES README.md DESTINATION share/${PROJECT_NAME})
 install(FILES ../third_party/frontier_ordering/LICENSE DESTINATION share/${PROJECT_NAME}/third_party/frontier_ordering)
 if(BUILD_TESTING)
-  add_executable(recorded_graph_replay test/recorded_graph_replay.cpp)
-  target_include_directories(recorded_graph_replay PRIVATE include)
-  ament_target_dependencies(recorded_graph_replay slam_toolbox nav_msgs sensor_msgs pluginlib rclcpp)
-  target_link_libraries(recorded_graph_replay nlohmann_json::nlohmann_json TBB::tbb /opt/ros/humble/lib/libkartoSlamToolbox.so boost_serialization boost_thread)
-  add_executable(recorded_map_probe test/recorded_map_probe.cpp)
-  target_include_directories(recorded_map_probe PRIVATE include)
-  ament_target_dependencies(recorded_map_probe slam_toolbox nav_msgs sensor_msgs)
-  target_link_libraries(recorded_map_probe nlohmann_json::nlohmann_json TBB::tbb /opt/ros/humble/lib/libkartoSlamToolbox.so boost_serialization boost_thread)
   add_executable(mapping_snapshot_benchmark test/snapshot_benchmark.cpp)
   target_include_directories(mapping_snapshot_benchmark PRIVATE include)
   ament_target_dependencies(mapping_snapshot_benchmark slam_toolbox)
   target_link_libraries(mapping_snapshot_benchmark nlohmann_json::nlohmann_json TBB::tbb /opt/ros/humble/lib/libkartoSlamToolbox.so boost_serialization boost_thread)
   find_package(rmw REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_loop_guard test/test_loop_guard.cpp)
-  target_include_directories(test_loop_guard PRIVATE include)
-  ament_target_dependencies(test_loop_guard slam_toolbox nav_msgs)
-  target_link_libraries(test_loop_guard nlohmann_json::nlohmann_json TBB::tbb /opt/ros/humble/lib/libkartoSlamToolbox.so boost_serialization boost_thread)
-  foreach(replay_mode baseline guard)
-    add_test(NAME test_recorded_loop_${replay_mode} COMMAND "${CMAKE_COMMAND}"
-      "-DREPLAY_EXE=$<TARGET_FILE:recorded_graph_replay>" "-DREPLAY_MODE=${replay_mode}"
-      "-DFIXTURE_ARCHIVE=${CMAKE_CURRENT_SOURCE_DIR}/test/data/loop_guard_20261101.tar.xz"
-      "-DFIXTURE_DIR=${CMAKE_CURRENT_BINARY_DIR}/recorded_loop_fixture"
-      -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_recorded_loop.cmake")
-    set_tests_properties(test_recorded_loop_${replay_mode} PROPERTIES
-      ENVIRONMENT "ROS_DOMAIN_ID=208;ROS_LOCALHOST_ONLY=1" RESOURCE_LOCK loop_domain_208 TIMEOUT 45)
-  endforeach()
-  ament_add_gtest(test_start_block test/test_start_block.cpp TIMEOUT 30)
-  target_link_libraries(test_start_block carcar_subcell_smac_planner)
-  ament_target_dependencies(test_start_block nav2_smac_planner nav2_costmap_2d rclcpp)
-  target_compile_definitions(test_start_block PRIVATE START_BLOCK_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/start_block_20261101.json")
-  set_tests_properties(test_start_block PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=213;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_subcell_departure test/test_subcell_departure.cpp)
-  target_include_directories(test_subcell_departure PRIVATE include)
-  ament_target_dependencies(test_subcell_departure nav_msgs)
-  target_link_libraries(test_subcell_departure nlohmann_json::nlohmann_json)
-  target_compile_definitions(test_subcell_departure PRIVATE SUBCELL_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/stop_subcell_20261031.json")
-  ament_add_gtest(test_subcell_planner test/test_subcell_planner.cpp TIMEOUT 30)
-  target_link_libraries(test_subcell_planner carcar_subcell_smac_planner)
-  find_package(nav2_controller REQUIRED)
-  find_package(nav2_regulated_pure_pursuit_controller REQUIRED)
-  ament_target_dependencies(test_subcell_planner nav2_smac_planner nav2_costmap_2d nav2_controller nav2_regulated_pure_pursuit_controller rclcpp)
-  target_compile_definitions(test_subcell_planner PRIVATE SUBCELL_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/stop_subcell_20261031.json" RPP_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_rpp.yaml")
-  set_tests_properties(test_subcell_planner PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=213;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_subcell_navigation test/test_subcell_navigation.cpp TIMEOUT 80)
-  target_include_directories(test_subcell_navigation PRIVATE include)
-  ament_target_dependencies(test_subcell_navigation rclcpp rclcpp_action nav_msgs nav2_msgs sensor_msgs tf2_ros ament_index_cpp)
-  target_link_libraries(test_subcell_navigation nlohmann_json::nlohmann_json)
-  target_compile_definitions(test_subcell_navigation PRIVATE
-    SUBCELL_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/stop_subcell_20261031.json"
-    NAVIGATION_LAUNCH="${CMAKE_CURRENT_SOURCE_DIR}/launch/navigation.launch.xml"
-    EXPLORATION_TREE="${CMAKE_CURRENT_SOURCE_DIR}/behavior_trees/navigate_to_pose_exploration.xml")
-  set_tests_properties(test_subcell_navigation PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=212;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_operator_recovery test/test_operator_recovery.cpp TIMEOUT 180)
-  find_package(Boost REQUIRED COMPONENTS system)
-  target_include_directories(test_operator_recovery PRIVATE include)
-  ament_target_dependencies(test_operator_recovery rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
-  target_link_libraries(test_operator_recovery nlohmann_json::nlohmann_json Boost::system)
-  target_compile_definitions(test_operator_recovery PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  add_dependencies(test_operator_recovery mapping_autonomy test_slow_graph)
-  set_tests_properties(test_operator_recovery PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=232;ROS_LOCALHOST_ONLY=1;MAPPING_CHECK_GATEWAY=${CMAKE_CURRENT_BINARY_DIR}/../carcar_mapping_console/mapping_web_gateway")
   ament_add_gtest(test_snapshot_supervisor test/test_snapshot_supervisor.cpp TIMEOUT 60)
   target_include_directories(test_snapshot_supervisor PRIVATE include)
   ament_target_dependencies(test_snapshot_supervisor rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
@@ -136,16 +71,6 @@ if(BUILD_TESTING)
   target_compile_definitions(test_snapshot_supervisor PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
   add_dependencies(test_snapshot_supervisor mapping_autonomy test_slow_graph)
   set_tests_properties(test_snapshot_supervisor PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=229;ROS_LOCALHOST_ONLY=1")
-  add_library(test_slow_telemetry SHARED test/slow_telemetry.cpp)
-  ament_target_dependencies(test_slow_telemetry rcl std_msgs)
-  target_link_libraries(test_slow_telemetry ${CMAKE_DL_LIBS})
-  ament_add_gtest(test_supervisor_telemetry test/test_supervisor_telemetry.cpp TIMEOUT 60)
-  target_include_directories(test_supervisor_telemetry PRIVATE include)
-  target_compile_definitions(test_supervisor_telemetry PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_TELEMETRY_LIBRARY="$<TARGET_FILE:test_slow_telemetry>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  ament_target_dependencies(test_supervisor_telemetry rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
-  target_link_libraries(test_supervisor_telemetry nlohmann_json::nlohmann_json)
-  add_dependencies(test_supervisor_telemetry mapping_autonomy test_slow_telemetry test_slow_graph)
-  set_tests_properties(test_supervisor_telemetry PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=205;ROS_LOCALHOST_ONLY=1")
   ament_add_gtest(test_online_snapshot test/test_online_snapshot.cpp TIMEOUT 180)
   target_include_directories(test_online_snapshot PRIVATE include)
   ament_target_dependencies(test_online_snapshot ament_index_cpp rclcpp slam_toolbox std_msgs sensor_msgs nav_msgs tf2_ros)
@@ -182,6 +107,10 @@ if(BUILD_TESTING)
   target_link_libraries(test_graph_snapshot /opt/ros/humble/lib/libkartoSlamToolbox.so boost_serialization boost_thread)
   ament_add_gtest(test_exploration_route test/test_exploration_route.cpp TIMEOUT 30)
   target_link_libraries(test_exploration_route mapping_continuous_exploration)
+  ament_add_gtest(test_continuous_progress test/test_continuous_progress.cpp TIMEOUT 20)
+  target_link_libraries(test_continuous_progress mapping_continuous_exploration)
+  target_compile_definitions(test_continuous_progress PRIVATE PROGRESS_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/r27_symmetric_stall.json")
+  set_tests_properties(test_continuous_progress PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=216;ROS_LOCALHOST_ONLY=1")
   ament_add_gtest(test_continuous_supervisor test/test_continuous_supervisor.cpp TIMEOUT 60)
   target_include_directories(test_continuous_supervisor PRIVATE include)
   ament_target_dependencies(test_continuous_supervisor rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
@@ -210,12 +139,18 @@ if(BUILD_TESTING)
   find_package(nav2_regulated_pure_pursuit_controller REQUIRED)
   find_package(nav2_costmap_2d REQUIRED)
   find_package(nav2_velocity_smoother REQUIRED)
+  ament_add_gtest(test_rpp_route_order test/test_rpp_route_order.cpp TIMEOUT 20)
+  ament_target_dependencies(test_rpp_route_order rclcpp rclcpp_lifecycle nav_msgs nav2_costmap_2d nav2_regulated_pure_pursuit_controller)
+  target_link_libraries(test_rpp_route_order nlohmann_json::nlohmann_json)
+  target_compile_definitions(test_rpp_route_order PRIVATE
+    FOLDED_ROUTE_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/r27_folded_route.json"
+    RPP_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_rpp.yaml")
+  set_tests_properties(test_rpp_route_order PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=214;ROS_LOCALHOST_ONLY=1")
   ament_add_gtest(test_mapping_recovery_core test/test_recovery_core.cpp)
   target_include_directories(test_mapping_recovery_core PRIVATE include)
   ament_target_dependencies(test_mapping_recovery_core nav_msgs)
   target_link_libraries(test_mapping_recovery_core nlohmann_json::nlohmann_json OpenSSL::Crypto)
   ament_add_gtest(test_mapping_recovery_initializer test/test_recovery_initializer.cpp)
-  target_compile_definitions(test_mapping_recovery_initializer PRIVATE RECOVERY_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data")
   target_include_directories(test_mapping_recovery_initializer PRIVATE include)
   ament_target_dependencies(test_mapping_recovery_initializer nav_msgs sensor_msgs slam_toolbox)
   target_link_libraries(test_mapping_recovery_initializer nlohmann_json::nlohmann_json TBB::tbb
@@ -226,82 +161,13 @@ if(BUILD_TESTING)
   target_compile_definitions(test_mapping_recovery_process PRIVATE SLAM_EXE="$<TARGET_FILE:mapping_slam>" RECOVERY_EXE="$<TARGET_FILE:mapping_recovery>" RELOCALIZER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/relocalizer.yaml")
   add_dependencies(test_mapping_recovery_process mapping_slam mapping_recovery)
   set_tests_properties(test_mapping_recovery_process PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=221;ROS_LOCALHOST_ONLY=1")
-  foreach(commit_case transient persistent cancel stale)
-    ament_add_test(test_recovery_commit_${commit_case}
-      COMMAND "$<TARGET_FILE:test_mapping_recovery_process>"
-        "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recovery_commit_${commit_case}.gtest.xml"
-      OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_recovery_commit_${commit_case}.txt"
-      RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recovery_commit_${commit_case}.gtest.xml"
-      TIMEOUT 100 ENV "ROS_DOMAIN_ID=221" "ROS_LOCALHOST_ONLY=1"
-        "CARCAR_TEST_COMMIT_GUARD=${commit_case}"
-        "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_BINARY_DIR}/log/commit_${commit_case}")
-    set_tests_properties(test_recovery_commit_${commit_case} PROPERTIES RESOURCE_LOCK recovery_domain_221)
-  endforeach()
-  ament_add_test(test_mapping_recovery_turn
-    COMMAND "$<TARGET_FILE:test_mapping_recovery_process>"
-      "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_mapping_recovery_turn.gtest.xml"
-    OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_mapping_recovery_turn.txt"
-    RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_mapping_recovery_turn.gtest.xml"
-    TIMEOUT 100 ENV "ROS_DOMAIN_ID=221" "ROS_LOCALHOST_ONLY=1" "CARCAR_TEST_RECORDED_TURN=1")
-  # 两个夹具共用隔离域，CTest并行运行时必须互斥。
-  set_tests_properties(test_mapping_recovery_process test_mapping_recovery_turn PROPERTIES RESOURCE_LOCK recovery_domain_221)
-  foreach(rollback_case success cancel)
-    ament_add_test(test_loop_recovery_${rollback_case}
-      COMMAND "$<TARGET_FILE:test_mapping_recovery_process>"
-        "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_loop_recovery_${rollback_case}.gtest.xml"
-      OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_loop_recovery_${rollback_case}.txt"
-      RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_loop_recovery_${rollback_case}.gtest.xml"
-      TIMEOUT 60 ENV "ROS_DOMAIN_ID=221" "ROS_LOCALHOST_ONLY=1" "CARCAR_TEST_LOOP_ROLLBACK=${rollback_case}"
-      "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_CURRENT_BINARY_DIR}/log/loop_recovery_${rollback_case}")
-    set_tests_properties(test_loop_recovery_${rollback_case} PROPERTIES RESOURCE_LOCK recovery_domain_221)
-  endforeach()
-  foreach(checkpoint_case transient burst persistent hard movement stale cancel)
-    ament_add_test(test_checkpoint_${checkpoint_case}
-      COMMAND "$<TARGET_FILE:test_mapping_recovery_process>"
-        "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_checkpoint_${checkpoint_case}.gtest.xml"
-      OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_checkpoint_${checkpoint_case}.txt"
-      RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_checkpoint_${checkpoint_case}.gtest.xml"
-      TIMEOUT 40 ENV "ROS_DOMAIN_ID=221" "ROS_LOCALHOST_ONLY=1" "CARCAR_TEST_CHECKPOINT_STABILITY=${checkpoint_case}"
-        "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_BINARY_DIR}/log/checkpoint_${checkpoint_case}")
-    set_tests_properties(test_checkpoint_${checkpoint_case} PROPERTIES RESOURCE_LOCK recovery_domain_221)
-  endforeach()
   ament_add_gtest(test_online_recovery_process test/test_recovery_process.cpp TIMEOUT 100)
   ament_target_dependencies(test_online_recovery_process rclcpp std_msgs sensor_msgs tf2_ros lifecycle_msgs)
   target_link_libraries(test_online_recovery_process nlohmann_json::nlohmann_json)
   target_compile_definitions(test_online_recovery_process PRIVATE CARCAR_ONLINE_RECOVERY SLAM_EXE="$<TARGET_FILE:mapping_slam>" RECOVERY_EXE="$<TARGET_FILE:mapping_recovery>" SNAPSHOT_WORKER="$<TARGET_FILE:mapping_snapshot_worker>" RELOCALIZER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/relocalizer.yaml")
   add_dependencies(test_online_recovery_process mapping_slam mapping_recovery mapping_snapshot_worker)
   set_tests_properties(test_online_recovery_process PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=230;ROS_LOCALHOST_ONLY=1")
-  set_tests_properties(test_online_recovery_process PROPERTIES RESOURCE_LOCK recovery_domain_230)
-  foreach(reference_case startup bad_scan bad_scan_existing cancel generation shift_10cm shift_20cm)
-    set(reference_environment "ROS_DOMAIN_ID=230" "ROS_LOCALHOST_ONLY=1"
-      "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_BINARY_DIR}/log/recent_reference_${reference_case}")
-    if(reference_case STREQUAL "startup")
-      list(APPEND reference_environment "CARCAR_TEST_LONG_STARTUP=1" "CARCAR_TEST_SNAPSHOT_PREFLIGHT_ONLY=1")
-    elseif(reference_case STREQUAL "shift_10cm")
-      list(APPEND reference_environment "CARCAR_TEST_SMALL_TRANSLATION=0.10")
-    elseif(reference_case STREQUAL "shift_20cm")
-      list(APPEND reference_environment "CARCAR_TEST_SMALL_TRANSLATION=0.20")
-    else()
-      list(APPEND reference_environment "CARCAR_TEST_SNAPSHOT_POST_CAPTURE=${reference_case}")
-    endif()
-    ament_add_test(test_recent_reference_${reference_case}
-      COMMAND "$<TARGET_FILE:test_online_recovery_process>"
-        "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recent_reference_${reference_case}.gtest.xml"
-      OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_recent_reference_${reference_case}.txt"
-      RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recent_reference_${reference_case}.gtest.xml"
-      TIMEOUT 100 ENV ${reference_environment})
-    set_tests_properties(test_recent_reference_${reference_case} PROPERTIES RESOURCE_LOCK recovery_domain_230)
-  endforeach()
   find_package(nav2_controller REQUIRED)
-  ament_add_gtest(test_return_navigation test/test_return_navigation.cpp TIMEOUT 60)
-  target_include_directories(test_return_navigation PRIVATE include)
-  ament_target_dependencies(test_return_navigation rclcpp rclcpp_lifecycle nav_msgs nav2_msgs nav2_controller nav2_costmap_2d nav2_smac_planner nav2_regulated_pure_pursuit_controller)
-  target_link_libraries(test_return_navigation nlohmann_json::nlohmann_json)
-  target_compile_definitions(test_return_navigation PRIVATE
-    NAV_BASE_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/../carcar_navigation/config/nav2.yaml"
-    MAPPING_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/nav2_mapping.yaml"
-    CONTROLLER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_rpp.yaml")
-  set_tests_properties(test_return_navigation PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=231;ROS_LOCALHOST_ONLY=1")
   add_executable(mapping_navigation_snapshot test/navigation_snapshot.cpp)
   ament_target_dependencies(mapping_navigation_snapshot rclcpp rclcpp_lifecycle nav_msgs nav2_msgs nav2_smac_planner nav2_regulated_pure_pursuit_controller nav2_costmap_2d)
   target_link_libraries(mapping_navigation_snapshot nlohmann_json::nlohmann_json)
@@ -358,55 +224,12 @@ if(BUILD_TESTING)
   target_link_libraries(test_mapping_supervisor nlohmann_json::nlohmann_json)
   add_dependencies(test_mapping_supervisor mapping_autonomy test_slow_graph)
   set_tests_properties(test_mapping_supervisor PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=206;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_planner_diagnostics test/test_planner_diagnostics.cpp TIMEOUT 45)
-  target_include_directories(test_planner_diagnostics PRIVATE include)
-  target_compile_definitions(test_planner_diagnostics PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  ament_target_dependencies(test_planner_diagnostics rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
-  target_link_libraries(test_planner_diagnostics nlohmann_json::nlohmann_json)
-  add_dependencies(test_planner_diagnostics mapping_autonomy test_slow_graph)
-  set_tests_properties(test_planner_diagnostics PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=206;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_return_selector test/test_return_selector.cpp)
-  if(TARGET test_return_selector)
-    target_include_directories(test_return_selector PRIVATE include)
-    ament_target_dependencies(test_return_selector nav_msgs)
-    target_link_libraries(test_return_selector nlohmann_json::nlohmann_json)
-  endif()
-  ament_add_gtest(test_return_nearby test/test_return_nearby.cpp TIMEOUT 100)
-  target_include_directories(test_return_nearby PRIVATE include)
-  target_compile_definitions(test_return_nearby PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  ament_target_dependencies(test_return_nearby rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
-  target_link_libraries(test_return_nearby nlohmann_json::nlohmann_json)
-  add_dependencies(test_return_nearby mapping_autonomy test_slow_graph)
-  set_tests_properties(test_return_nearby PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=210;ROS_LOCALHOST_ONLY=1")
-  ament_add_gtest(test_return_nearby_edges test/test_return_nearby_edges.cpp TIMEOUT 100)
-  target_include_directories(test_return_nearby_edges PRIVATE include)
-  target_compile_definitions(test_return_nearby_edges PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  ament_target_dependencies(test_return_nearby_edges rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs)
-  target_link_libraries(test_return_nearby_edges nlohmann_json::nlohmann_json)
-  add_dependencies(test_return_nearby_edges mapping_autonomy test_slow_graph)
-  set_tests_properties(test_return_nearby_edges PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=232;ROS_LOCALHOST_ONLY=1")
   ament_add_gtest(test_mapping_startup_slam test/test_startup_slam.cpp TIMEOUT 30)
-  target_include_directories(test_mapping_startup_slam PRIVATE include)
-  target_compile_definitions(test_mapping_startup_slam PRIVATE STARTUP_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data")
   target_compile_definitions(test_mapping_startup_slam PRIVATE SLAM_EXE="$<TARGET_FILE:mapping_slam>")
   ament_target_dependencies(test_mapping_startup_slam rclcpp sensor_msgs nav_msgs tf2_ros std_msgs)
   target_link_libraries(test_mapping_startup_slam nlohmann_json::nlohmann_json)
   add_dependencies(test_mapping_startup_slam mapping_slam)
   set_tests_properties(test_mapping_startup_slam PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=207;ROS_LOCALHOST_ONLY=1")
-  ament_add_test(test_recorded_startup_slam
-    COMMAND "$<TARGET_FILE:test_mapping_startup_slam>"
-      "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recorded_startup_slam.gtest.xml"
-    OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_recorded_startup_slam.txt"
-    RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_recorded_startup_slam.gtest.xml"
-    TIMEOUT 35 ENV "ROS_DOMAIN_ID=207" "ROS_LOCALHOST_ONLY=1" "CARCAR_TEST_LONG_STARTUP=1" "CARCAR_STARTUP_RECORDED=1")
-  set_tests_properties(test_mapping_startup_slam test_recorded_startup_slam PROPERTIES RESOURCE_LOCK startup_domain_207)
-  ament_add_test(test_startup_checkpoint_order
-    COMMAND "$<TARGET_FILE:test_mapping_recovery_process>"
-      "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_startup_checkpoint_order.gtest.xml"
-    OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_startup_checkpoint_order.txt"
-    RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_startup_checkpoint_order.gtest.xml"
-    TIMEOUT 100 ENV "ROS_DOMAIN_ID=221" "ROS_LOCALHOST_ONLY=1" "CARCAR_TEST_LONG_STARTUP=1")
-  set_tests_properties(test_startup_checkpoint_order PROPERTIES RESOURCE_LOCK recovery_domain_221)
   ament_add_gtest(test_mapping_laser_filter test/test_laser_filter.cpp)
   ament_target_dependencies(test_mapping_laser_filter laser_filters filters rclcpp sensor_msgs)
   target_compile_options(test_mapping_laser_filter PRIVATE -fsanitize=address -fno-omit-frame-pointer)

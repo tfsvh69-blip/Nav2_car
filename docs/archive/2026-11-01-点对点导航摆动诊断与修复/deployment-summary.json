@@ -1,0 +1,39 @@
+{
+  "time": "2026-11-01T22:39:47.345267+08:00",
+  "backup": "/home/jetson/luhao/my_nav_carcar_return_nearby_release.20261101-223947-345267.backup",
+  "candidate": "/home/jetson/luhao/my_nav_carcar_point_navigation",
+  "release": "/home/jetson/luhao/my_nav_carcar_return_nearby_release",
+  "unit_sha256": "16080c923e488dc724fbbf51354133c7be34ec42a1093fc7c22c7b5cfc8a0e45",
+  "files": [
+    {
+      "path": "src/carcar_mapping_autonomy/config/controller_rpp.yaml",
+      "source": "src/carcar_mapping_autonomy/config/controller_rpp.yaml",
+      "before": "1e4daedc58f3dbc5f330fdec2af30e17f33a575273dad1c4810b3560cf5f60a3",
+      "after": "b384e994b4b492970298ed709cced5bab69e1075dc7e4c673a6827ca98323dfe",
+      "before_mode": 436,
+      "after_mode": 436,
+      "tested_build_source": "src/carcar_mapping_autonomy/config/controller_rpp.yaml"
+    },
+    {
+      "path": "install/carcar_mapping_autonomy/share/carcar_mapping_autonomy/config/controller_rpp.yaml",
+      "source": "install/carcar_mapping_autonomy/share/carcar_mapping_autonomy/config/controller_rpp.yaml",
+      "before": "1e4daedc58f3dbc5f330fdec2af30e17f33a575273dad1c4810b3560cf5f60a3",
+      "after": "b384e994b4b492970298ed709cced5bab69e1075dc7e4c673a6827ca98323dfe",
+      "before_mode": 420,
+      "after_mode": 420,
+      "tested_build_source": "src/carcar_mapping_autonomy/config/controller_rpp.yaml"
+    }
+  ],
+  "after_status": {
+    "phase": "STANDBY",
+    "task_state": "STANDBY",
+    "busy": false,
+    "dirty": false,
+    "autonomy": {},
+    "error": "",
+    "control_mode": "manual"
+  },
+  "hardware_started": false,
+  "preserved_regular_files": 431,
+  "field_acceptance": "等待用户明确现场就绪，尚未开始"
+}

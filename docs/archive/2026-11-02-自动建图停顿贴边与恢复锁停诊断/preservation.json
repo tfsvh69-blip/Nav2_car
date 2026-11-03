@@ -1,0 +1,18 @@
+{
+  "trusted_checkpoint": "log/nav018_stutter_20261102/trusted-checkpoint-95",
+  "trusted_checks": {
+    "graph.data": true,
+    "graph.posegraph": true,
+    "map.pgm": true,
+    "map.yaml": true
+  },
+  "bundle": "src/carcar_navigation/maps/mapping_sessions/20261102_144741_31fc45e8",
+  "bundle_checks": {
+    "graph.data": true,
+    "graph.posegraph": true,
+    "map.pgm": true,
+    "map.yaml": true
+  },
+  "diagnostic_only": true,
+  "review_required": true
+}

@@ -1,0 +1,140 @@
+{
+  "test_id": "NAV-018-POINT-SMOOTH-002",
+  "date": "2026-11-02",
+  "status": "supervised_short_trial_and_nearby_return_passed",
+  "task_id": "2a88a1eca7d22926e992a8107dd2456c",
+  "source_worktree": "/home/jetson/luhao/my_nav_carcar_point_navigation",
+  "baseline": "V2.7",
+  "parameters": {
+    "FollowPath.rotate_to_heading_angular_vel": {
+      "expected": 0.22,
+      "value": 0.22,
+      "raw": "Double value is: 0.22"
+    },
+    "FollowPath.rotate_to_heading_min_angle": {
+      "expected": 0.1,
+      "value": 0.1,
+      "raw": "Double value is: 0.1"
+    },
+    "FollowPath.desired_linear_vel": {
+      "expected": 0.1,
+      "value": 0.1,
+      "raw": "Double value is: 0.1"
+    }
+  },
+  "initial_preflight": {
+    "success": false,
+    "reason": "CLI发现未找到已运行节点，未下发自动目标；halt后停稳，随后无daemon直接查询成功",
+    "evidence": "real-trial-2026-11-02T01-19-50-393Z-result.json"
+  },
+  "short_trial": {
+    "success": true,
+    "requested_command_observation_seconds": 20,
+    "elapsed_until_stop_confirmation_seconds": 22.612,
+    "wheel_estimated_displacement_m": 1.0769478015207175,
+    "continuous_stop_wall_seconds": 2,
+    "field_feedback": "已停稳，明显更平顺，可以返程",
+    "evidence": "real-resume-trial-2026-11-02T01-21-38-926Z-result.json"
+  },
+  "return": {
+    "success": true,
+    "result": "nearby",
+    "destination": {
+      "arrival_tolerance_m": 0.15,
+      "attempts": 11,
+      "distance_to_origin_m": 0.2956542095819037,
+      "kind": "nearby",
+      "max_candidates": 12,
+      "phase": "COMPLETED",
+      "reason": "已在起点附近停稳，位置为地图估计；未到达原起点",
+      "search_radius_m": 0.8,
+      "target": [
+        0.18473257571973356,
+        0.18506158682332963,
+        6.938893903907228e-17
+      ],
+      "target_offset_m": 0.26864207965992704
+    },
+    "still": true,
+    "navigation_terminal": true,
+    "output": [
+      0,
+      0
+    ],
+    "dirty": false,
+    "field_feedback": "返程平顺，已在起点附近完全停稳",
+    "evidence": "real-return-2026-11-02T01-23-40-491Z-result.json"
+  },
+  "candidate": {
+    "id": "20261102_092435_17897fa1",
+    "valid": true,
+    "status": "candidate",
+    "assets": {
+      "manifest.json": {
+        "size": 17853,
+        "sha256": "94f561ed815145a50d6b7d5188fe16521cbc82ec3e8d3a5b4107fee885e6ed3e"
+      },
+      "publication.json": {
+        "size": 396,
+        "sha256": "28c42fb8be27fe1d99d57a63e76f910e2f894f023ac0437b7a547d34066c9dce"
+      },
+      "map.yaml": {
+        "size": 121,
+        "sha256": "4b13b96bff25b423b144f90ab8270de0ac280d4d7a2f0b12cbb753af01dbc9a5"
+      },
+      "map.pgm": {
+        "size": 11186,
+        "sha256": "ad9f9907e78396d440c145253a50089530c6295988e3a4fa6d5b4c3902ac54d0"
+      },
+      "graph.data": {
+        "size": 833945,
+        "sha256": "0031b30b513e896c292094b535ca5524c428a7bf0290a0d5b0ad41cb6390a261"
+      },
+      "graph.posegraph": {
+        "size": 1723375,
+        "sha256": "5cf1396aacc5dec0f879de05715ff4e0e48a4dcfeca4595dd1363473d1b55801"
+      }
+    }
+  },
+  "raw_evidence": {
+    "session": {
+      "evidence_incomplete": false,
+      "evidence_incomplete_reason": "",
+      "is_recording_bag": false,
+      "raw_bag_cleaned": false,
+      "record_raw_bag": true,
+      "session_id": "20261102_091959_5616",
+      "session_type": "RAW_BAG",
+      "status": "ENDED",
+      "total_bag_bytes": 137158656,
+      "total_events": 363,
+      "total_goals": 3,
+      "total_stops": 10
+    },
+    "bag_path": "log/nav_sessions/20261102_091959_5616/bag/bag_0.db3",
+    "bag_bytes": 137510912,
+    "sha256": "6fa79c8f1501d3451d6ad8462a0241b619c41173892665afb148ff831764048a"
+  },
+  "final_status": {
+    "phase": "STANDBY",
+    "task_state": "STANDBY",
+    "busy": false,
+    "dirty": false,
+    "error": "",
+    "control_mode": "automatic",
+    "autonomy": {},
+    "last_saved_bundle": "20261102_092435_17897fa1"
+  },
+  "final_service": {
+    "pid": 1557,
+    "restarts": 0,
+    "active": true,
+    "serial_ports_released": true
+  },
+  "limitations": [
+    "单轮20秒短程与附近返程，不等同长期或全场景稳定",
+    "保留少量短时修正，未声称摆动完全消失",
+    "轮式位置和地图位置不是独立实物测量",
+    "control_mode保留已结束任务automatic；没有活动硬件，不表示自动续跑"
+  ]
+}

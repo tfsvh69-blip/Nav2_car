@@ -3,7 +3,6 @@
 #include <fstream>
 #include <unistd.h>
 #include "carcar_mapping_autonomy/recovery_core.hpp"
-#include "carcar_mapping_autonomy/recovery_commit_guard.hpp"
 #include "carcar_mapping_autonomy/recovery_artifact.hpp"
 namespace ca=carcar_mapping_autonomy;
 static nav_msgs::msg::OccupancyGrid room(bool corridor=false){
@@ -124,73 +123,6 @@ TEST(RecoveryFrames, DuplicateTimestampsAndPoseJumpsCannotSatisfyMultiFrameGate)
   EXPECT_FALSE(frames.observe({.3,0,0},2,3,true));EXPECT_EQ(frames.count,1u);
   bool passed=false;for(int i=3;i<9;++i)passed=frames.observe({.3,0,0},i,3+(i-2)*.21,true);
   EXPECT_TRUE(passed);EXPECT_FALSE(frames.observe({},9,5,false));EXPECT_EQ(frames.count,0u);
-}
-TEST(RecoveryCommit, DuplicateFramesCannotQualifyAndOneBadFrameRevokesWithoutPermanentFailure){
-  ca::RecoveryCommitGuard guard;guard.reset(1);
-  ca::ReferenceScore good;good.points=80;good.coverage=1;good.hit_ratio=1;good.mean=.02;good.free_conflict=.01;
-  ASSERT_TRUE(good.acceptable());
-  EXPECT_FALSE(guard.observe({},1,1,good));
-  for(int i=0;i<20;++i)EXPECT_FALSE(guard.observe({},1,1.1+i*.01,good));
-  EXPECT_EQ(guard.observations.count,1u);
-  EXPECT_FALSE(guard.observe({},2,1.1,good));EXPECT_TRUE(guard.observe({},3,1.3,good));
-  auto sparse=good;sparse.points=49;EXPECT_FALSE(guard.observe({},4,1.4,sparse));
-  EXPECT_FALSE(guard.ready);EXPECT_FALSE(guard.expired(1.5));
-  EXPECT_FALSE(guard.observe({},5,1.5,good));EXPECT_FALSE(guard.observe({},6,1.6,good));
-  EXPECT_TRUE(guard.observe({},7,1.8,good));EXPECT_FALSE(guard.expired(10));
-  auto wall=good;wall.free_conflict=.081;EXPECT_FALSE(guard.observe({},8,10,wall));
-  EXPECT_TRUE(guard.expired(15.001));EXPECT_FALSE(guard.ready);
-}
-TEST(RecoveryCommit, OriginalPoseBoundsAndUnknownSparseOrWallScoresRemainClosed){
-  EXPECT_TRUE(ca::RecoveryCommitGuard::agrees({.119,0,.099},{}));
-  EXPECT_FALSE(ca::RecoveryCommitGuard::agrees({.12,0,0},{}));
-  EXPECT_FALSE(ca::RecoveryCommitGuard::agrees({0,0,.10},{}));
-  ca::ReferenceScore good;good.points=80;good.coverage=1;good.hit_ratio=1;good.mean=.02;good.free_conflict=.01;
-  for(const std::string failure:{"unknown","sparse","wall","miss","residual"}){
-    auto bad=good;
-    if(failure=="unknown")bad.coverage=.79;
-    if(failure=="sparse")bad.points=49;
-    if(failure=="wall")bad.free_conflict=.081;
-    if(failure=="miss")bad.hit_ratio=.69;
-    if(failure=="residual")bad.mean=.101;
-    ca::RecoveryCommitGuard guard;guard.reset(1);
-    for(int i=0;i<60;++i)EXPECT_FALSE(guard.observe({},i+1,1+i*.1,bad))<<failure;
-    EXPECT_TRUE(guard.expired(7))<<failure;
-  }
-}
-TEST(RecoveryCommit, RecordedCurrentStationaryScansRevokeAndRegainQualificationAtSlamAlignedPose){
-  // 19:56当前只读采样，与19:52历史故障帧区分；不改原地图、扫描、位姿或评分门槛。
-  const auto path=std::filesystem::path(__FILE__).parent_path()/"data/recovery_commit_stationary_20261101.json";
-  std::ifstream in(path);ASSERT_TRUE(in.good());const auto j=nlohmann::json::parse(in);const auto&m=j.at("map");
-  nav_msgs::msg::OccupancyGrid map;map.info.width=m.at("width");map.info.height=m.at("height");map.info.resolution=m.at("resolution");
-  map.info.origin.position.x=m.at("origin")[0];map.info.origin.position.y=m.at("origin")[1];map.info.origin.orientation.w=1;
-  map.data=m.at("data").get<std::vector<int8_t>>();ca::ReferenceMatcher matcher(map);
-  const auto&original=j.at("verified_pose");const ca::Pose verified{original[0],original[1],original[2]};
-  ca::RecoveryCommitGuard guard;guard.reset(0);bool was_ready=false,revoked=false,regained=false,legacy_rejects_slam_accepts=false;size_t bad=0;
-  const auto ns=[](const auto&s){return s.at("sec").template get<int64_t>()*1000000000LL+s.at("nanosec").template get<int64_t>();};
-  const auto first=ns(j.at("frames").front().at("stamp"));
-  for(const auto&s:j.at("frames")){
-    const auto&t=s.at("sensor_in_base");const auto&q=t.at("rotation");
-    ASSERT_DOUBLE_EQ(q[0],0);ASSERT_DOUBLE_EQ(q[1],0);ASSERT_DOUBLE_EQ(q[2],0);ASSERT_DOUBLE_EQ(q[3],1);
-    const double ox=t.at("translation")[0],oy=t.at("translation")[1];const auto&ranges=s.at("ranges");
-    std::vector<ca::ReferenceMatcher::Ray> rays;
-    for(size_t i=0;i<ranges.size();i+=std::max<size_t>(1,ranges.size()/180)){
-      if(ranges[i].is_null())continue;
-      const double r=ranges[i];
-      if(r<std::max(.15,s.at("range_min").get<double>())||r>std::min(3.,s.at("range_max").get<double>())-.05)continue;
-      const double a=s.at("angle_min").get<double>()+i*s.at("angle_increment").get<double>();
-      rays.push_back({ox+r*std::cos(a),oy+r*std::sin(a),ox,oy});
-    }
-    const auto&p=s.at("base_in_map_at_scan").at("pose2d");const ca::Pose aligned{p[0],p[1],p[2]};
-    ASSERT_TRUE(ca::RecoveryCommitGuard::agrees(aligned,verified));
-    const auto score=matcher.score(aligned,rays);const auto old=matcher.score(verified,rays);
-    if(!old.acceptable()&&score.acceptable())legacy_rejects_slam_accepts=true;
-    const auto stamp=ns(s.at("stamp"));const double now=double(stamp-first)/1e9;
-    guard.observe(aligned,stamp,now,score);
-    if(!score.acceptable()){++bad;if(was_ready)revoked=true;EXPECT_FALSE(guard.ready);}
-    if(guard.ready){if(revoked)regained=true;was_ready=true;}
-    EXPECT_FALSE(guard.expired(now));
-  }
-  EXPECT_GT(bad,0u);EXPECT_TRUE(revoked);EXPECT_TRUE(regained);EXPECT_TRUE(legacy_rejects_slam_accepts);
 }
 TEST(RecoveryArtifact, CorruptionIsRejectedWithoutOverwritingEvidence){
   char path[]="/tmp/carcar-recovery-artifact-XXXXXX";ASSERT_NE(mkdtemp(path),nullptr);const std::filesystem::path directory(path);

@@ -1,0 +1,3300 @@
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 631608892
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.004'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.033705'
+  - key: driver_update_period_s
+    value: '0.033724'
+  - key: driver_sample_latency_ms
+    value: '0.108'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 688690416
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.011'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.057086'
+  - key: driver_update_period_s
+    value: '0.057178'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 717091383
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.012'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.028246'
+  - key: driver_update_period_s
+    value: '0.028031'
+  - key: driver_sample_latency_ms
+    value: '0.230'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 772463142
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.067'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.055529'
+  - key: driver_update_period_s
+    value: '0.055745'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 790929334
+  frame_id: ''
+status:
+- level: "\x01"
+  name: carcar/rosmaster
+  message: 轮式采样时间恢复中，速度未知，暂缓发布里程计
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.002'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_timing_recovery
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.018469'
+  - key: driver_update_period_s
+    value: '0.018472'
+  - key: driver_sample_latency_ms
+    value: '0.011'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 876286446
+  frame_id: ''
+status:
+- level: "\x01"
+  name: carcar/rosmaster
+  message: 轮式采样时间恢复中，速度未知，暂缓发布里程计
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.001'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_timing_recovery
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.085356'
+  - key: driver_update_period_s
+    value: '0.085353'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 916807035
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.005'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040520'
+  - key: driver_update_period_s
+    value: '0.040520'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602785
+    nanosec: 958042040
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.047'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.041238'
+  - key: driver_update_period_s
+    value: '0.041239'
+  - key: driver_sample_latency_ms
+    value: '0.013'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 20290652
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.005'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.062243'
+  - key: driver_update_period_s
+    value: '0.062238'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 45897382
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.025610'
+  - key: driver_update_period_s
+    value: '0.025614'
+  - key: driver_sample_latency_ms
+    value: '0.013'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 80574388
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.009'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.034541'
+  - key: driver_update_period_s
+    value: '0.034399'
+  - key: driver_sample_latency_ms
+    value: '0.155'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 121937844
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.012'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.041500'
+  - key: driver_update_period_s
+    value: '0.041641'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 151259054
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.010'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.029321'
+  - key: driver_update_period_s
+    value: '0.029321'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 191092588
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039832'
+  - key: driver_update_period_s
+    value: '0.039832'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 230819048
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039729'
+  - key: driver_update_period_s
+    value: '0.039730'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 271227795
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040405'
+  - key: driver_update_period_s
+    value: '0.040402'
+  - key: driver_sample_latency_ms
+    value: '0.017'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 280523100
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_navigation: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 311259349
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.031'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040030'
+  - key: driver_update_period_s
+    value: '0.040029'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 344879405
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'scan_to_scan_filter_chain: Heartbeat'
+  message: Alive
+  hardware_id: laser_filters
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 351250199
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.019'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039960'
+  - key: driver_update_period_s
+    value: '0.039963'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 391147286
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039932'
+  - key: driver_update_period_s
+    value: '0.039932'
+  - key: driver_sample_latency_ms
+    value: '0.015'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 430873938
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039729'
+  - key: driver_update_period_s
+    value: '0.039730'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 440042488
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_relocalizer: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 471068376
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040192'
+  - key: driver_update_period_s
+    value: '0.040192'
+  - key: driver_sample_latency_ms
+    value: '0.013'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 511132955
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.033'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040064'
+  - key: driver_update_period_s
+    value: '0.040063'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 551211518
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040076'
+  - key: driver_update_period_s
+    value: '0.040072'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 591436773
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040226'
+  - key: driver_update_period_s
+    value: '0.040226'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 630973181
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039538'
+  - key: driver_update_period_s
+    value: '0.039540'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 671282277
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040308'
+  - key: driver_update_period_s
+    value: '0.040301'
+  - key: driver_sample_latency_ms
+    value: '0.023'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 711328648
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040041'
+  - key: driver_update_period_s
+    value: '0.040043'
+  - key: driver_sample_latency_ms
+    value: '0.021'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 751136774
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039813'
+  - key: driver_update_period_s
+    value: '0.039817'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 791364972
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040225'
+  - key: driver_update_period_s
+    value: '0.040224'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 840290607
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.005'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.048915'
+  - key: driver_update_period_s
+    value: '0.048909'
+  - key: driver_sample_latency_ms
+    value: '0.025'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 871313903
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.036'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.031036'
+  - key: driver_update_period_s
+    value: '0.031041'
+  - key: driver_sample_latency_ms
+    value: '0.020'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 911312816
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.033'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039998'
+  - key: driver_update_period_s
+    value: '0.039999'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 951246225
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.018'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039931'
+  - key: driver_update_period_s
+    value: '0.039932'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602786
+    nanosec: 990970348
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039731'
+  - key: driver_update_period_s
+    value: '0.039736'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 30815691
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.002'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039843'
+  - key: driver_update_period_s
+    value: '0.039843'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 71133747
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040321'
+  - key: driver_update_period_s
+    value: '0.040321'
+  - key: driver_sample_latency_ms
+    value: '0.014'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 111108788
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.034'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039970'
+  - key: driver_update_period_s
+    value: '0.039969'
+  - key: driver_sample_latency_ms
+    value: '0.015'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 151088629
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039982'
+  - key: driver_update_period_s
+    value: '0.039981'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 191176856
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040086'
+  - key: driver_update_period_s
+    value: '0.040085'
+  - key: driver_sample_latency_ms
+    value: '0.017'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 230985653
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039808'
+  - key: driver_update_period_s
+    value: '0.039809'
+  - key: driver_sample_latency_ms
+    value: '0.017'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 271212092
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040226'
+  - key: driver_update_period_s
+    value: '0.040226'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 280533765
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_navigation: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 311395489
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040184'
+  - key: driver_update_period_s
+    value: '0.040182'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 344870997
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'scan_to_scan_filter_chain: Heartbeat'
+  message: Alive
+  hardware_id: laser_filters
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 351113948
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039718'
+  - key: driver_update_period_s
+    value: '0.039719'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 391187039
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040071'
+  - key: driver_update_period_s
+    value: '0.040068'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 430975324
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039794'
+  - key: driver_update_period_s
+    value: '0.039797'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 440066433
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_relocalizer: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 471329765
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040350'
+  - key: driver_update_period_s
+    value: '0.040346'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 511306918
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039983'
+  - key: driver_update_period_s
+    value: '0.039978'
+  - key: driver_sample_latency_ms
+    value: '0.024'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 551154500
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.021'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039850'
+  - key: driver_update_period_s
+    value: '0.039854'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 591183335
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040024'
+  - key: driver_update_period_s
+    value: '0.040024'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 630986948
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039803'
+  - key: driver_update_period_s
+    value: '0.039805'
+  - key: driver_sample_latency_ms
+    value: '0.017'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 671303340
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040313'
+  - key: driver_update_period_s
+    value: '0.040311'
+  - key: driver_sample_latency_ms
+    value: '0.020'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 711366287
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040066'
+  - key: driver_update_period_s
+    value: '0.040066'
+  - key: driver_sample_latency_ms
+    value: '0.020'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 751130827
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.022'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039766'
+  - key: driver_update_period_s
+    value: '0.039768'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 791116012
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039985'
+  - key: driver_update_period_s
+    value: '0.039985'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 831021964
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039907'
+  - key: driver_update_period_s
+    value: '0.039906'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 871243666
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040219'
+  - key: driver_update_period_s
+    value: '0.040220'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 911250035
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040007'
+  - key: driver_update_period_s
+    value: '0.040007'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 951157299
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039909'
+  - key: driver_update_period_s
+    value: '0.039909'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602787
+    nanosec: 991195093
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040036'
+  - key: driver_update_period_s
+    value: '0.040034'
+  - key: driver_sample_latency_ms
+    value: '0.020'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 30972561
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.002'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039779'
+  - key: driver_update_period_s
+    value: '0.039782'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 71298202
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040322'
+  - key: driver_update_period_s
+    value: '0.040317'
+  - key: driver_sample_latency_ms
+    value: '0.021'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 111293819
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039994'
+  - key: driver_update_period_s
+    value: '0.039996'
+  - key: driver_sample_latency_ms
+    value: '0.020'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 151171385
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039883'
+  - key: driver_update_period_s
+    value: '0.039884'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 191147226
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039973'
+  - key: driver_update_period_s
+    value: '0.039975'
+  - key: driver_sample_latency_ms
+    value: '0.017'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 231026776
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.002'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039882'
+  - key: driver_update_period_s
+    value: '0.039883'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 271204573
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040174'
+  - key: driver_update_period_s
+    value: '0.040171'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 280509894
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_navigation: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 311172766
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039970'
+  - key: driver_update_period_s
+    value: '0.039970'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 344883671
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'scan_to_scan_filter_chain: Heartbeat'
+  message: Alive
+  hardware_id: laser_filters
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 351167743
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039995'
+  - key: driver_update_period_s
+    value: '0.039995'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 391439654
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040273'
+  - key: driver_update_period_s
+    value: '0.040272'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 430962460
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039522'
+  - key: driver_update_period_s
+    value: '0.039523'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 440066689
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'lifecycle_manager_relocalizer: Nav2 Health'
+  message: Nav2 is active
+  hardware_id: Nav2
+  values: []
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 471284901
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040322'
+  - key: driver_update_period_s
+    value: '0.040321'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 511221028
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.032'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039935'
+  - key: driver_update_period_s
+    value: '0.039935'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 551261990
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.022'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040042'
+  - key: driver_update_period_s
+    value: '0.040041'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 591130757
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039870'
+  - key: driver_update_period_s
+    value: '0.039868'
+  - key: driver_sample_latency_ms
+    value: '0.021'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 630971714
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.002'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039844'
+  - key: driver_update_period_s
+    value: '0.039848'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 671288458
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.042'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040315'
+  - key: driver_update_period_s
+    value: '0.040312'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 711308844
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.033'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040020'
+  - key: driver_update_period_s
+    value: '0.040017'
+  - key: driver_sample_latency_ms
+    value: '0.021'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 751147753
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.022'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039839'
+  - key: driver_update_period_s
+    value: '0.039842'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 791258637
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040111'
+  - key: driver_update_period_s
+    value: '0.040112'
+  - key: driver_sample_latency_ms
+    value: '0.018'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 831003369
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.003'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039746'
+  - key: driver_update_period_s
+    value: '0.039749'
+  - key: driver_sample_latency_ms
+    value: '0.016'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 871191726
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.043'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040188'
+  - key: driver_update_period_s
+    value: '0.040185'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 911261328
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.033'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040066'
+  - key: driver_update_period_s
+    value: '0.040066'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 951138095
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.023'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.039880'
+  - key: driver_update_period_s
+    value: '0.039880'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---
+header:
+  stamp:
+    sec: 1793602788
+    nanosec: 991359989
+  frame_id: ''
+status:
+- level: "\0"
+  name: carcar/rosmaster
+  message: Connected
+  hardware_id: /dev/myserial
+  values:
+  - key: drive_mode
+    value: board_motion_pid
+  - key: battery_voltage
+    value: '12.20'
+  - key: last_cmd_age_s
+    value: '0.013'
+  - key: watchdog_stopped
+    value: 'True'
+  - key: motion_pid_active
+    value: 8.000,1.200,0.800
+  - key: motion_pid_staged
+    value: 8.000,1.200,0.800
+  - key: motion_pid_status
+    value: read_from_board
+  - key: wheel_odometry_enabled
+    value: 'True'
+  - key: wheel_odometry_status
+    value: encoder_odometry_active
+  - key: motion_interval_clock
+    value: steady
+  - key: wheel_sample_interval_s
+    value: '0.040221'
+  - key: driver_update_period_s
+    value: '0.040221'
+  - key: driver_sample_latency_ms
+    value: '0.019'
+---

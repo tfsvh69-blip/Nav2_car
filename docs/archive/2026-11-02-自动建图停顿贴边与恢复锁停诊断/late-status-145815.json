@@ -1,0 +1,854 @@
+{
+  "autonomy": {
+    "acceptance_wheel_ready": true,
+    "accepted_sequence": 593,
+    "accepted_wheel_position": [
+      -8.807886730509471,
+      -2.152307273102105
+    ],
+    "actions": {
+      "halt": {
+        "enabled": true,
+        "reason": ""
+      },
+      "manual": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      },
+      "pause": {
+        "enabled": false,
+        "reason": "当前没有自动行驶任务"
+      },
+      "recheck": {
+        "enabled": false,
+        "reason": "原始 /scan 超过0.5秒未更新"
+      },
+      "resume": {
+        "enabled": false,
+        "reason": "请先暂停或重新检查"
+      },
+      "return": {
+        "enabled": false,
+        "reason": "请先完成重新检查"
+      }
+    },
+    "active_request_id": "mapping-1793602211920-f98c3e33252c2",
+    "anchored": true,
+    "auto_start_pending": false,
+    "automatic_recovery": {
+      "attempts": 1,
+      "limit": 2,
+      "operator_hold": true
+    },
+    "automatic_start_ready": false,
+    "automatic_start_reason": "自动尚未启动：正在原地累计激光观测，已接纳593帧；补观测结束后检查净空与可信地图，没有下发目标",
+    "checkpoint_usable": false,
+    "continuous_exploration": {},
+    "control_max_tick_gap_ms": 113.01237700013189,
+    "control_max_tick_work_ms": 42.53320899999835,
+    "control_mode": "automatic",
+    "control_tick_gap_ms": 50.0892869999916,
+    "covariance_xy": 0.005474117560784674,
+    "current_pose": [
+      -6.118770121388678,
+      3.7771236673885653,
+      1.2276918077331727
+    ],
+    "direction_ratio": 0.0,
+    "elapsed_seconds": 841.7644737019998,
+    "end_reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "error": "",
+    "experimental": true,
+    "exploration_note": "",
+    "exploration_wait": {
+      "limit_seconds": 15.0,
+      "phase": "IDLE",
+      "seconds": 0.0
+    },
+    "explore_seconds": 2400.0,
+    "fault": {
+      "active": true,
+      "generation": 8,
+      "reason": "恢复期间再次出现被拒绝的回环，原恢复结果作废；保持锁停并保留证据",
+      "request_id": "mapping-1793601884837-5b106d1a7765f8",
+      "stamp_ns": 1793602056002484320,
+      "transient_scan": false
+    },
+    "frontier_goal": null,
+    "generation": 19,
+    "goal": null,
+    "goal_change_reason": "canceled：导航已取消；错误回环已撤销，停车并冻结；多帧地图、定位及导航检查通过后自动继续建图",
+    "goal_id": "",
+    "goal_request_id": "",
+    "goal_revalidating": false,
+    "goal_seconds": 0.0,
+    "goal_selecting": false,
+    "health_reason": "原始 /scan 超过0.5秒未更新",
+    "healthy": false,
+    "localization_requires_verification": true,
+    "loop_generation": 9,
+    "loop_waiting_map": false,
+    "map_revision": 248,
+    "map_sequence": 544,
+    "motion_note": "",
+    "nav_goal_id": "",
+    "navigation_attempt": 0,
+    "navigation_attempt_seconds": 0.0,
+    "navigation_detail": "",
+    "navigation_generation": 16,
+    "navigation_progress_m": 0.0,
+    "navigation_remaining_m": -1.0,
+    "navigation_terminal": true,
+    "near_field": {
+      "count": 0,
+      "inside": false,
+      "range": 0.0,
+      "side": "",
+      "valid": false,
+      "x": 0.0,
+      "y": 0.0
+    },
+    "observation_goal": null,
+    "observation_ready": false,
+    "observation_reason": "原始 /scan 超过0.5秒未更新",
+    "online_snapshots": true,
+    "operator_check": {
+      "phase": "FAILED",
+      "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+      "request_id": "mapping-1793602211920-f98c3e33252c2"
+    },
+    "origin": [
+      0.019995128039122158,
+      -0.0006979773289948156,
+      -0.01395999999999971
+    ],
+    "outcome": "fault",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "phase": "FAULT",
+    "pose_correction_pending": false,
+    "publication": {
+      "event_capacity": 64,
+      "event_high_water": 2,
+      "event_pending": 0,
+      "events_dropped": 0,
+      "events_enqueued": 484,
+      "events_logged": 484,
+      "last_error": "",
+      "last_log_ms": 1.5582009998524882,
+      "last_publish_ms": 1.1026489999039768,
+      "last_state_age_ms": 1.1421699998663826,
+      "log_failures": 0,
+      "max_log_ms": 3.1178469998849323,
+      "max_publish_ms": 10.642709999956423,
+      "max_state_age_ms": 11.91104399993037,
+      "mode": "latest_state_bounded_events",
+      "publish_failures": 0,
+      "source_age_seconds": 0.0007115360001535009,
+      "source_sequence": 12785,
+      "source_stamp_ns": 1793602695023525299,
+      "source_steady_seconds": 1857.308874548,
+      "state_pending": false,
+      "state_pending_age_seconds": 0.0,
+      "state_published": 12784,
+      "state_replaced": 0,
+      "state_submitted": 12785,
+      "worker_stage": "publish",
+      "worker_stage_age_seconds": 0.0002246130000003177
+    },
+    "quality_fault": "",
+    "radius_m": 20.0,
+    "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+    "recovery": {
+      "checkpoint_age_seconds": 653.3959612460001,
+      "checkpoint_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+      "checkpoint_path": "/home/jetson/luhao/my_nav_carcar/log/mapping_recovery/f35630a46437f3ed410f8c8b7d585ad3/f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+      "checkpoint_revalidation": {
+        "attempts": 0,
+        "limit": 2,
+        "reason": "",
+        "wait_limit_seconds": 12,
+        "waiting": false
+      },
+      "checkpoint_sequence": 588,
+      "commit_guard": {
+        "anchor_pose": null,
+        "frames": 0,
+        "limit_seconds": 5.0,
+        "pending_request_id": "",
+        "phase": "FAILED",
+        "scan_pose": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scan_stamp_ns": 0,
+        "score": {
+          "acceptable": false,
+          "coverage": 0.0,
+          "free_conflict": 1.0,
+          "hit_ratio": 0.0,
+          "mean_residual_m": 0.4,
+          "points": 0
+        },
+        "wait_seconds": 482.34710145500003
+      },
+      "commit_ready": false,
+      "gate_write": true,
+      "generation": 18,
+      "imu_acceleration_norm_mps2": 9.941100291215255,
+      "imu_age_seconds": 0.015018066000038743,
+      "imu_gyro_norm_radps": 0.00916515138991168,
+      "imu_ready": true,
+      "imu_reason": "IMU冲击／角速度异常",
+      "imu_relative_tilt_deg": 0.28302577509830773,
+      "imu_required": true,
+      "imu_stable": true,
+      "imu_valid": true,
+      "initialization": {
+        "pose": [
+          -6.09039064844659,
+          3.764169647812879,
+          1.2265846832976168
+        ],
+        "prior": [
+          -6.114920829030865,
+          3.763998569955511,
+          1.2165846832976168
+        ],
+        "prior_source": "slam_pose_with_scan_time_odometry",
+        "reference_at_prior": {
+          "age_seconds": 171.28309576100014,
+          "checkpoint_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+          "coverage": 0.9278350515463918,
+          "hit_ratio": 0.9072164948453608,
+          "mean_residual_m": 0.04589802165111344,
+          "points": 97,
+          "sequence": 588,
+          "source": "trusted_checkpoint"
+        },
+        "scan_stamp_ns": 1793602212727174087,
+        "slam_stamp_ns": 1793602055480758874,
+        "source": "karto_2.6.10_correlate_scan"
+      },
+      "localization_verified_frames": 0,
+      "mapping_range_m": 3.0,
+      "mapping_range_ready": true,
+      "mapping_range_waits": 2,
+      "note": "IMU仅受扰观察；旁路不广播TF，失败不强行返程",
+      "online_snapshots": true,
+      "phase": "FAILED",
+      "reason": "恢复已取消；入图保持冻结，工程和原始数据保留",
+      "request_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-113",
+      "requires_stop": true,
+      "snapshot": {
+        "action": "snapshot",
+        "capture_ms": 116.718566,
+        "capture_stamp_ns": 1793602041614833060,
+        "capture_steady_seconds": 1203.89976635,
+        "elapsed_seconds": 0.7619542289999117,
+        "generation": 7,
+        "in_flight": false,
+        "manifest": {
+          "action": "snapshot",
+          "base_frame": "base_footprint",
+          "capture_ms": 116.718566,
+          "capture_stamp_ns": 1793602041614833060,
+          "capture_steady_seconds": 1203.89976635,
+          "complete": true,
+          "generation": 7,
+          "geometry": {
+            "coverage": 1.0,
+            "free_conflict": 0.0071059431524547806,
+            "hit_ratio": 0.979328165374677,
+            "mean_residual_m": 0.015106155269596007,
+            "points": 387
+          },
+          "loop_generation": 4,
+          "map_stamp_ns": 1793602041614833060,
+          "mapping_range_m": 3.0,
+          "min_pass_through": 2,
+          "navigation_generation": 5,
+          "occupancy_threshold": 0.1,
+          "operator_revalidation": false,
+          "origin": [
+            0.019995128039122158,
+            -0.0006979773289948156,
+            -0.01395999999999971
+          ],
+          "pose": [
+            -6.151543744059957,
+            3.3243953594131814,
+            1.5818346622829162
+          ],
+          "request_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+          "resolution": 0.05,
+          "restore_generation": 0,
+          "scan_id": 587,
+          "scan_pose": [
+            -6.151543744059957,
+            3.3243953594131814,
+            1.5818346622829162
+          ],
+          "scan_stamp_ns": 1793602040903852826,
+          "sequence": 588,
+          "sha256": {
+            "graph.data": "711dcc0613ad91e865cde3b48d72fb92971dec0ded7c17db226fad62c11cef23",
+            "graph.posegraph": "f7fb3073fe287186bf7a3aed0712fdd6ebac0d19d5d6699dd43776ee9fe6832b",
+            "map.pgm": "5a8bc305350b2bc0c3600f73986a7d9de14ec7c934ecdbf7a861fbdb4855e9f8",
+            "map.yaml": "b416a07469642bef8f817e3a791e4bf2b1fbbeba50dd109a69463b6440843cd9"
+          },
+          "slam_version": "2.6.10",
+          "task_id": "f35630a46437f3ed410f8c8b7d585ad3"
+        },
+        "navigation_generation": 5,
+        "new_graph_observations": true,
+        "operator_revalidation": false,
+        "origin": [
+          0.019995128039122158,
+          -0.0006979773289948156,
+          -0.01395999999999971
+        ],
+        "path": "/home/jetson/luhao/my_nav_carcar/log/mapping_recovery/f35630a46437f3ed410f8c8b7d585ad3/f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+        "phase": "READY",
+        "reason": "后台快照已成为可信恢复点",
+        "request_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+        "scan_sequence": 588,
+        "task_id": "f35630a46437f3ed410f8c8b7d585ad3",
+        "validation_frames": 3,
+        "validation_geometry": {
+          "coverage": 0.9680851063829787,
+          "free_conflict": 0.008,
+          "hit_ratio": 0.9361702127659575,
+          "mean_residual_m": 0.029357566028050588,
+          "points": 94
+        },
+        "validation_scan_stamp_ns": 1793602042431701291
+      },
+      "task_id": "f35630a46437f3ed410f8c8b7d585ad3",
+      "verification": {
+        "ambiguity_margin": 0.06827539491500252,
+        "ambiguity_scope": "local_refinement_and_whole_map_sampled_competitors",
+        "coverage": 0.9111111111111111,
+        "frames": 0,
+        "free_conflict": 0.016901408450704224,
+        "global_sample_margin": -0.01954166187772828,
+        "global_samples": 28778,
+        "hit_ratio": 0.9,
+        "mean_residual_m": 0.04808612928979366,
+        "unique": false
+      },
+      "verified_frames": 0,
+      "verified_pose": [
+        -6.115577165927387,
+        3.7442360946196165,
+        1.230544683297617
+      ]
+    },
+    "recovery_navigation": {
+      "cleared_at": 0.0,
+      "error": "",
+      "failed": false,
+      "generation": 0,
+      "global": {
+        "age_s": null,
+        "qualified": false,
+        "received_at": 0.0
+      },
+      "global_clear_done": false,
+      "latest_scan_stamp_ns": 0,
+      "local": {
+        "age_s": null,
+        "qualified": false,
+        "received_at": 0.0
+      },
+      "local_clear_done": false,
+      "minimum_required_stamp_ns": 0,
+      "phase": "IDLE",
+      "ready": false,
+      "scan_age_s": null,
+      "scan_count": 0,
+      "started_at": 0.0
+    },
+    "recovery_pending": false,
+    "remaining_seconds": 1558.2355262980002,
+    "request_id": "mapping-1793602211920-f98c3e33252c2",
+    "request_result": "accepted",
+    "request_results": [
+      {
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601393253-b5d073c4ba6a68",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "请求手动接管，等待取消与停稳",
+        "request_id": "mapping-1793601642887-4488febe94e7f8",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601678603-755b1d93ce18b8",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "请求手动接管，等待取消与停稳",
+        "request_id": "mapping-1793601855023-90e5915e0a3238",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601884837-5b106d1a7765f8",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "恢复期间再次出现被拒绝的回环，原恢复结果作废；保持锁停并保留证据",
+        "request_id": "60ed0b2411d030ae3d70f016a608265f",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602065854-d9260516874888",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602093549-e2c951b4c8d6e",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602142113-94e779938723a8",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602169922-87b88cd932ff2",
+        "request_result": "accepted"
+      },
+      {
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602211920-f98c3e33252c2",
+        "request_result": "accepted"
+      }
+    ],
+    "return_destination": {
+      "arrival_tolerance_m": 0.15,
+      "attempts": 0,
+      "distance_to_origin_m": 7.208077078311445,
+      "kind": "none",
+      "max_candidates": 12,
+      "phase": "IDLE",
+      "reason": "尚未开始返程",
+      "search_radius_m": 0.8,
+      "target": null,
+      "target_offset_m": null
+    },
+    "return_remaining_seconds": 600.0,
+    "return_result": "not_started",
+    "return_retries": 0,
+    "return_seconds": 600.0,
+    "save_required": true,
+    "seconds_since_acceptance": 639.0322267700001,
+    "seconds_waiting_expected_acceptance": 0.0,
+    "slam": {
+      "accepted": true,
+      "accepted_stamp_ns": 1793602055480758874,
+      "admission_enabled": false,
+      "admission_retries": 427,
+      "attempts": 1069,
+      "frozen_observation_stamp_ns": 1793602373447476594,
+      "localization_requires_verification": true,
+      "loop_active": false,
+      "loop_generation": 9,
+      "loop_guard": {
+        "accepted": false,
+        "before": {
+          "coverage": 1.0,
+          "free_conflict": 0.016129032258064516,
+          "hit_ratio": 0.978494623655914,
+          "mean_residual_m": 0.014378634752154942,
+          "points": 93
+        },
+        "error": "",
+        "largest_translation_m": 1.6689131103268962,
+        "new_constraints": 1,
+        "proposed": {
+          "coverage": 1.0,
+          "free_conflict": 0.013440860215053764,
+          "hit_ratio": 0.34408602150537637,
+          "mean_residual_m": 0.16065117746431343,
+          "points": 93
+        },
+        "rejections": 2,
+        "rolled_back": true,
+        "scan_id": 592,
+        "validation_ms": 324.128079
+      },
+      "note": "接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流",
+      "restore_error": "",
+      "restore_generation": 1,
+      "scan_callback_age_ms": 90.482074,
+      "scan_callback_max_age_ms": 429.076636,
+      "scan_stale_rejections": 0,
+      "sequence": 593,
+      "startup_closed": false,
+      "startup_extra_limit": 12,
+      "startup_extras": 0,
+      "startup_window_seconds": 5.0
+    },
+    "snapshot_maintenance": {
+      "action": "snapshot",
+      "capture_ms": 116.718566,
+      "capture_stamp_ns": 1793602041614833060,
+      "capture_steady_seconds": 1203.89976635,
+      "elapsed_seconds": 0.7619542289999117,
+      "generation": 7,
+      "in_flight": false,
+      "manifest": {
+        "action": "snapshot",
+        "base_frame": "base_footprint",
+        "capture_ms": 116.718566,
+        "capture_stamp_ns": 1793602041614833060,
+        "capture_steady_seconds": 1203.89976635,
+        "complete": true,
+        "generation": 7,
+        "geometry": {
+          "coverage": 1.0,
+          "free_conflict": 0.0071059431524547806,
+          "hit_ratio": 0.979328165374677,
+          "mean_residual_m": 0.015106155269596007,
+          "points": 387
+        },
+        "loop_generation": 4,
+        "map_stamp_ns": 1793602041614833060,
+        "mapping_range_m": 3.0,
+        "min_pass_through": 2,
+        "navigation_generation": 5,
+        "occupancy_threshold": 0.1,
+        "operator_revalidation": false,
+        "origin": [
+          0.019995128039122158,
+          -0.0006979773289948156,
+          -0.01395999999999971
+        ],
+        "pose": [
+          -6.151543744059957,
+          3.3243953594131814,
+          1.5818346622829162
+        ],
+        "request_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+        "resolution": 0.05,
+        "restore_generation": 0,
+        "scan_id": 587,
+        "scan_pose": [
+          -6.151543744059957,
+          3.3243953594131814,
+          1.5818346622829162
+        ],
+        "scan_stamp_ns": 1793602040903852826,
+        "sequence": 588,
+        "sha256": {
+          "graph.data": "711dcc0613ad91e865cde3b48d72fb92971dec0ded7c17db226fad62c11cef23",
+          "graph.posegraph": "f7fb3073fe287186bf7a3aed0712fdd6ebac0d19d5d6699dd43776ee9fe6832b",
+          "map.pgm": "5a8bc305350b2bc0c3600f73986a7d9de14ec7c934ecdbf7a861fbdb4855e9f8",
+          "map.yaml": "b416a07469642bef8f817e3a791e4bf2b1fbbeba50dd109a69463b6440843cd9"
+        },
+        "slam_version": "2.6.10",
+        "task_id": "f35630a46437f3ed410f8c8b7d585ad3"
+      },
+      "navigation_generation": 5,
+      "new_graph_observations": true,
+      "operator_revalidation": false,
+      "origin": [
+        0.019995128039122158,
+        -0.0006979773289948156,
+        -0.01395999999999971
+      ],
+      "path": "/home/jetson/luhao/my_nav_carcar/log/mapping_recovery/f35630a46437f3ed410f8c8b7d585ad3/f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+      "phase": "READY",
+      "reason": "后台快照已成为可信恢复点",
+      "request_id": "f35630a46437f3ed410f8c8b7d585ad3-recovery-95",
+      "scan_sequence": 588,
+      "task_id": "f35630a46437f3ed410f8c8b7d585ad3",
+      "validation_frames": 3,
+      "validation_geometry": {
+        "coverage": 0.9680851063829787,
+        "free_conflict": 0.008,
+        "hit_ratio": 0.9361702127659575,
+        "mean_residual_m": 0.029357566028050588,
+        "points": 94
+      },
+      "validation_scan_stamp_ns": 1793602042431701291
+    },
+    "speed": {
+      "cap_mps": 0.18,
+      "confirmed_mps": 0.18,
+      "error": "",
+      "pending": false,
+      "phase": "READY",
+      "request_id": "speed-1793601695746-d035bb4bc14c08",
+      "requested_mps": 0.18
+    },
+    "still": true,
+    "stop_target": "FAULT",
+    "task_id": "f35630a46437f3ed410f8c8b7d585ad3",
+    "tf_map_odom_age": 0.314810747,
+    "tf_odom_base_age": 0.043997805,
+    "topology_age_s": 0.14889883799992276,
+    "topology_query_ms": 0.48957900003188115,
+    "travel_since_acceptance": 0.00021447033013391066,
+    "wheel_position": [
+      -8.807784648402878,
+      -2.1521186550594336
+    ]
+  },
+  "autonomy_age_ms": 34.50871200016081,
+  "autonomy_enabled": true,
+  "bundle": "",
+  "busy": false,
+  "completed_operation": 3,
+  "control": {
+    "accepted_sequence": 0,
+    "ack_sequence": 0,
+    "armed": false,
+    "control_epoch": "0ca4a5095f87d657b0ba545c3ba642f7",
+    "control_lease_ms": 1000.0,
+    "control_protocol": 2,
+    "control_revision": 27179,
+    "gear": "slow",
+    "health": "建图会话未就绪",
+    "idle_heartbeat_required": false,
+    "issued_steady_ms": 1857309.912459,
+    "last_stop": {
+      "reason": "网页请求停车: manual",
+      "server_steady": 1048.110367306
+    },
+    "reason": "网页请求停车: manual",
+    "require_video": false,
+    "supported_gears": [
+      "slow",
+      "normal",
+      "fast"
+    ],
+    "x": 0.0,
+    "yaw": 0.0
+  },
+  "control_age": 0.030668657999967763,
+  "control_mode": "automatic",
+  "dataflow_protocol": 1,
+  "dirty": false,
+  "error": "车端数据超过2秒未更新，已停止运动及入图；数据恢复后请重新检查",
+  "halt_pending": false,
+  "inspection_running": false,
+  "last_save_age": 633.5448460950001,
+  "last_saved_bundle": "20261102_144741_31fc45e8",
+  "managed": true,
+  "manual_control": {
+    "connected_clients": 1,
+    "generation": 9,
+    "owner_id": "800e11f94e9656515287e92b783c9c1d",
+    "owner_label": "电脑",
+    "phase": "READY",
+    "protocol": 1,
+    "ready": true,
+    "reason": "",
+    "shared_tasks": true
+  },
+  "map": {
+    "height": 223,
+    "origin": [
+      -12.092791306503694,
+      -3.883580435095714,
+      0.0
+    ],
+    "resolution": 0.05000000074505806,
+    "width": 349
+  },
+  "map_age": 321.96835126299993,
+  "map_version": "live-438",
+  "navigation": {
+    "global_costmap": {
+      "age_seconds": 0.3735181619999821,
+      "available": true,
+      "error": "",
+      "frame": "map",
+      "height": 223,
+      "origin": {
+        "x": -12.092791306503694,
+        "y": -3.883580435095714,
+        "yaw": 0.0
+      },
+      "resolution": 0.05000000074505806,
+      "sequence": 2106,
+      "source_age_seconds": 0.3745582103729248,
+      "source_frame": "map",
+      "width": 349
+    },
+    "global_path": {
+      "age_seconds": 651.1975598039999,
+      "available": false,
+      "error": "路径已结束或超过1.5秒没有更新",
+      "frame": "map",
+      "points": [],
+      "sequence": 804,
+      "source_age_seconds": 651.1981835365295,
+      "source_frame": "map"
+    },
+    "local_costmap": {
+      "age_seconds": 0.4616393119999884,
+      "available": true,
+      "error": "",
+      "frame": "map",
+      "height": 60,
+      "origin": {
+        "x": -4.892421251822606,
+        "y": 5.401374427671887,
+        "yaw": -2.9994604122990056
+      },
+      "resolution": 0.05000000074505806,
+      "sequence": 2789,
+      "source_age_seconds": 0.46225905418395996,
+      "source_frame": "odom",
+      "width": 60
+    },
+    "local_path": {
+      "age_seconds": 650.637768585,
+      "available": false,
+      "error": "路径已结束或超过1.5秒没有更新",
+      "frame": "map",
+      "points": [],
+      "sequence": 8033,
+      "source_age_seconds": 650.6669344902039,
+      "source_frame": "base_footprint"
+    },
+    "prediction": {
+      "age_seconds": 650.6373714429999,
+      "available": false,
+      "error": "路径已结束或超过1.5秒没有更新",
+      "frame": "map",
+      "points": [],
+      "sequence": 8033,
+      "source_age_seconds": 650.6669344902039,
+      "source_frame": "odom"
+    }
+  },
+  "odom_age": 319.54547638199983,
+  "operation": 3,
+  "phase": "FAILED",
+  "result": "地图与工程保存完整: 20261102_144741_31fc45e8",
+  "save_failed": false,
+  "save_reminder": true,
+  "scan_age": 321.571947763,
+  "scan_version": "4612c1d97d9c76325ddf2aface1966b7-4893",
+  "storage": {
+    "available_bytes": 62043795456,
+    "capacity_bytes": 249367060480,
+    "reason": "",
+    "save_allowed": true,
+    "start_allowed": true,
+    "valid": true,
+    "warning": false
+  },
+  "task_age": 1633.9363234480002,
+  "task_operations": {
+    "epoch": 3,
+    "protocol": 1,
+    "requests": [
+      {
+        "action": "resume",
+        "canonical_request_id": "mapping-1793601393253-b5d073c4ba6a68",
+        "epoch": 2,
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601393253-b5d073c4ba6a68",
+        "request_result": "accepted"
+      },
+      {
+        "action": "manual",
+        "canonical_request_id": "mapping-1793601642887-4488febe94e7f8",
+        "epoch": 2,
+        "reason": "请求手动接管，等待取消与停稳",
+        "request_id": "mapping-1793601642887-4488febe94e7f8",
+        "request_result": "accepted"
+      },
+      {
+        "action": "resume",
+        "canonical_request_id": "mapping-1793601678603-755b1d93ce18b8",
+        "epoch": 2,
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601678603-755b1d93ce18b8",
+        "request_result": "accepted"
+      },
+      {
+        "action": "set_speed",
+        "canonical_request_id": "speed-1793601695746-d035bb4bc14c08",
+        "epoch": 2,
+        "reason": "",
+        "request_id": "speed-1793601695746-d035bb4bc14c08",
+        "request_result": "accepted"
+      },
+      {
+        "action": "manual",
+        "canonical_request_id": "mapping-1793601855023-90e5915e0a3238",
+        "epoch": 2,
+        "reason": "请求手动接管，等待取消与停稳",
+        "request_id": "mapping-1793601855023-90e5915e0a3238",
+        "request_result": "accepted"
+      },
+      {
+        "action": "resume",
+        "canonical_request_id": "mapping-1793601884837-5b106d1a7765f8",
+        "epoch": 3,
+        "reason": "自动探索运行中",
+        "request_id": "mapping-1793601884837-5b106d1a7765f8",
+        "request_result": "accepted"
+      },
+      {
+        "action": "recheck",
+        "canonical_request_id": "mapping-1793602065854-d9260516874888",
+        "epoch": 3,
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602065854-d9260516874888",
+        "request_result": "accepted"
+      },
+      {
+        "action": "recheck",
+        "canonical_request_id": "mapping-1793602093549-e2c951b4c8d6e",
+        "epoch": 3,
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602093549-e2c951b4c8d6e",
+        "request_result": "accepted"
+      },
+      {
+        "action": "recheck",
+        "canonical_request_id": "mapping-1793602142113-94e779938723a8",
+        "epoch": 3,
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602142113-94e779938723a8",
+        "request_result": "accepted"
+      },
+      {
+        "action": "recheck",
+        "canonical_request_id": "mapping-1793602169922-87b88cd932ff2",
+        "epoch": 3,
+        "reason": "正在重新检查，车辆保持停车",
+        "request_id": "mapping-1793602169922-87b88cd932ff2",
+        "request_result": "accepted"
+      },
+      {
+        "action": "recheck",
+        "canonical_request_id": "mapping-1793602211920-f98c3e33252c2",
+        "epoch": 3,
+        "reason": "受扰恢复未通过：AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车；保持冻结，保存可信图和故障证据",
+        "request_id": "mapping-1793602211920-f98c3e33252c2",
+        "request_result": "accepted"
+      }
+    ],
+    "task_id": "f35630a46437f3ed410f8c8b7d585ad3"
+  },
+  "task_state": "RUNNING",
+  "video_age": 0.07781941500002176,
+  "video_requested": true,
+  "video_running": true
+}

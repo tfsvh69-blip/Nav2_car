@@ -1,0 +1,97 @@
+{
+  "test_id": "NAV-018-POINT-SMOOTH-003",
+  "date": "2026-11-02",
+  "requested_navigation_seconds": 60,
+  "observed_from_first_nonzero_until_pause_request_seconds": 60.284,
+  "final_stop_observation_wall_seconds": 2,
+  "elapsed_to_final_stop_verification_seconds": 63.377,
+  "software_sequence_success": true,
+  "task_id": "177f6f3eb2e6058b23ce33dcad88f859",
+  "controller_parameters": {
+    "FollowPath.rotate_to_heading_angular_vel": {
+      "expected": 0.22,
+      "value": 0.22,
+      "raw": "Double value is: 0.22"
+    },
+    "FollowPath.rotate_to_heading_min_angle": {
+      "expected": 0.1,
+      "value": 0.1,
+      "raw": "Double value is: 0.1"
+    },
+    "FollowPath.desired_linear_vel": {
+      "expected": 0.1,
+      "value": 0.1,
+      "raw": "Double value is: 0.1"
+    }
+  },
+  "wheel_estimated_net_displacement_m": 0.35736247929151993,
+  "status": "one_minute_trial_return_saved_and_closed",
+  "field_feedback": "整体平顺、已停稳，可以返程保存结束",
+  "evidence": "real-trial-2026-11-02T01-35-07-897Z-result.json",
+  "return_field_feedback": "返程正常，已完全停稳",
+  "wheel_sampled_exploring_path_length_m": 1.7392737811575647,
+  "observed_navigation_goal_ids": 4,
+  "residual_command_pattern": {
+    "goal_index": 1,
+    "mid_goal_low_translation_turn_episodes": 14,
+    "mid_goal_turn_direction_changes": 10,
+    "sampled_short_translation_episodes_below_8cm": 7,
+    "note": "约4Hz抽样命令统计，不能等同实体大角度摆动；残留小修正保留"
+  },
+  "return_result": "succeeded",
+  "return_destination": {
+    "arrival_tolerance_m": 0.15,
+    "attempts": 1,
+    "distance_to_origin_m": 0.1379124237877463,
+    "kind": "origin",
+    "max_candidates": 12,
+    "phase": "COMPLETED",
+    "reason": "已在原起点容差内停稳，位置为地图估计",
+    "search_radius_m": 0.8,
+    "target": [
+      0.009989038310552322,
+      -0.0010469234862894086,
+      -0.02093999999999996
+    ],
+    "target_offset_m": 0
+  },
+  "return_stop": {
+    "still": true,
+    "navigation_terminal": true,
+    "output": [
+      0,
+      0
+    ],
+    "dirty": false
+  },
+  "candidate": {
+    "id": "20261102_094010_5f33786f",
+    "valid": true,
+    "publication_status": "candidate"
+  },
+  "final_status": {
+    "task_state": "STANDBY",
+    "phase": "STANDBY",
+    "busy": false,
+    "dirty": false,
+    "error": "",
+    "control_mode": "automatic",
+    "autonomy": {},
+    "last_saved_bundle": "20261102_094010_5f33786f"
+  },
+  "service": {
+    "active": true,
+    "pid": 1557,
+    "restarts": 0
+  },
+  "serial_ports_released": true,
+  "raw_recording": {
+    "session": "log/nav_sessions/20261102_093513_8531",
+    "status": "ENDED",
+    "bag_path": "log/nav_sessions/20261102_093513_8531/bag/bag_0.db3",
+    "bytes": 149446656,
+    "sha256": "abac79e78716b3c5e2034f5fe20deec28f512c690c1ebad829daa52fa3168381"
+  },
+  "production_changed": false,
+  "return_evidence": "real-return-2026-11-02T01-39-50-800Z-result.json"
+}

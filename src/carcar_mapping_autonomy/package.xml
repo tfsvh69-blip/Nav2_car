@@ -31,9 +31,7 @@
   <depend>behaviortree_cpp_v3</depend>
   <test_depend>nav2_behavior_tree</test_depend>
   <test_depend>filters</test_depend>
-  <depend>nav2_smac_planner</depend>
-  <depend>nav2_core</depend>
-  <depend>pluginlib</depend>
+  <test_depend>nav2_smac_planner</test_depend>
   <test_depend>nav2_velocity_smoother</test_depend>
   <test_depend>nav2_controller</test_depend>
   <export><build_type>ament_cmake</build_type></export>

@@ -1,0 +1,116 @@
+[
+  {
+    "time": "2026-11-02T14:53:26.453762",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 32.96476284000005,
+    "odom_age": 30.938291842999888,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  },
+  {
+    "time": "2026-11-02T14:53:26.957417",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 33.46454387099993,
+    "odom_age": 31.438072521999857,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  },
+  {
+    "time": "2026-11-02T14:53:27.461695",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 33.9648120679999,
+    "odom_age": 31.938340399000026,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  },
+  {
+    "time": "2026-11-02T14:53:27.967431",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 34.46478688000002,
+    "odom_age": 32.438315530999944,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  },
+  {
+    "time": "2026-11-02T14:53:28.473053",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 34.964794412999936,
+    "odom_age": 32.93832303199997,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  },
+  {
+    "time": "2026-11-02T14:53:28.977430",
+    "phase": "FAULT",
+    "output": [
+      0.0,
+      0.0
+    ],
+    "still": true,
+    "scan_age": 35.464922204000004,
+    "odom_age": 33.438450759000034,
+    "recheck": {
+      "enabled": false,
+      "reason": "原始 /scan 超过0.5秒未更新"
+    },
+    "manual": {
+      "enabled": false,
+      "reason": "请先完成重新检查"
+    }
+  }
+]

@@ -99,6 +99,36 @@ std::string request(int port, const std::string& payload) {
   if (!read_headers(fd.n, result, 1500)) throw std::runtime_error("fixture response failed");
   return result;
 }
+void test_probe_damping() {
+  const Health verified{true, 401, 200, CURLE_OK};
+  const Health timeout{false, 0, 200, CURLE_OPERATION_TIMEDOUT};
+  State state;
+  record_probe(state, timeout, 3);
+  require(!state.health.ok, "unverified upstream is never promoted by transient tolerance");
+  record_probe(state, verified, 3);
+  record_probe(state, timeout, 3);
+  record_probe(state, timeout, 3);
+  require(state.health.ok && state.transient_failures == 2, "two transient probes retain previously verified upstream");
+  record_probe(state, timeout, 3);
+  require(!state.health.ok, "third consecutive transient probe makes upstream unavailable");
+  record_probe(state, timeout, 3);
+  require(!state.health.ok, "unavailable upstream needs successful HTTPS verification to recover");
+  record_probe(state, verified, 3);
+  require(state.health.ok && state.transient_failures == 0, "successful HTTPS probe resets transient failure count");
+  for (const auto& item : std::vector<std::pair<Health, const char*>>{
+      {{false, 0, 200, CURLE_PEER_FAILED_VERIFICATION}, "certificate verification failure is immediately unavailable"},
+      {{false, 0, 200, CURLE_SSL_CACERT_BADFILE}, "invalid CA file is immediately unavailable"},
+      {{false, 403, 200, CURLE_OK}, "unexpected HTTP status is immediately unavailable"},
+      {{false, 500, 200, CURLE_OK}, "HTTP server error is immediately unavailable"},
+      {{false, 0, 407, CURLE_RECV_ERROR}, "proxy authentication failure is not mistaken for transient receive error"}}) {
+    record_probe(state, verified, 3);
+    record_probe(state, item.first, 3);
+    require(!state.health.ok, item.second);
+  }
+  record_probe(state, verified, 1);
+  record_probe(state, timeout, 1);
+  require(!state.health.ok, "threshold one preserves immediate network failure behavior");
+}
 int main(int argc, char** argv) {
   signal(SIGPIPE, SIG_IGN);
   curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -119,9 +149,11 @@ int main(int argc, char** argv) {
     curl_global_cleanup(); return ok ? 0 : 1;
   }
   try {
+    test_probe_damping();
     TlsFixture tls;
     std::atomic<int> good_connects{0}, failed_connects{0};
     std::atomic<bool> reject_tunnel{false};
+    std::atomic<bool> drop_probe_tls{false};
     FixtureServer good([&](int fd) {
       nonblocking(fd); std::string header;
       if (!read_headers(fd, header, 1000)) return;
@@ -130,6 +162,7 @@ int main(int argc, char** argv) {
       Fd remote = connect_to("127.0.0.1", tls.port(), 500);
       if (!remote) return;
       send_all(fd, "HTTP/1.1 200 Connection established\r\n\r\n");
+      if (drop_probe_tls) return;
       relay(fd, remote.n);
     });
     FixtureServer fake([&](int fd) {
@@ -171,6 +204,18 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(Ms(550));
     pool.refresh();
     require(pool.ready().size() == 1, "automatic recovery after cooldown");
+    // 真实CONNECT/TLS握手中断只对已验证候选短暂容忍，第三次失败必须下线。
+    Config damped = config; damped.fixed = {healthy}; damped.probe_failure_threshold = 3;
+    Pool damped_pool(damped); damped_pool.refresh();
+    drop_probe_tls = true;
+    damped_pool.refresh(); damped_pool.refresh();
+    require(damped_pool.ready().size() == 1 && damped_pool.status().find("DEGRADED") != std::string::npos,
+      "pool retains verified candidate after two real TLS handshake EOF failures");
+    damped_pool.refresh();
+    require(damped_pool.ready().empty(), "pool rejects candidate after third real TLS handshake EOF failure");
+    drop_probe_tls = false; damped_pool.refresh();
+    require(damped_pool.ready().size() == 1 && damped_pool.status().find("DEGRADED") == std::string::npos,
+      "pool recovers and clears degraded status after verified HTTPS success");
     // 先将两个代理都验为健康，再让优先代理在真正CONNECT时返回502。
     std::atomic<int> backup_connects{0};
     FixtureServer backup([&](int fd) {
@@ -195,9 +240,15 @@ int main(int argc, char** argv) {
     // 并发探测的网络等待不得持有请求选择锁。
     std::atomic<bool> stall_entered{false};
     std::atomic<bool> stall{false};
+    std::atomic<bool> delayed_success{false}, delayed_entered{false}, reject_new_connects{false};
     FixtureServer slow([&](int fd) {
       nonblocking(fd); std::string header;
       if (!read_headers(fd, header, 1000)) return;
+      if (reject_new_connects) { reply(fd, 502, "Failed"); return; }
+      if (delayed_success) {
+        delayed_entered = true;
+        std::this_thread::sleep_for(Ms(300));
+      }
       if (stall) {
         stall_entered = true;
         std::this_thread::sleep_for(Ms(500)); return;
@@ -217,6 +268,21 @@ int main(int argc, char** argv) {
     bool quick = Clock::now() - before < Ms(100);
     refresh.get();
     require(stall_entered && quick && !snapshot.empty(), "slow health probe does not block request selection");
+    // 在途旧探测随后成功，也不能撤销真实业务CONNECT失败触发的冷却。
+    stall = false;
+    Config raced = config; raced.fixed = {{"raced", "127.0.0.1", slow.port}};
+    Pool raced_pool(raced); raced_pool.refresh();
+    delayed_success = true;
+    auto old_probe = std::async(std::launch::async, [&] { raced_pool.refresh(); });
+    wait_limit = Clock::now() + Ms(1000);
+    while (!delayed_entered && Clock::now() < wait_limit) std::this_thread::sleep_for(Ms(1));
+    reject_new_connects = true; delayed_success = false;
+    FixtureServer race_front([&](int fd) { nonblocking(fd); handle(fd, raced_pool, raced); });
+    const auto failed_request = request(race_front.port, "CONNECT target:443 HTTP/1.1\r\nHost: target:443\r\n\r\n");
+    old_probe.get();
+    require(delayed_entered && failed_request.find("502") != std::string::npos && raced_pool.ready().empty(),
+      "stale successful probe cannot revive upstream after actual CONNECT failure");
+    reject_new_connects = false;
     // 明文POST不允许因为上游断开而在下一候选重复提交。
     std::atomic<int> posts{0};
     FixtureServer post_sink([&](int fd) {
