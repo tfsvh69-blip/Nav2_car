@@ -18,7 +18,11 @@ public:
   std::string session, reason = "尚未使能", gear = "slow";
   bool armed = false, require_video = false;
   double gateway_at = -1e9, scan_at = -1e9, odom_at = -1e9, video_at = -1e9;
-  bool session_ready = false, topology_ok = true;
+  bool session_ready = false, topology_ok = true, restricted_mode = false;
+  void session_state(bool mapping_ready,bool restricted_active,bool restricted_ready){
+    if(restricted_mode!=restricted_active){restricted_mode=restricted_active;gear="slow";stop("控制资格已变更，请重新使能");}
+    session_ready=restricted_active?restricted_ready:mapping_ready;
+  }
   std::deque<std::pair<std::string, double>> frames;
   void stop(const std::string & why) {
     armed = false; pressed_ = false; challenges_.clear(); reason = why;
@@ -107,6 +111,7 @@ public:
     reason = "按住行驶"; return true;
   }
   void change_gear(const std::string & value) {
+    if(restricted_mode&&value!="slow"){gear="slow";stop("受限接管固定低速档，请重新使能");return;}
     if (value != "slow" && value != "normal" && value != "fast") return;
     gear = value; stop("已换档，请重新使能");
   }
@@ -121,8 +126,8 @@ public:
     }
     Velocity v;
     if (!armed || !pressed_) return v;
-    const double x = gear == "slow" ? 0.05 : gear == "normal" ? 0.10 : 0.18;
-    const double yaw = gear == "slow" ? 0.10 : gear == "normal" ? 0.20 : 0.36;
+    const double x = restricted_mode || gear == "slow" ? 0.05 : gear == "normal" ? 0.10 : 0.18;
+    const double yaw = restricted_mode || gear == "slow" ? 0.10 : gear == "normal" ? 0.20 : 0.36;
     v.x = input_x_ * x; v.yaw = input_yaw_ * yaw;
     return v;
   }

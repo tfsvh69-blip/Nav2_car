@@ -214,8 +214,9 @@ void Costmap2DClient::updatePartialMap(
   }
 }
 
-geometry_msgs::msg::Pose Costmap2DClient::getRobotPose() const
+geometry_msgs::msg::Pose Costmap2DClient::getRobotPose(bool* valid) const
 {
+  if(valid)*valid=false;
   geometry_msgs::msg::PoseStamped robot_pose;
   geometry_msgs::msg::Pose empty_pose;
   robot_pose.header.frame_id = robot_base_frame_;
@@ -249,6 +250,7 @@ geometry_msgs::msg::Pose Costmap2DClient::getRobotPose() const
     return empty_pose;
   }
 
+  if(valid)*valid=true;
   return robot_pose.pose;
 }
 

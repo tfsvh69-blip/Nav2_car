@@ -1,0 +1,52 @@
+{
+  "started": "2026-11-03T01:57:14.512324",
+  "boot_id": "53be04a4-b0b8-4f08-92e1-9bf68a7db934",
+  "passed": true,
+  "hardware_started": false,
+  "production_logic_changed": false,
+  "build_exit": 0,
+  "test_exit": 0,
+  "production_after": {
+    "/home/jetson/luhao/my_nav_carcar_stability_20261102/src/carcar_mapping_autonomy/src/supervisor.cpp": "dc8e33c525a47f263b26d2c29e96c7cda555e06c607d1feba1f0557317dca8fe",
+    "/home/jetson/luhao/my_nav_carcar_stability_20261102/src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/mapping_rotation_shim.hpp": "b10538fbb4787227a3f601661dad30fa7732682f57f968ba7224669bb63334ba",
+    "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/mapping_autonomy": "78903aa498a2c9bf4017ae490ea0c9c82bdcf5de2f1dcad4db20ab6f4a241b14",
+    "/home/jetson/luhao/my_nav_carcar_stability_20261102/install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy": "134bd636f1f34edb8be5682b76030ebd11d0675074f8615b346b8b47110f58bc",
+    "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy": "134bd636f1f34edb8be5682b76030ebd11d0675074f8615b346b8b47110f58bc",
+    "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_autonomy/lib/libcarcar_mapping_rotation_shim.so": "2847c6915df82dcd182f317b33734357d031768ab37b3f39f7363926f2683050"
+  },
+  "runtime_unchanged": true,
+  "test_fixture_sha256": "abe5fa624e50c3aa113be797a05e2792ef7bda77fecb7a85711ec37b104e7538",
+  "formal_executable": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy",
+  "cases": [
+    {
+      "name": "InactiveNav2CannotKeepDriving",
+      "status": "run",
+      "result": "completed",
+      "time": "1.648",
+      "timestamp": "2026-11-03T01:58:36",
+      "classname": "SupervisorIntegration",
+      "failures": []
+    },
+    {
+      "name": "OneExpiredProbeKeepsFreshActiveResponseWithoutLatchingStop",
+      "status": "run",
+      "result": "completed",
+      "time": "3.53",
+      "timestamp": "2026-11-03T01:58:37",
+      "classname": "Nav2HealthProbeIntegration",
+      "failures": []
+    },
+    {
+      "name": "MissingResponsesPastTwoSecondsLatchFaultAndRejectVelocity",
+      "status": "run",
+      "result": "completed",
+      "time": "3.981",
+      "timestamp": "2026-11-03T01:58:41",
+      "classname": "Nav2HealthProbeIntegration",
+      "failures": []
+    }
+  ],
+  "test_count": 3,
+  "failure_count": 0,
+  "finished": "2026-11-03T01:58:45.467897"
+}

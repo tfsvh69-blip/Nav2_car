@@ -66,9 +66,11 @@ private:
   size_t count_=0;double baseline_at_=0,lean_since_=0,shock_since_=0;std::array<double,3>baseline_{},sum_{};
 };
 struct ReferenceScore {
+  static constexpr size_t minimum_points=50;
+  static constexpr double minimum_coverage=.80,minimum_hit_ratio=.70,maximum_mean=.10,maximum_free_conflict=.08;
   double mean=.4,coverage=0,hit_ratio=0,free_conflict=1,cost=1;
   size_t points=0;
-  bool acceptable()const{return points>=50&&coverage>=.80&&hit_ratio>=.70&&mean<=.10&&free_conflict<=.08;}
+  bool acceptable()const{return points>=minimum_points&&coverage>=minimum_coverage&&hit_ratio>=minimum_hit_ratio&&mean<=maximum_mean&&free_conflict<=maximum_free_conflict;}
 };
 // AMCL候选的独立几何检查：只读检查点，未知区不提供匹配支持。
 // 距离场为8邻域度量，误差上界由栅格分辨率限制；绝不向生产图试错。

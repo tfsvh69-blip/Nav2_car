@@ -38,6 +38,7 @@
 #ifndef NAV_EXPLORE_H_
 #define NAV_EXPLORE_H_
 
+#include <nlohmann/json.hpp>
 #include <explore/costmap_client.h>
 #include <explore/frontier_search.h>
 #include <explore/goal_memory.h>
@@ -94,6 +95,25 @@ private:
    * @brief  Make a global plan
    */
   void makePlan();
+  void dispatchGoal(const geometry_msgs::msg::Pose&pose,const geometry_msgs::msg::Point&target_position);
+  bool rankPending();
+  void requestRanking(const std::vector<geometry_msgs::msg::Point>&candidates);
+  // 只跟踪本次排序的原始前沿，不能把安全观测点当作待观测未知边界。
+  bool searchValidFrontiers(geometry_msgs::msg::Pose&pose,std::vector<frontier_exploration::Frontier>&frontiers);
+  bool activeFrontierObserved();
+  bool ranked_frontier_valid_=false,frontier_observed_cancel_=false;
+  bool frontier_observation_disabled_=false,global_frontiers_observed_=false;
+  geometry_msgs::msg::Point ranked_frontier_;
+  uint64_t frontier_map_sequence_=0;
+  unsigned frontier_absent_updates_=0;
+  double frontier_absent_since_=0;
+
+  bool path_aware_ranking_=false,rank_pending_=false;
+  std::string rank_request_id_;uint64_t rank_sequence_=0;
+  double rank_started_=0;
+  nlohmann::json autonomy_=nlohmann::json::object(),rank_reply_=nlohmann::json::object(),rank_visits_=nlohmann::json::array();
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr rank_requests_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr rank_results_,autonomy_state_;
 
   // /**
   //  * @brief  Publish a frontiers as markers
@@ -102,6 +122,7 @@ private:
       const std::vector<frontier_exploration::Frontier>& frontiers);
 
   bool goalOnBlacklist(const geometry_msgs::msg::Point& goal);
+  bool frontierOnBlacklist(const geometry_msgs::msg::Point& frontier);
 
   NavigationGoalHandle::SharedPtr navigation_goal_handle_;
   // void
@@ -137,7 +158,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr resume_subscription_;
   void resumeCallback(const std_msgs::msg::Bool::SharedPtr msg);
 
-  GoalMemory goal_memory_;
+  GoalMemory goal_memory_,rank_frontier_memory_;
   DirectionPreference direction_;
   geometry_msgs::msg::Point dispatch_start_;
   rclcpp::Subscription<std_msgs::msg::UInt64>::SharedPtr navigation_generation_sub_;

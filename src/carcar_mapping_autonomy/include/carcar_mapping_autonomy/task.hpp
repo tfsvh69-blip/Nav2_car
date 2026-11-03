@@ -71,19 +71,19 @@ public:
     else if(stop_target=="MANUAL") {phase="MANUAL";mode="manual";}
     else {phase="PAUSED";}
   }
-  void returned(bool success,const std::string & why) {
-    phase="SAVE_PENDING";return_result=success?"succeeded":"failed";
-    reason=(end_reason.empty()?"":end_reason+"；")+(success?"已返回起点，等待停稳保存候选":why);save_required=true;++generation;
+  void returned(bool success,const std::string & why,bool nearby=false) {
+    phase="SAVE_PENDING";return_result=success?(nearby?"nearby":"succeeded"):"failed";
+    reason=(end_reason.empty()?"":end_reason+"；")+(success?(nearby?"已在起点附近停稳，等待保存候选":"已返回起点并停稳，等待保存候选"):why);save_required=true;++generation;
   }
-  void tick(double now,const Pose & pose,bool healthy) {
+  void tick(double now,const Pose & pose,bool healthy,const std::string & health_reason="") {
     const double dt=std::max(0.0,now-last_tick_);last_tick_=now;
     if(phase=="EXPLORING") {
       elapsed+=dt;
-      if(!healthy) stop("FAULT","感知／SLAM／TF失效，取消目标并冻结后续写图",now);
+      if(!healthy) stop("FAULT",health_reason.empty()?"感知／SLAM／TF失效，取消目标并冻结后续写图":health_reason,now);
       else if(!inside(pose)) stop("FINISH","达到探索半径边界",now,"radius_budget");
       else if(elapsed>=limits.explore_seconds)stop("FINISH","探索时间预算耗尽",now,"time_budget");
     } else if(phase=="RETURNING") {
-      if(!healthy) stop("FAULT","返程期间质量失效，停车并保留候选",now);
+      if(!healthy) stop("FAULT",health_reason.empty()?"返程期间质量失效，停车并保留候选":health_reason,now);
       else if(now-return_started>=limits.return_seconds){return_result="timeout";stop("SAVE","返程超时，原地停稳保存",now);}
     }
   }

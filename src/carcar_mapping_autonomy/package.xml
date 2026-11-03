@@ -16,6 +16,7 @@
   <depend>boost</depend>
   <depend>libssl-dev</depend>
   <exec_depend>nav2_amcl</exec_depend>
+  <depend>nav2_behaviors</depend>
   <exec_depend>carcar_navigation</exec_depend>
   <exec_depend>carcar_tf2_compat</exec_depend>
   <exec_depend>explore_lite</exec_depend><exec_depend>laser_filters</exec_depend>
@@ -31,8 +32,12 @@
   <depend>behaviortree_cpp_v3</depend>
   <test_depend>nav2_behavior_tree</test_depend>
   <test_depend>filters</test_depend>
-  <test_depend>nav2_smac_planner</test_depend>
+  <depend>nav2_smac_planner</depend>
+  <depend>nav2_core</depend>
+  <depend>pluginlib</depend>
   <test_depend>nav2_velocity_smoother</test_depend>
   <test_depend>nav2_controller</test_depend>
+  <depend>nav2_rotation_shim_controller</depend>
+  <test_depend>nav2_mppi_controller</test_depend>
   <export><build_type>ament_cmake</build_type></export>
 </package>

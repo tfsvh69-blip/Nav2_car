@@ -88,6 +88,23 @@ EXPECT_EQ(t.phase,"RETURNING");EXPECT_EQ(t.return_started,deadline);EXPECT_EQ(t.
 TEST(Task, ExpiredPausedReturnSavesWithoutRestartingExploration){Task t;t.start(1,{},true,true);t.stop("FINISH","结束",2);t.stopped(2.4,true,true,true);t.stop("PAUSED","暂停",3);t.stopped(3.4,true,true,true);t.start(604,{},true,true);
 EXPECT_EQ(t.phase,"SAVE_PENDING");EXPECT_EQ(t.return_result,"timeout");EXPECT_TRUE(t.save_required);}
 static nav_msgs::msg::OccupancyGrid room(){nav_msgs::msg::OccupancyGrid m;m.header.frame_id="map";m.info.resolution=.05;m.info.width=m.info.height=100;m.info.origin.position.x=m.info.origin.position.y=-2.5;m.info.origin.orientation.w=1;m.data.assign(10000,0);return m;}
+TEST(MapGeometry, ReportsUnknownAndOccupiedWithoutChangingCollisionVerdict){
+  auto m=room();FootprintEvidence e;
+  EXPECT_TRUE(free_footprint(m,{},.22,&e));EXPECT_EQ(e.unknown,0u);EXPECT_EQ(e.occupied,0u);
+  m.data[50*100+50]=-1;EXPECT_FALSE(free_footprint(m,{},.22,&e));EXPECT_EQ(e.unknown,1u);EXPECT_EQ(e.occupied,0u);
+  m.data[50*100+51]=50;EXPECT_FALSE(free_footprint(m,{},.22,&e));EXPECT_EQ(e.unknown,1u);EXPECT_EQ(e.occupied,1u);
+  EXPECT_EQ(free_footprint(m,{}),free_footprint(m,{},.22,&e));
+  EXPECT_FALSE(free_footprint(m,{2.49,0,0},.22,&e));EXPECT_TRUE(e.outside);
+  m.data.clear();EXPECT_FALSE(free_footprint(m,{},.22,&e));EXPECT_TRUE(e.invalid);EXPECT_FALSE(e.outside);
+}
+TEST(StartupAccumulation, ExtendedObservationRemainsBoundedAndFrozenScansDoNotCount){
+  StartupAccumulation s;consider_stationary_startup(s,true,false,0,0,10,.10,.30,12,5);
+  for(int i=1;i<=12;++i)EXPECT_EQ(consider_stationary_startup(s,false,false,0,0,10+i*.31,.10,.30,12,5),StartupDecision::accept_extra);
+  EXPECT_EQ(consider_stationary_startup(s,false,false,0,0,14,.10,.30,12,5),StartupDecision::ignore);EXPECT_TRUE(s.closed);EXPECT_EQ(s.extras,12);
+  StartupAccumulation held;consider_stationary_startup(held,true,false,0,0,10,.10,.30,12,5);
+  EXPECT_EQ(consider_stationary_startup(held,false,true,0,0,11,.10,.30,12,5),StartupDecision::ignore);EXPECT_EQ(held.extras,0);
+  EXPECT_EQ(consider_stationary_startup(held,false,false,0,0,15,.10,.30,12,5),StartupDecision::ignore);EXPECT_TRUE(held.closed);
+}
 TEST(MapGeometry, UnknownIsNotFreeAndFootprintMustFit){auto m=room();
 EXPECT_TRUE(free_footprint(m,{}));m.data[50*100+50]=-1;
 EXPECT_FALSE(free_footprint(m,{}));

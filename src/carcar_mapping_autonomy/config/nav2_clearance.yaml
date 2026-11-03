@@ -1,0 +1,19 @@
+# 离线候选：保留0.22米硬检查和既有规划掩膜，只改变软代价偏好。
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      inflation_layer:
+        inflation_radius: 0.30
+        cost_scaling_factor: 5.0
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      inflation_layer:
+        inflation_radius: 0.50
+        cost_scaling_factor: 3.0
+planner_server:
+  ros__parameters:
+    GridBased:
+      cost_travel_multiplier: 2.0
+    ExplorationGrid:
+      cost_travel_multiplier: 2.0

@@ -51,5 +51,31 @@ async function render(snapshot, {selection='manual'}={}) {
       resume:{enabled:true,reason:''},return:{enabled:true,reason:''},manual:{enabled:true,reason:''}}}});
   assert.equal(saved.elements['auto-start'].disabled,false);assert.equal(saved.elements['auto-return'].disabled,false);
   await saved.elements['auto-return'].onclick();assert(saved.requests.some(x=>x.options.body&&JSON.parse(x.options.body).action==='return'));
+  const restricted=await render({...snapshot,autonomy:{...snapshot.autonomy,actions:{...snapshot.autonomy.actions,
+    manual_restricted:{enabled:true,reason:''}}}});
+  assert.equal(restricted.elements['auto-manual'].disabled,false,'冻结地图且原始观测健康时应有明确的受限接管入口');
+  assert.equal(restricted.elements['auto-manual'].textContent,'受限手动接管');
+  await restricted.elements['auto-manual'].onclick();
+  const takeover=restricted.requests.find(x=>x.options.method==='POST');
+  assert.equal(JSON.parse(takeover.options.body).restricted,true,'受限接管必须是显式请求');
+  const recovering=await render({...snapshot,autonomy:{...snapshot.autonomy,phase:'RECOVERING',recovery_pending:true,
+    operator_check:{phase:'CHECKING'},actions:{...snapshot.autonomy.actions,halt:{enabled:true,reason:''}}}});
+  assert.equal(recovering.elements['auto-pause'].hidden,false);assert.equal(recovering.elements['auto-pause'].disabled,false);
+  assert.equal(recovering.elements['auto-pause'].textContent,'中止恢复');
+  await recovering.elements['auto-pause'].onclick();
+  assert(recovering.requests.some(x=>x.options.body&&JSON.parse(x.options.body).action==='halt'));
+  const ambiguous=await render({...snapshot,autonomy:{...snapshot.autonomy,phase:'RECOVERING',recovery_pending:true,
+    recovery:{phase:'LOCALIZING',verified_frames:0,checkpoint_id:'known',imu_ready:true,imu_stable:true,
+      progress:{verified_frames:0,required_frames:6,remaining_seconds:12},
+      verification:{unique:false,ambiguity_margin:.01,global_sample_margin:-.0195,
+        failed_checks:['多解竞争：参考图仍存在同样合理的位置']}}}});
+  assert.match(ambiguous.elements['recovery-status'].textContent,/已验证 0\/6 帧/);
+  assert.match(ambiguous.elements['recovery-status'].textContent,/多解竞争/);
+  const activeManual=await render({...snapshot,autonomy:{...snapshot.autonomy,phase:'MANUAL',control_mode:'manual',
+    restricted_manual:{active:true,ready:true,map_frozen:true,reason:''}}});
+  assert.match(activeManual.elements['workflow-title'].textContent,/受限手动/);
+  assert.match(activeManual.elements['status-caption'].textContent,/地图冻结/);
+  assert.equal(activeManual.elements.enable.disabled,false,'定位未恢复不能封死已确认的受限摇杆资格');
+  assert.equal(activeManual.elements.gear.disabled,true);
   console.log('R27故障重新检查、操作可用性、状态过期及独立返程协议通过');
 })().catch(e=>{console.error(e);process.exitCode=1;});

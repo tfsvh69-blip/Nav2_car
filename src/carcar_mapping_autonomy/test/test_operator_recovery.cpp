@@ -59,6 +59,61 @@ TEST_F(OperatorRecovery, FrozenObservationDoesNotBecomeMotionHealthyFromFreshTf)
   EXPECT_TRUE(state["actions"]["recheck"].value("enabled",false));
   EXPECT_EQ(state.value("phase",""),"PAUSED");EXPECT_EQ(last_velocity,0);
 }
+class RestrictedManualRecovery:public OperatorRecovery {
+protected:
+  void SetUp()override{restricted_manual_enabled=true;OperatorRecovery::SetUp();}
+};
+TEST_F(RestrictedManualRecovery, ExplicitTakeoverKeepsFrozenMapAndClampsMotionWithoutNavigationHealth){
+  start_goal();request("pause","hold-before-restricted");
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},2));
+  freeze_nav_pose=true;session_ready=false;
+  recovery_state.update({{"phase","FAILED"},{"gate_write",true},{"requires_stop",true}});
+  ASSERT_TRUE(until([this]{return !state.value("healthy",true)&&state.value("actions",Json::object()).value("manual_restricted",Json::object()).value("enabled",false);},3))<<state;
+  EXPECT_FALSE(state.value("healthy",true));EXPECT_EQ(last_velocity,0);
+  request("manual","explicit-restricted",{{"restricted",true}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="MANUAL"&&
+    state.value("restricted_manual",Json::object()).value("active",false);},3))<<state;
+  auto manual=n->create_publisher<geometry_msgs::msg::Twist>("/mapping/manual_cmd_vel",1);
+  auto drive=n->create_wall_timer(std::chrono::milliseconds(50),[manual]{geometry_msgs::msg::Twist v;v.linear.x=.18;v.angular.z=.36;manual->publish(v);});
+  ASSERT_TRUE(until([this]{return last_velocity>.001;},3))<<state;
+  EXPECT_LE(last_velocity,.05);EXPECT_FALSE(state.value("healthy",true));
+  EXPECT_FALSE(state["actions"]["resume"].value("enabled",true));EXPECT_TRUE(recovery_state.value("gate_write",false));
+  feed_scan=false;
+  ASSERT_TRUE(until([this]{return std::abs(last_velocity)<1e-9;},1));
+  ASSERT_TRUE(until([this]{return !state.value("restricted_manual",Json::object()).value("ready",true);},1));
+  drive.reset();request("halt","stop-restricted");
+  ASSERT_TRUE(until([this]{return state.value("phase","")!="MANUAL";},2));
+  feed_scan=true;until([]{return false;},.7);EXPECT_EQ(last_velocity,0);EXPECT_EQ(nav_requests,1U);
+}
+TEST_F(RestrictedManualRecovery, TakeoverWaitsForRecoveryTerminalAndActualMapFreeze){
+  start_goal();++loop_rejections;
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="RECOVERING";},3));
+  ack_recovery_cancel=false;force_slam_admission_open=true;
+  request("manual","takeover-during-recovery",{{"restricted",true}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="STOPPING";},2));
+  until([]{return false;},.6);EXPECT_EQ(last_velocity,0);EXPECT_EQ(state["phase"],"STOPPING");
+  ack_recovery_cancel=true;until([]{return false;},1.2);EXPECT_EQ(state["phase"],"STOPPING");
+  force_slam_admission_open=false;
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="MANUAL";},2));
+  recovery_state.update({{"phase","SUCCEEDED"},{"gate_write",false},{"requires_stop",false}});
+  until([]{return false;},.4);EXPECT_EQ(last_velocity,0);EXPECT_FALSE(state.value("healthy",true));
+  request("resume","late-resume-after-takeover");
+  ASSERT_TRUE(until([this]{return state.value("request_id","")=="late-resume-after-takeover";},1));
+  EXPECT_EQ(state["request_result"],"rejected");EXPECT_EQ(state["phase"],"MANUAL");EXPECT_EQ(nav_requests,1U);
+}
+TEST_F(RestrictedManualRecovery, RecheckAfterTakeoverKeepsTaskAndHumanHold){
+  start_goal();const auto origin=state["origin"];request("pause","pause-to-takeover");
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},2));
+  recovery_state.update({{"phase","FAILED"},{"gate_write",true},{"requires_stop",true}});session_ready=false;
+  request("manual","takeover-to-check",{{"restricted",true}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="MANUAL";},3));
+  request("recheck","check-after-takeover");
+  ASSERT_TRUE(until([this]{return recovery_state.value("phase","")=="WAITING_STABLE";},3));
+  recovery_state["phase"]="VERIFY_READY";recovery_state["commit_ready"]=true;
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},5))<<state;
+  EXPECT_EQ(state["origin"],origin);EXPECT_EQ(state["control_mode"],"manual");
+  EXPECT_TRUE(state["automatic_recovery"].value("operator_hold",false));EXPECT_EQ(last_velocity,0);EXPECT_EQ(nav_requests,1U);
+}
 TEST_F(OperatorRecovery, PausedCheckpointFailureKeepsOperatorHoldAndRecoveryEntry){
   start_goal();request("pause","pause-before-checkpoint");
   ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},2));

@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <ament_index_cpp/get_package_prefix.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <rclcpp/parameter_client.hpp>
 #include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -26,7 +27,9 @@ struct NavigationProcess {
     kill(-pid,SIGKILL);waitpid(pid,nullptr,0);
   }
   bool start(const std::string&log){
-    std::vector<std::string>args={"/opt/ros/humble/bin/ros2","launch",NAVIGATION_LAUNCH};
+    // 明确加载本轮候选参数，避免包索引落到保留版本后产生错误的集成通过结论。
+    std::vector<std::string>args={"/opt/ros/humble/bin/ros2","launch",NAVIGATION_LAUNCH,
+      std::string("controller_params:=")+RPP_CONFIG};
     std::vector<char*>argv;for(auto&s:args)argv.push_back(s.data());argv.push_back(nullptr);
     posix_spawnattr_t attr;posix_spawnattr_init(&attr);posix_spawnattr_setflags(&attr,POSIX_SPAWN_SETPGROUP);posix_spawnattr_setpgroup(&attr,0);
     posix_spawn_file_actions_t actions;posix_spawn_file_actions_init(&actions);
@@ -86,6 +89,13 @@ TEST(SubcellNavigation, RecordedStopReplansAndReachesObservationWithRealNav2) {
   };
   using Nav=nav2_msgs::action::NavigateToPose;auto nav=rclcpp_action::create_client<Nav>(node,"/navigate_to_pose");
   ASSERT_TRUE(until([&]{return nav->action_server_is_ready();},25));until([]{return false;},2);
+  // 核对实际控制进程的生效值，不能只凭Launch参数或源码文件认定候选已经加载。
+  auto parameters=std::make_shared<rclcpp::AsyncParametersClient>(node,"/controller_server");
+  ASSERT_TRUE(until([&]{return parameters->service_is_ready();},5));
+  auto queried=parameters->get_parameters({"FollowPath.rotate_to_heading_angular_vel","FollowPath.rotate_to_heading_min_angle"});
+  ASSERT_TRUE(until([&]{return queried.wait_for(std::chrono::seconds(0))==std::future_status::ready;},5));
+  const auto effective=queried.get();ASSERT_EQ(effective.size(),2U);
+  EXPECT_DOUBLE_EQ(effective[0].as_double(),.22);EXPECT_DOUBLE_EQ(effective[1].as_double(),.10);
   Nav::Goal goal;goal.pose.header.frame_id="map";goal.pose.pose.position.x=.47661976260876737;goal.pose.pose.position.y=.0038987502426766074;goal.pose.pose.orientation.w=1;
   goal.behavior_tree=EXPLORATION_TREE;rclcpp_action::ResultCode result=rclcpp_action::ResultCode::UNKNOWN;
   rclcpp_action::Client<Nav>::SendGoalOptions options;options.result_callback=[&](const auto&r){finished=true;result=r.code;};
@@ -95,6 +105,8 @@ TEST(SubcellNavigation, RecordedStopReplansAndReachesObservationWithRealNav2) {
   EXPECT_FALSE(unsafe);EXPECT_EQ(result,rclcpp_action::ResultCode::SUCCEEDED);EXPECT_GT(moving,20U);
   EXPECT_LE(std::hypot(current.x-goal.pose.pose.position.x,current.y-goal.pose.pose.position.y),.16);
   std::ofstream(directory/"result.json")<<ca::Json{{"hardware",false},{"real_nav2",true},{"safe",!unsafe},{"result",int(result)},
-    {"moving_samples",moving},{"last_pose",{current.x,current.y,current.yaw}}}.dump(2);
+    {"moving_samples",moving},{"last_pose",{current.x,current.y,current.yaw}},
+    {"rotate_to_heading_angular_vel_readback",effective[0].as_double()},
+    {"rotate_to_heading_min_angle_readback",effective[1].as_double()}}.dump(2);
 }
 }  // namespace

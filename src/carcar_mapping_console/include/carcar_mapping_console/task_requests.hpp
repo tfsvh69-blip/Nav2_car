@@ -43,6 +43,8 @@ public:
       }
       if(!ongoing.empty())return {false,false,{},"重新检查尚未结束，本次未重复下发；等待当前检查完成"};
     }
+    // 明确受限接管沿用manual接口；先作废尚未下发的继续，不能被迟到请求抢回自动控制。
+    if(action=="manual"&&extra.is_object()&&extra.value("restricted",false))cancel_continuations("受限接管已撤销旧继续请求，地图保持冻结");
     const bool queued=action=="start"||action=="resume";
     add({id,id,action,queued?"queued":"submitted",queued?"等待跨端停车优先窗口，尚未下发":"已提交车端，等待确认",extra,epoch_,now+.15,now});
     return {!queued,queued,id,{}};

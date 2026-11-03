@@ -45,12 +45,25 @@ TEST(RecordedStartBlock, ReturnFromStoppedPoseWithObservedScan) {
   node->declare_parameter("GridBased.allow_unknown",false);node->declare_parameter("GridBased.max_planning_time",1.);
   ca::SubcellSmacPlanner planner;planner.configure(node,"GridBased",map->getTfBuffer(),map);
   auto io=std::make_shared<rclcpp::Node>("recorded_start_input");
+  ca::Json diagnostic;
+  auto observed=io->create_subscription<std_msgs::msg::String>("/mapping/planner_diagnostic",10,
+    [&](const std_msgs::msg::String&m){diagnostic=ca::Json::parse(m.data);});
   auto pub=io->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local());
   rclcpp::executors::SingleThreadedExecutor executor;executor.add_node(node->get_node_base_interface());executor.add_node(io);
   pub->publish(raw);
   for(int i=0;i<30;++i){executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(5));}
   try {const auto path=planner.createPlan(start,goal);EXPECT_FALSE(path.poses.empty());}
   catch(const std::exception&e){ADD_FAILURE()<<e.what();}
+  // 静态物体被实时障碍层观测到，不意味着物体在移动；要求回传确切触发格与圆包络。
+  unsigned bx=0,by=0;ASSERT_TRUE(obstacle->worldToMap(current.x,current.y-.205,bx,by));
+  obstacle->setCost(bx,by,254);
+  EXPECT_THROW(planner.createPlan(start,goal),std::exception);
+  for(int i=0;i<30&&diagnostic.empty();++i){executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(5));}
+  ASSERT_FALSE(diagnostic.empty());EXPECT_EQ(diagnostic.value("code",""),"START_BLOCKED");
+  ASSERT_TRUE(diagnostic.contains("blocking"));
+  EXPECT_EQ(diagnostic["blocking"].value("source",""),"live_obstacle_layer");
+  EXPECT_EQ(diagnostic["blocking"].value("frame_id",""),"map");
+  EXPECT_FALSE(diagnostic["blocking"].value("cells",ca::Json::array()).empty());
   planner.cleanup();map->getLayeredCostmap()->getPlugins()->clear();map->cleanup();rclcpp::shutdown();
 }
 }

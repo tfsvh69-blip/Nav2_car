@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "carcar_mapping_console/common.hpp"
+#include "carcar_mapping_console/safety.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -125,6 +126,138 @@ protected:
 };
 class BrowserIntegration:public Integration {bool strict_video()const override{return false;}};
 class AutonomyGateway:public BrowserIntegration {bool autonomy_profile()const override{return true;}};
+TEST_F(AutonomyGateway, RestrictedTakeoverUsesExistingProtocolAndGuardWhileMapStaysFrozen){
+  std::mutex mutex;json forwarded=json::object();
+  json value={{"task_id","offline-autonomy"},{"phase","FAULT"},{"control_mode","automatic"},
+    {"healthy",false},{"still",true},{"navigation_terminal",true},{"output",{0,0}},
+    {"reason","定位失败，地图冻结"},{"request_id",""},{"request_result",""}};
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;
+    {std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}publisher->publish(m);});
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);if(j.value("action","")!="manual")return;
+    std::lock_guard<std::mutex>lock(mutex);forwarded=j;
+    if(!j.value("restricted",false))return;
+    value.update({{"phase","MANUAL"},{"control_mode","manual"},{"request_id",j.at("request_id")},{"request_result","accepted"},
+      {"restricted_manual",{{"active",true},{"ready",true},{"map_frozen",true}}}});
+  });
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="FAILED";}));
+  const auto accepted=request("/api/autonomy",{{"action","manual"},{"request_id","restricted-operator"},{"restricted",true}});
+  ASSERT_EQ(accepted["http_status"],202);
+  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return forwarded.value("restricted",false);},2));
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("health","not ready").empty();},3));
+  send({{"action","gear"},{"gear","fast"}});usleep(100000);
+  send({{"action","enable"}});ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("armed",false);}));
+  send({{"action","drive"},{"sequence",1u},{"x",1.0},{"yaw",0.0},{"challenge",""}});
+  ASSERT_TRUE(wait([&]{return output.load()>.001;}));EXPECT_LE(output.load(),.05);
+  const auto status=request("/api/status");EXPECT_EQ(status["phase"],"FAILED");EXPECT_EQ(status["control"]["gear"],"slow");
+  const auto relayed=relay_count.load();usleep(200000);EXPECT_EQ(relay_count.load(),relayed);
+  send({{"action","release"},{"sequence",2u}});ASSERT_TRUE(wait([&]{return output.load()==0;},.5));
+}
+TEST_F(AutonomyGateway, RealBrowserRecoveryCancelRestrictedTakeoverAndFrozenObservation){
+  std::mutex mutex;std::atomic<int> cancelled{0},manuals{0};
+  json value={{"task_id","offline-autonomy"},{"phase","RECOVERING"},{"control_mode","automatic"},
+    {"healthy",false},{"still",true},{"navigation_terminal",true},{"output",{0,0}},
+    {"request_id",""},{"request_result",""},{"generation",1},{"recovery_pending",true},
+    {"reason","冻结图定位验证中"},{"radius_m",5},{"remaining_seconds",600},{"anchored",true},
+    {"recovery",{{"phase","LOCALIZING"},{"checkpoint_id","trusted"},{"gate_write",true},{"imu_ready",true},{"imu_stable",true},
+      {"progress",{{"verified_frames",0},{"required_frames",6},{"remaining_seconds",12}}},
+      {"verification",{{"failed_checks",{"多解竞争：参考图仍存在同样合理的位置"}}}}}},
+    {"actions",{{"halt",{{"enabled",true},{"reason",""}}},{"resume",{{"enabled",false},{"reason","定位尚未通过"}}},
+      {"manual",{{"enabled",false},{"reason","定位尚未通过"}}},{"manual_restricted",{{"enabled",false},{"reason","先取消恢复"}}},
+      {"recheck",{{"enabled",false},{"reason","恢复检查中"}}},{"return",{{"enabled",false},{"reason","定位尚未通过"}}}}}};
+  value["phase"]="PAUSED";value["healthy"]=true;value["recovery_pending"]=false;value["recovery"]["gate_write"]=false;
+  auto recovery_publisher=node->create_publisher<std_msgs::msg::String>("/mapping/recovery/state",rclcpp::QoS(1).reliable().transient_local());
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String message;
+    {std::lock_guard<std::mutex>lock(mutex);message.data=value.dump();
+      std_msgs::msg::String recovery;auto r=value["recovery"];r["task_id"]="offline-autonomy";recovery.data=r.dump();recovery_publisher->publish(recovery);
+    }publisher->publish(message);});
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);std::lock_guard<std::mutex>lock(mutex);
+    value["request_id"]=j.at("request_id");value["request_result"]="accepted";
+    if(j.value("action","")=="halt"){
+      ++cancelled;value["phase"]="FAULT";value["recovery_pending"]=false;value["recovery"]["phase"]="FAILED";
+      value["actions"]["manual_restricted"]["enabled"]=true;value["actions"]["recheck"]["enabled"]=true;
+      value["reason"]="操作者中止恢复，地图保持冻结";
+    }else if(j.value("action","")=="manual"&&j.value("restricted",false)){
+      ++manuals;value["phase"]="MANUAL";value["control_mode"]="manual";
+      value["restricted_manual"]={{"active",true},{"ready",true},{"map_frozen",true},{"reason",""}};
+    }
+  });
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  {std::lock_guard<std::mutex>lock(mutex);value["phase"]="RECOVERING";value["healthy"]=false;value["recovery_pending"]=true;value["recovery"]["gate_write"]=true;}
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).value("phase","")=="RECOVERING";}));
+  usleep(150000);
+  const auto frozen_relay_count=relay_count.load();
+  auto browser=spawn({NODE_EXE,BROWSER_RECOVERY,std::to_string(port),BROWSER_CHROME,(root/"recovery-browser").string()});
+  int status=0;const bool done=wait([&]{return waitpid(browser,&status,WNOHANG)==browser;},65);
+  if(!done)kill_child(browser);
+  ASSERT_TRUE(done);ASSERT_TRUE(WIFEXITED(status));ASSERT_EQ(WEXITSTATUS(status),0);
+  EXPECT_EQ(cancelled.load(),1);EXPECT_EQ(manuals.load(),1);EXPECT_GT(nonzero.load(),0);
+  EXPECT_TRUE(wait([&]{return std::abs(output.load())<1e-9;},1));EXPECT_EQ(relay_count.load(),frozen_relay_count);
+}
+TEST_F(AutonomyGateway, TwoRealBrowsersShareTasksAndTransferManualOwnership){
+  // 整个夹具只在隔离ROS域发布合成数据，真实guard的速度不会接入任何底盘。
+  std::mutex mutex;std::atomic<int> starts{0},pauses{0},manuals{0};double still_after=0;
+  json value={{"task_id","offline-autonomy"},{"phase","PAUSED"},{"control_mode","automatic"},
+    {"healthy",true},{"still",true},{"navigation_terminal",true},{"output",{0,0}},
+    {"request_id",""},{"request_result",""},{"generation",1},{"automatic_start_ready",true},
+    {"reason","隔离双浏览器：等待操作"},{"radius_m",5},{"remaining_seconds",600},{"anchored",true},
+    {"actions",{{"resume",{{"enabled",true},{"reason",""}}},{"pause",{{"enabled",false},{"reason","当前已暂停"}}},
+      {"manual",{{"enabled",true},{"reason",""}}},{"return",{{"enabled",false},{"reason","本夹具不验证返程"}}},
+      {"recheck",{{"enabled",true},{"reason",""}}}}}};
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String message;
+    {std::lock_guard<std::mutex> lock(mutex);if(steady()>=still_after)value["still"]=true;message.data=value.dump();}publisher->publish(message);});
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String & message){
+    const auto request=json::parse(message.data);const auto action=request.value("action","");
+    std::lock_guard<std::mutex> lock(mutex);
+    value["request_id"]=request.at("request_id");value["request_result"]="accepted";
+    if(action=="start"||action=="resume"){++starts;value["phase"]="EXPLORING";value["control_mode"]="automatic";}
+    else if(action=="pause"||action=="halt"){++pauses;value["phase"]="PAUSED";}
+    else if(action=="manual"){++manuals;value["phase"]="MANUAL";value["control_mode"]="manual";}
+    value["actions"]["pause"]["enabled"]=value["phase"]=="EXPLORING";
+  });
+  auto control_requests=node->create_subscription<std_msgs::msg::String>("/mapping/control/request",10,[&](const std_msgs::msg::String & message){
+    const auto request=json::parse(message.data);std::lock_guard<std::mutex> lock(mutex);
+    // 合成停稳应答延后800ms，给真实页面观察/验证STOPPING交接屏障的确定性窗口。
+    if(request.value("action","")=="stop"&&value["phase"]=="MANUAL"){value["still"]=false;still_after=steady()+.8;}
+  });
+  // 先停止执行器，再销毁测试局部状态，避免失败返回后还有ACK回调引用局部变量。
+  struct CallbackScope {std::function<void()> stop;~CallbackScope(){stop();}} callbacks{[this]{
+    executor->cancel();if(thread.joinable())thread.join();
+  }};
+  start_gateway();ASSERT_TRUE(wait([&]{const auto s=request("/api/status");return s.value("phase","")=="CURRENT"&&
+    s.value("autonomy",json::object()).value("phase","")=="PAUSED";}));
+  auto browser=spawn({NODE_EXE,BROWSER_MULTI,std::to_string(port),BROWSER_CHROME,(root/"dual-browser").string()});
+  int status=0;const bool done=wait([&]{return waitpid(browser,&status,WNOHANG)==browser;},90);
+  if(!done)kill_child(browser);
+  ASSERT_TRUE(done)<<"真实双浏览器测试未在90秒内结束";
+  ASSERT_TRUE(WIFEXITED(status));ASSERT_EQ(WEXITSTATUS(status),0)<<"查看dual-browser证据与网页异常";
+  EXPECT_EQ(starts.load(),1)<<"重复继续应合并一次，停车前排队的继续不能再发给车端";
+  EXPECT_GE(pauses.load(),2);EXPECT_EQ(manuals.load(),1);EXPECT_GT(nonzero.load(),0);
+  EXPECT_TRUE(wait([&]{return std::abs(output.load())<1e-9;}));
+}
+TEST_F(AutonomyGateway, OnlyRequestedVerifiedCheckCanReopenFrozenSession){
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  auto pub=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  std::mutex mutex;json value={{"task_id","offline-autonomy"},{"phase","FAULT"},{"control_mode","automatic"},
+    {"reason","原始 /scan 超时"},{"navigation_terminal",true},{"still",true},{"generation",7},{"save_required",false}};
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;{std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}pub->publish(m);});
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="FAILED";}));
+  const int frozen=relay_count.load();usleep(200000);EXPECT_EQ(relay_count.load(),frozen);
+  {std::lock_guard<std::mutex>lock(mutex);value["phase"]="PAUSED";value["operator_check"]={{"request_id","unsolicited"},{"phase","READY"},{"generation",7}};}
+  usleep(300000);EXPECT_EQ(request("/api/status")["phase"],"FAILED");
+  EXPECT_EQ(request("/api/autonomy",{{"action","recheck"},{"request_id","user-check"}})["http_status"],202);
+  const auto merged=request("/api/autonomy",{{"action","recheck"},{"request_id","conflicting-check"}});
+  EXPECT_EQ(merged["http_status"],202);EXPECT_TRUE(merged.value("coalesced",false));EXPECT_EQ(merged["canonical_request_id"],"user-check");
+  {std::lock_guard<std::mutex>lock(mutex);value["operator_check"]["request_id"]="user-check";}
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  EXPECT_TRUE(wait([&]{return relay_count.load()>frozen;}));EXPECT_EQ(output,0);
+}
 TEST_F(AutonomyGateway, HaltBeforeFirstAutonomyHeartbeatIsAcceptedAndReplayedUntilConfirmed){
   start_gateway();connect_control();
   std::atomic<int> received{0};std::atomic<bool> acknowledge{false};
@@ -268,7 +401,9 @@ TEST_F(Integration, ActualWebSocketMotionTimeoutVideoAndReadOnlyInterfaces){
   ASSERT_TRUE(wait([&]{return request("/api/state")["control"].value("armed",false);}));
   uint64_t sequence=0;bool moved=false;
   for(int i=0;i<60;++i){auto status=read_ws();if(!status.contains("challenge")||!status.value("armed",false))continue;frame=get_video();send({{"action","intent"},{"sequence",++sequence},{"challenge",status["challenge"]},{"direction","forward"},{"frame",frame}});usleep(20000);if(nonzero>0){moved=true;break;}}
-  ASSERT_TRUE(moved);ASSERT_TRUE(wait([&]{return output.load()==0;},1));
+  // 生产租期仍由Safety精确执行；订阅端观测还须覆盖20ms门控节拍及DDS调度传播。
+  const auto observed_stop_budget=Safety::control_lease_seconds+.25;
+  ASSERT_TRUE(moved);ASSERT_TRUE(wait([&]{return output.load()==0;},observed_stop_budget));
   ASSERT_TRUE(wait([&]{return !request("/api/state")["control"].value("armed",true);},1));
   EXPECT_EQ(request("/api/not-a-shell",json::object())["http_status"],404);
   frame=get_video();send({{"action","enable"},{"frame",frame}});ASSERT_TRUE(wait([&]{return request("/api/state")["control"].value("armed",false);}));
@@ -361,6 +496,26 @@ class ManagedIntegration : public Integration {
   bool managed_backend() const override {return true;}
   bool strict_video() const override {return false;}
 };
+TEST_F(ManagedIntegration, SensorTimeoutKeepsReadOnlyObservationWithoutReopeningMapping) {
+  video=false;start_gateway("standby");connect_control();
+  ASSERT_EQ(request("/api/start",{{"mode","new"}})["http_status"],202);
+  ASSERT_TRUE(wait([&]{const auto s=request("/api/status");return s.value("task_state","")=="RUNNING"&&
+    s.value("phase","")=="CURRENT";},25));
+  // 雷达停更不能令仍在发布的轮式缓存一起冻结；恢复观测也不能自动恢复入图或运动。
+  emit_scan=false;
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="FAILED";},4));
+  usleep(650000);
+  const auto failed=request("/api/status");
+  EXPECT_LT(failed.value("odom_age",1e9),.5);
+  EXPECT_GT(failed.value("scan_age",0.),2.);
+  const auto frozen_frames=relay_count.load();
+  emit_scan=true;
+  EXPECT_TRUE(wait([&]{const auto s=request("/api/status");return s.value("scan_age",1e9)<.5&&
+    s.value("odom_age",1e9)<.5;},2));
+  EXPECT_EQ(request("/api/status").value("phase",""),"FAILED");
+  EXPECT_EQ(relay_count.load(),frozen_frames);
+  EXPECT_EQ(nonzero.load(),0);
+}
 TEST_F(ManagedIntegration, TabletLifecycleWithoutHardwareOrVideoSavesLoadsAndResumes) {
   video=false; start_gateway("standby"); connect_control();
   EXPECT_EQ(request("/api/state")["phase"],"STANDBY");

@@ -1,0 +1,26 @@
+{
+  "source_and_syntax": {
+    "source_sha256": 326,
+    "xml": 15,
+    "yaml": 17
+  },
+  "hardware_started": false,
+  "parameters_changed": false,
+  "ros_rebuild_performed": false,
+  "protected_original_files": 1490,
+  "original_branch_and_index_unchanged": true,
+  "formal_release_files_unchanged": 278,
+  "javascript_syntax": true,
+  "javascript_regression_groups": [
+    "test_operator_controls",
+    "test_browser_task_state"
+  ],
+  "formal_status": {
+    "phase": "STANDBY",
+    "task_state": "STANDBY",
+    "busy": false,
+    "dirty": false,
+    "error": ""
+  },
+  "note": "仅源码归档检查；此前完整软件负载结果另附，不把用户定性反馈等同量化实车验收"
+}

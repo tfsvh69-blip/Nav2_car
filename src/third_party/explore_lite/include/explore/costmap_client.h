@@ -68,7 +68,7 @@ public:
    * @brief Get the pose of the robot in the global frame of the costmap
    * @return pose of the robot in the global frame of the costmap
    */
-  geometry_msgs::msg::Pose getRobotPose() const;
+  geometry_msgs::msg::Pose getRobotPose(bool* valid=nullptr) const;
   uint64_t mapSequence() const {return map_sequence_;}
 
   /**

@@ -23,6 +23,6 @@ private:
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_;
   std::chrono::steady_clock::time_point map_at_;
   std::mutex map_mutex_,planning_mutex_;
-  double dynamic_radius_=0;
+  double dynamic_radius_=0;Json blocking_evidence_=Json::object();
 };
 }  // namespace carcar_mapping_autonomy

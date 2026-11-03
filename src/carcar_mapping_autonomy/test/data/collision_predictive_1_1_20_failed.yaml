@@ -1,0 +1,27 @@
+# 仅用于正常自动导航的前瞻减速；受限接管和独立短退保留各自方向扫掠审查。
+mapping_predictive_collision:
+  ros__parameters:
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    cmd_vel_in_topic: /mapping/auto_smoothed
+    cmd_vel_out_topic: /mapping/auto_cmd_vel
+    transform_tolerance: 0.1
+    source_timeout: 0.5
+    base_shift_correction: true
+    stop_pub_timeout: 0.0
+    polygons: [Approach]
+    Approach:
+      type: circle
+      radius: 0.22
+      action_type: approach
+      time_before_collision: 1.5
+      simulation_time_step: 0.05
+      max_points: 0
+      visualize: true
+      polygon_pub_topic: /mapping/approach_polygon
+      enabled: true
+    observation_sources: [scan]
+    scan:
+      type: scan
+      topic: /scan
+      enabled: true

@@ -14,6 +14,7 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2_ros/transform_broadcaster.h>
@@ -65,9 +66,12 @@ public:
   kill(-pid,SIGKILL);waitpid(pid,nullptr,0);pid=-1;}
 };
 int run_evaluation(int argc,char**argv){
- if(argc!=4||std::string(std::getenv("ROS_DOMAIN_ID")?std::getenv("ROS_DOMAIN_ID"):"")!="231"){
-  std::cerr<<"仅允许隔离域231；参数为场景、legacy或continuous、新证据目录\n";return 2;}
- const std::string scenario=argv[1],mode=argv[2];if(mode!="legacy"&&mode!="continuous")return 2;
+ const std::string domain=std::getenv("ROS_DOMAIN_ID")?std::getenv("ROS_DOMAIN_ID"):"";
+ const std::string local=std::getenv("ROS_LOCALHOST_ONLY")?std::getenv("ROS_LOCALHOST_ONLY"):"";
+ if(argc!=4||(domain!="231"&&domain!="232")||local!="1"){
+  std::cerr<<"仅允许本机隔离域231或232；参数为场景、legacy、ranked或continuous、新证据目录\n";return 2;
+ }
+ const std::string scenario=argv[1],mode=argv[2];if(mode!="legacy"&&mode!="ranked"&&mode!="continuous")return 2;
  const std::filesystem::path evidence=argv[3];if(std::filesystem::exists(evidence)){std::cerr<<"证据目录已存在，拒绝覆盖\n";return 2;}
  std::filesystem::create_directories(evidence);World world(scenario);rclcpp::init(0,nullptr);
  auto node=std::make_shared<rclcpp::Node>("exploration_evaluation_truth");
@@ -82,6 +86,13 @@ int run_evaluation(int argc,char**argv){
  geometry_msgs::msg::Twist velocity;Json state=Json::object();bool contact=false,started=false;std::set<std::string>checkpoints;
  std::ofstream trace(evidence/"trace.jsonl");
  std::ofstream command_trace(evidence/"commands.jsonl");
+ std::ofstream rank_trace(evidence/"ranking.jsonl");
+ auto ranking=node->create_subscription<std_msgs::msg::String>("/mapping/exploration/rank_result",10,
+   [&](const std_msgs::msg::String&m){try{rank_trace<<Json{{"time_s",elapsed()},{"result",Json::parse(m.data)}}.dump()<<'\n';rank_trace.flush();}catch(const std::exception&){}});
+ nav_msgs::msg::OccupancyGrid::ConstSharedPtr latest_map;
+ auto map_sub=node->create_subscription<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local(),
+   [&](nav_msgs::msg::OccupancyGrid::ConstSharedPtr m){latest_map=std::move(m);});
+
  auto commands=node->create_subscription<geometry_msgs::msg::Twist>("/mapping/cmd_vel",1,[&](const geometry_msgs::msg::Twist&m){
   velocity=m;velocity_at=elapsed();
   // 保存真正进入软件轮式积分的最终命令，后续可核对停顿与状态，不能用目标速度冒充反馈。
@@ -109,31 +120,42 @@ int run_evaluation(int argc,char**argv){
   if(started&&window_path>=.25){if((world.seen.size()-window_seen)*.0025<.02)repeated+=window_path;window_path=0;window_seen=world.seen.size();}
  });
  char temporary[]="/tmp/carcar-exploration-eval-XXXXXX";if(!mkdtemp(temporary))return 2;Child child;
- std::vector<std::string>args{"/opt/ros/humble/bin/ros2","launch","carcar_mapping_console","mapping_autonomous.launch.xml","start_hardware:=false","record_raw_bag:=false","control_mode:=automatic","port:=18127","task_id:=exploration-evaluation","explore_seconds:=240.0",std::string("map_root:=")+temporary,
-  std::string("checkpoint_root:=")+temporary+"/checkpoints",std::string("continuous_exploration:=")+(mode=="continuous"?"true":"false"),std::string("online_snapshots:=")+(mode=="continuous"?"true":"false")};
+ std::vector<std::string>args{"/opt/ros/humble/bin/ros2","launch","carcar_mapping_console","mapping_autonomous.launch.xml","start_hardware:=false","record_raw_bag:=false","control_mode:=automatic",std::string("port:=")+std::to_string(18127+std::stoi(domain)-231),"task_id:=exploration-evaluation","explore_seconds:=240.0",std::string("map_root:=")+temporary,
+  std::string("checkpoint_root:=")+temporary+"/checkpoints",std::string("continuous_exploration:=")+(mode=="continuous"?"true":"false"),std::string("online_snapshots:=true")};
+ if(mode!="continuous"){
+  args.push_back(std::string("path_aware_ranking:=")+(mode=="ranked"?"true":"false"));
+  args.push_back("prefer_observation_clearance:=true");args.push_back("auto_execution_sweep:=true");args.push_back("obstacle_wait_enabled:=true");
+  args.push_back(std::string("controller_params:=")+EVALUATION_SHIM_PARAMS);args.push_back(std::string("cost_params:=")+EVALUATION_CLEARANCE_PARAMS);
+ }
  if(mode=="continuous")args.push_back(std::string("bt_params:=")+EVALUATION_BT_PARAMS);
  if(!child.start(args))return 2;
  std::string stop="budget";double last_trace=-1;std::string last_phase;Json stop_reasons=Json::array();
  while(rclcpp::ok()&&elapsed()<285){rclcpp::spin_some(node);const auto phase=state.value("phase","");
   if(phase!=last_phase){stop_reasons.push_back({{"time_s",elapsed()},{"phase",phase},{"reason",state.value("reason","")}});last_phase=phase;}
-  if(elapsed()-last_trace>=1){last_trace=elapsed();trace<<Json{{"time_s",elapsed()},{"pose",{x,y,yaw}},{"path_m",path},{"seen_cells",world.seen.size()},{"phase",phase},{"reason",state.value("reason","")},{"continuous",state.value("continuous_exploration",Json::object())},{"snapshot",state.value("snapshot_maintenance",Json::object()).value("phase","")}}.dump()<<'\n';trace.flush();}
-  if(contact){stop="contact";break;}if(phase=="FAULT"){stop="fault";break;}if(started&&(phase=="RETURNING"||phase=="REVIEW_REQUIRED")){stop=state.value("outcome",phase);break;}
+  if(elapsed()-last_trace>=1){last_trace=elapsed();trace<<Json{{"time_s",elapsed()},{"pose",{x,y,yaw}},{"path_m",path},{"seen_cells",world.seen.size()},{"phase",phase},{"reason",state.value("reason","")},{"goal",state.value("goal",Json())},
+    {"frontier_goal",state.value("frontier_goal",Json())},{"navigation_remaining_m",state.value("navigation_remaining_m",-1.)},
+    {"continuous",state.value("continuous_exploration",Json::object())},{"snapshot",state.value("snapshot_maintenance",Json::object()).value("phase","")}}.dump()<<'\n';trace.flush();}
+  if(contact){stop="contact";break;}if(phase=="FAULT"){stop="fault";break;}if(started&&phase=="PAUSED"){stop="paused";break;}if(started&&(phase=="RETURNING"||phase=="REVIEW_REQUIRED")){stop=state.value("outcome",phase);break;}
   if(started&&elapsed()-started_at>=240)break;
   if(!started&&elapsed()>45){stop="startup_timeout";break;}
   std::this_thread::sleep_for(std::chrono::milliseconds(2));
  }
  if(!rclcpp::ok())stop="interrupted";
- const Json result{{"hardware",false},{"scenario",scenario},{"mode",mode},{"speed_mps",.10},{"budget_seconds",240},{"started",started},{"stop",stop},{"contact",contact},
+ const Json result{{"hardware",false},{"same_controller_and_soft_costs",true},{"online_snapshots",true},{"scenario",scenario},{"mode",mode},{"speed_mps",.10},{"budget_seconds",240},{"started",started},{"stop",stop},{"contact",contact},
   {"wall_seconds",elapsed()},{"exploration_wall_seconds",started?elapsed()-started_at:0.},{"initial_observable_m2",initial_seen*.0025},{"total_observable_m2",world.total*.0025},
   {"coverage",double(world.seen.size())/world.total},{"new_observable_m2",(world.seen.size()-initial_seen)*.0025},{"path_m",path},{"gain_m2_per_m",path>0?(world.seen.size()-initial_seen)*.0025/path:0.},
   {"no_gain_distance_m",repeated},{"snapshot_count",checkpoints.size()},{"stop_reasons",stop_reasons},{"final_state",state},{"artifacts",temporary}};
+ if(latest_map){const auto&m=*latest_map;
+  std::ofstream(evidence/"final_map.json")<<Json{{"resolution",m.info.resolution},{"width",m.info.width},{"height",m.info.height},
+    {"origin",{m.info.origin.position.x,m.info.origin.position.y}},{"data",m.data}}.dump()<<'\n';
+ }
  std::ofstream(evidence/"result.json")<<result.dump(2)<<'\n';std::cout<<"EXPLORATION_EVALUATION "<<result.dump()<<'\n';
  // 先请求真实监督器停车并继续提供新鲜数据，再退出自有子进程组。
  if(rclcpp::ok()){
  std_msgs::msg::String pause;pause.data=Json{{"task_id","exploration-evaluation"},{"request_id","evaluation-stop"},{"action","pause"}}.dump();requests->publish(pause);
  const double until=elapsed()+3;while(rclcpp::ok()&&elapsed()<until){rclcpp::spin_some(node);if(state.value("still",false)&&state.value("navigation_terminal",false))break;std::this_thread::sleep_for(std::chrono::milliseconds(5));}
  }
- child.stop();rclcpp::shutdown();return started&&!contact&&stop!="fault"&&stop!="interrupted"&&result.at("coverage").get<double>()>=.95?0:1;
+ child.stop();rclcpp::shutdown();return started&&!contact&&stop!="fault"&&stop!="interrupted"&&stop!="paused"&&stop!="budget"&&stop!="startup_timeout"&&result.at("coverage").get<double>()>=.95?0:1;
 }
 int main(int argc,char**argv){
  // 异常必须先展开场景栈、回收自有子进程；避免中断时ROS上下文异常跳过清理。

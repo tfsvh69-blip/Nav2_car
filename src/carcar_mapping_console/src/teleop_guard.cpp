@@ -43,7 +43,7 @@ public:
       });
     readiness_ = create_subscription<std_msgs::msg::String>("/mapping/session/state", rclcpp::QoS(1),
       [this](const std_msgs::msg::String & message) {
-        try {auto v = json::parse(message.data); safety_.session_ready = v.at("ready").get<bool>(); safety_.gateway_at = steady();}
+        try {auto v = json::parse(message.data); safety_.session_state(v.at("ready").get<bool>(),v.value("restricted_manual_active",false),v.value("restricted_manual_ready",false)); safety_.gateway_at = steady();}
         catch (...) {safety_.stop("建图会话消息异常"); safety_.session_ready = false;}
       });
     scan_ = create_subscription<sensor_msgs::msg::LaserScan>("/scan", rclcpp::SensorDataQoS().keep_last(1),
@@ -78,7 +78,7 @@ public:
         json value{{"challenge", token}, {"armed", safety_.armed}, {"reason", safety_.reason},
           {"gear", safety_.gear}, {"x", velocity.x}, {"yaw", velocity.yaw}, {"health", safety_.health(now_s)},
           {"controller_session", safety_.session}, {"require_video", safety_.require_video},
-          {"supported_gears", {"slow","normal","fast"}}, {"ack_sequence", safety_.timing(now_s).sequence},
+          {"supported_gears", safety_.restricted_mode?json::array({"slow"}):json::array({"slow","normal","fast"})},{"restricted_manual",safety_.restricted_mode}, {"ack_sequence", safety_.timing(now_s).sequence},
           {"control_protocol",2},{"control_lease_ms",Safety::control_lease_seconds*1000},{"idle_heartbeat_required",false},
           {"control_revision",++control_revision_},{"control_epoch",control_epoch_},{"issued_steady_ms",now_s*1000},
           {"accepted_sequence",safety_.timing(now_s).accepted_sequence},

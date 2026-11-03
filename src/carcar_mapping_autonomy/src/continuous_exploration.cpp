@@ -101,12 +101,9 @@ public:
     auto record=std::make_shared<NavRecord>();record->id=plan_->id;record->epoch=epoch_;navs_.push_back(record);nav_pending_=true;nav_at_=snapshot_.route.now;
     rclcpp_action::Client<Navigate>::SendGoalOptions options;
     options.goal_response_callback=[this,record,route,path](NavHandle::SharedPtr handle){
-      const bool was_moving=motion();
       nav_pending_=false;record->handle=handle;
       if(!handle){record->done=true;if(terminal()){route_.clear();active_path_.reset();last_selection_=-1e9;}event("route_rejected","导航器拒绝预取路线，未将请求受理误报为执行成功");return;}
       if(stopping_||record->epoch!=epoch_){nav_->async_cancel_goal(handle);return;}
-      // 空闲／失败等待不属于行驶进展预算；已有路线的续接不能反复重置卡住保护。
-      if(!was_moving){last_progress_=snapshot_.route.now;progress_pose_=snapshot_.route.current;}
       route_=route;active_path_=path;dispatch_stamp_=node_.now();active_id_=record->id;
       event("route_accepted","导航器接受已审查多点路线；通过原生抢占续接，不先取消旧路线");
     };

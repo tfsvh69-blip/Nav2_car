@@ -15,6 +15,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <depend>explore_lite_msgs</depend>
+  <depend>nlohmann-json-dev</depend>
   <depend>geometry_msgs</depend>
   <depend>map_msgs</depend>
   <depend>nav2_costmap_2d</depend>

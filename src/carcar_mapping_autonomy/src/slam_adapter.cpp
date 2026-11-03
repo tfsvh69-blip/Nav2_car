@@ -11,20 +11,31 @@
 #include <slam_toolbox/slam_toolbox_async.hpp>
 #include "carcar_mapping_autonomy/startup_accumulation.hpp"
 #include "carcar_mapping_autonomy/online_snapshot.hpp"
+#include "carcar_mapping_autonomy/loop_guard.hpp"
+#include "carcar_mapping_autonomy/frozen_scan_validation.hpp"
 // 桥接接纳与闭环事件。静止起步只临时放行 Karto 的时间门槛，不改匹配、损失函数或移动门槛。
 class MappingSlam: public slam_toolbox::AsynchronousSlamToolbox {
   class Listener:public karto::MapperLoopClosureListener {
   public:
     explicit Listener(MappingSlam & owner):owner_(owner){}
-    void BeginLoopClosure(const std::string&)override{owner_.loop_active_=true;++owner_.loop_generation_;owner_.publish();}
-    void EndLoopClosure(const std::string&)override{owner_.loop_active_=false;++owner_.loop_generation_;owner_.publish();}
+    void BeginLoopClosure(const std::string&)override{
+      owner_.loop_active_=true;++owner_.loop_generation_;owner_.publish();
+      owner_.loop_guard_.begin(*owner_.mapper_);
+    }
+    void EndLoopClosure(const std::string&)override{
+      if(!owner_.loop_guard_.finish(*owner_.mapper_,*owner_.solver_)){
+        owner_.admission_enabled_=false;owner_.permit_once_=false;
+        RCLCPP_ERROR(owner_.get_logger(),"回环校正未通过几何复核，已撤销本次约束与位姿更新；冻结入图等待停车验证：%s",owner_.loop_guard_.state().dump().c_str());
+      }
+      owner_.loop_active_=false;++owner_.loop_generation_;owner_.publish();
+    }
   private:MappingSlam & owner_;
   };
 public:
   MappingSlam():AsynchronousSlamToolbox(rclcpp::NodeOptions()),listener_(*this){}
   void configure()override{
     AsynchronousSlamToolbox::configure();
-    startup_extra_limit_=std::clamp(static_cast<int>(declare_parameter("startup_stationary_scans",3)),0,8);
+    startup_extra_limit_=std::clamp(static_cast<int>(declare_parameter("startup_stationary_scans",3)),0,12);
     startup_window_sec_=std::clamp(declare_parameter("startup_stationary_window",2.0),0.5,5.0);
     // 静止时SLAM可能只发布首个位姿。新组合保留最后接纳位姿，防止订阅者晚启动死等。
     // 位姿年龄仍不作健康真值；扫描、独立TF、轮式与接纳诊断分别监督。
@@ -44,6 +55,22 @@ public:
         // 发布事件直接闭门，避免网关的在途扫描在取消导航期间污染图。
         recovery_gate_=j.value("gate_write",false);
       }catch(...){}});
+    // 网关冻结时不再转发入图扫描。独立只读观察只维护有依据的TF时间，绝不消耗单帧入图许可。
+    observation_sub_=create_subscription<sensor_msgs::msg::LaserScan>(
+      declare_parameter("observation_scan_topic",std::string("/scan/filtered")),rclcpp::SensorDataQoS().keep_last(1),
+      [this](sensor_msgs::msg::LaserScan::ConstSharedPtr scan){
+        if(admission_enabled_.load()&&!recovery_gate_.load())return;
+        const double age=(now()-rclcpp::Time(scan->header.stamp)).seconds();
+        if(!std::isfinite(age)||age<-.1||age>.5||scan->ranges.empty()||scan->ranges.size()>100000||
+          scan->header.frame_id.empty()||!std::isfinite(scan->angle_min)||!std::isfinite(scan->angle_increment)||scan->angle_increment<=0)return;
+        karto::Pose2 odometry;
+        if(!pose_helper_->getOdomPose(odometry,scan->header.stamp))return;
+        if(!tf_->canTransform(base_frame_,scan->header.frame_id,rclcpp::Time(scan->header.stamp),rclcpp::Duration::from_seconds(0)))return;
+        // 与上游TF发布线程共用锁。新观测仅表示运输链鲜活，定位可信仍由恢复事务验证。
+        boost::mutex::scoped_lock lock(map_to_odom_mutex_);
+        if(rclcpp::Time(scan->header.stamp)>rclcpp::Time(scan_header.stamp))scan_header=scan->header;
+        observation_stamp_=rclcpp::Time(scan->header.stamp).nanoseconds();
+      });
     attach();
     if(declare_parameter("online_snapshots",false)){
       const auto root=declare_parameter("snapshot_root",std::string("/home/jetson/luhao/my_nav_carcar/log/mapping_recovery"));
@@ -61,10 +88,26 @@ protected:
     const double age=(now()-rclcpp::Time(scan->header.stamp)).seconds();
     scan_callback_age_ms_=age*1000;scan_callback_max_age_ms_=std::max(scan_callback_max_age_ms_,scan_callback_age_ms_);
     if(!std::isfinite(age)||age<-.1||age>.5){++scan_stale_rejections_;return;}
-    if((!admission_enabled_.load()||recovery_gate_.load())&&!permit_once_.exchange(false))return;
+    const bool validation_frame=!admission_enabled_.load()||recovery_gate_.load();
+    if(validation_frame&&!permit_once_.exchange(false))return;
     const auto before=sequence_.load();
     AsynchronousSlamToolbox::laserCallback(scan);
     const bool parent_accepted=sequence_.load()!=before;
+    if(validation_frame){
+      // 显式单帧验证不能消耗许可后又被正常建图的位移／时间节流静默丢弃。
+      // 首帧仍由基类完成恢复初始化；后续仅补这一帧，匹配和外部多帧几何校验保持有效。
+      if(!parent_accepted&&processor_type_==slam_toolbox::PROCESS&&
+         !isPaused(slam_toolbox::NEW_MEASUREMENTS)&&pose_helper_&&smapper_&&smapper_->getMapper()){
+        karto::Pose2 odometry;
+        if(pose_helper_->getOdomPose(odometry,scan->header.stamp)){
+          auto*mapper=smapper_->getMapper();const double interval=mapper->getParamMinimumTimeInterval();
+          mapper->setParamMinimumTimeInterval(0);
+          struct Restore{karto::Mapper*mapper;double interval;~Restore(){mapper->setParamMinimumTimeInterval(interval);}} restore{mapper,interval};
+          if(auto*laser=getLaser(scan))addScan(laser,scan,odometry);
+        }
+      }
+      return;
+    }
     if(startup_.closed){
       // Humble外层在0.8*d²时更新“尝试”基准，Karto按最后接纳的d²判断。
       // 短途停车会落在两门槛之间。按最后接纳的里程计重试，Karto全部原门槛继续生效。
@@ -108,6 +151,9 @@ protected:
   }
   karto::LocalizedRangeScan * addScan(karto::LaserRangeFinder*laser,const sensor_msgs::msg::LaserScan::ConstSharedPtr&scan,karto::Pose2&pose)override{
     const auto input_odometry=pose;
+    const bool frozen=!admission_enabled_.load()||recovery_gate_.load();
+    carcar_mapping_autonomy::FrozenScanValidation validation(smapper_?smapper_->getMapper():nullptr,frozen);
+    if(frozen)++frozen_validation_frames_;
     ++attempts_;auto*result=AsynchronousSlamToolbox::addScan(laser,scan,pose);
     accepted_=result!=nullptr;
     if(result){++sequence_;accepted_stamp_=rclcpp::Time(scan->header.stamp).nanoseconds();last_accepted_id_=result->GetUniqueId();
@@ -125,7 +171,7 @@ protected:
     detach();bool ok=false;
     try{ok=AsynchronousSlamToolbox::deserializePoseGraphCallback(header,req,res);attach();}
     catch(...){attach();throw;}
-    if(ok)++restore_generation_;
+    if(ok){++restore_generation_;loop_guard_.reset_graph();}
     ++loop_generation_;last_accepted_id_=-1;accepted_=false;startup_={};startup_extras_.store(0);startup_closed_.store(false);have_accepted_odom_=false;publish();return ok;
   }
   bool serializePoseGraphCallback(const std::shared_ptr<rmw_request_id_t> header,
@@ -165,13 +211,19 @@ private:
   void publish(){if(!pub_)return;nlohmann::json j{{"sequence",sequence_.load()},{"attempts",attempts_.load()},
     {"accepted",accepted_.load()},{"accepted_stamp_ns",accepted_stamp_.load()},
     {"loop_generation",loop_generation_.load()},{"loop_active",loop_active_.load()},
+    {"loop_guard",loop_guard_.state()},
     {"startup_extras",startup_extras_.load()},{"startup_closed",startup_closed_.load()},
-    {"admission_retries",admission_retries_.load()},
+    {"startup_extra_limit",startup_extra_limit_},{"startup_window_seconds",startup_window_sec_},
+    {"admission_retries",admission_retries_.load()},{"frozen_validation_frames",frozen_validation_frames_.load()},
+    {"frozen_validation_policy","local_matching_without_global_loop_optimization"},
     {"scan_callback_age_ms",scan_callback_age_ms_},{"scan_callback_max_age_ms",scan_callback_max_age_ms_},{"scan_stale_rejections",scan_stale_rejections_},
     {"admission_enabled",admission_enabled_.load()&&!recovery_gate_.load()},{"restore_generation",restore_generation_.load()},{"restore_error",restore_error_},
+    {"frozen_observation_stamp_ns",observation_stamp_.load()},
+    {"localization_requires_verification",!admission_enabled_.load()||recovery_gate_.load()},
     {"note","接纳与协方差不是独立真值；静止起步只有限补帧，之后仍按移动门槛节流"}};
     std_msgs::msg::String m;m.data=j.dump();pub_->publish(m);}
   Listener listener_;karto::Mapper*mapper_=nullptr;
+  carcar_mapping_autonomy::LoopGuard loop_guard_;
   std::unique_ptr<carcar_mapping_autonomy::OnlineSnapshot> snapshots_;int last_accepted_id_=-1;
   double scan_callback_age_ms_=0,scan_callback_max_age_ms_=0;uint64_t scan_stale_rejections_=0;
   carcar_mapping_autonomy::StartupAccumulation startup_;
@@ -179,9 +231,11 @@ private:
   std::atomic<int>startup_extras_{0};std::atomic<bool>startup_closed_{false};
   std::atomic<uint64_t>sequence_{0},attempts_{0},loop_generation_{0};
   std::atomic<int64_t>accepted_stamp_{0};std::atomic<bool>accepted_{false},loop_active_{false};
+  std::atomic<int64_t>observation_stamp_{0};
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr observation_sub_;
   karto::Pose2 accepted_odom_;bool have_accepted_odom_=false;
   double accepted_odom_at_=0,last_retry_at_=-1e9;
-  std::atomic<uint64_t>admission_retries_{0};
+  std::atomic<uint64_t>admission_retries_{0},frozen_validation_frames_{0};
   std::atomic<bool>admission_enabled_{true},permit_once_{false},recovery_gate_{false};std::atomic<uint64_t>restore_generation_{0};
   std::string restore_error_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr admission_service_;

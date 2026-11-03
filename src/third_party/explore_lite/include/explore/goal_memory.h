@@ -12,6 +12,15 @@ public:
   double radius=.40,cooldown=60.;
   unsigned failure_limit=2;
   void clear(){regions_.clear();}
+  struct BlockedRegion {geometry_msgs::msg::Point point;double radius=0,until=0;bool visited=false;};
+  // 导出与 blocked() 完全相同的活动区域中心；合并历史记录时中心保持原有语义。
+  std::vector<BlockedRegion> blocked_regions(double now)const{
+    std::vector<BlockedRegion> result;
+    for(const auto&r:regions_)if(now<r.until&&(r.visited||r.failures>=failure_limit))
+      result.push_back({r.point,radius,r.until,r.visited});
+    return result;
+  }
+
   bool blocked(const geometry_msgs::msg::Point&p,double now)const{
     for(const auto&r:regions_)if(std::hypot(r.point.x-p.x,r.point.y-p.y)<=radius&&now<r.until&&
       (r.visited||r.failures>=failure_limit))return true;

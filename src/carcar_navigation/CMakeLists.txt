@@ -308,7 +308,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_nav012_regressions test/test_nav012_regressions.cpp)
   ament_add_gtest(test_nav_recording test/test_nav_recording.cpp)
   find_package(tf2_msgs REQUIRED)
-  ament_target_dependencies(test_nav_recording rclcpp tf2_ros tf2_msgs rosbag2_cpp)
+  ament_target_dependencies(test_nav_recording rclcpp nav_msgs geometry_msgs sensor_msgs std_msgs tf2_ros tf2_msgs rosbag2_cpp)
   target_compile_definitions(test_nav_recording PRIVATE
     NAV_LOGGER_EXECUTABLE="$<TARGET_FILE:nav_event_logger>")
   add_dependencies(test_nav_recording nav_event_logger)

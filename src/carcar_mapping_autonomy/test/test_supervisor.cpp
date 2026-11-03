@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -33,15 +34,20 @@ protected:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf;
   std::unique_ptr<tf2_ros::StaticTransformBroadcaster> fixed;
   pid_t pid=-1;Json state=Json::object();bool feed_scan=true,ack_cancel=true,feed_pose=true,feed_map=true,loop_active=false;
-  double pose_x=0,pose_y=0,odom_y=0;uint64_t loop_generation=0,slam_sequence=1;
-  bool freeze_nav_pose=false;builtin_interfaces::msg::Time nav_pose_stamp;
-  bool succeed_return=false,stall_plan=false,unknown_start=false,automatic_on_boot=false,continuous_mode=false;
+  double sideways_speed=0;
+  double pose_x=0,pose_y=0,odom_y=0;uint64_t loop_generation=0,slam_sequence=1,loop_rejections=0;
+  bool slam_startup_closed=true;double snapshot_interval_seconds=30.0;
+  bool freeze_nav_pose=false,session_ready=true,publish_session=true,storage_ready=true,near_obstacle=false;builtin_interfaces::msg::Time nav_pose_stamp;
+  bool succeed_return=false,stall_plan=false,stall_after_failures=false,unknown_start=false,automatic_on_boot=false,continuous_mode=false;
+  bool succeed_any_return=false,fake_return_success=false,origin_obstacle=false,fill_return_neighborhood=false;
+  bool fast_selection_timeout=false,restricted_manual_enabled=false,ack_recovery_cancel=true,force_slam_admission_open=false;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr base_diagnostics;
   bool delay_initial_odometry=false;double odom_feed_after=0,odom_x=0;
   int grid_width=100;double grid_origin=-2.5;bool block_route=false,observation_wall=false,block_distant=false,narrow_door=false;
   size_t nav_requests=0,plan_requests=0;std::vector<double> nav_targets,proxy_distances;
   std::shared_ptr<rclcpp_action::ServerGoalHandle<Plan>> stalled_plan;
   bool nav2_active=true;rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr lifecycle;
-  bool recovery_mode=false,online_snapshot_mode=false,closed_outer_walls=false;size_t plan_failures=0;
+  bool recovery_mode=false,online_snapshot_mode=false,closed_outer_walls=false,fail_checkpoints=false;size_t plan_failures=0;
   Json recovery_state={{"phase","CHECKPOINT_READY"},{"checkpoint_id","fixture-stable"},{"imu_ready",true},{"imu_stable",true},{"gate_write",false},{"requires_stop",false},{"generation",0}};
   std::vector<std::string> recovery_actions,nav_trees;
   std::vector<geometry_msgs::msg::PoseStamped> nav_poses;
@@ -80,6 +86,7 @@ protected:
     geometry_msgs::msg::TransformStamped s;s.header.frame_id="base_footprint";s.child_frame_id="laser_frame";s.transform.rotation.w=1;s.transform.translation.z=.217;fixed->sendTransform(s);
     scan=n->create_publisher<sensor_msgs::msg::LaserScan>("/scan",rclcpp::SensorDataQoS());filtered=n->create_publisher<sensor_msgs::msg::LaserScan>("/scan/filtered",rclcpp::SensorDataQoS());
     odom=n->create_publisher<nav_msgs::msg::Odometry>("/wheel/odometry",1);
+    if(restricted_manual_enabled)base_diagnostics=n->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics",10);
     map=n->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",rclcpp::QoS(1).reliable().transient_local());
     pose=n->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/pose",rclcpp::QoS(1).reliable().transient_local());
     local_pose=n->create_publisher<geometry_msgs::msg::PolygonStamped>("/local_costmap/published_footprint",1);
@@ -101,9 +108,12 @@ protected:
       recovery_pub=n->create_publisher<std_msgs::msg::String>("/mapping/recovery/state",rclcpp::QoS(1).reliable().transient_local());
       recovery_commands=n->create_subscription<std_msgs::msg::String>("/mapping/recovery/request",10,[this](const std_msgs::msg::String&m){
         const auto j=Json::parse(m.data);const auto action=j.value("action",std::string());recovery_actions.push_back(action);
+        if(action=="cancel"&&!ack_recovery_cancel)return;
         recovery_state["generation"]=j["generation"];recovery_state["request_id"]=j["request_id"];
-        if(action=="freeze")recovery_state.update({{"phase","DISTURBED"},{"gate_write",true},{"requires_stop",true}});
-        else if(action=="recover")recovery_state["phase"]="WAITING_STABLE";
+        if(action=="cancel")recovery_state.update({{"phase","FAILED"},{"gate_write",true},{"requires_stop",true}});
+        else if(action=="freeze")recovery_state.update({{"phase","DISTURBED"},{"gate_write",true},{"requires_stop",true}});
+        else if(action=="checkpoint"&&fail_checkpoints)recovery_state.update({{"phase","FAILED"},{"gate_write",true},{"requires_stop",true},{"reason","检查点几何校验失败"}});
+        else if(action=="recover"||action=="recover_rollback")recovery_state["phase"]="WAITING_STABLE";
         else if(action=="commit_verified")recovery_state.update({{"phase","SUCCEEDED"},{"gate_write",false},{"requires_stop",false}});
         else if(action=="snapshot"){recovery_state["snapshot"]=j;recovery_state["snapshot"]["phase"]="PREPARING";recovery_state["snapshot"]["in_flight"]=true;}
       });
@@ -115,17 +125,21 @@ protected:
       previous_output_time=t;
       last_velocity=m.linear.x;if(std::abs(m.linear.x)>1e-5)++nonzero;});
     nav_server=rclcpp_action::create_server<Nav>(n,"/navigate_to_pose",[](const auto&,auto){return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},[](auto){return rclcpp_action::CancelResponse::ACCEPT;},[this](auto h){active=h;++nav_requests;nav_targets.push_back(h->get_goal()->pose.pose.position.x);nav_poses.push_back(h->get_goal()->pose);nav_trees.push_back(h->get_goal()->behavior_tree);});
-    plan_server=rclcpp_action::create_server<Plan>(n,"/compute_path_to_pose",[](const auto&,auto){return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},[](auto){return rclcpp_action::CancelResponse::ACCEPT;},[this](auto h){++plan_requests;if(stall_plan){stalled_plan=h;return;}auto result=std::make_shared<Plan::Result>();if(plan_failures){--plan_failures;h->abort(result);return;}result->path.header.frame_id="map";geometry_msgs::msg::PoseStamped start;start.pose.orientation.w=1;result->path.poses={start,h->get_goal()->goal};h->succeed(result);});
+    plan_server=rclcpp_action::create_server<Plan>(n,"/compute_path_to_pose",[](const auto&,auto){return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;},[](auto){return rclcpp_action::CancelResponse::ACCEPT;},[this](auto h){++plan_requests;if(stall_plan||(stall_after_failures&&plan_failures==0)){stalled_plan=h;return;}auto result=std::make_shared<Plan::Result>();if(plan_failures){--plan_failures;h->abort(result);return;}result->path.header.frame_id="map";geometry_msgs::msg::PoseStamped start;start.pose.orientation.w=1;start.pose.position.x=pose_x;start.pose.position.y=pose_y;result->path.poses={start,h->get_goal()->goal};h->succeed(result);});
     proxy=rclcpp_action::create_client<Nav>(n,"/mapping/explore_navigate_to_pose");
     if(delay_initial_odometry)odom_feed_after=n->now().seconds()+1.5;
     timer=n->create_wall_timer(std::chrono::milliseconds(50),[this]{feed();});
-    char executable[]=AUTONOMY_EXE;
+    std::string executable_path=std::getenv("CARCAR_RETURN_BASELINE_EXE")?std::getenv("CARCAR_RETURN_BASELINE_EXE"):AUTONOMY_EXE;
+    char* executable=executable_path.data();
     char ros_args[]="--ros-args",parameter[]="-p";
     char mode_manual[]="control_mode:=manual",mode_automatic[]="control_mode:=automatic";
     char recovery_on[]="recovery_enabled:=true",recovery_off[]="recovery_enabled:=false";
     char continuous_on[]="continuous_exploration:=true",continuous_off[]="continuous_exploration:=false";
     char snapshot_on[]="online_snapshots:=true",snapshot_off[]="online_snapshots:=false";
-    char* args[]={executable,ros_args,parameter,automatic_on_boot?mode_automatic:mode_manual,parameter,recovery_mode?recovery_on:recovery_off,parameter,continuous_mode?continuous_on:continuous_off,parameter,online_snapshot_mode?snapshot_on:snapshot_off,nullptr};
+    std::string snapshot_interval="snapshot_interval_seconds:="+std::to_string(snapshot_interval_seconds);
+    char selection_fast[]="selection_stall_seconds:=1.0",selection_normal[]="selection_stall_seconds:=15.0";
+    char restricted_on[]="restricted_manual_enabled:=true",restricted_off[]="restricted_manual_enabled:=false";
+    char* args[]={executable,ros_args,parameter,automatic_on_boot?mode_automatic:mode_manual,parameter,recovery_mode?recovery_on:recovery_off,parameter,continuous_mode?continuous_on:continuous_off,parameter,online_snapshot_mode?snapshot_on:snapshot_off,parameter,snapshot_interval.data(),parameter,fast_selection_timeout?selection_fast:selection_normal,parameter,restricted_manual_enabled?restricted_on:restricted_off,nullptr};
     ASSERT_EQ(posix_spawn(&pid,executable,nullptr,nullptr,args,environ),0);
     ASSERT_TRUE(until([this]{return state.value("healthy",false)&&state.value("still",false);},8))<<state.dump();
   }
@@ -142,9 +156,16 @@ protected:
   void feed(){
     const auto now=n->now();
     geometry_msgs::msg::TransformStamped t;t.header.stamp=now;t.header.frame_id="map";t.child_frame_id="odom";t.transform.rotation.w=1;tf->sendTransform(t);t.header.frame_id="odom";t.child_frame_id="base_footprint";t.transform.translation.x=odom_x;t.transform.translation.y=odom_y;tf->sendTransform(t);
-    sensor_msgs::msg::LaserScan s;s.header.stamp=now;s.header.frame_id="laser_frame";s.angle_min=-M_PI;s.angle_increment=2*M_PI/360;s.angle_max=M_PI;s.range_min=.05;s.range_max=12;s.ranges.assign(360,2.0);if(feed_scan){scan->publish(s);filtered->publish(s);}
-    nav_msgs::msg::Odometry o;o.header.stamp=now;o.header.frame_id="odom";o.child_frame_id="base_footprint";o.pose.pose.orientation.w=1;o.pose.pose.position.x=odom_x;o.pose.pose.position.y=odom_y;if(now.seconds()>=odom_feed_after)odom->publish(o);
+    sensor_msgs::msg::LaserScan s;s.header.stamp=now;s.header.frame_id="laser_frame";s.angle_min=-M_PI;s.angle_increment=2*M_PI/360;s.angle_max=M_PI;s.range_min=.05;s.range_max=12;s.ranges.assign(360,2.0);if(near_obstacle){s.ranges[180]=.1;s.ranges[181]=.1;}if(feed_scan){scan->publish(s);filtered->publish(s);}
+    nav_msgs::msg::Odometry o;o.header.stamp=now;o.header.frame_id="odom";o.child_frame_id="base_footprint";o.twist.twist.linear.y=sideways_speed;o.pose.pose.orientation.w=1;o.pose.pose.position.x=odom_x;o.pose.pose.position.y=odom_y;if(now.seconds()>=odom_feed_after)odom->publish(o);
+    if(base_diagnostics){diagnostic_msgs::msg::DiagnosticArray d;d.header.stamp=now;
+      diagnostic_msgs::msg::DiagnosticStatus status;status.name="carcar/rosmaster";status.level=0;
+      diagnostic_msgs::msg::KeyValue value;value.key="wheel_odometry_status";value.value="encoder_odometry_active";status.values.push_back(value);
+      d.status.push_back(status);base_diagnostics->publish(d);}
     nav_msgs::msg::OccupancyGrid m;m.header.frame_id="map";m.header.stamp=now;m.info.resolution=.05;m.info.width=grid_width;m.info.height=100;m.info.origin.position.x=grid_origin;m.info.origin.position.y=-2.5;m.info.origin.orientation.w=1;m.data.assign(grid_width*100,0);if(unknown_start)m.data[50*grid_width+53]=-1;if(block_route)m.data[50*grid_width+58]=100;
+    if(origin_obstacle)m.data[50*grid_width+50]=100;
+    if(fill_return_neighborhood)for(int y=0;y<100;++y)for(int x=0;x<grid_width;++x)
+      if(std::hypot(grid_origin+(x+.5)*.05,-2.5+(y+.5)*.05)<.95)m.data[y*grid_width+x]=100;
     if(block_distant)m.data[80*grid_width+80]=100;
     if(observation_wall)for(int y=0;y<100;++y){m.data[y*grid_width+63]=100;for(int x=64;x<grid_width;++x)m.data[y*grid_width+x]=-1;}
     // 激光可穿过0.35米门缝，0.22米圆包络及规划余量不能通过。
@@ -161,13 +182,18 @@ protected:
     geometry_msgs::msg::PoseWithCovarianceStamped p;p.header.frame_id="map";p.header.stamp=now;p.pose.pose.orientation.w=1;p.pose.pose.position.x=pose_x;p.pose.pose.position.y=pose_y;if(feed_pose)pose->publish(p);
     if(!freeze_nav_pose)nav_pose_stamp=now;
     geometry_msgs::msg::PolygonStamped fp;fp.header.stamp=nav_pose_stamp;fp.polygon.points.resize(4);fp.header.frame_id="odom";local_pose->publish(fp);fp.header.frame_id="map";global_pose->publish(fp);
-    std_msgs::msg::String j;j.data=Json{{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"loop_generation",loop_generation},{"loop_active",loop_active}}.dump();slam->publish(j);j.data="{\"ready\":true}";ready->publish(j);
+    std_msgs::msg::String j;j.data=Json{{"admission_enabled",force_slam_admission_open||!recovery_state.value("gate_write",false)},{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"startup_closed",slam_startup_closed},{"loop_generation",loop_generation},{"loop_active",loop_active},{"loop_guard",{{"rejections",loop_rejections},{"rolled_back",loop_rejections>0}}}}.dump();slam->publish(j);j.data=Json{{"ready",session_ready},{"storage",{{"start_allowed",storage_ready},{"reason",storage_ready?"":"磁盘余量不足2 GiB"}}}}.dump();if(publish_session)ready->publish(j);
     if(recovery_pub&&!task_id.empty()){recovery_state["task_id"]=task_id;j.data=recovery_state.dump();recovery_pub->publish(j);}
     geometry_msgs::msg::Twist v;v.linear.x=.06;nav_velocity->publish(v);
     if(active&&active->is_canceling()&&ack_cancel){active->canceled(std::make_shared<Nav::Result>());active.reset();}
-    else if(active&&succeed_return&&std::abs(active->get_goal()->pose.pose.position.x)<.01){active->succeed(std::make_shared<Nav::Result>());active.reset();}
+    else if(active&&((succeed_return&&std::abs(active->get_goal()->pose.pose.position.x)<.01)||succeed_any_return)){
+      if(!fake_return_success){pose_x=odom_x=active->get_goal()->pose.pose.position.x;pose_y=odom_y=active->get_goal()->pose.pose.position.y;}
+      active->succeed(std::make_shared<Nav::Result>());active.reset();}
   }
-  void request(const std::string&a,const std::string&id){std_msgs::msg::String m;m.data=Json{{"task_id",task_id},{"request_id",id},{"action",a}}.dump();command->publish(m);}
+  void request(const std::string&a,const std::string&id,Json extra=Json::object()){
+    extra.update({{"task_id",task_id},{"request_id",id},{"action",a}});
+    std_msgs::msg::String m;m.data=extra.dump();command->publish(m);
+  }
   void start_goal(){request("start","start");
 ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));
 ASSERT_TRUE(proxy->wait_for_action_server(std::chrono::seconds(2)));Nav::Goal g;g.pose.header.frame_id="map";g.pose.pose.position.x=.7;g.pose.pose.orientation.w=1;
@@ -212,17 +238,17 @@ TEST_F(SupervisorIntegration, ExplorationEndHeadingFollowsApproachRatherThanFixe
 }
 TEST_F(SupervisorIntegration, ReturnReobservesAndRetriesBeforeSavingOnTransientPlanningFailure){
  request("start","return-start");ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));
- plan_failures=1;succeed_return=true;request("finish","return-retry");
+ plan_failures=1;succeed_any_return=true;request("finish","return-retry");
  ASSERT_TRUE(until([this]{return state.value("return_retries",0)==1;},2));
  EXPECT_EQ(nav_requests,0U);EXPECT_DOUBLE_EQ(last_velocity,0);
- ASSERT_TRUE(until([this]{return state.value("return_result","")=="succeeded";},5))<<state.dump();
+ ASSERT_TRUE(until([this]{return state.value("return_result","")=="nearby";},5))<<state.dump();
  EXPECT_EQ(plan_requests,2U);EXPECT_EQ(nav_requests,1U);
 }
 TEST_F(SupervisorIntegration, PersistentReturnObstructionStopsAfterBoundedRechecks){
  request("start","blocked-return-start");ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));
- plan_failures=10;request("finish","blocked-return");
- ASSERT_TRUE(until([this]{return state.value("return_result","")=="failed";},7))<<state.dump();
- EXPECT_EQ(plan_requests,3U);EXPECT_EQ(nav_requests,0U);EXPECT_DOUBLE_EQ(last_velocity,0);
+ plan_failures=100;request("finish","blocked-return");
+ ASSERT_TRUE(until([this]{return state.value("return_result","")=="failed";},12))<<state.dump();
+ EXPECT_EQ(plan_requests,12U);EXPECT_EQ(nav_requests,0U);EXPECT_DOUBLE_EQ(last_velocity,0);
  EXPECT_TRUE(state.value("save_required",false));
 }
 TEST_F(RecoverySupervisorIntegration, RecoveryCannotResumeBeforeGeometryAndCommitAndKeepsTaskOrigin){
@@ -233,6 +259,10 @@ TEST_F(RecoverySupervisorIntegration, RecoveryCannotResumeBeforeGeometryAndCommi
  ASSERT_TRUE(until([this]{return std::find(recovery_actions.begin(),recovery_actions.end(),"recover")!=recovery_actions.end();},1));
  until([]{return false;},.3);EXPECT_EQ(state["phase"],"RECOVERING");EXPECT_EQ(nav_requests,1U);
  recovery_state["phase"]="VERIFY_READY";
+ recovery_state["commit_ready"]=false;
+ until([]{return false;},1.3);EXPECT_EQ(state["phase"],"RECOVERING");
+ EXPECT_EQ(std::find(recovery_actions.begin(),recovery_actions.end(),"commit_verified"),recovery_actions.end());
+ recovery_state["commit_ready"]=true;
  ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},5))<<state.dump();
  EXPECT_EQ(state["origin"],origin);EXPECT_GT(state.value("generation",uint64_t{0}),generation);
  EXPECT_EQ(nav_requests,1U)<<"旧目标不得在恢复提交后重放";
@@ -314,6 +344,7 @@ EXPECT_FALSE(state.value("save_required",true));
 EXPECT_EQ(state["elapsed_seconds"],0);
 EXPECT_NE(state.value("error","").find("当前车位"),std::string::npos);
 EXPECT_NE(state.value("error","").find("未知"),std::string::npos);
+EXPECT_NE(state.value("error","").find("并非检测到障碍"),std::string::npos);
 EXPECT_DOUBLE_EQ(last_velocity,0);EXPECT_EQ(nonzero,0U);EXPECT_FALSE(active);
 unknown_start=false;until([]{return false;},.3);
 request("start","clear-start");
@@ -402,6 +433,20 @@ TEST_F(SupervisorIntegration, NavigationFailureDoesNotPublishCandidateRejection)
 }
 class OccludedFrontier:public SupervisorIntegration {void SetUp()override{observation_wall=true;SupervisorIntegration::SetUp();}};
 class DisconnectedFrontier:public SupervisorIntegration {void SetUp()override{narrow_door=true;SupervisorIntegration::SetUp();}};
+class StalledSelection:public SupervisorIntegration {void SetUp()override{narrow_door=true;fast_selection_timeout=true;SupervisorIntegration::SetUp();}};
+TEST_F(StalledSelection, RejectedSelectionEventuallyPausesWithoutClaimingCompletionOrMoving) {
+ request("start","stalled-selection");ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));
+ ASSERT_TRUE(proxy->wait_for_action_server(std::chrono::seconds(2)));
+ Nav::Goal g;g.pose.header.frame_id="map";g.pose.pose.position.x=1.5;g.pose.pose.orientation.w=1;
+ auto sent=proxy->async_send_goal(g);ASSERT_TRUE(until([&]{return sent.wait_for(std::chrono::seconds(0))==std::future_status::ready;},2));
+ ASSERT_TRUE(sent.get());auto result=proxy->async_get_result(sent.get());
+ ASSERT_TRUE(until([&]{return result.wait_for(std::chrono::seconds(0))==std::future_status::ready;},2));
+ ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},3))<<state.dump();
+ EXPECT_EQ(nav_requests,0U);EXPECT_EQ(nonzero,0U);EXPECT_TRUE(state.value("still",false));
+ EXPECT_EQ(state.value("outcome",std::string()),"");
+ EXPECT_NE(state.value("reason",std::string()).find("没有可执行目标"),std::string::npos);
+ EXPECT_EQ(state["exploration_wait"]["phase"],"PAUSED");
+}
 TEST_F(DisconnectedFrontier, DisconnectedObservationIsRejectedBeforePlanner){
  request("start","disconnected-start");ASSERT_TRUE(until([this]{return state.value("phase","")=="EXPLORING";},3));
  ASSERT_TRUE(proxy->wait_for_action_server(std::chrono::seconds(2)));Nav::Goal g;g.pose.header.frame_id="map";g.pose.pose.position.x=1.5;g.pose.pose.orientation.w=1;
@@ -499,6 +544,18 @@ TEST_F(SupervisorIntegration, LoopHoldsUntilClosureEndsAndNewMapArrives){
  EXPECT_EQ(nav_requests,1U);EXPECT_TRUE(state.value("loop_waiting_map",false));
  feed_map=true;ASSERT_TRUE(until([this]{return nav_requests==2;},3));
  EXPECT_DOUBLE_EQ(nav_targets[0],nav_targets[1]);
+}
+
+TEST_F(SupervisorIntegration, RequestResultsRemainAvailableAfterAnotherDeviceStops){
+ start_goal();request("pause","desktop-pause");request("halt","phone-stop");
+ ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},3));
+ ASSERT_TRUE(until([this]{return state.value("request_results",Json::array()).size()>=3;},2));
+ const auto results=state["request_results"];
+ for(const auto&id:{"desktop-pause","phone-stop"}){
+  const auto found=std::find_if(results.begin(),results.end(),[&](const auto&r){return r.value("request_id","")==id;});
+  ASSERT_NE(found,results.end());EXPECT_EQ((*found)["request_result"],"accepted");
+ }
+ EXPECT_EQ(last_velocity,0);
 }
 
 #endif

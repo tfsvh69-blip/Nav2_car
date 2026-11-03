@@ -7,6 +7,7 @@
 #include "carcar_mapping_autonomy/rasterization.hpp"
 #include "carcar_mapping_autonomy/recovery_core.hpp"
 #include "carcar_mapping_autonomy/loop_guard.hpp"
+#include "carcar_mapping_autonomy/frozen_scan_validation.hpp"
 #include "carcar_mapping_autonomy/recovery_artifact.hpp"
 using Json=nlohmann::json;
 namespace ca=carcar_mapping_autonomy;
@@ -55,13 +56,15 @@ int main(int argc,char**argv){
   for(const auto&group:mapper.GetGraph()->GetVertices())for(const auto&entry:group.second)if(entry.second)solver->AddNode(entry.second);
   for(auto*edge:mapper.GetGraph()->GetEdges())if(edge)solver->AddConstraint(edge);
   mapper.SetScanSolver(solver.get());if(mode=="no-loop")mapper.setParamDoLoopClosing(false);
-  Listener listener(mapper);if(mode=="guard")listener.solver=solver.get();mapper.AddListener(&listener);
+  Listener listener(mapper);if(mode=="guard"||mode=="restore-guard")listener.solver=solver.get();mapper.AddListener(&listener);
   std::ifstream file(argv[3]);const auto inputs=Json::parse(file);int last=-1;for(auto*s:mapper.GetAllProcessedScans())last=std::max(last,s->GetUniqueId());
   for(const auto&j:inputs){if(j["id"].get<int>()<=last)continue;
     karto::RangeReadingsVector ranges;for(const auto&v:j["ranges"])ranges.push_back(v.is_null()?NAN:v.get<double>());
     auto*scan=new karto::LocalizedRangeScan(karto::Name(j["sensor"].get<std::string>()),ranges);scan->SetTime(j["time"]);
-    const auto&p=j["odom"];scan->SetOdometricPose(karto::Pose2(p[0],p[1],p[2]));scan->SetCorrectedPose(scan->GetOdometricPose());listener.current=scan;
-    if(mapper.Process(scan)){dataset.Add(scan);std::cout<<Json{{"id",scan->GetUniqueId()},{"pose",pose(scan->GetCorrectedPose())},{"geometry",score(mapper,scan)}}<<std::endl;}else delete scan;
+    const auto&p=j.value("initial_pose",j["odom"]);scan->SetOdometricPose(karto::Pose2(p[0],p[1],p[2]));scan->SetCorrectedPose(scan->GetOdometricPose());listener.current=scan;
+    ca::FrozenScanValidation frozen(&mapper,mode=="restore-validation");
+    const bool processed=mode.rfind("restore-",0)==0?mapper.ProcessAgainstNodesNearBy(scan,false):mapper.Process(scan);
+    if(processed){dataset.Add(scan);std::cout<<Json{{"id",scan->GetUniqueId()},{"pose",pose(scan->GetCorrectedPose())},{"geometry",score(mapper,scan)}}<<std::endl;}else delete scan;
   }
   mapper.RemoveListener(&listener);
   if(argc>4){

@@ -1,0 +1,5 @@
+<library path="carcar_mapping_rotation_shim">
+  <class type="carcar_mapping_autonomy::MappingRotationShim" base_class_type="nav2_core::Controller">
+    <description>Humble Rotation Shim短路径适配；底层路径跟踪使用RPP。</description>
+  </class>
+</library>

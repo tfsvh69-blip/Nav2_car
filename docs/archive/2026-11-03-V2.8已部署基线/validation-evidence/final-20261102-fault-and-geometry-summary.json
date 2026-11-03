@@ -1,0 +1,70 @@
+{
+  "cpp_tests": 137,
+  "failures": 0,
+  "suites": [
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_observation_selector.gtest.xml",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.044
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_operator_recovery.gtest.xml",
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 81.912
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_retreat_planner.gtest.xml",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.018
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_manual_motion.gtest.xml",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.003
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_auto_motion.gtest.xml",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.001
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_loop_guard.gtest.xml",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.058
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_console/test_results/carcar_mapping_console/test_mapping_logic.gtest.xml",
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.004
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_console/test_results/carcar_mapping_console/test_shared_operations.gtest.xml",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 0.001
+    },
+    {
+      "file": "/home/jetson/luhao/my_nav_carcar_stability_20261102/build/carcar_mapping_console/test_results/carcar_mapping_console/test_mapping_integration.gtest.xml",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "time_s": 154.211
+    }
+  ],
+  "js_groups_passed": 2
+}

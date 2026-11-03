@@ -228,3 +228,12 @@ TEST(Bundle, IncompleteCannotResume) {
   std::ofstream(root/"partial/manifest.json")<<json{{"complete",false}}.dump();
   EXPECT_THROW(validate_bundle(root,"partial"),std::exception); std::filesystem::remove_all(root);
 }
+TEST(Safety, RestrictedSessionCannotRaiseSpeedAndTransitionRevokesOldPress){
+  auto s=ready();s.require_video=false;s.change_gear("fast");
+  s.session_state(false,true,true);EXPECT_EQ(s.gear,"slow");EXPECT_FALSE(s.armed);
+  s.change_gear("fast");EXPECT_EQ(s.gear,"slow");
+  ASSERT_TRUE(s.enable("operator","",10.01));ASSERT_TRUE(s.drive("operator",1,"token",1,0,"",10.02));
+  EXPECT_DOUBLE_EQ(s.tick(10.03).x,.05);
+  s.session_state(true,true,false);EXPECT_DOUBLE_EQ(s.tick(10.04).x,0);EXPECT_FALSE(s.armed);
+  s.session_state(true,false,false);EXPECT_DOUBLE_EQ(s.tick(10.05).x,0);EXPECT_FALSE(s.armed);
+}

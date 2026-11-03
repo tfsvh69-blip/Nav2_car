@@ -1,3 +1,4 @@
+#include <mutex>
 /*********************************************************************
  *
  * Software License Agreement (BSD License)
@@ -37,6 +38,7 @@
  *********************************************************************/
 
 #include <explore/explore.h>
+#include <array>
 
 #include <thread>
 #include <tf2/utils.h>
@@ -74,10 +76,26 @@ Explore::Explore()
   this->get_parameter("return_to_init", return_to_init_);
   this->get_parameter("robot_base_frame", robot_base_frame_);
 
+  path_aware_ranking_=declare_parameter("path_aware_ranking",false);
+  if(path_aware_ranking_){
+    rank_requests_=create_publisher<std_msgs::msg::String>("/mapping/exploration/rank_request",10);
+    autonomy_state_=create_subscription<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local(),
+      [this](const std_msgs::msg::String&m){try{autonomy_=nlohmann::json::parse(m.data);}catch(...){}});
+    rank_results_=create_subscription<std_msgs::msg::String>("/mapping/exploration/rank_result",10,
+      [this](const std_msgs::msg::String&m){try{const auto result=nlohmann::json::parse(m.data);
+        if(rank_pending_&&!stopped_&&!goal_active_&&result.value("request_id",std::string())==rank_request_id_&&
+           result.value("task_id",std::string())==autonomy_.value("task_id",std::string())&&
+           result.value("generation",uint64_t{})==autonomy_.value("generation",uint64_t{})&&
+           result.value("navigation_generation",uint64_t{})==navigation_generation_)rank_reply_=result;
+      }catch(...){}});
+  }
   progress_timeout_ = timeout;
   progress_epsilon_=declare_parameter<double>("progress_epsilon",.10);
   goal_memory_.radius=declare_parameter<double>("region_radius",.40);
   goal_memory_.cooldown=declare_parameter<double>("region_cooldown",60.0);
+  rank_frontier_memory_.radius=goal_memory_.radius;
+  rank_frontier_memory_.cooldown=goal_memory_.cooldown;
+
   if(!(std::isfinite(planner_frequency_)&&planner_frequency_>0&&planner_frequency_<=100&&
        std::isfinite(progress_timeout_)&&progress_timeout_>0&&std::isfinite(progress_epsilon_)&&progress_epsilon_>0&&
        std::isfinite(goal_memory_.radius)&&goal_memory_.radius>0&&std::isfinite(goal_memory_.cooldown)&&goal_memory_.cooldown>0&&
@@ -86,7 +104,9 @@ Explore::Explore()
   if(!generation_topic.empty())navigation_generation_sub_=create_subscription<std_msgs::msg::UInt64>(
     generation_topic,rclcpp::QoS(1).reliable().transient_local(),[this](const std_msgs::msg::UInt64&m){
       if(m.data==navigation_generation_)return;
-      navigation_generation_=m.data;goal_memory_.clear();direction_.clear();waiting_success_map_=false;
+      navigation_generation_=m.data;goal_memory_.clear();rank_frontier_memory_.clear();direction_.clear();waiting_success_map_=false;
+      rank_pending_=false;rank_request_id_.clear();rank_reply_=nlohmann::json::object();rank_visits_=nlohmann::json::array();
+      ranked_frontier_valid_=false;frontier_observed_cancel_=false;frontier_absent_updates_=0;frontier_observation_disabled_=false;
       RCLCPP_INFO(logger_,"地图坐标增代 generation=%lu；清理旧坐标中的区域和方向记忆",navigation_generation_);
     });
   // 显式接口参数避免Humble中action内部服务/话题重映射差异绕过监督器。
@@ -247,7 +267,30 @@ void Explore::visualizeFrontiers(
 void Explore::makePlan()
 {
   if (stopped_) return;
+  if(path_aware_ranking_&&rankPending())return;
   if(goal_active_){
+    // 有效目标继续保持；仅在原前沿邻域已被连续新图看清后取消过时的观测行程。
+    // 沿用已有 action 取消和终态屏障，绝不在取消尚未完成时重发目标。
+    if(navigation_goal_handle_&&!timeout_cancel_&&!frontier_observed_cancel_&&
+       dispatch_navigation_generation_==navigation_generation_&&activeFrontierObserved()){
+      frontier_observed_cancel_=true;
+      RCLCPP_INFO(logger_,"探索目标 goal_id=%s event=frontier_observed reason=%s；有效前沿已由连续新地图确认消失，取消剩余行程并等待终态",
+        rclcpp_action::to_string(active_goal_id_).c_str(),global_frontiers_observed_?"global_frontiers_empty":"source_frontier_observed");
+      const auto dispatch=dispatch_generation_;
+      try{
+        move_base_client_->async_cancel_goal(navigation_goal_handle_,[this,dispatch](auto response){
+          if(stopped_||!goal_active_||dispatch!=dispatch_generation_||!frontier_observed_cancel_)return;
+          if(!response||response->return_code!=response->ERROR_NONE||response->goals_canceling.empty()){
+            frontier_observed_cancel_=false;ranked_frontier_valid_=false;frontier_observation_disabled_=true;
+            RCLCPP_WARN(logger_,"原前沿已观测但导航取消未获接受；保留原进展超时及当前目标，不重发目标");
+          }
+        });
+      }catch(const std::exception&e){
+        frontier_observed_cancel_=false;ranked_frontier_valid_=false;frontier_observation_disabled_=true;
+        RCLCPP_WARN(logger_,"原前沿观测取消异常：%s；保留原进展超时，不重发目标",e.what());
+      }
+    }
+    // 取消失去响应时仍保留原进展期限；不能用观测完成状态关闭原有无进展保护。
     // 只跟踪已发送目标的真实导航反馈；候选前沿变化不得刷新进展计时。
     if(!timeout_cancel_&&(this->now()-last_progress_).seconds()>progress_timeout_){
       timeout_cancel_=true;
@@ -261,13 +304,14 @@ void Explore::makePlan()
     if(costmap_client_.mapSequence()<=success_map_sequence_)return;
     waiting_success_map_=false;
   }
-  const auto pose=costmap_client_.getRobotPose();
+  geometry_msgs::msg::Pose pose;std::vector<frontier_exploration::Frontier> frontiers;
+  if(!searchValidFrontiers(pose,frontiers))return;
   const double yaw=tf2::getYaw(pose.orientation);
-  auto frontiers=search_.searchFrom(pose.position);
   if(frontiers.empty()){
     if(visualize_)visualizeFrontiers(frontiers);
     auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_complete";status_pub_->publish(status);stop(true);return;
   }
+  std::vector<std::pair<double,geometry_msgs::msg::Point>> rank_candidates;
   geometry_msgs::msg::Point target_position;bool found=false;
   double best=std::numeric_limits<double>::infinity();
   for(auto&f:frontiers){
@@ -276,12 +320,26 @@ void Explore::makePlan()
     auto consider=[&](const geometry_msgs::msg::Point&p){
       const auto d=std::hypot(p.x-pose.position.x,p.y-pose.position.y);
       const auto cost=d+direction_.penalty(pose.position,yaw,p,orientation_scale_);
-      if(d>.25&&cost<nearest&&!goalOnBlacklist(p)){nearest=cost;candidate=p;}
+      if(d>.25&&cost<nearest&&!frontierOnBlacklist(p)){nearest=cost;candidate=p;}
     };
     consider(f.middle);
     for(const auto&p:f.points)consider(p);
     if(!std::isfinite(nearest))continue;
     f.cost+=direction_.penalty(pose.position,yaw,candidate,orientation_scale_);
+    if(path_aware_ranking_){
+      // 同一连通前沿也可能绕过多个墙角；按方位保留分散代表，不能只试最近一个点。
+      std::array<double,8>sector_distance;sector_distance.fill(std::numeric_limits<double>::infinity());
+      std::array<geometry_msgs::msg::Point,8>sector_points;
+      for(const auto&p:f.points){
+        const double d=std::hypot(p.x-pose.position.x,p.y-pose.position.y);
+        if(d<=.25||frontierOnBlacklist(p))continue;
+        const double angle=std::atan2(p.y-pose.position.y,p.x-pose.position.x);
+        const size_t sector=std::min<size_t>(7,size_t((angle+M_PI)/(M_PI/4)));
+        if(d<sector_distance[sector]){sector_distance[sector]=d;sector_points[sector]=p;}
+      }
+      for(size_t i=0;i<8;++i)if(std::isfinite(sector_distance[i]))rank_candidates.emplace_back(
+        f.cost+sector_distance[i]+direction_.penalty(pose.position,yaw,sector_points[i],orientation_scale_),sector_points[i]);
+    }else rank_candidates.emplace_back(f.cost,candidate);
     if(f.cost<best){best=f.cost;target_position=candidate;found=true;}
   }
   std::stable_sort(frontiers.begin(),frontiers.end(),[](const auto&a,const auto&b){return a.cost<b.cost;});
@@ -290,6 +348,21 @@ void Explore::makePlan()
     auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_waiting_candidates";status_pub_->publish(status);
     RCLCPP_INFO_THROTTLE(logger_,*get_clock(),5000,"前沿仍存在，但观测候选正在暂避或过近；保持未完成，等待地图及冷却");return;
   }
+  if(path_aware_ranking_){
+    std::stable_sort(rank_candidates.begin(),rank_candidates.end(),[](const auto&a,const auto&b){return a.first<b.first;});
+    std::vector<geometry_msgs::msg::Point> candidates;
+    for(const auto&entry:rank_candidates){
+      if(candidates.size()==8)break;
+      if(std::none_of(candidates.begin(),candidates.end(),[&](const auto&p){return std::hypot(p.x-entry.second.x,p.y-entry.second.y)<.40;}))candidates.push_back(entry.second);
+    }
+    requestRanking(candidates);return;
+  }
+  dispatchGoal(pose,target_position);
+}
+
+void Explore::dispatchGoal(const geometry_msgs::msg::Pose&pose,const geometry_msgs::msg::Point&target_position){
+  ranked_frontier_valid_=false;frontier_observed_cancel_=false;frontier_absent_updates_=0;frontier_observation_disabled_=false;
+  frontier_map_sequence_=costmap_client_.mapSequence();
   last_failed_goal_.clear();
   prev_goal_=target_position;dispatch_start_=pose.position;dispatch_navigation_generation_=navigation_generation_;
   last_progress_=this->now();feedback_seen_=false;timeout_cancel_=false;
@@ -312,7 +385,7 @@ void Explore::makePlan()
         if (!goal_handle) {
           RCLCPP_ERROR(logger_, "Goal was REJECTED by the action server");
           goal_active_ = false;
-          goal_memory_.record(prev_goal_,false,this->now().seconds());
+          if(dispatch_navigation_generation_==navigation_generation_)goal_memory_.record(prev_goal_,false,this->now().seconds());
         } else {
           navigation_goal_handle_ = goal_handle;
           active_goal_id_ = goal_handle->get_goal_id();
@@ -336,6 +409,101 @@ void Explore::makePlan()
         reachedGoal(result, target_position);
       };
   move_base_client_->async_send_goal(goal, send_goal_options);
+}
+
+void Explore::requestRanking(const std::vector<geometry_msgs::msg::Point>&candidates){
+  if(candidates.empty()||autonomy_.value("task_id",std::string()).empty())return;
+  rank_request_id_=autonomy_.value("task_id",std::string())+"-rank-"+std::to_string(++rank_sequence_);
+  rank_pending_=true;rank_started_=this->now().seconds();rank_reply_=nlohmann::json::object();
+  auto points=nlohmann::json::array();for(const auto&p:candidates)points.push_back({p.x,p.y});
+  auto blocked=nlohmann::json::array();
+  for(const auto&region:goal_memory_.blocked_regions(this->now().seconds()))
+    blocked.push_back({{"center",{region.point.x,region.point.y}},{"radius",region.radius},
+      {"until",region.until},{"kind",region.visited?"visited_observation":"failed_observation"}});
+
+  std_msgs::msg::String request;request.data=nlohmann::json{{"request_id",rank_request_id_},
+    {"task_id",autonomy_.value("task_id",std::string())},{"generation",autonomy_.value("generation",uint64_t{})},
+    {"navigation_generation",navigation_generation_},{"candidates",points},{"visits",rank_visits_},{"blocked_observations",blocked}}.dump();rank_requests_->publish(request);
+}
+bool Explore::rankPending(){
+  if(!rank_pending_)return false;
+  if(!rank_reply_.empty()){
+    rank_pending_=false;const auto result=std::move(rank_reply_);rank_reply_=nlohmann::json::object();
+    if(result.value("task_id",std::string())!=autonomy_.value("task_id",std::string())||
+       result.value("generation",uint64_t{})!=autonomy_.value("generation",uint64_t{})||
+       result.value("navigation_generation",uint64_t{})!=navigation_generation_)return true;
+    if(result.contains("rejected")&&result["rejected"].is_array())for(const auto&candidate:result["rejected"]){
+      try{geometry_msgs::msg::Point rejected;rejected.x=candidate.at("frontier").at(0);rejected.y=candidate.at("frontier").at(1);
+        if(std::isfinite(rejected.x)&&std::isfinite(rejected.y))rank_frontier_memory_.record(rejected,false,this->now().seconds());
+      }catch(const std::exception&){}
+    }
+    const auto pose=costmap_client_.getRobotPose();
+    if(result.contains("candidates")&&result["candidates"].is_array())for(const auto&candidate:result["candidates"]){
+      try{geometry_msgs::msg::Point target;const auto point=candidate.value("observation",candidate.at("frontier"));target.x=point.at(0);target.y=point.at(1);
+        if(!std::isfinite(target.x)||!std::isfinite(target.y)||goalOnBlacklist(target))continue;
+        RCLCPP_INFO(logger_,"探索路径排序 request_id=%s 路程=%.3fm 新增可见未知=%.3fm²；沿用固定目标和取消协议",
+          rank_request_id_.c_str(),candidate.value("path_m",0.),candidate.value("gain_m2",0.));
+        const auto source=candidate.at("frontier");
+        geometry_msgs::msg::Point frontier;frontier.x=source.at(0);frontier.y=source.at(1);
+        if(!std::isfinite(frontier.x)||!std::isfinite(frontier.y))continue;
+        dispatchGoal(pose,target);
+        ranked_frontier_=frontier;ranked_frontier_valid_=true;
+        frontier_map_sequence_=costmap_client_.mapSequence();frontier_absent_updates_=0;
+        return true;
+      }catch(const std::exception&){}
+    }
+    auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_waiting_candidates";status_pub_->publish(status);
+    RCLCPP_INFO_THROTTLE(logger_,*get_clock(),5000,"探索排序未得到可执行目标：%s",result.value("reason",std::string()).c_str());return true;
+  }
+  if(this->now().seconds()-rank_started_>6){
+    rank_pending_=false;rank_request_id_.clear();
+    auto status=explore_lite_msgs::msg::ExploreStatus();status.status="exploration_waiting_candidates";status_pub_->publish(status);
+    RCLCPP_WARN(logger_,"探索只读排序超过6秒，丢弃迟到结果；未下发运动目标");
+  }
+  return true;
+}
+
+bool Explore::searchValidFrontiers(geometry_msgs::msg::Pose&pose,std::vector<frontier_exploration::Frontier>&frontiers){
+  bool valid=false;pose=costmap_client_.getRobotPose(&valid);
+  if(!valid||!std::isfinite(pose.position.x)||!std::isfinite(pose.position.y))return false;
+  auto*map=costmap_client_.getCostmap();
+  std::lock_guard<nav2_costmap_2d::Costmap2D::mutex_t> lock(*(map->getMutex()));
+  unsigned mx=0,my=0;
+  if(!map->getSizeInCellsX()||!map->getSizeInCellsY()||!map->getCharMap()||
+     !std::isfinite(map->getResolution())||map->getResolution()<=0||
+     !std::isfinite(map->getOriginX())||!std::isfinite(map->getOriginY())||
+     !map->worldToMap(pose.position.x,pose.position.y,mx,my)||
+     map->getCost(mx,my)!=nav2_costmap_2d::FREE_SPACE)return false;
+  // 与原完成准则共用同一搜索与 min_frontier_size；冷却区域不参与完成判断。
+  frontiers=search_.searchFrom(pose.position);return true;
+}
+bool Explore::activeFrontierObserved(){
+  if(frontier_observation_disabled_)return false;
+  const auto sequence=costmap_client_.mapSequence();
+  if(sequence==frontier_map_sequence_)return false;
+  frontier_map_sequence_=sequence;
+  geometry_msgs::msg::Pose pose;std::vector<frontier_exploration::Frontier> frontiers;
+  if(!searchValidFrontiers(pose,frontiers)){frontier_absent_updates_=0;return false;}
+  const bool global_empty=frontiers.empty();
+  if(!global_empty){
+    if(!path_aware_ranking_||!ranked_frontier_valid_){frontier_absent_updates_=0;return false;}
+    auto*map=costmap_client_.getCostmap();unsigned cx=0,cy=0;
+    if(!map->worldToMap(ranked_frontier_.x,ranked_frontier_.y,cx,cy)){
+      frontier_absent_updates_=0;return false;
+    }
+    auto nearby=[this](const geometry_msgs::msg::Point&p){
+      return std::hypot(p.x-ranked_frontier_.x,p.y-ranked_frontier_.y)<=.40;};
+    // 检查整个合法簇的点（含首格），不是可能随部分观测而偏移的centroid。
+    for(const auto&frontier:frontiers)if(nearby(frontier.initial)||
+        std::any_of(frontier.points.begin(),frontier.points.end(),nearby)){
+      frontier_absent_updates_=0;return false;
+    }
+  }
+  // 三次新地图且跨越至少0.5秒；完成仍需取消终态和后续新图的有效搜索。
+  if(frontier_absent_updates_++==0){
+    frontier_absent_since_=this->now().seconds();global_frontiers_observed_=global_empty;
+  }else global_frontiers_observed_=global_frontiers_observed_&&global_empty;
+  return frontier_absent_updates_>=3&&this->now().seconds()-frontier_absent_since_>=.5;
 }
 
 void Explore::returnToInitialPose()
@@ -364,6 +532,11 @@ void Explore::returnToInitialPose()
       };
   move_base_client_->async_send_goal(goal, send_goal_options);
 }
+bool Explore::frontierOnBlacklist(const geometry_msgs::msg::Point&frontier){
+  // 排序模式的前沿代表点失败只暂避源点，不能连带否决附近已验证安全的观测位置。
+  return (path_aware_ranking_?rank_frontier_memory_:goal_memory_).blocked(frontier,this->now().seconds());
+}
+
 bool Explore::goalOnBlacklist(const geometry_msgs::msg::Point& goal)
 {
   return goal_memory_.blocked(goal,this->now().seconds());
@@ -377,6 +550,8 @@ void Explore::reachedGoal(const NavigationGoalHandle::WrappedResult& result,
   }
 
   goal_active_=false;navigation_goal_handle_.reset();
+  const bool observed_cancel=frontier_observed_cancel_;
+  frontier_observed_cancel_=false;ranked_frontier_valid_=false;
   const bool success=result.code==rclcpp_action::ResultCode::SUCCEEDED;
   const bool failure=result.code==rclcpp_action::ResultCode::ABORTED||timeout_cancel_;
   const bool same_coordinates=dispatch_navigation_generation_==navigation_generation_;
@@ -384,8 +559,16 @@ void Explore::reachedGoal(const NavigationGoalHandle::WrappedResult& result,
   RCLCPP_INFO(logger_,"探索目标 goal_id=%s result=%s reason=%s；保留区域记忆",rclcpp_action::to_string(result.goal_id).c_str(),
     success?"succeeded":(failure?"failed":"canceled"),timeout_cancel_?"配置窗口内无有效路径进展":"导航终态");
   timeout_cancel_=false;
+  if(success&&same_coordinates&&path_aware_ranking_){
+    if(rank_visits_.size()>=64)rank_visits_.erase(rank_visits_.begin());
+    rank_visits_.push_back({{"point",{frontier_goal.x,frontier_goal.y}},{"at",this->now().seconds()}});
+  }
   if(success&&same_coordinates){direction_.succeeded(dispatch_start_,costmap_client_.getRobotPose().position);
     waiting_success_map_=true;success_map_sequence_=costmap_client_.mapSequence();}
+  if(observed_cancel&&!success&&!failure&&same_coordinates){
+    // 取消成功不是到达原目标，不写“成功到点”记忆；只等待终态之后的新图再选点。
+    waiting_success_map_=true;success_map_sequence_=costmap_client_.mapSequence();
+  }
   last_failed_goal_=result.code==rclcpp_action::ResultCode::ABORTED?rclcpp_action::to_string(result.goal_id):"";
   retryRejectedCandidate(last_failed_goal_);
   // 等下次timer；成功还必须等终态之后的新地图，禁止递归重选。
@@ -420,6 +603,8 @@ void Explore::stop(bool finished_exploring)
 
   goal_active_ = false;
   stopped_ = true;
+  rank_pending_=false;rank_request_id_.clear();rank_reply_=nlohmann::json::object();
+  ranked_frontier_valid_=false;frontier_observed_cancel_=false;frontier_absent_updates_=0;frontier_observation_disabled_=false;
   ++dispatch_generation_;
   last_failed_goal_.clear();
   if(candidate_retry_timer_)candidate_retry_timer_->cancel();

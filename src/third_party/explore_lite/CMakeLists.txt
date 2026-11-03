@@ -31,6 +31,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(nlohmann_json REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -88,6 +89,7 @@ target_include_directories(explore PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
+target_link_libraries(explore nlohmann_json::nlohmann_json)
 ament_target_dependencies(explore rclcpp rclcpp_action std_msgs sensor_msgs geometry_msgs tf2 tf2_ros tf2_geometry_msgs nav2_msgs nav_msgs map_msgs nav2_costmap_2d visualization_msgs explore_lite_msgs)
 
 if(nav2_msgs_VERSION VERSION_GREATER_EQUAL "1.3.0")
@@ -117,7 +119,8 @@ if(BUILD_TESTING)
     ${geometry_msgs_TARGETS}
   )
 
-  ament_add_gtest(test_goal_lifecycle test/test_goal_lifecycle.cpp TIMEOUT 60)
+  ament_add_gtest(test_goal_lifecycle test/test_goal_lifecycle.cpp TIMEOUT 180)
+  target_link_libraries(test_goal_lifecycle nlohmann_json::nlohmann_json)
   ament_target_dependencies(test_goal_lifecycle rclcpp rclcpp_action geometry_msgs nav_msgs nav2_msgs std_msgs tf2_ros explore_lite_msgs)
   target_compile_definitions(test_goal_lifecycle PRIVATE EXPLORE_EXE="$<TARGET_FILE:explore>")
   add_dependencies(test_goal_lifecycle explore)

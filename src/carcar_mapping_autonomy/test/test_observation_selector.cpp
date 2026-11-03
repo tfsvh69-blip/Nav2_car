@@ -60,3 +60,25 @@ TEST(ObservationSelector, MapGrowthPreservesWorldSelectionAndWorkerTagsSnapshot)
   for(int i=0;i<500&&!result;++i){std::this_thread::sleep_for(std::chrono::milliseconds(2));result=worker.take();}
   ASSERT_TRUE(result);ASSERT_TRUE(result->target);EXPECT_EQ(result->job.operation,7U);EXPECT_EQ(result->job.revision,2U);
 }
+
+TEST(ObservationSelector, ComfortableCandidateKeepsHardChecksAndAvoidsPullingGoalTowardKnownWall){
+  auto j=doorway(1.2);auto map=std::make_shared<nav_msgs::msg::OccupancyGrid>(*j.map);
+  map->data.assign(10000,0);for(int x=0;x<100;++x)map->data[42*100+x]=100;
+  j.map=map;j.frontier={1,0,0};ObservationSelector::Search search;
+  const auto before=search.select(j);ASSERT_TRUE(before);
+  j.prefer_clearance=true;const auto after=search.select(j);ASSERT_TRUE(after);
+  EXPECT_GT(after->y,before->y+.05);
+  EXPECT_TRUE(planning_footprint(*map,*after));EXPECT_TRUE(observation_visible(*map,*after,j.frontier));
+  EXPECT_LT(std::hypot(after->x-j.frontier.x,after->y-j.frontier.y),.30);
+}
+
+TEST(ObservationSelector, ClearanceRewardIsBoundedAndDoesNotRepelUnknownFrontier){
+  auto j=doorway(1.2);auto map=std::make_shared<nav_msgs::msg::OccupancyGrid>(*j.map);map->data.assign(10000,0);
+  for(int y=0;y<100;++y)for(int x=74;x<100;++x)map->data[y*100+x]=-1;
+  j.map=map;j.frontier={1.2,0,0};ObservationSelector::Search search;
+  auto before=search.select(j);ASSERT_TRUE(before);j.prefer_clearance=true;auto after=search.select(j);ASSERT_TRUE(after);
+  EXPECT_DOUBLE_EQ(before->x,after->x);EXPECT_DOUBLE_EQ(before->y,after->y);
+  // 已有充足净空时，不为继续远离墙而偏离有用观测点。
+  for(int x=0;x<100;++x)map->data[20*100+x]=100;++j.revision;
+  after=search.select(j);ASSERT_TRUE(after);EXPECT_DOUBLE_EQ(before->x,after->x);EXPECT_DOUBLE_EQ(before->y,after->y);
+}

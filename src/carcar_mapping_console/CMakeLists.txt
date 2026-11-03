@@ -111,6 +111,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_mapping_logic nlohmann_json::nlohmann_json OpenSSL::Crypto ${MAP_IO_LIBRARY})
   ament_target_dependencies(test_mapping_logic nav_msgs)
   ament_add_gtest(test_mapping_integration test/test_integration.cpp TIMEOUT 240)
+  # 仅夹具降低编译优化，真实网关和guard仍使用Release构建。
+  target_compile_options(test_mapping_integration PRIVATE -O0)
   target_include_directories(test_mapping_integration PRIVATE include ${OpenCV_INCLUDE_DIRS})
   ament_target_dependencies(test_mapping_integration rclcpp std_msgs sensor_msgs nav_msgs geometry_msgs tf2_ros slam_toolbox)
   target_link_libraries(test_mapping_integration Boost::system Threads::Threads nlohmann_json::nlohmann_json ${OpenCV_LIBS} OpenSSL::Crypto ${MAP_IO_LIBRARY})
@@ -119,6 +121,7 @@ if(BUILD_TESTING)
     NODE_EXE="${NODE_EXE}" BROWSER_PROTOCOL="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_protocol.js"
     BROWSER_TOUCH="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_touch.js"
     BROWSER_MULTI="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_multiclient.js"
+    BROWSER_RECOVERY="${CMAKE_CURRENT_SOURCE_DIR}/test/test_browser_recovery.js"
     BROWSER_CHROME="$<TARGET_FILE:mapping_test_chromium>"
     APP_JS="${CMAKE_CURRENT_SOURCE_DIR}/web/app.js"
     WEB_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/web")

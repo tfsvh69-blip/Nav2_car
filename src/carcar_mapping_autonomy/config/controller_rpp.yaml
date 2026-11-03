@@ -12,12 +12,13 @@ controller_server:
       # 候选前视范围0.20～0.30m，降低门口直角转弯切角；速度及足迹门槛保持。
       use_velocity_scaled_lookahead_dist: true
       lookahead_time: 1.5
-      # 折返段可能再次靠近车位；限制沿路径弧长的最近点搜索，避免跳过未到中间点。
-      # 0.30米沿用已验证的软件候选，不改变前视、到点容差及碰撞检查。
-      max_robot_pose_search_dist: 0.30
       use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.785
-      rotate_to_heading_angular_vel: 0.36
+      # 现场格心衔接时净空余量很小；先对准前视方向，避免带大角差前进切入未知区。
+      # 仅建图使用0.10rad，速度、前视距离与0.22米路径审查保持。
+      rotate_to_heading_min_angle: 0.10
+      # NAV-018-POINT-SMOOTH-001：对准阶段采用0.22rad/s，兼顾响应延迟下的防摆动与短返程30秒进展预算。
+      # 保留0.10rad近边界对准门槛、前进速度档及最终0.36rad/s包络；原0.36对照在测试夹具中保留。
+      rotate_to_heading_angular_vel: 0.22
       # 内部可行速度计算采用Humble默认候选，避免与基于实测速度的限幅重复卡住。
       # 最终velocity_smoother仍限0.80rad/s²及0.36rad/s；R10实车6点及返程验证，仍属实验配置。
       max_angular_accel: 3.20

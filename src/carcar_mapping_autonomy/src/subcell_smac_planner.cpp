@@ -28,24 +28,45 @@ void SubcellSmacPlanner::cleanup() {
   {std::lock_guard<std::mutex> lock(map_mutex_);map_.reset();}
   SmacPlanner2D::cleanup();costmap_ros_.reset();
 }
+// 返回触发时的栅格方框和实际圆包络，网页不把实时障碍层误称为运动中的障碍物。
+static Json blocking_evidence(const nav_msgs::msg::OccupancyGrid&map,
+    const geometry_msgs::msg::PoseStamped&pose,double radius,const std::string&source){
+  Json result={{"source",source},{"frame_id","map"},{"radius_m",radius},
+    {"pose",{pose.pose.position.x,pose.pose.position.y,2*std::atan2(pose.pose.orientation.z,pose.pose.orientation.w)}},
+    {"resolution_m",map.info.resolution},{"cells",Json::array()}};
+  if(!grid_valid(map)||std::abs(grid_yaw(map))>1e-6)return result;
+  const double x=pose.pose.position.x,y=pose.pose.position.y,r=map.info.resolution;
+  const int x0=std::max(0,int(std::floor((x-radius-map.info.origin.position.x)/r))-1);
+  const int x1=std::min(int(map.info.width)-1,int(std::floor((x+radius-map.info.origin.position.x)/r)));
+  const int y0=std::max(0,int(std::floor((y-radius-map.info.origin.position.y)/r))-1);
+  const int y1=std::min(int(map.info.height)-1,int(std::floor((y+radius-map.info.origin.position.y)/r)));
+  for(int cy=y0;cy<=y1;++cy)for(int cx=x0;cx<=x1;++cx){
+    const auto value=map.data[size_t(cy)*map.info.width+cx];if(value>=0&&value<50)continue;
+    const double left=map.info.origin.position.x+cx*r,bottom=map.info.origin.position.y+cy*r;
+    const double dx=x-std::clamp(x,left,left+r),dy=y-std::clamp(y,bottom,bottom+r);
+    if(dx*dx+dy*dy>radius*radius+1e-12)continue;
+    if(result["cells"].size()<32)result["cells"].push_back({{"index",{cx,cy}},{"bounds",{left,bottom,r,r}},{"unknown",value<0}});
+  }
+  return result;
+}
 nav_msgs::msg::Path SubcellSmacPlanner::createPlan(
   const geometry_msgs::msg::PoseStamped &start,const geometry_msgs::msg::PoseStamped &goal) {
+  std::lock_guard<std::mutex> operation(planning_mutex_);blocking_evidence_=Json::object();
   try{return checkedPlan(start,goal);}
   catch(const std::exception&e){
     const std::string reason=e.what();
-    const bool blocked=reason.find("实际车位存在动态障碍")!=std::string::npos||
+    const bool blocked=reason.find("实际车位的圆形检查范围")!=std::string::npos||
       reason.find("实际车位不满足原图")!=std::string::npos;
     std_msgs::msg::String message;
     message.data=Json{{"planner_id",_name},{"goal_stamp_ns",rclcpp::Time(goal.header.stamp).nanoseconds()},
       {"target",{goal.pose.position.x,goal.pose.position.y}},{"code",blocked?"START_BLOCKED":"PLAN_FAILED"},
-      {"reason",reason},{"dynamic_radius_m",dynamic_radius_}}.dump();
+      {"reason",reason},{"dynamic_radius_m",dynamic_radius_},{"blocking",blocking_evidence_}}.dump();
     if(diagnostics_)diagnostics_->publish(message);
     throw;
   }
 }
 nav_msgs::msg::Path SubcellSmacPlanner::checkedPlan(
   const geometry_msgs::msg::PoseStamped &start,const geometry_msgs::msg::PoseStamped &goal) {
-  std::lock_guard<std::mutex> operation(planning_mutex_);
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr map;
   {std::lock_guard<std::mutex> lock(map_mutex_);
     if(!map_||std::chrono::duration<double>(std::chrono::steady_clock::now()-map_at_).count()>10)
@@ -55,7 +76,8 @@ nav_msgs::msg::Path SubcellSmacPlanner::checkedPlan(
   const Pose current{start.pose.position.x,start.pose.position.y,0};
   if(start.header.frame_id!="map"||goal.header.frame_id!="map"||!grid_valid(*map)||
     std::abs(grid_yaw(*map))>1e-6||!free_footprint(*map,current))
-    throw std::runtime_error("规划未执行：实际车位不满足原图0.22米净空；保持停车检查地图与定位");
+    {blocking_evidence_=blocking_evidence(*map,start,.22,"raw_map");
+     throw std::runtime_error("规划未执行：实际车位不满足原图0.22米净空；保持停车检查地图与定位");}
   // 整个检查与Smac搜索共用Nav2的递归代价图锁，不修改任何格值。
   std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> lock(*_costmap->getMutex());
   if(_costmap->getSizeInCellsX()!=map->info.width||_costmap->getSizeInCellsY()!=map->info.height||
@@ -115,8 +137,12 @@ nav_msgs::msg::Path SubcellSmacPlanner::checkedPlan(
     return path;
   }
   // 只处理额外规划余量/取整格心造成的堵塞；真实当前位置不安全时绝不寻找逃逸路径。
-  if(!connector_safe(current,current))
-    throw std::runtime_error("规划未执行：实际车位存在动态障碍，保持停车检查激光与现场");
+  if(!connector_safe(current,current)){
+    for(const auto&obstacle:obstacles)if(!free_footprint(obstacle,current,dynamic_radius_)){
+      blocking_evidence_=blocking_evidence(obstacle,start,dynamic_radius_,"live_obstacle_layer");break;
+    }
+    throw std::runtime_error("规划未执行：实际车位的圆形检查范围与实时激光障碍栅格相交；物体可能是静态的，保持停车并核对触发格与现场");
+  }
   if(planning_footprint(*map,center))
     throw std::runtime_error("规划未执行：起点被实时代价图阻挡，不属于地图离散起点问题");
   auto available=*map;

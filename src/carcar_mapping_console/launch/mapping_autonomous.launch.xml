@@ -6,8 +6,17 @@
   <arg name="explore_seconds" default="2400.0"/>
   <arg name="control_mode" default="manual"/><arg name="task_id" default=""/>
   <arg name="recovery_enabled" default="true"/>
+  <arg name="path_aware_ranking" default="false"/>
+  <arg name="prefer_observation_clearance" default="true"/>
+  <arg name="restricted_manual_enabled" default="true"/>
+  <arg name="auto_execution_sweep" default="true"/>
+  <arg name="obstacle_wait_enabled" default="true"/>
+  <arg name="obstacle_escape_enabled" default="false"/>
+  <arg name="cost_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_clearance.yaml"/>
   <arg name="continuous_exploration" default="false"/>
-  <arg name="online_snapshots" default="false"/>
+  <!-- 普通逐目标探索也维护近期可信图；连续路线保持独立关闭。 -->
+  <arg name="online_snapshots" default="true"/>
+  <arg name="snapshot_interval_seconds" default="10.0"/>
   <arg name="bt_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/nav2_mapping.yaml"/>
   <arg name="checkpoint_root" default="/home/jetson/luhao/my_nav_carcar/log/mapping_recovery"/>
   <arg name="bundle_id" default=""/><arg name="start_gateway" default="true"/>
@@ -16,7 +25,7 @@
   <arg name="lidar_port" default="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
   <arg name="map_root" default="/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps/mapping_sessions"/>
   <arg name="slam_params_file" default="$(find-pkg-share carcar_navigation)/config/slam_toolbox.yaml"/>
-  <arg name="controller_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/controller_rpp.yaml"/>
+  <arg name="controller_params" default="$(find-pkg-share carcar_mapping_autonomy)/config/controller_shim_rpp.yaml"/>
   <arg name="port" default="8080"/>
   <arg name="web_root" default="$(find-pkg-share carcar_mapping_console)/web"/>
   <arg name="record_raw_bag" default="true"/>
@@ -37,6 +46,9 @@
   </node>
   <node pkg="carcar_mapping_autonomy" exec="mapping_slam" name="slam_toolbox" output="screen">
     <param from="$(var slam_params_file)"/><param name="scan_topic" value="/mapping/slam_scan"/><param name="use_map_saver" value="false"/>
+    <!-- 静止首帧加最多12个新扫描；原通行计数、占用和运动接纳门槛不变。 -->
+    <param name="startup_stationary_scans" value="12"/>
+    <param name="startup_stationary_window" value="5.0"/>
     <param name="online_snapshots" value="$(var online_snapshots)"/>
     <param name="snapshot_root" value="$(var checkpoint_root)"/>
   </node>
@@ -45,6 +57,8 @@
   </node>
   <include file="$(find-pkg-share carcar_mapping_autonomy)/launch/navigation.launch.xml">
     <arg name="controller_params" value="$(var controller_params)"/>
+    <arg name="cost_params" value="$(var cost_params)"/>
+    <arg name="obstacle_escape_enabled" value="$(var obstacle_escape_enabled)"/>
     <arg name="bt_params" value="$(var bt_params)"/>
   </include>
   <node pkg="carcar_mapping_autonomy" exec="mapping_autonomy" name="mapping_autonomy" output="screen">
@@ -52,16 +66,27 @@
     <param name="explore_seconds" value="$(var explore_seconds)"/>
     <param name="recovery_enabled" value="$(var recovery_enabled)"/>
     <param name="continuous_exploration" value="$(var continuous_exploration)"/>
+    <param name="fixed_observation_goals" value="$(var path_aware_ranking)"/>
+    <param name="prefer_observation_clearance" value="$(var prefer_observation_clearance)"/>
+    <param name="restricted_manual_enabled" value="$(var restricted_manual_enabled)"/>
+    <param name="auto_execution_sweep" value="$(var auto_execution_sweep)"/>
+    <param name="obstacle_wait_enabled" value="$(var obstacle_wait_enabled)"/>
+    <param name="obstacle_escape_enabled" value="$(var obstacle_escape_enabled)"/>
     <param name="online_snapshots" value="$(var online_snapshots)"/>
     <param name="exploration_behavior_tree" value="$(find-pkg-share carcar_mapping_autonomy)/behavior_trees/navigate_to_pose_exploration.xml"/>
+    <param name="snapshot_interval_seconds" value="$(var snapshot_interval_seconds)"/>
   </node>
   <include if="$(var recovery_enabled)" file="$(find-pkg-share carcar_mapping_autonomy)/launch/recovery.launch.xml">
     <arg name="task_id" value="$(var task_id)"/>
     <arg name="checkpoint_root" value="$(var checkpoint_root)"/>
     <arg name="online_snapshots" value="$(var online_snapshots)"/>
   </include>
+  <node if="$(var path_aware_ranking)" pkg="carcar_mapping_autonomy" exec="mapping_frontier_ranker" name="mapping_frontier_ranker" output="screen">
+    <param name="prefer_observation_clearance" value="$(var prefer_observation_clearance)"/>
+  </node>
   <node pkg="explore_lite" exec="explore" name="explore_node" output="screen">
     <param from="$(find-pkg-share carcar_mapping_autonomy)/config/explore.yaml"/>
+    <param name="path_aware_ranking" value="$(var path_aware_ranking)"/>
   </node>
   <node if="$(var record_raw_bag)" pkg="carcar_navigation" exec="nav_event_logger" name="nav_event_logger" output="screen">
     <param name="record_raw_bag" value="true"/><param name="raw_bag_max_duration_s" value="3000.0"/>

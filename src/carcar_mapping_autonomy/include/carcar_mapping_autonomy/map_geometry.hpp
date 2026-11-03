@@ -88,7 +88,8 @@ inline bool observation_visible(const nav_msgs::msg::OccupancyGrid&m,const Pose&
 struct ObservationCounts {size_t clearance=0,connected=0,visible=0,progress=0;};
 inline std::optional<Pose> safe_observation(const nav_msgs::msg::OccupancyGrid & m,const Pose & target,const Task & t,
                                           const std::vector<uint8_t>*reachable=nullptr,
-                                          const Pose*current=nullptr,ObservationCounts*counts=nullptr) {
+                                          const Pose*current=nullptr,ObservationCounts*counts=nullptr,
+                                          const std::vector<float>*known_clearance=nullptr) {
   if(!grid_valid(m)||!std::isfinite(target.x)||!std::isfinite(target.y)||
      (reachable&&reachable->size()!=m.data.size()))return {};
   const auto a=grid_yaw(m),dx=target.x-m.info.origin.position.x,dy=target.y-m.info.origin.position.y;
@@ -101,7 +102,7 @@ inline std::optional<Pose> safe_observation(const nav_msgs::msg::OccupancyGrid &
   const int cx=static_cast<int>(std::floor(gx)),cy=static_cast<int>(std::floor(gy));
   const int x0=std::max(0,cx-reach),y0=std::max(0,cy-reach);
   const int x1=std::min(static_cast<int>(m.info.width)-1,cx+reach),y1=std::min(static_cast<int>(m.info.height)-1,cy+reach);
-  std::optional<Pose> best;double distance=.8;
+  std::optional<Pose> best;double score_best=std::numeric_limits<double>::infinity();
   for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x) {
     if(m.data[static_cast<size_t>(y)*m.info.width+x]!=0)continue;
     auto p=cell_world(m,x,y);const double d=std::hypot(p.x-target.x,p.y-target.y);
@@ -114,7 +115,13 @@ inline std::optional<Pose> safe_observation(const nav_msgs::msg::OccupancyGrid &
     // 将到点距离要求纳入候选枚举，不能选中已到过的最近点后直接放弃其余候选。
     if(current&&std::hypot(p.x-current->x,p.y-current->y)<=.25)continue;
     if(counts)++counts->progress;
-    if(d<distance){distance=d;best=p;}
+    double score=d;
+    if(known_clearance&&known_clearance->size()==m.data.size()){
+      const double clearance=(*known_clearance)[static_cast<size_t>(y)*m.info.width+x];
+      // 45厘米后不再奖励更远离墙；不会用未知边界把目标推离待观察区域。
+      if(std::isfinite(clearance))score+=2.0*std::max(0.,.45-clearance);
+    }
+    if(score<score_best){score_best=score;best=p;}
   }
   return best;
 }

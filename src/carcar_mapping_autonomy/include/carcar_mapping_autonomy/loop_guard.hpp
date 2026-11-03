@@ -1,5 +1,8 @@
 #pragma once
 #include <chrono>
+#include <set>
+#include <sstream>
+#include <iomanip>
 #include <karto_sdk/Mapper.h>
 #include "carcar_mapping_autonomy/rasterization.hpp"
 #include "carcar_mapping_autonomy/recovery_core.hpp"
@@ -41,12 +44,18 @@ public:
   bool finish(karto::Mapper&mapper,karto::ScanSolver&solver){
     if(saved_.empty()||!current_)throw std::runtime_error("回环事务缺少开始时的位姿快照");
     ReferenceScore after;std::string error;
+    std::vector<std::string>constraints;bool quarantined=false;
+    const auto&edges=mapper.GetGraph()->GetEdges();
+    for(size_t i=edges_;i<edges.size();++i){
+      const auto key=constraint_id(*edges[i]);constraints.push_back(key);
+      quarantined=quarantined||rejected_constraints_.count(key)!=0;
+    }
     try{after=score(mapper,current_);}catch(const std::exception&e){error=e.what();}
-    const bool valid=error.empty()&&current_->GetUniqueId()!=rejected_scan_id_&&after.acceptable()&&
+    const bool valid=!quarantined&&error.empty()&&current_->GetUniqueId()!=rejected_scan_id_&&after.acceptable()&&
       (!before_.acceptable()||(after.mean<=before_.mean+.04&&after.hit_ratio>=before_.hit_ratio-.15));
     double largest=0;for(const auto&s:saved_)largest=std::max(largest,std::hypot(s.corrected.GetX()-s.scan->GetCorrectedPose().GetX(),s.corrected.GetY()-s.scan->GetCorrectedPose().GetY()));
     last_={{"accepted",valid},{"scan_id",current_->GetUniqueId()},{"before",json(before_)},{"proposed",json(after)},
-      {"largest_translation_m",largest},{"new_constraints",mapper.GetGraph()->GetEdges().size()-edges_},{"error",error}};
+      {"constraint_ids",constraints},{"quarantined",quarantined},{"largest_translation_m",largest},{"new_constraints",mapper.GetGraph()->GetEdges().size()-edges_},{"error",error}};
     if(!valid){
       // 上游2.6.10只追加回环边，不改原边。撤销两端邻接表再释放边，避免留下悬空指针。
       auto*graph=mapper.GetGraph();
@@ -63,8 +72,13 @@ public:
       // Ceres的内部参数也必须恢复，不能只改显示位姿后继续使用错误优化状态。
       for(const auto&group:graph->GetVertices())for(const auto&entry:group.second)if(entry.second)solver.AddNode(entry.second);
       for(auto*edge:graph->GetEdges())if(edge)solver.AddConstraint(edge);
-      ++rejections_;rejected_scan_id_=current_->GetUniqueId();
+      // 同一任务恢复检查点后保留约束隔离；重复撤销不消耗一次新的自动恢复预算。
+      // 时间戳参与标识，防止重新载图后复用整数ID误伤新的扫描。
+      for(const auto&key:constraints)rejected_constraints_.insert(key);
+      if(quarantined)++quarantine_hits_;else ++rejections_;
+      rejected_scan_id_=current_->GetUniqueId();
     }
+    last_["quarantine_hits"]=quarantine_hits_;last_["quarantine_size"]=rejected_constraints_.size();
     last_["rejections"]=rejections_;last_["rolled_back"]=!valid;
     last_["validation_ms"]=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-started_).count();
     saved_.clear();current_=nullptr;return valid;
@@ -72,6 +86,16 @@ public:
   const Json&state()const{return last_;}
   void reset_graph(){saved_.clear();current_=nullptr;rejected_scan_id_=-1;last_["rolled_back"]=false;}
 private:
+  static std::string constraint_id(const karto::Edge<karto::LocalizedRangeScan>&edge){
+    auto identify=[](const karto::LocalizedRangeScan*scan){
+      std::ostringstream out;out<<scan->GetSensorName().ToString()<<':'<<scan->GetUniqueId()<<':'<<std::setprecision(17)<<scan->GetTime();
+      return out.str();
+    };
+    auto a=identify(edge.GetSource()->GetObject()),b=identify(edge.GetTarget()->GetObject());
+    if(b<a)std::swap(a,b);
+    return a+"|"+b;
+  }
+  std::set<std::string>rejected_constraints_;unsigned quarantine_hits_=0;
   static Json json(const ReferenceScore&s){return {{"points",s.points},{"mean_residual_m",s.mean},{"coverage",s.coverage},{"hit_ratio",s.hit_ratio},{"free_conflict",s.free_conflict}};}
   std::vector<Saved>saved_;karto::LocalizedRangeScan*current_=nullptr;size_t edges_=0;unsigned rejections_=0;
   int rejected_scan_id_=-1;ReferenceScore before_;Json last_=Json::object();std::chrono::steady_clock::time_point started_;

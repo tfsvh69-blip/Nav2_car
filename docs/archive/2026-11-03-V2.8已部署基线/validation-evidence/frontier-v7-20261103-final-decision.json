@@ -1,0 +1,118 @@
+{
+  "decided": "2026-11-03T02:30:09.091894+08:00",
+  "decision": "不采用、不启用v7路径排序；本轮收口，不再执行24矩阵或继续调参。",
+  "reason": "同条件240秒对称中legacy与ranked均预算耗尽，均未真实complete；coverage=1.0不能替代生产前沿完成判据。",
+  "candidate": "/home/jetson/luhao/my_nav_carcar_stability_20261102",
+  "formal_release": "/home/jetson/luhao/my_nav_carcar_return_nearby_release",
+  "formal_modified_by_v7": false,
+  "formal_path_aware_ranking_enabled": false,
+  "hardware": false,
+  "v7_results": [
+    {
+      "scenario": "symmetric",
+      "mode": "legacy",
+      "stop": "budget",
+      "coverage": 1.0,
+      "path_m": 14.75569963760895,
+      "gain_m2_per_m": 0.08149393316024804,
+      "exploration_wall_seconds": 240.00097605300002,
+      "contact": false,
+      "snapshot_count": 24,
+      "ranking_prefix_diagnostics": false,
+      "exit_code": 1,
+      "domain": 231,
+      "evidence": "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy",
+      "finished": "2026-11-03T02:28:23.461508+08:00"
+    },
+    {
+      "scenario": "symmetric",
+      "mode": "ranked",
+      "stop": "budget",
+      "coverage": 1.0,
+      "path_m": 13.20245864091999,
+      "gain_m2_per_m": 0.0910815199430313,
+      "exploration_wall_seconds": 240.00122472799998,
+      "contact": false,
+      "snapshot_count": 24,
+      "ranking_prefix_diagnostics": true,
+      "exit_code": 1,
+      "domain": 232,
+      "evidence": "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked",
+      "finished": "2026-11-03T02:28:24.651671+08:00"
+    }
+  ],
+  "partial_efficiency": {
+    "ranked_path_reduction_percent": 10.526379872426372,
+    "ranked_gain_per_m_increase_percent": 11.764785930666054,
+    "qualification": "两边均未完成任务，此局部效率不得解释为已验收收益或采用资格。"
+  },
+  "run_variability": {
+    "v6_legacy_stop": "complete",
+    "v6_legacy_seconds": 194.398801864,
+    "v6_legacy_path_m": 12.564854959780224,
+    "v7_legacy_stop": "budget",
+    "v7_legacy_seconds": 240.00097605300002,
+    "statement": "前一轮v6 legacy曾完成，本轮legacy也预算耗尽，存在运行间差异，原因尚未单独查明；legacy不使用评分，不能把该差异归因于v7评分修改。"
+  },
+  "regressions": [
+    {
+      "name": "frontier-gain",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "xml_sha256": "496577484932df758b631d82b4e5c04c64c2aa53af59246ccf883f85587f0af2"
+    },
+    {
+      "name": "frontier-contract",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "xml_sha256": "c03b3e7aa34fc41c1871421bae6542dc12d0d408afeadb15d711cc3d82694e04"
+    }
+  ],
+  "closure": {
+    "bound_input_count": 121,
+    "changed_inputs": [],
+    "boot_unchanged": true,
+    "loaded_runtime_bound": true,
+    "remaining_test_processes": [],
+    "ports_free": true,
+    "formal_status_after": {
+      "phase": "STANDBY",
+      "control_mode": "manual",
+      "busy": false,
+      "inspection_running": false,
+      "operation": 0,
+      "halt_pending": false,
+      "task_id": ""
+    },
+    "matrix_started": false
+  },
+  "preserved": "候选源码、源补丁前备份、候选安装前副本、审查、构建、回归、两轮失败/成功原始证据及有界prefix诊断均保留；无正式部署。",
+  "evidence_sha256": {
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/pair-finished.json": "ca6c68ea11abf85eaf596eb8aa78b1862ff3a45b15b3b5e0375f3aad00b8a9e8",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/pair-summary.json": "8584963df44e587db86e93fe7cb13fce753097e92b019b3538b194bde1296b0e",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/pair-preflight.json": "2c6d81ac481253b1e767a5fe46b8563e8ec2854349208df27425a3fee9f11993",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/loaded-runtime.json": "864c96e904778e526f16d1d142b4232118bc21770b0ec2bb0e3046bf94581c6d",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/build-finished.json": "ee099e6c180f20aa5ffc56657030ddb34f78938a2bc4743c874052a8161429fa",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/frontier-gain.xml": "496577484932df758b631d82b4e5c04c64c2aa53af59246ccf883f85587f0af2",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/frontier-contract.xml": "c03b3e7aa34fc41c1871421bae6542dc12d0d408afeadb15d711cc3d82694e04",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/source-before.json": "f342da005e5211536c6ee3f6945a3a7eb55d87c1be851a31e3f8d543b6026a37",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/source-after.json": "70939e71c5e0cd1d0ce0ebb2682c1225c91f348f973fda62a102d341fc901d65",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/v7-source.patch": "d6e5ee69500e8d3efca6c8367db56d02df3f237a81dcc5db78f5db63f4e486ca",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/code-review-final.json": "08e6a3cdf16545f4182bd178f616b300dfd2940c08f86d4a02a45cf0cff962a1",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/exploration-symmetric-v6-final-20261103-summary.json": "bbe87e490e9b7b725272c249367a016baba1d39687e45a1451e2397163d1ea07",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/exploration-symmetric-v6-final-20261103-finished.json": "fc95abc7049eaa73850422d1a8ee512483d91b1c43447a6407a21b83227a9af8",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/exploration-symmetric-v6-final-20261103-diagnostics.json": "f7cf7dd90810a7ee52a4ca6e4c9ce20a00acb488faceed4ad5d7a97cc8242c6f",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy/result.json": "893de01d0b55f1dcd0e99addf03c2c0a4a12094b1d107d6e68b8e80edab691ad",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy/commands.jsonl": "c8ce28e744d4304389bac43193ea22a0b2366b33cc483f0cdf967e22661516d3",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy/trace.jsonl": "58976d2001fbd35ce07280b8fbb894071e46cb238a5c6f653339ba75aaa51037",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy/ranking.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-legacy.log": "e43a9c99d0466cb7a6893eb1b7af28c41998c128ef48e5c71980f56a9bc324b8",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked/result.json": "cfee470da216356334233d65f3742b1bec6e43af56ad4954f1f6de6f5d53f38e",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked/commands.jsonl": "f22b8cde89cbfd4a3e99d0748f1fe34ff46b422fab119cbe4133377eb99bb51f",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked/trace.jsonl": "b59c552987cbb41b62e09d12cd6ae199ccd22caa242fc6e4572a193bde6f89c1",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked/ranking.jsonl": "86eb9e768232f42dc6f3643448ba72eab4a9a0af7e74613a1122d2ea767f4a95",
+    "/home/jetson/luhao/my_nav_carcar/log/nav018_stability_20261102/frontier-v7-20261103/symmetric-ranked.log": "fed9ad63f3d2dcb00eecfb9341709da73e72f660c7f4afaed3a916f22c9b47d0"
+  }
+}

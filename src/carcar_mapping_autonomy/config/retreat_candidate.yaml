@@ -1,0 +1,22 @@
+# 独立现场验收前保持关闭；仅显式obstacle_escape_enabled启动。
+velocity_smoother:
+  ros__parameters:
+    min_velocity: [-0.03, 0.0, -0.36]
+lifecycle_manager_navigation:
+  ros__parameters:
+    node_names: [controller_server, velocity_smoother, planner_server, bt_navigator, collision_monitor, behavior_server]
+behavior_server:
+  ros__parameters:
+    costmap_topic: /local_costmap/costmap_raw
+    footprint_topic: /local_costmap/published_footprint
+    cycle_frequency: 20.0
+    behavior_plugins: [backup]
+    backup:
+      plugin: nav2_behaviors/BackUp
+    global_frame: odom
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.1
+    simulate_ahead_time: 1.0
+    backup.acceleration_limit: 0.20
+    backup.deceleration_limit: -0.20
+    backup.minimum_speed: 0.001

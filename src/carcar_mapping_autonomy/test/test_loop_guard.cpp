@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "carcar_mapping_autonomy/loop_guard.hpp"
+#include "carcar_mapping_autonomy/frozen_scan_validation.hpp"
 namespace ca=carcar_mapping_autonomy;
 class GuardSolver:public karto::ScanSolver{
 public:
@@ -50,4 +51,32 @@ TEST_F(LoopGuardTest, InconsistentCorrectionRestoresPosesEdgesAndSolver){
   next->SetOdometricPose(karto::Pose2(0,0,0));next->SetCorrectedPose(karto::Pose2(0,0,0));next->SetTime(9);
   ASSERT_TRUE(mapper.Process(next));dataset.Add(next);
   guard.begin(mapper);EXPECT_TRUE(guard.finish(mapper,solver));EXPECT_EQ(guard.state()["rejections"],2);
+}
+
+TEST_F(LoopGuardTest, RejectedConstraintIsQuarantinedAcrossGraphRestoreWithoutCountingANewFailure){
+  const auto vertices=mapper.GetGraph()->GetVertices().begin()->second;
+  auto*first=vertices.begin()->second;auto*last=vertices.rbegin()->second;
+  auto add=[&]{static_cast<karto::Graph<karto::LocalizedRangeScan>*>(mapper.GetGraph())->AddEdge(
+    new karto::Edge<karto::LocalizedRangeScan>(first,last));};
+  ca::LoopGuard guard;guard.begin(mapper);add();
+  mapper.GetAllProcessedScans().back()->SetCorrectedPoseAndUpdate(karto::Pose2(1,0,0));
+  ASSERT_FALSE(guard.finish(mapper,solver));const auto original=mapper.GetGraph()->GetEdges().size();
+  // 恢复同一任务的检查点不能遗忘刚拒绝的约束；即使这次评分偶然好看也不能直接重纳。
+  guard.reset_graph();guard.begin(mapper);add();
+  EXPECT_FALSE(guard.finish(mapper,solver));
+  EXPECT_EQ(mapper.GetGraph()->GetEdges().size(),original);
+  EXPECT_EQ(guard.state().value("rejections",0),1);
+  EXPECT_EQ(guard.state().value("quarantine_hits",0),1);
+  EXPECT_TRUE(guard.state().value("quarantined",false));
+}
+
+TEST_F(LoopGuardTest, FrozenValidationRestoresNormalLoopClosingEvenWhenMatchingThrows){
+  mapper.setParamDoLoopClosing(true);
+  try{ca::FrozenScanValidation transaction(&mapper,true);EXPECT_FALSE(mapper.getParamDoLoopClosing());throw std::runtime_error("匹配失败");}
+  catch(const std::runtime_error&){}
+  EXPECT_TRUE(mapper.getParamDoLoopClosing());
+  {ca::FrozenScanValidation normal(&mapper,false);EXPECT_TRUE(mapper.getParamDoLoopClosing());}
+  mapper.setParamDoLoopClosing(false);
+  {ca::FrozenScanValidation transaction(&mapper,true);}
+  EXPECT_FALSE(mapper.getParamDoLoopClosing());
 }

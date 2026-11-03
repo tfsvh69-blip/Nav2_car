@@ -1,0 +1,332 @@
+{
+  "hardware": false,
+  "ros_domain": 231,
+  "localhost_only": true,
+  "wall_seconds": 88.35584956799994,
+  "interrupted": false,
+  "processes": {
+    "event-logger": 0,
+    "websocket-client": 0,
+    "evaluation": 0
+  },
+  "web_load": {
+    "http_ok": 421,
+    "http_errors": 16,
+    "http_max_ms": 17.23648300003333,
+    "ws_messages": 1974,
+    "ws_bytes": 851293,
+    "ws_connects": 2,
+    "ws_errors": 0,
+    "real_chromium": true,
+    "native_windows": false,
+    "chromium_wrapper_domain": 219,
+    "observer_domain": 231,
+    "load_profile": "two_read_only_pages_two_idle_control_websockets",
+    "browsers": [
+      {
+        "frames": {
+          "received": 1004,
+          "welcome": 1,
+          "received_bytes": 433152,
+          "sent": 2,
+          "actions": {
+            "transport": 1,
+            "client_event": 1
+          },
+          "urls": [
+            "ws://127.0.0.1:18127/ws/control"
+          ]
+        },
+        "connection": {
+          "created_ms": 1793628850397,
+          "first_frame_ms": 1793628850433,
+          "closed": 0,
+          "errors": 0,
+          "handshakes101": 1,
+          "duration_seconds": 60.111
+        },
+        "http": {
+          "state_responses": 226,
+          "api_responses": 1037,
+          "errors": 338,
+          "paths": {
+            "/api/status": 226,
+            "/api/video.jpg": 338,
+            "/api/operator": 1,
+            "/api/scan": 281,
+            "/api/map.png": 20,
+            "/api/navigation/local-costmap.png": 97,
+            "/api/navigation/global-costmap.png": 74
+          }
+        },
+        "state_updates": 29,
+        "observation_count": 29,
+        "automatic_observations": 29,
+        "exceptions": [],
+        "ready": true,
+        "observed": {
+          "phase": "CURRENT",
+          "autonomy": "EXPLORING",
+          "control_mode": "automatic",
+          "armed": false,
+          "ws_ready_state": 1,
+          "last_state_at": 58918.89999999991
+        },
+        "chrome_exit": null,
+        "chrome_stderr": "ocket: No such file or directory\n[2:18:1102/141409.815504:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141409.815615:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141409.819389:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141409.859892:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n\nDevTools listening on ws://127.0.0.1:36359/devtools/browser/6fefbb69-f694-4605-9463-2822a392b6d5\n\n(process:2): GLib-GIO-CRITICAL **: 14:14:09.898: g_settings_schema_source_lookup: assertion 'source != NULL' failed\n[2:2:1102/141410.041733:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:2:1102/141410.041904:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.042161:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.042175:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.042232:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.049369:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.049620:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.095531:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.096515:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n[2:18:1102/141410.096603:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n[2:2:1102/141410.096948:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.097104:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.112531:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:2:1102/141410.133630:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: \n[2:2:1102/141410.133686:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.133924:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.155681:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141410.155971:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141410.182263:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n"
+      },
+      {
+        "frames": {
+          "received": 970,
+          "welcome": 1,
+          "received_bytes": 418141,
+          "sent": 2,
+          "actions": {
+            "transport": 1,
+            "client_event": 1
+          },
+          "urls": [
+            "ws://127.0.0.1:18127/ws/control"
+          ]
+        },
+        "connection": {
+          "created_ms": 1793628852451,
+          "first_frame_ms": 1793628852468,
+          "closed": 0,
+          "errors": 0,
+          "handshakes101": 1,
+          "duration_seconds": 58.076
+        },
+        "http": {
+          "state_responses": 218,
+          "api_responses": 1010,
+          "errors": 329,
+          "paths": {
+            "/api/status": 218,
+            "/api/video.jpg": 329,
+            "/api/operator": 1,
+            "/api/map.png": 20,
+            "/api/scan": 272,
+            "/api/navigation/local-costmap.png": 96,
+            "/api/navigation/global-costmap.png": 74
+          }
+        },
+        "state_updates": 29,
+        "observation_count": 29,
+        "automatic_observations": 29,
+        "exceptions": [],
+        "ready": true,
+        "observed": {
+          "phase": "CURRENT",
+          "autonomy": "EXPLORING",
+          "control_mode": "automatic",
+          "armed": false,
+          "ws_ready_state": 1,
+          "last_state_at": 57035.60000000009
+        },
+        "chrome_exit": null,
+        "chrome_stderr": "ocket: No such file or directory\n[2:18:1102/141411.441926:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141411.442016:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141411.451724:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:18:1102/141411.510918:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n\nDevTools listening on ws://127.0.0.1:43093/devtools/browser/34fc863c-59a1-41ea-aa5e-e1225b6c65ce\n\n(process:2): GLib-GIO-CRITICAL **: 14:14:11.594: g_settings_schema_source_lookup: assertion 'source != NULL' failed\n[2:2:1102/141411.809030:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.809319:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141411.810085:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.810335:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141411.810622:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:2:1102/141411.819982:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.820611:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141411.931468:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.932881:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n[2:18:1102/141411.933057:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory\n[2:2:1102/141411.933669:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.933829:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141411.935673:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:2:1102/141411.971735:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: \n[2:2:1102/141411.972162:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141411.972383:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141412.011049:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n[2:18:1102/141412.011316:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory\n[2:2:1102/141412.058673:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: \n"
+      }
+    ]
+  },
+  "timing_messages": 53,
+  "controller_timing_last": {
+    "controller": "MappingRotationShim+RPP",
+    "exceptions": 0,
+    "max_ms": 1.401614,
+    "mean_ms": 0.4060790710172747,
+    "over_100ms": 0,
+    "p99_upper_ms": 1.25,
+    "quantile_bin_ms": 0.25,
+    "samples": 521,
+    "scope": "computeVelocityCommands",
+    "observed_seconds": 78.09989747100008,
+    "task_phase": "EXPLORING",
+    "evaluation_result_written": false
+  },
+  "active_controller_timing_last": {
+    "controller": "MappingRotationShim+RPP",
+    "exceptions": 0,
+    "max_ms": 1.401614,
+    "mean_ms": 0.4060790710172747,
+    "over_100ms": 0,
+    "p99_upper_ms": 1.25,
+    "quantile_bin_ms": 0.25,
+    "samples": 521,
+    "scope": "computeVelocityCommands",
+    "observed_seconds": 78.09989747100008,
+    "task_phase": "EXPLORING",
+    "evaluation_result_written": false
+  },
+  "actual_parameters": {
+    "/controller_server": {
+      "controller_frequency": 10.0,
+      "FollowPath.plugin": "carcar_mapping_autonomy::MappingRotationShim",
+      "FollowPath.primary_controller": "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController",
+      "FollowPath.angular_dist_threshold": 0.5,
+      "FollowPath.angular_disengage_threshold": 0.1,
+      "FollowPath.use_rotate_to_heading": false,
+      "FollowPath.cost_scaling_dist": 0.3,
+      "FollowPath.inflation_cost_scaling_factor": 5.0,
+      "FollowPath.rotate_to_heading_angular_vel": 0.22,
+      "FollowPath.desired_linear_vel": 0.1,
+      "FollowPath.lookahead_dist": 0.3,
+      "FollowPath.min_lookahead_dist": 0.2,
+      "FollowPath.max_lookahead_dist": 0.3
+    },
+    "/local_costmap/local_costmap": {
+      "inflation_layer.inflation_radius": 0.3,
+      "inflation_layer.cost_scaling_factor": 5.0
+    },
+    "/global_costmap/global_costmap": {
+      "inflation_layer.inflation_radius": 0.5,
+      "inflation_layer.cost_scaling_factor": 3.0
+    },
+    "/planner_server": {
+      "GridBased.cost_travel_multiplier": 2.0,
+      "ExplorationGrid.cost_travel_multiplier": 2.0
+    },
+    "/velocity_smoother": {
+      "max_velocity": [
+        0.18,
+        0.0,
+        0.36
+      ],
+      "min_velocity": [
+        0.0,
+        0.0,
+        -0.36
+      ],
+      "max_accel": [
+        0.2,
+        0.0,
+        0.8
+      ],
+      "max_decel": [
+        -0.2,
+        0.0,
+        -0.8
+      ]
+    },
+    "/mapping_autonomy": {
+      "restricted_manual_enabled": true,
+      "auto_execution_sweep": true,
+      "obstacle_wait_enabled": true,
+      "obstacle_escape_enabled": false,
+      "prefer_observation_clearance": true,
+      "fixed_observation_goals": false
+    }
+  },
+  "controller_timing_max_ms": 1.401614,
+  "controller_over_100ms": 0,
+  "bags": {
+    "nav-sessions/20261102_221406_20413/bag/bag_0.db3": {
+      "bytes": 33054720,
+      "topics": {
+        "/backup/_action/feedback": 0,
+        "/backup/_action/status": 0,
+        "/behavior_tree_log": 161,
+        "/cmd_vel": 0,
+        "/cmd_vel_nav": 0,
+        "/diagnostics": 248,
+        "/explore/resume": 6,
+        "/explore/status": 10,
+        "/global_costmap/costmap": 157,
+        "/global_costmap/costmap_raw": 157,
+        "/global_costmap/published_footprint": 239,
+        "/imu/data_raw": 1712,
+        "/local_costmap/costmap": 254,
+        "/local_costmap/costmap_raw": 254,
+        "/local_costmap/published_footprint": 398,
+        "/localization_monitor/diagnostics": 0,
+        "/localization_monitor/ready": 0,
+        "/lookahead_collision_arc": 410,
+        "/lookahead_point": 410,
+        "/map": 28,
+        "/map_metadata": 28,
+        "/mapping/auto_cmd_vel": 1065,
+        "/mapping/autonomy/state": 652,
+        "/mapping/cmd_vel": 1668,
+        "/mapping/collision_input": 1668,
+        "/mapping/collision_output": 1042,
+        "/mapping/collision_stop_polygon": 1580,
+        "/mapping/controller_timing": 53,
+        "/mapping/exploration/rank_result": 0,
+        "/mapping/exploration/rank_state": 0,
+        "/mapping/explore_navigate_to_pose/_action/feedback": 5184,
+        "/mapping/explore_navigate_to_pose/_action/status": 17,
+        "/mapping/known_space/state": 15,
+        "/mapping/known_space_filter_info": 1,
+        "/mapping/known_space_mask": 15,
+        "/mapping/manual_cmd_vel": 4213,
+        "/mapping/nav_raw": 526,
+        "/mapping/navigation_generation": 0,
+        "/mapping/planner_diagnostic": 1,
+        "/mapping/recovery/amcl_pose": 0,
+        "/mapping/recovery/initialpose": 0,
+        "/mapping/recovery/reference_map": 7,
+        "/mapping/recovery/request": 8,
+        "/mapping/recovery/scan": 0,
+        "/mapping/recovery/state": 839,
+        "/mapping/relocalizer/particle_cloud": 0,
+        "/mapping/slam/status": 502,
+        "/mapping/slam_scan": 1666,
+        "/navigate_through_poses/_action/feedback": 0,
+        "/navigate_through_poses/_action/status": 0,
+        "/navigate_to_pose/_action/feedback": 5193,
+        "/navigate_to_pose/_action/status": 9,
+        "/navigation/motion_permit": 0,
+        "/navigation/status": 380,
+        "/parameter_events": 314,
+        "/plan": 57,
+        "/pose": 49,
+        "/progress_guard/status": 0,
+        "/rear_clear/status": 0,
+        "/recovery/status": 0,
+        "/rosout": 407,
+        "/scan": 1713,
+        "/scan/filtered": 1670,
+        "/tf": 5909,
+        "/tf_static": 1,
+        "/unsmoothed_plan": 57,
+        "/wheel/odometry": 1713
+      },
+      "messages": 42666
+    }
+  },
+  "required_topic_counts": {
+    "/scan": 1713,
+    "/wheel/odometry": 1713,
+    "/map": 28,
+    "/mapping/cmd_vel": 1668,
+    "/mapping/controller_timing": 53,
+    "/mapping/slam_scan": 1666
+  },
+  "parameter_nodes_requested": [
+    "/controller_server",
+    "/local_costmap/local_costmap",
+    "/global_costmap/global_costmap",
+    "/planner_server",
+    "/velocity_smoother",
+    "/mapping_autonomy"
+  ],
+  "evaluation": {
+    "stop": "complete",
+    "contact": false,
+    "coverage": 1.0,
+    "snapshot_count": 7,
+    "wall_seconds": 85.941672061,
+    "path_m": 3.841587267929879,
+    "gain_m2_per_m": 0.7802764302723407,
+    "same_controller_and_soft_costs": true
+  },
+  "scope": "真实SLAM/Nav2/快照/网关/候选日志录包并发的软件闭环；两个真实Chromium只读页面与两条空闲WS控制连接，页面状态由HTTP轮询；不包含连续摇杆高流量、实际串口驱动与真实电机",
+  "browser_stats_stage": "before_harness_shutdown",
+  "loaded_library": {
+    "path": "/home/jetson/luhao/my_nav_carcar_stability_20261102/install/carcar_mapping_autonomy/lib/libcarcar_mapping_rotation_shim.so",
+    "sha256_before": "2847c6915df82dcd182f317b33734357d031768ab37b3f39f7363926f2683050",
+    "sha256_after": "2847c6915df82dcd182f317b33734357d031768ab37b3f39f7363926f2683050",
+    "unchanged": true
+  },
+  "passed": true
+}

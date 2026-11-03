@@ -4,6 +4,7 @@
 #include <queue>
 #include <thread>
 #include "carcar_mapping_autonomy/subcell_departure.hpp"
+#include "carcar_mapping_autonomy/known_obstacle_clearance.hpp"
 
 namespace carcar_mapping_autonomy {
 // 只作静态可达性筛选；动态代价、真实路径及连续净空仍由原规划／审查链路决定。
@@ -13,7 +14,7 @@ public:
   struct Job {
     uint64_t operation=0,revision=0;
     nav_msgs::msg::OccupancyGrid::ConstSharedPtr map;
-    Pose current,frontier;Task task;
+    Pose current,frontier;Task task;bool prefer_clearance=false;
   };
   struct Result {Job job;std::optional<Pose> target;std::string reason;};
   class Search {
@@ -31,7 +32,7 @@ public:
       if(!j.map||!grid_valid(*j.map)||!free_footprint(*j.map,j.current))return {};
       const auto start=cell(*j.map,j.current);if(!start)return {};
       if(!map_||revision_!=j.revision){
-        mask_=planning_keepout_mask(*j.map);map_=j.map;revision_=j.revision;start_.reset();
+        mask_=planning_keepout_mask(*j.map);map_=j.map;revision_=j.revision;start_.reset();known_clearance_.clear();
       }
       if(!mask_)return {};
       if(!start_||*start_!=*start||std::hypot(j.current.x-position_.x,j.current.y-position_.y)>1e-6){
@@ -58,8 +59,11 @@ public:
           }
         }
       }
+      if(j.prefer_clearance&&known_clearance_.empty())known_clearance_=known_obstacle_clearance(*j.map);
+      if(j.prefer_clearance&&known_clearance_.empty()){reason_="观测点净空距离场超过资源上限，未提交目标";return {};}
       ObservationCounts counts;
-      auto result=safe_observation(*j.map,j.frontier,j.task,&reachable_,&j.current,&counts);
+      auto result=safe_observation(*j.map,j.frontier,j.task,&reachable_,&j.current,&counts,
+        j.prefer_clearance?&known_clearance_:nullptr);
       const std::string layer=counts.clearance==0?"前沿附近没有足够净空":
         counts.connected==0?"前沿附近有空地，但与当前车位不连通":
         counts.visible==0?"候选与前沿之间被墙体或未知区遮挡":
@@ -75,7 +79,7 @@ public:
     std::string reason_;
     nav_msgs::msg::OccupancyGrid::ConstSharedPtr map_;
     std::optional<nav_msgs::msg::OccupancyGrid> mask_;
-    uint64_t revision_=0;std::optional<size_t>start_;std::vector<uint8_t>reachable_;Pose position_;
+    std::vector<float>known_clearance_;uint64_t revision_=0;std::optional<size_t>start_;std::vector<uint8_t>reachable_;Pose position_;
   };
   ObservationSelector():thread_([this]{run();}){}
   ~ObservationSelector(){ {std::lock_guard<std::mutex>lock(mutex_);stopping_=true;}cv_.notify_one();thread_.join();}

@@ -71,3 +71,13 @@ TEST(SharedOperations, ExplicitManualStopCancelsQueuedAndAlreadySubmittedContinu
   EXPECT_FALSE(ledger.continuation_submitted());ledger.acknowledge("sent","accepted","迟到确认");
   const auto status=ledger.status();EXPECT_EQ(status["requests"][1]["request_result"],"cancelled");
 }
+TEST(SharedOperations, RestrictedManualCancelsContinueWithoutChangingTheWireAction){
+  TaskRequests ledger;ledger.reset("task");const json epoch=ledger.epoch();
+  ASSERT_TRUE(ledger.submit("continue","resume",json::object(),1,epoch).queued);
+  ASSERT_TRUE(ledger.submit("manual","manual",{{"restricted",true}},1.01,epoch).forward);
+  EXPECT_TRUE(ledger.ready(2).empty());
+  EXPECT_FALSE(ledger.submit("late","resume",json::object(),2,epoch).error.empty());
+  EXPECT_FALSE(ledger.submit("manual","manual",json::object(),2,json(ledger.epoch())).error.empty());
+  const auto duplicate=ledger.submit("manual","manual",{{"restricted",true}},2,epoch);
+  EXPECT_FALSE(duplicate.forward);EXPECT_TRUE(duplicate.error.empty());
+}
