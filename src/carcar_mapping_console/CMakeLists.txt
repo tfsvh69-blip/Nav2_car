@@ -99,6 +99,9 @@ if(BUILD_TESTING)
   ament_add_test(test_mapping_live_controls
     COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_live_controls.js ${CMAKE_CURRENT_SOURCE_DIR}/web/app.js
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 15)
+  ament_add_test(test_navigation_image_revision
+    COMMAND ${NODE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_navigation_image_revision.js
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO TIMEOUT 10)
   ament_add_gtest(test_tablet_wifi_trial test/test_tablet_wifi_trial.cpp)
   target_include_directories(test_tablet_wifi_trial PRIVATE include)
   target_link_libraries(test_tablet_wifi_trial PkgConfig::GIO)

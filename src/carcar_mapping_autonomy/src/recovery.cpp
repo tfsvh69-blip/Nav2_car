@@ -104,12 +104,12 @@ private:
       ca::snapshot_same_generation(snapshot_request_,autonomy_state_);
   }
   void snapshot_failed(const std::string&reason){
-    snapshot_pending_=false;snapshot_candidate_.reset();snapshot_observations_.reset();
+    snapshot_waiting_=false;snapshot_pending_=false;snapshot_candidate_.reset();snapshot_observations_.reset();
     snapshot_state_["phase"]="FAILED";snapshot_state_["reason"]=reason;snapshot_state_["in_flight"]=false;
     RCLCPP_WARN(get_logger(),"快照维护未提交 request_id=%s reason=%s；旧可信快照保留，定位健康时继续任务",snapshot_request_.value("request_id",std::string()).c_str(),reason.c_str());
   }
   void start_snapshot(const Json&request){
-    if(!online_snapshots_||snapshot_pending_||snapshot_future_.valid()||request.value("request_id","")==snapshot_request_.value("request_id",""))return;
+    if(!online_snapshots_||snapshot_waiting_||snapshot_pending_||snapshot_future_.valid()||request.value("request_id","")==snapshot_request_.value("request_id",""))return;
     snapshot_request_=request;snapshot_state_=request;snapshot_state_["phase"]="REQUESTED";snapshot_state_["in_flight"]=true;
     try{
       ca::validate_snapshot_request(request);
@@ -119,7 +119,11 @@ private:
         snapshot_state_["reason"]="首个可信快照等待有界静止补观测结束，车辆保持停车，入图继续开放";
         return;
       }
-      if(!snapshot_current()||!mapping_range_ready_||(!checkpoint_&&!settled()))throw std::runtime_error("首个可信快照要求停稳；维护快照要求生产定位健康且任务代次一致");
+      if(!snapshot_current()||!mapping_range_ready_||(!checkpoint_&&!settled())){
+        // 请求与健康状态经不同话题到达；在原安全门槛内有界等待新状态，不抢先判为失败。
+        snapshot_waiting_=true;snapshot_wait_begin_=steady();snapshot_state_["phase"]="WAITING_STATE";
+        snapshot_state_["reason"]="等待同任务健康状态、停稳与代次同步；尚未捕获或提升可信快照";return;
+      }
       snapshot_candidate_.reset();snapshot_observations_.reset();
       snapshot_pending_=true;snapshot_begin_=steady();std_msgs::msg::String m;m.data=request.dump();snapshot_request_pub_->publish(m);
     }catch(const std::exception&e){snapshot_failed(e.what());}
@@ -151,6 +155,14 @@ private:
   }
   void snapshot_tick(){
     try{
+      if(snapshot_waiting_){
+        if(!idle()||freeze_||steady()-snapshot_wait_begin_>2){snapshot_failed("等待快照健康、停稳及同代次状态超过2秒或已取消；旧可信参考保留");return;}
+        if(snapshot_current()&&mapping_range_ready_&&(checkpoint_||settled())){
+          snapshot_waiting_=false;snapshot_candidate_.reset();snapshot_observations_.reset();
+          snapshot_pending_=true;snapshot_begin_=steady();snapshot_state_["phase"]="REQUESTED";
+          std_msgs::msg::String m;m.data=snapshot_request_.dump();snapshot_request_pub_->publish(m);
+        }
+      }
       if(snapshot_pending_&&(!snapshot_current()||steady()-snapshot_begin_>35))snapshot_failed("快照维护超时或任务／定位状态已改变，未提升候选");
       if(snapshot_future_.valid()&&snapshot_future_.wait_for(std::chrono::seconds(0))==std::future_status::ready){
         const auto candidate=snapshot_future_.get();if(!snapshot_pending_||!snapshot_current())return;
@@ -440,6 +452,7 @@ private:
     open_then("SUCCEEDED");
   }
   void fail(const std::string&why){
+    if(snapshot_waiting_)snapshot_failed("恢复流程已取消或冻结，未提交等待中的快照");
     wall_review_wait_.update(steady(),false);
     if(phase_!="FAILED"){failed_stage_=phase_;failed_elapsed_=std::max(0.,steady()-begin_);}
     phase_="FAILED";reason_=why;freeze_=true;requires_stop_=true;trial_permit_=false;++token_;
@@ -702,7 +715,7 @@ private:
   bool rollback_recovery_=false;double rollback_reference_at_=0;size_t localization_verified_frames_=0;std::shared_ptr<Artifact>rollback_candidate_;
   std::future<Json>validation_future_;std::future<void>suspect_future_;
   std::future<ca::Pose>initializer_future_;
-  bool online_snapshots_=false,snapshot_pending_=false;double snapshot_begin_=0;
+  bool online_snapshots_=false,snapshot_pending_=false,snapshot_waiting_=false;double snapshot_begin_=0,snapshot_wait_begin_=0;
   Json snapshot_request_=Json::object(),snapshot_state_={{"phase","DISABLED"}};
   std::future<std::shared_ptr<Artifact>>snapshot_future_;
   std::shared_ptr<Artifact>snapshot_candidate_;ca::MultiFrameVerification snapshot_observations_;double snapshot_validation_begin_=0;

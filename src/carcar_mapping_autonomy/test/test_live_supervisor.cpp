@@ -49,6 +49,35 @@ protected:
   }
 };
 
+TEST_F(LiveSupervisorIntegration, FailedParametersBlockRestrictedManualAndExplainReason){
+  start_goal();
+  tuning_state.update({{"phase","FAILED"},{"ready",false},{"pending",false},{"requires_stop",true},
+    {"restore_available",true},{"error","现场回退读回超时"}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED";},3));
+  request("manual","failed-parameter-manual",{{"restricted",true}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="MANUAL";},3))<<state.dump();
+  until([]{return false;},.5);
+  EXPECT_FALSE(state["restricted_manual"].value("ready",true));
+  EXPECT_NE(state["restricted_manual"].value("reason","").find("参数安全核验"),std::string::npos);
+  EXPECT_DOUBLE_EQ(last_velocity,0);
+}
+
+TEST_F(LiveSupervisorIntegration, ExplicitParameterRestoreKeepsAutomaticTaskPaused){
+  start_goal();
+  tuning_state.update({{"phase","FAILED"},{"ready",false},{"pending",false},{"requires_stop",true},
+    {"restore_available",true},{"error","现场回退读回超时"}});
+  ASSERT_TRUE(until([this]{return state.value("phase","")=="PAUSED"&&state.value("still",false)&&state.value("navigation_terminal",false);},3));
+  Json forwarded;
+  auto listener=n->create_subscription<std_msgs::msg::String>("/mapping/tuning/request",10,
+    [&forwarded](const std_msgs::msg::String&m){forwarded=Json::parse(m.data);});
+  until([]{return false;},.2);request("restore_tuning","restore-failed-parameters");
+  ASSERT_TRUE(until([&]{return !forwarded.empty();},2))<<state.dump();
+  EXPECT_EQ(forwarded.value("action",""),"restore");EXPECT_EQ(forwarded.value("task_id",""),task_id);
+  tuning_state.update({{"phase","READY"},{"ready",true},{"pending",false},{"requires_stop",false}});
+  until([]{return false;},.7);
+  EXPECT_EQ(state.value("phase",""),"PAUSED");EXPECT_EQ(nav_requests,1U);EXPECT_DOUBLE_EQ(last_velocity,0);
+}
+
 TEST_F(LiveAutomaticStartupIntegration, DelayedTuningAndSceneKeepBootRequestUntilBothAreReady){
   until([]{return false;},.3);
   ASSERT_TRUE(state.value("auto_start_pending",false))<<state.dump();

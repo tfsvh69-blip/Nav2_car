@@ -395,6 +395,17 @@ if(BUILD_TESTING)
   add_dependencies(test_online_recovery_process mapping_slam mapping_recovery mapping_snapshot_worker)
   set_tests_properties(test_online_recovery_process PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=230;ROS_LOCALHOST_ONLY=1")
   set_tests_properties(test_online_recovery_process PROPERTIES RESOURCE_LOCK recovery_domain_230)
+  foreach(wait_case ready timeout cancel)
+    ament_add_test(test_snapshot_health_wait_${wait_case}
+      COMMAND "$<TARGET_FILE:test_online_recovery_process>"
+        "--gtest_output=xml:${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_snapshot_health_wait_${wait_case}.gtest.xml"
+      OUTPUT_FILE "${CMAKE_BINARY_DIR}/ament_cmake_gtest/test_snapshot_health_wait_${wait_case}.txt"
+      RESULT_FILE "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_snapshot_health_wait_${wait_case}.gtest.xml"
+      TIMEOUT 100 ENV "ROS_DOMAIN_ID=230" "ROS_LOCALHOST_ONLY=1"
+        "CARCAR_TEST_SNAPSHOT_HEALTH_LAG=${wait_case}"
+        "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_BINARY_DIR}/log/snapshot_health_wait_${wait_case}")
+    set_tests_properties(test_snapshot_health_wait_${wait_case} PROPERTIES RESOURCE_LOCK recovery_domain_230)
+  endforeach()
   foreach(reference_case startup bad_scan bad_scan_existing cancel generation shift_10cm shift_20cm)
     set(reference_environment "ROS_DOMAIN_ID=230" "ROS_LOCALHOST_ONLY=1"
       "CARCAR_TEST_EVIDENCE_DIR=${CMAKE_BINARY_DIR}/log/recent_reference_${reference_case}")
@@ -543,7 +554,7 @@ if(BUILD_TESTING)
     EVALUATION_SHIM_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_shim_rpp.yaml"
     EVALUATION_CLEARANCE_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/nav2_clearance.yaml"
     EVALUATION_BT_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/nav2_continuous.yaml")
-  ament_target_dependencies(mapping_virtual_room rclcpp std_msgs sensor_msgs geometry_msgs nav_msgs tf2_ros)
+  ament_target_dependencies(mapping_virtual_room rclcpp std_msgs sensor_msgs geometry_msgs nav_msgs tf2_ros diagnostic_msgs)
   target_link_libraries(mapping_virtual_room nlohmann_json::nlohmann_json)
   target_compile_definitions(mapping_virtual_room PRIVATE CONTINUOUS_ROOM_PARAMS="${CMAKE_CURRENT_SOURCE_DIR}/config/nav2_continuous.yaml")
   add_executable(mapping_corridor test/corridor.cpp)

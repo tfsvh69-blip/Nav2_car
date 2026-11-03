@@ -147,9 +147,59 @@ try{
  await post('/api/start',{mode:'new',control_mode:'manual'});
  await waitFor(liveReady,90,'手动新任务健康、参数与场景就绪');task=last.autonomy.task_id;result.first_task=task;
  await verifySoftwareOnly();await capture('manual-ready');
+ if(process.env.CARCAR_TEST_FIELD_RECOVERY==='1'){
+  mark('failed-tuning-restore-and-manual');
+  // 仅在隔离域227且真实轮式停稳时，使局部生命周期暂时inactive，制造真实调参与回退失败。
+  assert(stopped(last));
+  const lifecycle=async id=>{
+   const {stdout}=await execFileAsync('/opt/ros/humble/bin/ros2',['service','call','/local_costmap/local_costmap/change_state','lifecycle_msgs/srv/ChangeState',`{transition: {id: ${id}}}`],{timeout:12000,maxBuffer:65536});
+   assert(/success=True/.test(stdout),'软件局部代价图生命周期切换失败：'+stdout);
+  };
+  await lifecycle(4);
+  const failedId=await command('set_tuning',{values:{local_cost_scaling_factor:5.1}});await accepted(failedId);
+  await waitFor(s=>s.autonomy.tuning?.phase==='FAILED'&&stopped(s),20,'故障注入后保持停车',{allowFault:true});
+  await page.waitForFunction(()=>document.getElementById('workflow-title').textContent.includes('参数核验失败'),null,{timeout:5000});
+  await pause(300);
+  assert((await page.locator('#motion').textContent()).includes('参数安全核验'),'控制心跳覆盖了真实参数故障');
+  assert.equal(await page.locator('#enable').isEnabled(),false);
+  result.failed_tuning_request=failedId;await capture('parameter-failed');
+  await lifecycle(3);
+  await page.locator('#live-settings').evaluate(el=>{el.open=true;});
+  const before=requests.length;await page.locator('#tuning-restore').click();
+  await waitFor(s=>s.autonomy.tuning?.request_result==='completed'&&s.autonomy.tuning?.ready&&stopped(s),30,'独立恢复参数读回与膨胀代次核验',{allowFault:true});
+  assert(requests.slice(before).some(v=>v.request?.action==='restore_tuning'));
+  assert.equal(last.autonomy.phase,'MANUAL');assert.equal(last.autonomy.tuning.previous_failure?.request_id,failedId);
+  await page.locator('#live-settings').evaluate(el=>{el.open=false;});
+  if(await page.locator('#manual-claim').isEnabled())await page.locator('#manual-claim').click();
+  await page.waitForFunction(()=>!document.getElementById('enable').disabled,null,{timeout:12000});
+  await page.locator('#enable').click();await page.waitForFunction(()=>latestControl.armed,null,{timeout:5000});
+  await page.locator('#joystick').scrollIntoViewIfNeeded();const box=await page.locator('#joystick').boundingBox();assert(box);
+  await page.mouse.move(box.x+box.width/2,box.y+box.height*.2);await page.mouse.down();
+  await waitFor(s=>s.autonomy.output?.[0]>.005,4,'恢复参数后的真实网页摇杆输出');
+  await page.mouse.up();await waitFor(stopped,5,'松杆后轮式停稳');
+  if(process.env.CARCAR_TEST_FIELD_RESTRICTED==='1'){
+   const haltId=await command('halt');await accepted(haltId);
+   await waitFor(s=>s.autonomy?.phase==='PAUSED'&&stopped(s),10,'受限接管前明确停车');
+   const restrictedId=await command('manual',{restricted:true});await accepted(restrictedId);
+   await waitFor(s=>s.autonomy?.phase==='MANUAL'&&s.autonomy.restricted_manual?.ready&&stopped(s),15,'受限接管冻结确认',{allowFault:true});
+   assert.equal(last.autonomy.restricted_manual.map_frozen,true);
+   assert.equal(last.autonomy.actions.resume.enabled,false,'冻结后不能直接切回自动');
+   const checkId=await command('recheck');await accepted(checkId);
+   await waitFor(s=>s.autonomy?.phase==='PAUSED'&&s.autonomy.healthy&&s.autonomy.actions.resume.enabled&&stopped(s),65,'受限手动重新检查后恢复自动资格',{allowFault:true});
+   result.restricted_recheck_passed=true;
+  }
+  result.parameter_failure_recovered=true;result.manual_after_restore=true;await capture('parameter-restored-manual');
+ }
  mark('automatic-motion');const startId=await command('start');await accepted(startId);
  const origin=last.autonomy.wheel_position||[0,0];
  await waitFor(s=>s.autonomy?.phase==='EXPLORING'&&s.autonomy.output?.[0]>.005&&Array.isArray(s.autonomy.wheel_position)&&Math.hypot(s.autonomy.wheel_position[0]-origin[0],s.autonomy.wheel_position[1]-origin[1])>.15,45,'真实导航驱动模拟车平移');
+ if(process.env.CARCAR_TEST_FIELD_RESTRICTED==='1'){
+  // 此场景验收受限冻结、定位复验和恢复自动；自动墙的运动阶段由独立完整场景覆盖。
+  result.scope='参数故障恢复→普通手动→停车受限接管→冻结定位复验→自动平移→停车保存';
+  result.automatic_after_restricted=true;await capture('restricted-restored-automatic');
+  const haltId=await command('halt');await accepted(haltId);await waitFor(s=>s.autonomy?.phase==='PAUSED'&&stopped(s),10,'受限恢复场景结束停车');
+  await post('/api/finish');await waitFor(s=>s.task_state==='STANDBY'&&!s.busy,35,'受限恢复场景保存并正常结束');task='';
+ }else{
  mark('online-tuning');await page.locator('#live-settings summary').click();const tuningStart=states.length;
  const globalId=await uiNumber('tuning-global_inflation_radius',.55,'set_tuning');
  await waitFor(s=>requestReady(s.autonomy.tuning,globalId)&&Math.abs(s.autonomy.tuning.confirmed?.global_inflation_radius-.55)<1e-6,20,'全局膨胀参数真实事务确认');
@@ -184,6 +234,7 @@ try{
  assert.equal(last.autonomy.walls.items.length,0,'新任务继承了旧临时墙');assert(Math.abs(last.autonomy.tuning.confirmed.global_inflation_radius-.55)<1e-6);assert(Math.abs(last.autonomy.tuning.confirmed.local_cost_scaling_factor-5.2)<1e-6);assert(Math.abs(last.autonomy.handoff.distance_m-.35)<1e-6);
  result.second_parameter_readbacks=[await parameter('/global_costmap/global_costmap','inflation_layer.inflation_radius',.55),await parameter('/controller_server','FollowPath.inflation_cost_scaling_factor',5.2)];
  await verifySoftwareOnly();await capture('new-task-defaults');await post('/api/finish');await waitFor(s=>s.task_state==='STANDBY'&&!s.busy,35,'正常保存并结束第二轮软件任务');task='';
+ }
  assert.equal(pageErrors.length,0,pageErrors.join('\n'));complete=true;result.passed=true;mark('completed');
 }catch(error){result.passed=false;result.error=String(error);result.failed_stage=stage;process.exitCode=1;console.error('LIVE_WORKFLOW_FAILED '+JSON.stringify({stage,error:String(error)}));}
 finally{

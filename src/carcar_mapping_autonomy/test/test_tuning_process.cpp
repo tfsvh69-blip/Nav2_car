@@ -145,6 +145,42 @@ TEST_F(TuningProcess,ParameterReadbackWithoutCompletedMapRevisionCannotSucceed){
   stopped=true;ASSERT_TRUE(until([this]{return tuning->state().at("rollback_ready").get<bool>();},5));
   EXPECT_EQ(tuning->state().at("confirmed"),ca::TuningValues{}.json());
 }
+TEST_F(TuningProcess,FailedRollbackCanRestoreBaselineOnlyWithFreshStopAcknowledgement){
+  hold_ack[1]=true;ca::TuningValues target;target.local_radius=.4;apply(target,"failed-original");
+  ASSERT_TRUE(until([this]{return tuning->state().at("phase")=="WAITING_STOP";},5));
+  stopped=true;
+  ASSERT_TRUE(until([this]{return tuning->state().at("phase")=="FAILED";},5));
+  const auto original_error=tuning->state().at("error");
+  hold_ack[1]=false;acknowledge_stop=false;
+  std_msgs::msg::String request;request.data=Json{{"task_id","task-test"},{"request_id","restore-after-failure"},
+    {"generation",generation},{"action","restore"}}.dump();requests->publish(request);
+  ASSERT_TRUE(until([this]{return tuning->state().at("request_id")=="restore-after-failure";},1));
+  const auto count=writes.size();until([]{return false;},.15);
+  EXPECT_EQ(writes.size(),count);EXPECT_FALSE(tuning->state().at("ready").get<bool>());
+  acknowledge_stop=true;
+  ASSERT_TRUE(until([this]{return tuning->state().at("ready").get<bool>();},5));
+  EXPECT_EQ(tuning->state().at("request_result"),"completed");
+  EXPECT_EQ(tuning->state().at("confirmed"),ca::TuningValues{}.json());
+  EXPECT_EQ(tuning->state().at("previous_failure").at("error"),original_error);
+  EXPECT_EQ(tuning->state().at("previous_failure").at("request_id"),"failed-original");
+}
+TEST_F(TuningProcess,FailedRestoreRejectsMovingStateAndAbortsOnGenerationChange){
+  hold_ack[1]=true;ca::TuningValues target;target.local_radius=.4;apply(target,"original-negative");
+  ASSERT_TRUE(until([this]{return tuning->state().at("phase")=="WAITING_STOP";},5));
+  stopped=true;ASSERT_TRUE(until([this]{return tuning->state().at("phase")=="FAILED";},5));
+  stopped=false;until([]{return false;},.1);const auto count=writes.size();
+  std_msgs::msg::String request;request.data=Json{{"task_id","task-test"},{"request_id","moving-restore"},
+    {"generation",generation},{"action","restore"}}.dump();requests->publish(request);
+  ASSERT_TRUE(until([this]{return !tuning->state().at("rejected_requests").empty();},1));
+  EXPECT_EQ(writes.size(),count);EXPECT_EQ(tuning->state().at("phase"),"FAILED");
+  stopped=true;acknowledge_stop=false;until([]{return false;},.1);
+  request.data=Json{{"task_id","task-test"},{"request_id","changed-generation-restore"},
+    {"generation",generation},{"action","restore"}}.dump();requests->publish(request);
+  ASSERT_TRUE(until([this]{return tuning->state().at("request_id")=="changed-generation-restore";},1));
+  ++generation;acknowledge_stop=true;
+  ASSERT_TRUE(until([this]{return tuning->state().at("phase")=="FAILED";},1));
+  EXPECT_EQ(writes.size(),count);EXPECT_FALSE(tuning->state().at("ready").get<bool>());
+}
 TEST_F(TuningProcess,NavigationGenerationChangeCancelsOldTransaction){
   hold_ack[1]=true;ca::TuningValues target;target.local_radius=.4;apply(target);
   ASSERT_TRUE(until([this]{return endpoints[1]->get_parameter("inflation_layer.inflation_radius").as_double()==.4;},4));

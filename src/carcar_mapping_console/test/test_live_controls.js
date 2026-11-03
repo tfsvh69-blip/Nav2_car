@@ -29,6 +29,28 @@ async function browser(snapshot=fixture(),response=()=>({ok:true,status:202,valu
   return {context,e:elements,next,posts,listeners,run:code=>vm.runInContext(code,context)};
 }
 (async()=>{
+  // 现场失败回放：受限手动局部条件满足，但参数保护仍拒绝运动。
+  const failedManual=fixture();failedManual.autonomy.phase='MANUAL';failedManual.autonomy.control_mode='manual';
+  failedManual.autonomy.live_controls_enabled=true;failedManual.autonomy.healthy=false;
+  failedManual.autonomy.restricted_manual={active:true,ready:true,map_frozen:true,reason:''};
+  failedManual.autonomy.tuning={...failedManual.autonomy.tuning,phase:'FAILED',ready:false,requires_stop:true,error:'回退读取参数超时'};
+  const blockedManual=await browser(failedManual);
+  assert.equal(blockedManual.e.enable.disabled,true,'参数保护拒绝运动时不得开放使能');
+  assert.match(blockedManual.e.motion.textContent,/参数安全核验/);
+  blockedManual.run("receiveControl({armed:false,reason:'输入已就绪，请确认现场后使能',control_revision:99})");
+  assert.match(blockedManual.e.motion.textContent,/参数安全核验/,'门控心跳不得覆盖参数阻断原因');
+  assert.match(blockedManual.e['workflow-title'].textContent,/参数/,'页面主状态不得宣称已就绪');
+  failedManual.autonomy.still=true;failedManual.autonomy.navigation_terminal=true;
+  failedManual.autonomy.tuning.restore_available=true;
+  await blockedManual.next(failedManual);
+  assert.equal(blockedManual.e['tuning-restore'].disabled,false,'停稳后应提供独立参数恢复入口');
+  await blockedManual.e['tuning-restore'].onclick();await new Promise(setImmediate);
+  assert.equal(blockedManual.posts()[0].action,'restore_tuning');
+  const failedRecover=structuredClone(failedManual);failedRecover.autonomy.phase='RECOVERING';failedRecover.autonomy.recovery_pending=true;
+  failedRecover.autonomy.recovery={phase:'VERIFY_READY',reason:'等待监督器提交',progress:{remaining_seconds:54}};
+  const recoveryBlocked=await browser(failedRecover);
+  assert.match(recoveryBlocked.run('recoverySentence(state.autonomy)'),/参数安全核验阻止/);
+  assert.equal(recoveryBlocked.e['tuning-restore'].disabled,true,'恢复未中止时不得并发更改参数');
   const b=await browser();assert.equal(b.e['tuning-global_inflation_radius'].disabled,false);assert.equal(b.e['escape-enabled'].disabled,true);assert.match(b.e['escape-status'].textContent,/现场验证/);
   b.e['tuning-global_inflation_radius'].value='.6';b.e['tuning-global_inflation_radius'].oninput();await b.e['tuning-global_inflation_radius'].onchange();await new Promise(resolve=>setImmediate(resolve));
   const command=b.posts()[0];assert.equal(command.action,'set_tuning');assert.equal(command.values.global_inflation_radius,.6);assert.equal(command.task_id,'test-task');assert.equal(command.operation_epoch,3);

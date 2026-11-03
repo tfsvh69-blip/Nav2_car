@@ -195,8 +195,14 @@ public:
     });
     filtered_=create_subscription<sensor_msgs::msg::LaserScan>(filtered_scan_,rclcpp::SensorDataQoS().keep_last(1),[this](sensor_msgs::msg::LaserScan::ConstSharedPtr m){if(fresh(m->header.stamp)&&!m->ranges.empty())filtered_at_=seconds();});
     odom_=create_subscription<nav_msgs::msg::Odometry>("/wheel/odometry",rclcpp::QoS(1),[this](nav_msgs::msg::Odometry::ConstSharedPtr m){
+      const double received=seconds();++odom_received_count_;
+      if(odom_received_at_>=0)odom_max_receive_gap_=std::max(odom_max_receive_gap_,received-odom_received_at_);
+      odom_received_at_=received;odom_source_age_=(now()-rclcpp::Time(m->header.stamp)).seconds();
       if(!fresh(m->header.stamp)||!std::isfinite(m->twist.twist.linear.x)||!std::isfinite(m->twist.twist.linear.y)||!std::isfinite(m->twist.twist.angular.z)||
-        !std::isfinite(m->pose.pose.position.x)||!std::isfinite(m->pose.pose.position.y))return;
+        !std::isfinite(m->pose.pose.position.x)||!std::isfinite(m->pose.pose.position.y)){
+        ++odom_rejected_count_;odom_rejection_=!fresh(m->header.stamp)?"消息源时间超过新鲜度门槛":"轮式位姿或速度不是有限数值";return;
+      }
+      odom_rejection_.clear();
       // 全向底盘横向仍在移动时，不能把纵向速度为零当作停稳。
       measured_velocity_=m->twist.twist;odom_at_=seconds();speed_=std::hypot(m->twist.twist.linear.x,m->twist.twist.linear.y);rotation_speed_=std::abs(m->twist.twist.angular.z);
       wheel_={m->pose.pose.position.x,m->pose.pose.position.y,yaw(m->pose.pose.orientation)};
@@ -712,9 +718,17 @@ private:
     if(!tuning&&!wall&&action!="set_handoff"&&action!="set_escape_enabled"&&action!="set_wall_bypass")return false;
     if(!live_controls_enabled_)throw std::runtime_error("当前入口未启用在线调参与临时墙");
     if(tuning){
+      const bool retry=action=="restore_tuning"&&tuning_state_.value("phase",std::string())=="FAILED"&&
+        tuning_state_.value("restore_available",false);
       if(!wall_pending_.empty()||recovery_pending_||checkpoint_requested_||
-         (task_.phase!="EXPLORING"&&task_.phase!="RETURNING"&&task_.phase!="MANUAL"&&task_.phase!="PAUSED"))throw std::runtime_error("当前正在停车、恢复或应用墙，未提交参数变更");
-      if(seconds()-tuning_at_>2||!tuning_state_.value("ready",false)||tuning_state_.value("pending",false))throw std::runtime_error("参数事务未就绪或上一批尚未完成");
+         (task_.phase!="EXPLORING"&&task_.phase!="RETURNING"&&task_.phase!="MANUAL"&&task_.phase!="PAUSED"&&!(retry&&task_.phase=="FAULT")))throw std::runtime_error("当前正在停车、恢复或应用墙，未提交参数变更");
+      if(seconds()-tuning_at_>2||(!retry&&!tuning_state_.value("ready",false))||tuning_state_.value("pending",false))throw std::runtime_error("参数事务未就绪或上一批尚未完成");
+      if(retry){
+        if(!still()||!terminal()||(task_.phase!="PAUSED"&&task_.phase!="MANUAL"&&task_.phase!="FAULT"))
+          throw std::runtime_error("参数恢复需先停车，等待导航终态及轮式停稳");
+        // 显式恢复参数只恢复资格，不重新发起此前的自动行驶。
+        live_resume_phase_.clear();operator_hold_=true;manual_at_=-1e9;
+      }
       auto request=j;request["action"]=action=="set_tuning"?"apply":"restore";request["generation"]=navigation_generation_;
       publish_live(tuning_requests_,request);task_.reason="参数请求已转交车端，等待真实读回和代价图更新；车辆按原安全链路行驶";return true;
     }
@@ -1253,6 +1267,8 @@ private:
           recovery_state_.value("commit_ready",false)&&costmap_rebuild_->ready()&&aligned&&mask_ready&&map_sequence_>recovery_map_sequence_&&healthy(true,operator_recovery_)&&still()&&terminal()&&
           map_&&accepted_stamp>0&&rclcpp::Time(map_->header.stamp).nanoseconds()>=accepted_stamp&&
           ca::free_footprint(*map_,current_)&&t-local_pose_at_<.5&&t-global_pose_at_<.5;
+        if(live_controls_enabled_&&(t-tuning_at_>2||!tuning_state_.value("ready",false)))
+          task_.reason="定位已通过，但参数安全核验未通过，未提交恢复；请中止恢复，停稳后恢复本轮参数再重新检查："+tuning_state_.value("error",std::string("参数状态过期或未就绪"));
         if(!ready)recovery_valid_since_=-1;
         else if(recovery_valid_since_<0)recovery_valid_since_=t;
         else if(t-recovery_valid_since_>=1&&!recovery_commit_sent_){recovery_commit_sent_=true;recovery_request("commit_verified");}
@@ -1405,6 +1421,9 @@ private:
       (escape_motion||(!obstacle_escape_->active()&&((operation_&&operation_->nav&&!operation_->nav_done&&!operation_->cancel)||(continuous_&&task_.phase=="EXPLORING"&&continuous_->motion()))));
     restricted_ready_=restricted_manual_&&task_.phase=="MANUAL"&&terminal()&&restricted_freeze_confirmed();
     restricted_reason_=local_manual_block();restricted_ready_=restricted_ready_&&restricted_reason_.empty();
+    if(live_controls_enabled_&&(t-tuning_at_>2||!tuning_state_.value("ready",false)||tuning_state_.value("requires_stop",false))){
+      restricted_ready_=false;restricted_reason_="参数安全核验未通过，未放行手动运动；停稳后恢复本轮参数："+tuning_state_.value("error",std::string());
+    }
     if(restricted_manual_&&!restricted_freeze_confirmed())restricted_reason_="等待恢复取消与地图冻结回执";
     if(restricted_ready_&&t-last_closed_>.3&&t-manual_at_<.3){
       input=manual_velocity_;input.linear.x=std::clamp(input.linear.x,-.05,.05);input.angular.z=std::clamp(input.angular.z,-.10,.10);
@@ -1516,6 +1535,10 @@ private:
     j["obstacle_escape"]["setting_request_id"]=escape_setting_id_;
     j["live_controls_enabled"]=live_controls_enabled_;
     j["tuning"]=tuning_state_;j["tuning"]["age_seconds"]=seconds()-tuning_at_;
+    j["wheel_input"]={{"received_count",odom_received_count_},{"rejected_count",odom_rejected_count_},
+      {"receive_age_seconds",odom_received_at_<0?ca::Json(nullptr):ca::Json(seconds()-odom_received_at_)},
+      {"accepted_age_seconds",seconds()-odom_at_},{"source_age_at_receive_seconds",odom_source_age_},
+      {"max_receive_gap_seconds",odom_max_receive_gap_},{"last_rejection",odom_rejection_}};
     j["handoff"]={{"distance_m",handoff_distance_},{"phase","READY"},{"request_id",handoff_request_id_}};
     j["walls"]=wall_state_;j["walls"]["bypass_enabled"]=wall_bypass_;
     j["walls"]["bypass_request_id"]=wall_bypass_id_;j["walls"]["bypass_owner_id"]=wall_bypass_owner_;
@@ -1686,6 +1709,8 @@ private:
   ca::RouteValidator validator_;ca::ObservationSelector selector_;uint64_t map_revision_=0,operation_sequence_=0,loop_map_after_=0;
   std::unique_ptr<ca::TopologyMonitor>topology_;ca::TopologyMonitor::Result topology_result_;
   double last_tick_at_=0,tick_gap_ms_=0,max_tick_gap_ms_=0,max_tick_work_ms_=0;
+  double odom_received_at_=-1,odom_source_age_=0,odom_max_receive_gap_=0;
+  uint64_t odom_received_count_=0,odom_rejected_count_=0;std::string odom_rejection_;
   double scan_at_=-1e9,filtered_at_=-1e9,odom_at_=-1e9,map_at_=-1e9,slam_at_=-1e9,session_at_=-1e9,local_pose_at_=-1e9,global_pose_at_=-1e9;
   double manual_at_=-1e9,auto_at_=-1e9,collision_at_=-1e9,still_since_=-1,accepted_at_=0,acceptance_motion_at_=-1,loop_at_=-1e9,map_odom_age_=0,odom_base_age_=0;
   double last_state_=0,last_closed_=seconds(),direction_ratio_=0,direction_since_=-1,direction_min_=0,direction_hold_=3,covariance_=0,speed_=0,rotation_speed_=0,pending_pose_jump_at_=-1,return_remaining_=600;

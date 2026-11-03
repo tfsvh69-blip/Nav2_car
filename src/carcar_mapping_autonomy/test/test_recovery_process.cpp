@@ -108,7 +108,7 @@ TEST(RecoveryProcess, CheckpointTiltRelocalizeRestoreAndCommitWithoutMotion){
   ASSERT_TRUE(!small_translation||(std::isfinite(translation_m)&&translation_m>0&&translation_m<=.20));
   bool post_capture_injected=false;double post_capture_injection_time=0;Json post_capture_before=Json::object();
   const std::string commit_case=std::getenv("CARCAR_TEST_COMMIT_GUARD")?std::getenv("CARCAR_TEST_COMMIT_GUARD"):"";
-  bool commit_bad_scan=false;
+  bool commit_bad_scan=false,fixture_healthy=true;
   bool injected=false,cancel_sent=false;int injection_tick=0;double injection_time=0;
   auto spin_until=[&](auto done,double timeout){
     const auto end=std::chrono::steady_clock::now()+std::chrono::duration<double>(timeout);
@@ -116,7 +116,7 @@ TEST(RecoveryProcess, CheckpointTiltRelocalizeRestoreAndCommitWithoutMotion){
       const auto now=n->now();geometry_msgs::msg::TransformStamped t;t.header.stamp=now;t.header.frame_id="odom";t.child_frame_id="base_footprint";t.transform.translation.x=odom_x;t.transform.rotation.w=1;
       t.transform.rotation.z=std::sin(turn_yaw/2);t.transform.rotation.w=std::cos(turn_yaw/2);
       if(tf_enabled){if(!static_sent){fixed.sendTransform(laser);static_sent=true;}tf.sendTransform(t);}
-      std_msgs::msg::String a;a.data=Json{{"task_id","fixture"},{"generation",gen},{"navigation_generation",gen},{"healthy",true},{"phase","MANUAL"},{"control_mode","automatic"},{"still",!(injected&&checkpoint_case=="movement")},{"navigation_terminal",true},{"current_pose",{0,0,0}},{"origin",{0,0,0}}}.dump();state_pub->publish(a);
+      std_msgs::msg::String a;a.data=Json{{"task_id","fixture"},{"generation",gen},{"navigation_generation",gen},{"healthy",fixture_healthy},{"phase","MANUAL"},{"control_mode","automatic"},{"still",!(injected&&checkpoint_case=="movement")},{"navigation_terminal",true},{"current_pose",{0,0,0}},{"origin",{0,0,0}}}.dump();state_pub->publish(a);
       // 现场40毫秒单帧比力方向越界；这里只重现相对夹角，不声称车身发生真实倾斜。
       if(!checkpoint_case.empty()&&!injected&&state.value("phase","")=="CHECKPOINTING"){
         injected=true;injection_tick=tick;injection_time=now.seconds();tilt=checkpoint_case=="hard"?.25:4.236456*M_PI/180;
@@ -191,6 +191,23 @@ TEST(RecoveryProcess, CheckpointTiltRelocalizeRestoreAndCommitWithoutMotion){
   // 补采封窗状态经独立话题到达；至少再送一轮，避免把尚在WARMING的正常拒绝当成检查点故障。
   ASSERT_TRUE(spin_until([&]{return slam.value("startup_closed",true);},6));
   spin_until([]{return false;},.3);
+  if(online&&std::getenv("CARCAR_TEST_SNAPSHOT_HEALTH_LAG")){
+    fixture_healthy=false;spin_until([]{return false;},.3);
+    request("snapshot","snapshot-health-lag");
+    ASSERT_TRUE(spin_until([&]{const auto s=state.value("snapshot",Json::object());return s.value("request_id","")=="snapshot-health-lag";},1));
+    ASSERT_EQ(state.at("snapshot").value("phase",""),"WAITING_STATE")<<state.dump();
+    const std::string lag_case=std::getenv("CARCAR_TEST_SNAPSHOT_HEALTH_LAG");
+    if(lag_case=="timeout"||lag_case=="cancel"){
+      if(lag_case=="cancel"){++gen;request("cancel","cancel-waiting-health");}
+      ASSERT_TRUE(spin_until([&]{return state.value("snapshot",Json::object()).value("phase","")=="FAILED";},3))<<state.dump();
+      fixture_healthy=true;spin_until([]{return false;},.4);
+      EXPECT_TRUE(state.value("checkpoint_id",std::string()).empty());
+      EXPECT_EQ(state.at("snapshot").value("phase",""),"FAILED");
+      rclcpp::shutdown();return;
+    }
+    fixture_healthy=true;
+    ASSERT_TRUE(spin_until([&]{return state.value("snapshot",Json::object()).value("phase","")=="READY";},15))<<state.dump();
+  }
   request(online?"snapshot":"checkpoint","checkpoint-1");ASSERT_TRUE(spin_until([&]{return state.value("phase","")=="CHECKPOINT_READY"||state.value("phase","")=="FAILED"||state.value("snapshot",Json::object()).value("phase","")=="FAILED";},20));
   if(online&&snapshot_post_capture_case=="bad_scan"){
     ASSERT_TRUE(post_capture_injected)<<"必须真实进入捕获后验证阶段，不能用启动失败代替几何反例";

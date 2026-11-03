@@ -1,5 +1,5 @@
 'use strict';
-const UI_VERSION='20261103-nav018-live-controls';
+const UI_VERSION='20261103-nav018-field-recovery';
 const $ = id => document.getElementById(id);
 let ws, session = '', challenge = '', sequence = 0, pressed = '', frame = '', frameAt = -Infinity;
 let state = {}, mapImage = null, displayMap = null, mapVersion = '', mapLoading = false, hint = null, choosing = false;
@@ -34,8 +34,20 @@ function clientLog(event, detail = {}) {
 const canvas = $('map'), ctx = canvas.getContext('2d'), video = $('video'), vctx = video.getContext('2d');
 const phases = {STANDBY:'网页待命 · 硬件未启动',STOPPING:'正在关闭本次任务',WAITING:'等待建图输入',CURRENT:'实时建图',REFERENCE:'历史参考图：请选择初始位置',LOADING:'正在恢复工程',TRIAL:'首帧试匹配',CANDIDATE:'匹配候选：核对后确认',FAILED:'建图锁停：查看诊断后重启',SAVING:'已停车，正在保存'};
 function savedAutonomy(){return !!state.autonomy_enabled&&state.task_state==='RUNNING'&&state.autonomy?.phase==='REVIEW_REQUIRED'&&!!state.last_saved_bundle&&!state.dirty;}
-function manualControlAllowed(){return !state.autonomy_enabled||state.autonomy?.phase==='MANUAL'&&!state.autonomy?.auto_start_pending;}
-function restrictedControlReady(){return !!state.autonomy?.restricted_manual?.active&&!!state.autonomy?.restricted_manual?.ready&&(state.autonomy_age_ms??Infinity)<500;}
+function manualControlAllowed(){return !parameterMotionBlock()&&(!state.autonomy_enabled||state.autonomy?.phase==='MANUAL'&&!state.autonomy?.auto_start_pending);}
+function parameterMotionBlock(){
+  const auto=state.autonomy||{},t=auto.tuning||{};
+  if(!auto.live_controls_enabled)return '';
+  if((auto.autonomy_age_ms??state.autonomy_age_ms??Infinity)>=500||!Number.isFinite(t.age_seconds)||t.age_seconds>2)return '车端参数状态过期，未允许运动';
+  if(!t.ready||t.requires_stop)return '参数安全核验未通过，未允许运动：'+(t.error||'等待真实参数与代价图核验');
+  return '';
+}
+function parameterFailureHint(auto=state.autonomy||{}){
+  if(!auto.live_controls_enabled||auto.tuning?.phase!=='FAILED')return '';
+  return '参数安全核验未通过，车辆保持停车。'+(recoveryActive(auto)?'先中止恢复并停稳，':'停稳后')+
+    '打开“运行参数”，点击“恢复本轮初值”；读回完成后再选择手动控制或重新检查定位。原因：'+(auto.tuning.error||'参数事务失败');
+}
+function restrictedControlReady(){return !parameterMotionBlock()&&!!state.autonomy?.restricted_manual?.active&&!!state.autonomy?.restricted_manual?.ready&&(state.autonomy_age_ms??Infinity)<500;}
 function needsRestrictedTakeover(){return !state.autonomy?.actions?.manual?.enabled&&!!state.autonomy?.actions?.manual_restricted?.enabled;}
 function sharedOperators(){return state.manual_control?.protocol>=1;}
 function isManualOwner(){return !sharedOperators()||!!operatorClientId&&state.manual_control.owner_id===operatorClientId;}
@@ -151,12 +163,13 @@ function checkpointSentence(auto){
     '车辆保持停车，正在保存稳定检查点；完成后继续原任务，沿用本轮起点和预算。';
 }
 function recoverySentence(auto){
-  if(auto.phase==='STOPPING'&&recoveryActive(auto))return '检测到受扰，正在取消导航并等待停稳；地图恢复验证尚未开始。';
+  if(auto.phase==='STOPPING'&&recoveryActive(auto))return '正在取消导航并等待停稳，地图恢复验证尚未开始。'+(auto.reason||auto.recovery?.reason||'');
   if(!recoveryActive(auto))return '';
+  if(auto.live_controls_enabled&&auto.tuning?.phase==='FAILED')return '定位恢复被参数安全核验阻止，车辆保持停车。请中止恢复，停稳后点击“恢复本轮初值”，参数核验完成后再重新检查定位。原因：'+(auto.tuning.error||'参数事务失败');
   const recovery=auto.recovery||{};
   const after=auto.operator_check?.phase==='CHECKING'||auto.automatic_recovery?.operator_hold?
     '通过后保持暂停，由操作者选择下一步。':'通过后刷新导航并继续原任务。';
-  return ({DISTURBED:'检测到受扰，正在暂停行驶和地图更新。',WAITING_STABLE:'等待车身平稳，再对照稳定地图重新定位。',
+  return ({DISTURBED:'定位或输入状态需要复核，正在暂停行驶和地图更新。',WAITING_STABLE:'等待车身平稳，再对照稳定地图重新定位。',
     WAITING_ROLLBACK_STABLE:'错误回环已撤销，地图保持冻结；等待车辆连续停稳。',
     VERIFYING_ROLLBACK:'正在核对撤销后的地图与六帧新激光；'+after,
     VALIDATING_CHECKPOINT:'正在核验稳定检查点的完整性；通过后重新匹配当前位置。',
@@ -183,7 +196,8 @@ function renderRecovery(auto,fresh){
   const frames=progress.required_frames>0?`已验证 ${progress.verified_frames||0}/${progress.required_frames} 帧`:'';
   const remaining=Number.isFinite(progress.remaining_seconds)&&recoveryActive(auto)?`本阶段剩余 ${Math.max(0,progress.remaining_seconds).toFixed(0)} 秒`:'';
   const checks=Array.isArray(recovery.verification?.failed_checks)?recovery.verification.failed_checks.join('；'):'';
-  summary.textContent=!fresh?'恢复状态过期，等待车端新反馈。':[frames,remaining,checks||recovery.reason].filter(Boolean).join(' · ');
+  const parameterFailure=auto.live_controls_enabled&&auto.tuning?.phase==='FAILED'?recoverySentence(auto):'';
+  summary.textContent=!fresh?'恢复状态过期，等待车端新反馈。':[frames,remaining,parameterFailure||checks||recovery.reason].filter(Boolean).join(' · ');
   const imu=Number.isFinite(recovery.imu_age_seconds)&&recovery.imu_age_seconds>.5?'姿态观测过期':
     recovery.imu_valid===false?'姿态观测无效':!recovery.imu_ready?'等待姿态参考':recovery.imu_stable?'姿态观测平稳':
       ['EXPLORING','RETURNING'].includes(auto.phase)&&!recovery.requires_stop?'行驶中，姿态观测更新':'等待连续停稳观测';
@@ -215,6 +229,7 @@ function renderWorkflow(){
   else if(!idle){
     step=2;
     if(savedAutonomy()){step=3;title='候选地图已保存';next=returnNotice(a)+'结束本次任务后审核候选；审核发布和巡检启用分别进行。';}
+    else if(parameterFailureHint(a)){title='参数核验失败，保持停车';next=parameterFailureHint(a);}
     else if(a.restricted_manual?.active){title='受限手动接管';next='地图保持冻结，原任务保留。最高0.05 m/s、0.10 rad/s；按住行驶，松手停车。'+(a.restricted_manual.reason||'重新检查通过后，由你选择是否继续自动建图。');}
     else if(a.operator_check?.phase==='CHECKING'){title=recoveryActive(a)?'正在重新定位':'正在重新检查';next=recoveryActive(a)?recoverySentence(a):a.operator_check.reason||'车辆保持停车，等待连续健康检查。';}
     else if(a.phase==='FAULT'||state.phase==='FAILED'){title='建图已锁停';next=a.actions?'查看任务控制中的原因；条件恢复后可重新检查。':a.fault?.reason||a.quality_fault||a.error||state.error||'确认实物停稳，查看原因后结束任务；不自动恢复运动。';}
@@ -254,6 +269,7 @@ function renderWorkflow(){
   if(!a.restricted_manual?.active&&(a.phase==='FAULT'||state.phase==='FAILED'))$('status-caption').textContent='故障保持停车 · 先检查再继续';
   if(a.restricted_manual?.active)$('status-caption').textContent='受限人工控制 · 地图冻结 · 松手停车';
   if(a.phase==='CHECKING')$('status-caption').textContent='检查中 · 不会自动起步';
+  if(parameterFailureHint(a))$('status-caption').textContent='参数故障 · 保持停车 · 可恢复本轮初值';
   $('safety-note').textContent=a.restricted_manual?.active?'受限接管只在当前方向的激光与车身扫掠检查通过时放行；定位未确认，地图冻结。实物是否停稳仍须现场核对。':!idle&&a.control_mode==='automatic'?
     '自动建图需要现场看护；二维激光不能覆盖所有高度的障碍。紧急时切断轮动力。':
     '遥控无自动避障。速度为命令上限，实物是否停稳须目视确认；紧急时切断轮动力。';
@@ -419,7 +435,7 @@ function receiveControl(value) {
     const ack=value.accepted_sequence??value.ack_sequence;
     if(sentAt.has(ack)){roundTripMs=Math.round(performance.now()-sentAt.get(ack));sentAt.delete(ack);}
     if(value.last_stop?.server_steady&&value.last_stop.server_steady!==lastFault?.server_steady){lastFault=value.last_stop;clientLog('guard_stop',{reason:lastFault.reason});}
-    if(!savedAutonomy())$('motion').textContent=value.reason||'未使能';
+    if(!savedAutonomy())$('motion').textContent=parameterMotionBlock()||value.reason||'未使能';
     $('enable').disabled=!manualControlAllowed()||!ownsManualControl()||!!value.armed||!!value.health||(state.phase!=='CURRENT'&&!restrictedControlReady())||state.busy||(state.save_failed&&!restrictedControlReady())||!session||!controlFresh();
     joystick.classList.toggle('disabled',!manualControlAllowed()||!ownsManualControl()||!value.armed||state.busy||!session);
     if(value.gear&&document.activeElement!==$('gear'))$('gear').value=value.gear;
@@ -638,7 +654,7 @@ function renderOperatorActions(auto,fresh,uiBusy){
     (auto.actions.recheck?.enabled?'数据已恢复，可重新检查；通过后仍保持暂停。':auto.actions.recheck?.reason||'等待车端恢复条件。'):
     auto.phase==='PAUSED'?(!auto.healthy&&auto.actions.recheck?.enabled?'车辆保持停车，可重新检查并校正位置；验证通过后选择继续建图、返程或接管。':auto.reason||'车辆已暂停，选择下一步操作。'):auto.phase==='RETURNING'?returnNotice(auto):
     auto.phase==='EXPLORING'?(auto.exploration_wait?.phase==='WAITING'?`等待可执行目标；${auto.navigation_detail||auto.exploration_note||'车端正在重新筛选。'}`:auto.near_field?.inside?'近场障碍阻挡，车辆等待通道恢复。':'正在自动建图。'):auto.reason||'';
-  $('autonomy-hint').textContent=terminal?'本轮探索已结束。'+returnNotice(auto):explanation;
+  $('autonomy-hint').textContent=terminal?'本轮探索已结束。'+returnNotice(auto):parameterFailureHint(auto)||explanation;
   $('autonomy-quality').hidden=false;
   $('autonomy-quality').textContent=auto.fault?.active?auto.fault.reason:returnNotice(auto)||(
     auto.phase==='FAULT'?auto.quality_fault||auto.error||state.error:!auto.healthy&&!checking?auto.health_reason||'': '');
@@ -690,7 +706,9 @@ function liveReason(action){
   if(!liveFresh())return '网页未提交：车端状态过期，请检查连接';
   if(livePending||autonomyPending||taskOperationBusy()||state.busy)return '等待本次操作的车端确认';
   const module=liveStatusFor(action,a);
-  if(['set_tuning','restore_tuning','save_tuning'].includes(action)&&(module.ready===false||Number.isFinite(module.age_seconds)&&module.age_seconds>2))return '参数服务尚未就绪或读回已过期，等待车端同步';
+  const restoreFailed=action==='restore_tuning'&&module.phase==='FAILED'&&module.restore_available===true;
+  if(restoreFailed&&(!a.still||!a.navigation_terminal||!['MANUAL','PAUSED','FAULT'].includes(a.phase)))return '请先中止恢复或停车，等待导航结束与轮式停稳，再恢复本轮参数';
+  if(['set_tuning','restore_tuning','save_tuning'].includes(action)&&(!restoreFailed&&module.ready===false||!Number.isFinite(module.age_seconds)||module.age_seconds>2))return '参数服务尚未就绪或读回已过期，等待车端同步';
   if(action==='save_tuning'&&(module.ready!==true||!Number.isFinite(module.age_seconds)||module.age_seconds<0||module.age_seconds>2||module.task_id!==a.task_id))return '默认参数未提交：等待本轮调参节点的新鲜、稳定真实读回';
   if(module.pending||['APPLYING','SETTING','STOPPING','SAVING'].includes(module.phase))return '车端正在处理同类操作，等待真实读回后再提交';
   if(cap&&cap.enabled===false)return '车端健康检查拒绝：'+(cap.reason||'当前阶段不允许该操作');
@@ -773,7 +791,8 @@ function renderLiveControls(){
     $('readback-'+key).textContent=[Number.isFinite(requested)?`请求 ${requested.toFixed(2)}${spec.unit}`:'',Number.isFinite(tuning.confirmed?.[key])?`真实读回 ${tuning.confirmed[key].toFixed(2)}${spec.unit}`:'等待真实读回'].filter(Boolean).join(' ／ ');
   }
   for(const [id,action] of [['tuning-restore','restore_tuning'],['tuning-save','save_tuning']]){
-    const why=liveReason(action)||(!tuningSupported?'车端尚未提供动态调参能力':tuning.pending||tuning.phase!=='READY'?'等待稳定的真实读回':'');
+    const retry=action==='restore_tuning'&&tuning.phase==='FAILED'&&tuning.restore_available===true;
+    const why=liveReason(action)||(!tuningSupported?'车端尚未提供动态调参能力':tuning.pending||tuning.phase!=='READY'&&!retry?'等待稳定的真实读回':'');
     $(id).disabled=!!why;$(id).title=why;
   }
   $('tuning-status').textContent=(tuning.pending?'车端正在应用参数，等待真实读回。':'')||tuning.error||tuning.defaults_error||liveMessages.tuning?.text||(!tuningSupported?'车端尚未提供动态调参能力。':tuning.pending?'车端正在应用参数，请等待真实读回。':reason||'参数已读回；修改只影响当前任务，保存默认后用于新任务。');
@@ -942,7 +961,8 @@ let lastPaintAt=-Infinity,navImages={};
 function layerOn(id){const node=$(id);return !node||node.checked!==false;}
 function paintCost(slot,key,toggle){
   const image=navImages[slot],layer=state.navigation?.[key];
-  if(!layerOn(toggle)||!layer?.available||!image?.bitmap||image.sequence!==layer.sequence)return;
+  if(!layerOn(toggle)||!layer?.available||!image?.bitmap||!Number.isFinite(image.decodedAt)||
+    (performance.now()-image.decodedAt)/1000+(image.sourceAge||0)>1.5)return;
   const meta=image.meta;if(!meta?.origin)return;
   ctx.save();ctx.translate(meta.origin.x,meta.origin.y);ctx.rotate(meta.origin.yaw||0);
   ctx.translate(0,meta.height*meta.resolution);ctx.scale(meta.resolution,-meta.resolution);
@@ -974,9 +994,15 @@ function navigationSentence(auto){
   if(near?.valid)return `最近激光在${near.side||'车身附近'} ${Number(near.range).toFixed(2)} 米，${near.inside?'已进入车身停车框':'在车身停车框外'}`;
   return '';
 }
-function layerAge(layer,name){
+function layerAge(layer,name,slot){
   if(!layer)return name+'未接入';
   if(!layer.available)return `${name}：${layer.error||'没有数据'}`;
+  if(slot){
+    const image=navImages[slot];
+    if(!image?.bitmap||!Number.isFinite(image.decodedAt))return `${name}：等待图片加载`;
+    const age=Math.max(0,(performance.now()-image.decodedAt)/1000+(image.sourceAge||0));
+    return `${name}图像 ${age.toFixed(1)}秒${age>1.5?'（已隐藏过期图层）':image.loading?'（更新中）':''}`;
+  }
   const points=Array.isArray(layer.points)?` ${layer.points.length}点`:'';
   return `${name} ${Math.max(0,layer.age_seconds||0).toFixed(1)}秒${points}`;
 }
@@ -984,17 +1010,22 @@ function refreshNavigationImages(){
   const nav=state.navigation||{};
   for(const [key,slot,url] of [['global_costmap','global','/api/navigation/global-costmap.png'],['local_costmap','local','/api/navigation/local-costmap.png']]){
     const layer=nav[key];
-    if(!layer?.available||!layer.sequence||navImages[slot]?.sequence===layer.sequence||navImages[slot]?.loading)continue;
+    if(!layer?.available||!layer.sequence||navImages[slot]?.sequence>=layer.sequence||navImages[slot]?.loading)continue;
     const sequence=layer.sequence,generation=taskKey;
-    navImages[slot]={...navImages[slot],loading:true,sequence};
+    // 加载中的目标版本不能覆盖已经解码、正在显示的图片版本。
+    const pending={...navImages[slot],loading:true,requestedSequence:sequence,requestedAt:performance.now()};
+    navImages[slot]=pending;
     fetchTimed(url,{},4000).then(async response=>{
       if(!response.ok)throw Error('代价图不可用');
       const meta=JSON.parse(response.headers.get('X-Nav-Meta')||'{}');
       const bitmap=await createImageBitmap(await response.blob());
-      if(generation!==taskKey){bitmap.close();return;}
+      if(generation!==taskKey||navImages[slot]!==pending){bitmap.close();return;}
+      if(!Number.isSafeInteger(meta.sequence)||meta.sequence<sequence){bitmap.close();throw Error('代价图版本无效或已过期');}
       navImages[slot]?.bitmap?.close?.();
-      navImages[slot]={sequence,meta,bitmap,loading:false};
-    }).catch(()=>{if(navImages[slot]?.sequence===sequence)navImages[slot].loading=false;});
+      const decodedAt=performance.now();
+      navImages[slot]={sequence:meta.sequence,meta,bitmap,loading:false,decodedAt,
+        sourceAge:Math.max(0,meta.source_age_seconds||meta.age_seconds||0)+(decodedAt-pending.requestedAt)/1000};
+    }).catch(()=>{if(generation===taskKey&&navImages[slot]===pending)pending.loading=false;});
   }
 }
 function draw(at=performance.now()){
@@ -1133,7 +1164,8 @@ const age=value=>Number.isFinite(value)&&value<10000?`${Math.max(0,value).toFixe
       }
       $('motion').textContent=saved?'探索已结束；确认实物停稳后结束任务，查看候选或开始新一轮':state.inspection_running?'巡检还在进行，请先在巡检页取消或等这轮结束':state.phase==='STANDBY'?'网页待命，尚未启动硬件':state.task_state==='STARTING'?'正在预检和启动，车辆保持停车':!controlFresh()?'控制状态过期，请检查连接':control?.reason||'等待运动门控';
       $('enable').disabled=!!state.inspection_running||!ownsManualControl()||!session||state.busy||(state.save_failed&&!restrictedControlReady())||(state.phase!=='CURRENT'&&!restrictedControlReady())||!controlFresh()||!!control?.armed||!!control?.health;
-      if(!manualControlAllowed())$('enable').disabled=true;
+      if(!manualControlAllowed()||parameterMotionBlock())$('enable').disabled=true;
+      if(parameterMotionBlock()){$('motion').textContent=parameterMotionBlock();$('enable').title=parameterMotionBlock();}
       joystick.classList.toggle('disabled',!manualControlAllowed()||!ownsManualControl()||!control?.armed||state.busy||!session);
       $('fast-option').disabled=!control?.supported_gears?.includes('fast');
       $('save').disabled=saved||(state.phase!=='CURRENT'&&!restrictedControlReady())||state.busy||!session;
@@ -1167,7 +1199,7 @@ const age=value=>Number.isFinite(value)&&value<10000?`${Math.max(0,value).toFixe
       $('confirm').hidden=state.phase!=='CANDIDATE';
       $('health').textContent=`雷达 ${age(state.scan_age)} · 里程计 ${age(state.odom_age)} · 地图 ${age(state.map_age)} · 控制 ${controlFresh()?'正常':'过期'}${roundTripMs===null?'':' · 往返 '+roundTripMs+'ms'}`;
       $('nav-layer-note').textContent=!state.autonomy_enabled||state.task_state==='STANDBY'?'':state.navigation?[
-        layerAge(state.navigation.global_costmap,'全局代价'),layerAge(state.navigation.local_costmap,'局部代价'),
+        layerAge(state.navigation.global_costmap,'全局代价','global'),layerAge(state.navigation.local_costmap,'局部代价','local'),
         layerAge(state.navigation.global_path,'全局路径'),layerAge(state.navigation.local_path,'局部跟随'),layerAge(state.navigation.prediction,'预测弧')
       ].join(' · '):'导航图层尚未从车端接入';
       refreshNavigationImages();

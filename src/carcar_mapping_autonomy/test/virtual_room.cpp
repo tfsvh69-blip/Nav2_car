@@ -16,6 +16,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 extern char**environ;
 int main(int argc,char**argv){
   const bool continuous=std::getenv("CARCAR_ROOM_CONTINUOUS")!=nullptr;
@@ -36,6 +37,8 @@ int main(int argc,char**argv){
   auto scan=n->create_publisher<sensor_msgs::msg::LaserScan>("/scan",rclcpp::SensorDataQoS());
   auto imu=n->create_publisher<sensor_msgs::msg::Imu>("/imu/data_raw",rclcpp::SensorDataQoS());
   auto odom=n->create_publisher<nav_msgs::msg::Odometry>("/wheel/odometry",1);
+  auto diagnostics=n->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics",10);
+  unsigned diagnostic_tick=0;
   auto commands=n->create_publisher<std_msgs::msg::String>("/mapping/autonomy/request",10);
   geometry_msgs::msg::Twist velocity;double velocity_at=-1e9,x=complete?0:-1.2,y=0,a=0,path=0;int nonzero=0,relays=0;bool fault=false,started=false,paused=false;
   nlohmann::json state=nlohmann::json::object();const auto began=std::chrono::steady_clock::now();
@@ -50,6 +53,14 @@ int main(int argc,char**argv){
     if(nextx>west+.3&&nextx<east-.3&&nexty>south+.3&&nexty<north-.3){path+=std::hypot(nextx-x,nexty-y);x=nextx;y=nexty;}
     a+=velocity.angular.z*step;
     nav_msgs::msg::Odometry o;o.header.stamp=n->now();o.header.frame_id="odom";o.child_frame_id="base_footprint";o.pose.pose.position.x=x;o.pose.pose.position.y=y;o.pose.pose.orientation.z=std::sin(a/2);o.pose.pose.orientation.w=std::cos(a/2);o.twist.twist=velocity;odom->publish(o);
+    // 隔离软件轮式反馈的配套诊断，不伪装成实车验收，也不放宽受限接管门槛。
+    if(++diagnostic_tick%10==0){
+      diagnostic_msgs::msg::DiagnosticArray d;d.header=o.header;
+      diagnostic_msgs::msg::DiagnosticStatus status;status.name="carcar/rosmaster";status.hardware_id="software-fixture";
+      status.message="隔离软件房间正在生成模拟轮式反馈";
+      diagnostic_msgs::msg::KeyValue item;item.key="wheel_odometry_status";item.value="encoder_odometry_active";
+      status.values.push_back(item);d.status.push_back(status);diagnostics->publish(d);
+    }
     geometry_msgs::msg::TransformStamped t;t.header=o.header;t.child_frame_id="base_footprint";t.transform.translation.x=x;t.transform.translation.y=y;t.transform.rotation=o.pose.pose.orientation;tf.sendTransform(t);
     sensor_msgs::msg::LaserScan s;s.header.stamp=o.header.stamp;s.header.frame_id="laser_frame";s.angle_min=-M_PI;s.angle_max=M_PI;s.angle_increment=2*M_PI/360;s.scan_time=.05;s.time_increment=0;s.range_min=.05;s.range_max=12;s.ranges.resize(361);s.intensities.assign(361,10);
     const double sx=x-.05*std::cos(a),sy=y-.05*std::sin(a);

@@ -36,7 +36,7 @@ public:
         defaults_=TuningValues::parse(value.contains("values")?value.at("values"):value);have_defaults_=true;
       }
     }catch(const std::exception&e){defaults_error_=std::string("默认配置无效，未应用：")+e.what();}
-    for(size_t i=0;i<nodes_.size();++i){set_[i]=create_client<Set>(nodes_[i]+"/set_parameters_atomically");get_[i]=create_client<Get>(nodes_[i]+"/get_parameters");life_[i]=create_client<Life>(nodes_[i]+"/get_state");}
+    connect_clients();
     const auto qos=rclcpp::QoS(1).reliable().transient_local();
     state_pub_=create_publisher<std_msgs::msg::String>("/mapping/tuning/state",qos);
     requests_=create_subscription<std_msgs::msg::String>("/mapping/tuning/request",rclcpp::QoS(10),[this](const std_msgs::msg::String&m){request(m.data);});
@@ -55,6 +55,7 @@ public:
       {"pending",phase_=="APPLYING"||phase_=="WAITING_STOP"||phase_=="ROLLING_BACK"},
       {"requested",requested_.json()},{"confirmed",confirmed_valid_?confirmed_.json():Json(nullptr)},{"values",confirmed_valid_?confirmed_.json():Json(nullptr)},
       {"baseline",baseline_.json()},{"error",error_},{"requires_stop",requires_stop_},{"rolled_back",rolled_back_},{"rollback_ready",rolled_back_&&ready_},
+      {"previous_failure",previous_failure_},{"restore_available",phase_=="FAILED"&&confirmed_valid_&&defaults_error_.empty()},
       {"defaults_loaded",have_defaults_},{"rejected_requests",rejected},{"transaction_revision",revision_},
       {"expected_revisions",expected_revision_},{"inflation_ack",ack_},
       {"stage",steps_.empty()?std::string():steps_.front().label}};
@@ -71,6 +72,19 @@ private:
   void publish(){std_msgs::msg::String m;m.data=state().dump();state_pub_->publish(m);last_publish_=seconds();}
   bool stopped()const{return seconds()-autonomy_at_<=.6&&autonomy_at_>stop_requested_at_&&autonomy_hold_ack_&&
     autonomy_safe_phase_&&autonomy_still_&&autonomy_terminal_&&autonomy_zero_;}
+  void connect_clients(){
+    // 显式故障恢复重新建立服务连接；旧请求先撤销，新写入仍由停稳和代次屏障保护。
+    remove_pending();
+    for(size_t i=0;i<nodes_.size();++i){
+      set_[i]=create_client<Set>(nodes_[i]+"/set_parameters_atomically");
+      get_[i]=create_client<Get>(nodes_[i]+"/get_parameters");
+      life_[i]=create_client<Life>(nodes_[i]+"/get_state");
+    }
+  }
+  bool services_ready()const{
+    for(size_t i=0;i<nodes_.size();++i)if(!get_[i]->service_is_ready()||!set_[i]->service_is_ready()||!life_[i]->service_is_ready())return false;
+    return true;
+  }
   void observe(const std::string&text){
     try{const auto j=Json::parse(text);const auto task=j.at("task_id").get<std::string>();if(task.empty())return;
       if(task_id_.empty())task_id_=task;
@@ -86,6 +100,10 @@ private:
       autonomy_at_=seconds();autonomy_safe_phase_=safe_phase;autonomy_hold_ack_=hold_ack;
       autonomy_still_=is_still;autonomy_terminal_=is_terminal;autonomy_zero_=zero;
       observed_generation_=generation;
+      if(restore_transaction_&&(phase_=="WAITING_STOP"||phase_=="ROLLING_BACK")&&generation!=request_generation_){
+        remove_pending();steps_.clear();phase_="FAILED";ready_=false;requires_stop_=true;request_result_="failed";
+        error_="参数恢复期间任务代次改变，已停止后续写入；保持停车，请重新核验";publish();return;
+      }
       if(phase_=="APPLYING"&&!startup_transaction_&&generation!=request_generation_)fail("任务代次变化，停止旧调参事务并等待停车后回退");
     }catch(const std::exception&){}
   }
@@ -105,8 +123,23 @@ private:
         throw std::runtime_error("调参generation必须为非负整数");
       const auto generation=j.at("generation").get<uint64_t>();
       if(seconds()-autonomy_at_>.6||generation!=observed_generation_)throw std::runtime_error("任务状态或代次陈旧，未提交参数");
-      if(phase_!="READY"||!ready_)throw std::runtime_error("已有事务或参数尚未就绪，未并行提交");
       const auto action=j.at("action").get<std::string>();if(action!="apply"&&action!="restore")throw std::runtime_error("仅支持apply或restore");
+      if(action=="restore"&&phase_=="FAILED"&&confirmed_valid_&&defaults_error_.empty()){
+        if(!autonomy_safe_phase_||!autonomy_still_||!autonomy_terminal_||!autonomy_zero_)
+          throw std::runtime_error("恢复参数前须取消导航并确认轮式停稳和零输出");
+        // 重建失败时仍保留原FAILED事务，不留下已拒绝却可能继续执行的恢复请求。
+        connect_clients();
+        previous_failure_={{"request_id",request_id_},{"error",error_},{"request_result",request_result_}};
+        before_=baseline_;before_rpp_distance_=tuning_cost_distance(nominal_distance_,baseline_.local_radius);
+        requested_=baseline_;request_id_=id;request_generation_=generation;startup_transaction_=false;restore_transaction_=true;
+        seen_.push_back(id);while(seen_.size()>64)seen_.pop_front();
+        ready_=false;requires_stop_=true;rolled_back_=false;error_.clear();request_result_="accepted";
+        phase_="WAITING_STOP";stop_requested_at_=seconds();stop_deadline_=stop_requested_at_+8;
+        RCLCPP_INFO(get_logger(),"参数故障恢复已受理 request_id=%s；重建参数服务连接，等待新停车确认后恢复本轮初值；原失败=%s",
+          request_id_.c_str(),previous_failure_.dump().c_str());
+        publish();return;
+      }
+      if(phase_!="READY"||!ready_)throw std::runtime_error("已有事务或参数尚未就绪，未并行提交");
       auto target=baseline_;
       if(action=="apply"){
         const auto&values=j.at("values");
@@ -122,7 +155,7 @@ private:
       }
       before_=confirmed_;before_rpp_distance_=confirmed_rpp_distance_;requested_=target;request_id_=id;request_generation_=generation;
       seen_.push_back(id);while(seen_.size()>64)seen_.pop_front();
-      requires_stop_=false;rolled_back_=false;error_.clear();request_result_="accepted";startup_transaction_=false;
+      requires_stop_=false;rolled_back_=false;error_.clear();request_result_="accepted";startup_transaction_=false;restore_transaction_=false;
       phase_="APPLYING";transaction_deadline_=seconds()+25;mode_="READ_CURRENT";read_all();publish();
       RCLCPP_INFO(get_logger(),"在线调参受理 request_id=%s action=%s generation=%lu values=%s；正常应用不暂停导航",id.c_str(),action.c_str(),generation,target.json().dump().c_str());
     }catch(const std::exception&e){reject(id,e.what());}
@@ -195,7 +228,7 @@ private:
       for(size_t i=0;i<2;++i)if(!tuning_ack_matches(ack_[i],nodes_[i],expected_revision_[i],i==0?target_.global_radius:target_.local_radius,i==0?target_.global_factor:target_.local_factor))
         throw std::runtime_error("实际膨胀周期回执未匹配最终参数");
       confirmed_=target_;confirmed_rpp_distance_=target_rpp_distance_;confirmed_valid_=true;
-      if(phase_=="ROLLING_BACK"){
+      if(phase_=="ROLLING_BACK"&&!restore_transaction_){
         rolled_back_=true;
         // 原请求仍失败；仅在新的停稳回退事务完整核验后，判断当前配置是否已实际满足启动要求。
         const bool startup_satisfied=tuning_equal(actual_.values,requested_)&&
@@ -224,7 +257,7 @@ private:
       if(available&&now>=retry_at_){mode_="READ_INITIAL";read_all();}
     }
     if(phase_=="WAITING_STOP"){
-      if(stopped()){phase_="ROLLING_BACK";mode_="READ_ROLLBACK";transaction_deadline_=now+25;read_all();publish();}
+      if(stopped()&&services_ready()){phase_="ROLLING_BACK";mode_="READ_ROLLBACK";transaction_deadline_=now+25;read_all();publish();}
       else if(now>stop_deadline_){phase_="FAILED";error_+="；8秒内未确认导航终态、轮式停稳和零输出，未执行回退";publish();}
     }
     if((phase_=="APPLYING"||phase_=="ROLLING_BACK")&&now>transaction_deadline_){fail("调参事务总期限超过25秒");return;}
@@ -269,6 +302,7 @@ private:
   std::shared_future<Get::Response::SharedPtr>get_future_;std::shared_future<Set::Response::SharedPtr>set_future_;
   std::shared_future<Life::Response::SharedPtr>life_future_;
   std::deque<Step>steps_;std::array<Json,2>ack_;std::array<double,2>ack_at_{{-1e9,-1e9}};std::array<int64_t,3>expected_revision_{{0,0,0}};
+  Json previous_failure_=Json::object();bool restore_transaction_=false;
   std::deque<Json>rejected_;std::deque<std::string>seen_;Actual actual_;TuningValues baseline_,confirmed_,requested_,target_,defaults_,before_;
   std::string task_id_,request_id_,phase_="INITIALIZING",mode_,error_,defaults_file_,defaults_error_,request_result_;
   uint64_t observed_generation_=0,request_generation_=0;int64_t revision_=0,pending_id_=-1;size_t pending_node_=0;
