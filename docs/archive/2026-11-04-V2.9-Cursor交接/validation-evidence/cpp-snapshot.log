@@ -1,0 +1,13 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy
+Test project /home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy
+    Start 25: test_snapshot_supervisor
+1/2 Test #25: test_snapshot_supervisor .........   Passed   33.71 sec
+    Start 28: test_snapshot_process
+2/2 Test #28: test_snapshot_process ............   Passed    0.86 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Label Time Summary:
+gtest    =  34.57 sec*proc (2 tests)
+
+Total Test time (real) =  34.58 sec

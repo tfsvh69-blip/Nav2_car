@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <future>
 #include "carcar_mapping_console/http_server.hpp"
 #include "carcar_mapping_console/common.hpp"
 #include <boost/asio.hpp>
@@ -416,4 +417,21 @@ TEST(HttpTransport, InspectPrefixOnSameServerStaysLocalForHttpAndWebSocket) {
   websocket::stream<tcp::socket> control(io);control.next_layer().connect({asio::ip::make_address("127.0.0.1"),18117});
   EXPECT_NO_THROW(control.handshake("127.0.0.1:18117","/inspect/ws/control"));
   control.next_layer().close();
+}
+
+TEST(HttpTransport, ArchiveDoesNotBlockStateOrCancelThroughInspectProxy) {
+  std::atomic<bool> entered{false};
+  HttpServer upstream("127.0.0.1",18216,[&](const HttpRequest&request){
+    if(request.target.find("/archive.zip")!=std::string::npos){entered=true;std::this_thread::sleep_for(std::chrono::milliseconds(800));return HttpResponse{200,"application/zip",{'P','K'},{{"Content-Disposition","attachment; filename=test.zip"}}};}
+    return HttpResponse{200,"application/json",{'{','}'},{}};
+  },[](const std::string&,const std::string&){});
+  HttpServer gateway("127.0.0.1",18217,[](const HttpRequest&){return HttpResponse{};},[](const std::string&,const std::string&){});
+  gateway.set_inspect_upstream("127.0.0.1",18216);
+  auto get=[](const std::string&path,bool post=false){asio::io_context io;tcp::socket connection(io);connection.connect({asio::ip::make_address("127.0.0.1"),18217});
+    http::request<http::string_body> request(post?http::verb::post:http::verb::get,path,11);request.set(http::field::host,"127.0.0.1:18217");request.set("X-Mapping-Console","1");request.body()=post?"{}":"";request.prepare_payload();http::write(connection,request);
+    beast::flat_buffer buffer;http::response<http::string_body> response;http::read(connection,buffer,response);return response;};
+  auto archive=std::async(std::launch::async,[&]{return get("/inspect/api/runs/run/archive.zip");});
+  const auto until=steady()+2;while(!entered&&steady()<until)std::this_thread::sleep_for(std::chrono::milliseconds(5));ASSERT_TRUE(entered);
+  const auto start=steady();EXPECT_EQ(get("/inspect/api/state").result_int(),200U);EXPECT_EQ(get("/inspect/api/run/cancel",true).result_int(),200U);EXPECT_LT(steady()-start,.5);
+  const auto result=archive.get();EXPECT_EQ(result.body(),"PK");EXPECT_EQ(result["Content-Disposition"],"attachment; filename=test.zip");
 }

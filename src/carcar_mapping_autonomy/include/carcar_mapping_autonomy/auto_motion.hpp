@@ -19,9 +19,9 @@ inline AutoMotionCheck auto_motion_check(const nav_msgs::msg::OccupancyGrid&map,
   if(!grid_valid(map)||!std::isfinite(start.x)||!std::isfinite(start.y)||!std::isfinite(start.yaw)||laser_points.size()>4096||
       !std::isfinite(requested.linear.x)||!std::isfinite(requested.angular.z)||!std::isfinite(measured.linear.x)||!std::isfinite(measured.angular.z)||
       !std::isfinite(requested.linear.y)||std::abs(requested.linear.y)>1e-9||!std::isfinite(measured.linear.y)||
-      requested.linear.x<0||requested.linear.x>.18||std::abs(requested.angular.z)>.36||
+      requested.linear.x<0||requested.linear.x>.20||std::abs(requested.angular.z)>.36||
       std::abs(measured.linear.x)>.25||std::abs(measured.angular.z)>.6||std::abs(measured.linear.y)>.02){
-    result.reason="最终运动审查输入无效或超出已验证的前进包络";return finish();
+    result.reason="最终运动审查输入无效或超出本轮配置的前进包络";return finish();
   }
   for(const auto&p:laser_points)if(!std::isfinite(p.x)||!std::isfinite(p.y)){
     result.reason="最终运动审查含无效激光端点";return finish();

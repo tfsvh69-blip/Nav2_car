@@ -1,0 +1,255 @@
+{
+  "id": "NAV-018-RECOVERY-SWEEP-001",
+  "passed": true,
+  "candidate": {
+    "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy": {
+      "sha256": "6a48176a8efe024157ec967b5227b119debae09b9a87940ba4b36e1b4920d33c",
+      "size": 6474040,
+      "mode": 509
+    },
+    "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_recovery": {
+      "sha256": "502d67b85b138668bc52b2b27480ded233c38d65a2452a0cc26fbd68fe262862",
+      "size": 3613344,
+      "mode": 509
+    },
+    "install/carcar_mapping_console/share/carcar_mapping_console/web/app.js": {
+      "sha256": "beffdecb1a559e95c4d67ee36fdfd1f790ab3183e875fcc293381a002e90f4a4",
+      "size": 130837,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/manual_coverage.hpp": {
+      "sha256": "8eccf0b2f28edde7fba561caa2cd840d00cd11b333cf053f7ef25a27d955c71d",
+      "size": 4671,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/manual_motion.hpp": {
+      "sha256": "55b057f7b75c2b292f435010b08b4111edeb6eb5622193fab3f3d7d349dc690c",
+      "size": 8993,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_observation.hpp": {
+      "sha256": "35cc92f231364e61d879a1f27f30d7b64e392f2a666b1e3780a59fc7e89fe9fb",
+      "size": 1665,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_core.hpp": {
+      "sha256": "762e784b2936c0c32bfb6a91947043a0a92196bde49aedc204485c1ccf2adf81",
+      "size": 14018,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/src/recovery.cpp": {
+      "sha256": "97638833abb2b18c127b89fb8e5e6bd69624e9300016bc49026a01656ad69078",
+      "size": 62654,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/src/supervisor.cpp": {
+      "sha256": "3fa74cc30a1422f4cfb7ed3f241ef7248892166eb76c1f04daa75a7c9dbe962f",
+      "size": 147158,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/CMakeLists.txt": {
+      "sha256": "d4cbe708e75c3ce73e4e4f045985a5363c3bb4fdf1bffd4ab2d52cdd4db10811",
+      "size": 57660,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_recovery_observation.cpp": {
+      "sha256": "db0733460236b46ca27867928365ad0b1fa0fe8a8270a060b3e4d6fd2274e3a9",
+      "size": 8678,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_manual_motion.cpp": {
+      "sha256": "0850be464a5deb448fbbd1a1f8f76f2e635d87ad9f796c0f5482edebe4dd466f",
+      "size": 5253,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_live_supervisor.cpp": {
+      "sha256": "3da25724ceed6375d0ae4dd8bdb6928307563b59b2c5f97cf365b2601f91ed4b",
+      "size": 39601,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/data/recovery_scan_20261104.json": {
+      "sha256": "6d46d5b26121d0dd8fcce09899f7343c7f9b8a1bcb336e9b91f3f5898497638b",
+      "size": 448724,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/data/manual_scan_20261104.json": {
+      "sha256": "e09b20ec1669dcbb0824ac67bb1994214f1b394762dfe2f8315f35a43d034a41",
+      "size": 239396,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/continuous_exploration.hpp": {
+      "sha256": "f0cc536ea68dd767a7864a365060f51a906facc997ee7598cad0647e3483af62",
+      "size": 894,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/exploration_route.hpp": {
+      "sha256": "db741ed4dae275e1ae192c634cca4980b4b3fbafd33f49890feb592107eff49d",
+      "size": 1489,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/obstacle_escape.hpp": {
+      "sha256": "9085ecea9ccedb2395b30b6e15d5e6f72aad7bf3e9bf9c81b2256b8391ffa822",
+      "size": 13014,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/src/continuous_exploration.cpp": {
+      "sha256": "38f295b43dc1548ed5eb4c0ddf5d1f0496c6123cc22da3938fa5774b8d318ab5",
+      "size": 18000,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/src/exploration_route.cpp": {
+      "sha256": "d4019adde307ee8c706fa7efa225e587d378471f5adbc05ff933736906165d64",
+      "size": 17305,
+      "mode": 436
+    },
+    "src/carcar_mapping_console/web/app.js": {
+      "sha256": "beffdecb1a559e95c4d67ee36fdfd1f790ab3183e875fcc293381a002e90f4a4",
+      "size": 130837,
+      "mode": 436
+    },
+    "src/carcar_mapping_console/test/test_live_controls.js": {
+      "sha256": "4d0da2abbd1d50834e81ee32b1ff2e74ebff3c7432734fbf77b6596e16147a4f",
+      "size": 31676,
+      "mode": 436
+    },
+    "src/carcar_mapping_console/test/test_manual_wall_feedback_browser.mjs": {
+      "sha256": "590385a666d0118fc57f51962682e6ce25a8b85367bedb4cf24108183bf35e23",
+      "size": 21978,
+      "mode": 436
+    }
+  },
+  "build_log": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/evidence/build-frozen.log",
+  "cpp_suites": [
+    {
+      "name": "test_manual_motion",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.02,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_manual_motion.gtest.xml",
+      "sha256": "57e8003a2d2d2585b40cc97b802ba4cbd35e7a3839af0948b3736d9db64daaa2"
+    },
+    {
+      "name": "test_mapping_recovery_observation",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.168,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_recovery_observation.gtest.xml",
+      "sha256": "c0b1f5599517c7150f164b4beac06566c0f8d1f65aaa926e64aac5ccd8ee51bf"
+    },
+    {
+      "name": "test_mapping_recovery_core",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.254,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_recovery_core.gtest.xml",
+      "sha256": "5797ae75d1ce6193923afe8b1a85ec2e12bcd35d73b0f3f5bff35485488508ff"
+    },
+    {
+      "name": "test_mapping_recovery_initializer",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.167,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_recovery_initializer.gtest.xml",
+      "sha256": "5fa67ab3f618f2c333f1c106c7e0088d018f0476dff817909f6e33d7d9da3bc1"
+    },
+    {
+      "name": "test_mapping_recovery_process",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 48.239,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_mapping_recovery_process.gtest.xml",
+      "sha256": "0bc5ebc17b1855975f61df26c848dd7340bfdb89f666bea385e4c3282a4a663f"
+    },
+    {
+      "name": "test_live_supervisor",
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 62.274,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_live_supervisor.gtest.xml",
+      "sha256": "c5865a78d1dc8ea84f2adb247392791154271000441f3978a5c0231b71e1115f"
+    },
+    {
+      "name": "test_snapshot_supervisor",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 33.454,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_snapshot_supervisor.gtest.xml",
+      "sha256": "3e23ecc38dd081b5df20d44f1d86dcbb3ae307cee1578704d6f3eabdea0560a3"
+    },
+    {
+      "name": "test_snapshot_process",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.717,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_snapshot_process.gtest.xml",
+      "sha256": "194ac6b3ae3fb17fbfa1cdba7fd6a3199642e0ea74fd97726dd66c0cdba411e6"
+    },
+    {
+      "name": "test_operator_recovery",
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 82.627,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_operator_recovery.gtest.xml",
+      "sha256": "73c292e32138599af1012c4a8f1917103d234001584ffe16cf27446dd6cb3ec7"
+    },
+    {
+      "name": "test_auto_motion",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 0.001,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_auto_motion.gtest.xml",
+      "sha256": "120794baad21f3e74bf59fa536780a283a67a828557d3b788164118f782d15ef"
+    },
+    {
+      "name": "test_collision_manual",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0,
+      "skipped": 0,
+      "time_s": 5.061,
+      "xml": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/test_results/carcar_mapping_autonomy/test_collision_manual.gtest.xml",
+      "sha256": "38b1e76621c5f4841d295f033bf2c101c9b4264e53007a6e610986290521ecc7"
+    }
+  ],
+  "cpp_tests": 114,
+  "browser_checks": 33,
+  "browser_passed": true,
+  "manual_real_replays": 160,
+  "manual_p99_ms": 0.112197,
+  "manual_max_ms": 0.178152,
+  "differential_cases": 640,
+  "differential_mismatches": 0,
+  "physical_tested": false,
+  "hardware_started": false
+}

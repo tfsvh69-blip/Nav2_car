@@ -1,0 +1,30 @@
+{
+  "idle": {
+    "date": "2026-11-04T23:34:51.819163+08:00",
+    "mapping": {
+      "phase": "STANDBY",
+      "task_state": "STANDBY",
+      "busy": false,
+      "dirty": false,
+      "video_running": false,
+      "inspection_running": false
+    },
+    "inspection_phase": "CONFIG_ONLY",
+    "hardware_enabled": false
+  },
+  "runtime": {
+    "MainPID": "19399",
+    "ActiveState": "active",
+    "SubState": "running",
+    "executable": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_web_gateway",
+    "exe_sha256": "3e04b6b7329f7ad2268fc8abec019f43d8d5057ff68a036fe18012755f3e18a9"
+  },
+  "http_sha256": {
+    "/": "fdc227a37f018b44d560598127903109bdcde72f8cd7a0528944d850bdef4264",
+    "/app.js": "beffdecb1a559e95c4d67ee36fdfd1f790ab3183e875fcc293381a002e90f4a4",
+    "/style.css": "3057c2ae51cc7a7d4d743290bd642d0199e5ddae9564d155230fdd4b45cf1e43"
+  },
+  "inspection_page_status": 200,
+  "hardware_started": false,
+  "control_requests_sent": false
+}

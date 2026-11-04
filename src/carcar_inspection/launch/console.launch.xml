@@ -1,4 +1,5 @@
 <launch>
+  <arg name="managed_runtime" default="false"/>
   <!-- 默认只启动网页和数据存储，不启动/控制执行器。 -->
   <arg name="bind_address" default="127.0.0.1"/>
   <arg name="port" default="8081"/>
@@ -11,6 +12,8 @@
   <arg name="cmd_vel_topic" default="/cmd_vel"/>
   <node pkg="carcar_inspection" exec="inspection_console" name="inspection_console" output="screen">
     <param from="$(find-pkg-share carcar_inspection)/config/console.yaml"/>
+    <param from="$(find-pkg-share carcar_inspection)/config/navigation_speed_envelope.yaml"/>
+    <param name="managed_runtime" value="$(var managed_runtime)"/>
     <param name="bind_address" value="$(var bind_address)"/>
     <param name="port" value="$(var port)"/>
     <param name="data_root" value="$(var data_root)"/>

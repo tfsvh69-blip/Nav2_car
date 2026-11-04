@@ -23,6 +23,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <nav2_map_server/map_io.hpp>
 #include "carcar_mapping_autonomy/recovery_core.hpp"
+#include "carcar_mapping_autonomy/recovery_observation.hpp"
 #include "carcar_mapping_autonomy/recovery_commit_guard.hpp"
 #include "carcar_mapping_autonomy/recovery_wall_review.hpp"
 #include "carcar_mapping_autonomy/recovery_artifact.hpp"
@@ -245,6 +246,8 @@ private:
         try{initializer_future_.get();}catch(const std::exception&){}
       }
       generation_=generation;request_id_=id;++token_;begin_=steady();reason_.clear();failed_stage_.clear();failed_elapsed_=0;verification_.reset();
+      // 新事务不得沿用上一轮候选失败；原失败仍保留在对应request_id的日志中。
+      verification_json_=Json::object();
       wall_review_wait_.reset();
       pending_commit_request_.clear();commit_anchor_.reset();commit_odometry_.reset();commit_guard_.reset(steady());
       rollback_recovery_=action=="recover_rollback";rollback_candidate_.reset();trial_pose_.reset();localization_verified_frames_=0;
@@ -360,19 +363,13 @@ private:
         "；先验处参考支持="+support_detail+"；未发布AMCL初值，请检查参考覆盖与当前位置，不能按低分强行续跑");}
     });
     phase_="INITIALIZING";reason_="用只读参考图的Karto相关匹配生成AMCL初值，尚未允许恢复";
-    localization_begin_=steady();last_nomotion_=0;verification_.reset();
+    localization_begin_=steady();last_nomotion_=0;verification_.reset();verification_json_=Json::object();
   }
   std::vector<ca::ReferenceMatcher::Ray> rays(const sensor_msgs::msg::LaserScan&m){
     const auto transform=tf_.lookupTransform("base_footprint",m.header.frame_id,rclcpp::Time(m.header.stamp),rclcpp::Duration::from_seconds(0));
     const auto&q=transform.transform.rotation;const auto&t=transform.transform.translation;
     tf2::Transform tf(tf2::Quaternion(q.x,q.y,q.z,q.w),tf2::Vector3(t.x,t.y,t.z));
-    const auto origin=tf*tf2::Vector3(0,0,0);std::vector<ca::ReferenceMatcher::Ray> out;
-    const size_t stride=std::max<size_t>(1,m.ranges.size()/180);
-    for(size_t i=0;i<m.ranges.size();i+=stride){const double r=m.ranges[i];if(!std::isfinite(r)||r<std::max(.15,double(m.range_min))||r>std::min(mapping_range_,double(m.range_max))-.05)continue;
-      const double angle=m.angle_min+i*m.angle_increment;const auto p=tf*tf2::Vector3(r*std::cos(angle),r*std::sin(angle),0);
-      out.push_back({p.x(),p.y(),origin.x(),origin.y()});
-    }
-    return out;
+    return ca::reference_scan_rays(m,tf,mapping_range_);
   }
   sensor_msgs::msg::LaserScan reference_scan(const sensor_msgs::msg::LaserScan&input)const{
     auto output=input;output.range_max=std::min(double(input.range_max),mapping_range_);
@@ -594,22 +591,15 @@ private:
       if(t-last_nomotion_>.2&&nomotion_->service_is_ready()){auto req=std::make_shared<Empty::Request>();nomotion_->async_send_request(req);last_nomotion_=t;}
       if(check_future_.valid()&&check_future_.wait_for(std::chrono::seconds(0))==std::future_status::ready){
         const auto checked=check_future_.get();if(check_token_!=token_)return;
-        const auto&v=checked.result;verification_json_={{"mean_residual_m",v.score.mean},{"coverage",v.score.coverage},{"hit_ratio",v.score.hit_ratio},{"free_conflict",v.score.free_conflict},{"ambiguity_margin",v.ambiguity_margin},{"global_sample_margin",v.global_margin},{"global_samples",v.global_evaluations},{"ambiguity_scope","local_refinement_and_whole_map_sampled_competitors"},{"unique",v.unique},{"frames",verification_.count}};
-        std::vector<std::string>failed;
-        if(v.score.points<ca::ReferenceScore::minimum_points)failed.push_back("有效匹配点不足50点");
-        if(v.score.coverage<ca::ReferenceScore::minimum_coverage)failed.push_back("参考图覆盖不足80%");
-        if(v.score.hit_ratio<ca::ReferenceScore::minimum_hit_ratio)failed.push_back("激光重合不足70%");
-        if(v.score.mean>ca::ReferenceScore::maximum_mean)failed.push_back("平均残差超过0.10米");
-        if(v.score.free_conflict>ca::ReferenceScore::maximum_free_conflict)failed.push_back("自由区冲突超过8%");
-        if(!v.unique)failed.push_back("多解竞争：参考图仍存在同样合理的位置，不能确认唯一车位");
-        verification_json_["failed_checks"]=failed;
+        const auto&v=checked.result;verification_json_={{"points",v.score.points},{"mean_residual_m",v.score.mean},{"coverage",v.score.coverage},{"hit_ratio",v.score.hit_ratio},{"free_conflict",v.score.free_conflict},{"ambiguity_margin",v.ambiguity_margin},{"global_sample_margin",v.global_margin},{"global_samples",v.global_evaluations},{"ambiguity_checked",v.ambiguity_checked},{"ambiguity_status",v.ambiguity_checked?"checked":"not_checked_geometry_rejected"},{"ambiguity_scope","local_refinement_and_whole_map_sampled_competitors"},{"unique",v.unique},{"frames",verification_.count}};
+        verification_json_["failed_checks"]=ca::ReferenceMatcher::verification_failure_reasons(v);
         const bool verified=verification_.observe(checked.pose,checked.stamp,t,v.unique&&v.score.acceptable());
         verification_json_["frames"]=verification_.count;
         if(verified){
           localization_verified_frames_=verification_.count;restore(checked.pose);
         }
       }
-      if(t-localization_begin_>25)throw std::runtime_error("AMCL旁路未通过重叠、残差、多解和多帧检查；保持停车");
+      if(t-localization_begin_>25)throw std::runtime_error(ca::recovery_verification_timeout_reason(verification_json_,verification_.count));
     }else if(phase_=="PRESERVING_SUSPECT"){
       if(ready(save_future_)){
         const auto response=save_future_.get();save_future_={};

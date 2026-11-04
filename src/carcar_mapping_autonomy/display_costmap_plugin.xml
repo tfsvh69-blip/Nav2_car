@@ -1,0 +1,5 @@
+<library path="carcar_display_costmap">
+  <class name="carcar_mapping_autonomy/DisplayCostmapLayer" type="carcar_mapping_autonomy::DisplayCostmapLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>只读发布过滤前的真实障碍与膨胀代价，不改变导航栅格。</description>
+  </class>
+</library>

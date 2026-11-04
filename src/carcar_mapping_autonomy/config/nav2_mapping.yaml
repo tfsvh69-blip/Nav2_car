@@ -67,7 +67,9 @@ global_costmap:
         plugin: nav2_costmap_2d::KeepoutFilter
         enabled: true
         filter_info_topic: /mapping/known_space_filter_info
-      plugins: [static_layer, obstacle_layer, inflation_layer]
+      plugins: [static_layer, obstacle_layer, inflation_layer, display_costmap]
+      display_costmap:
+        plugin: carcar_mapping_autonomy/DisplayCostmapLayer
       static_layer:
         map_subscribe_transient_local: true
         subscribe_to_updates: false
@@ -114,9 +116,9 @@ velocity_smoother:
   ros__parameters:
     feedback: OPEN_LOOP
     # NAV-018-R12实验候选：同步缩放加速增量，避免起步时独立限幅放大转弯半径。
-    # 仅自动建图覆盖；行驶上限由RPP与监督器确认，平滑器保留0.18m/s包络。
+    # 仅自动建图覆盖；行驶上限由RPP与监督器确认，平滑器允许0.20m/s候选上限，默认起步速度仍为0.10m/s。
     scale_velocities: true
-    max_velocity: [0.18, 0.0, 0.36]
+    max_velocity: [0.20, 0.0, 0.36]
     min_velocity: [0.0, 0.0, -0.36]
     max_accel: [0.20, 0.0, 0.80]
     max_decel: [-0.20, 0.0, -0.80]

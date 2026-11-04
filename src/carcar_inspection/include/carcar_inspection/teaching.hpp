@@ -51,6 +51,10 @@ public:
     require(fresh_and_still && fresh_image && now - command_at >= settle_seconds, "车体或相机数据尚未满足确认条件");
     require(displayed == displayed_frame && displayed > frame_sequence, "请先查看本次调角后的新画面");
   }
+  void finish_for_driving() {
+    // 行驶会改变构图，旧示教画面和确认资格必须作废。
+    phase="IDLE";owner.clear();displayed_frame=0;++revision;
+  }
   void confirmed() {phase = "CONFIRMED"; ++revision;}
   void fault(const std::string & reason) {phase = "FAULT"; error = reason; ++revision; displayed_frame = 0;}
   void disconnect(const std::string & session) {

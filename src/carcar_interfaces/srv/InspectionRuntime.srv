@@ -1,0 +1,10 @@
+# 只允许准备或结束固定巡检组合，不接受命令或任意路径。
+string action
+string request_id
+string map_id
+string generation
+---
+bool accepted
+string generation
+string phase
+string reason

@@ -24,9 +24,18 @@ public:
       map.data.push_back(value==karto::GridStates_Occupied?100:value==karto::GridStates_Free?0:-1);
     }
     const auto*laser=scan->GetLaserRangeFinder();const auto offset=laser->GetOffsetPose();const auto values=scan->GetRangeReadingsVector();
-    std::vector<ReferenceMatcher::Ray> rays;
-    for(size_t i=0;i<values.size();i+=std::max<size_t>(1,values.size()/180)){
-      const double r=values[i];if(!std::isfinite(r)||r<std::max(.15,laser->GetMinimumRange())||r>laser->GetRangeThreshold()-.05)continue;
+    // 先筛选原始有效束，再均匀限量；避免整圈抽样丢掉短量程内已足够的独立证据。
+    std::vector<size_t> valid_indices;valid_indices.reserve(values.size());
+    for(size_t i=0;i<values.size();++i){
+      const double r=values[i];
+      if(std::isfinite(r)&&r>=std::max(.15,laser->GetMinimumRange())&&r<=laser->GetRangeThreshold()-.05)valid_indices.push_back(i);
+    }
+    const size_t sample_count=std::min<size_t>(180,valid_indices.size());
+    std::vector<ReferenceMatcher::Ray> rays;rays.reserve(sample_count);
+    for(size_t sample=0;sample<sample_count;++sample){
+      // 保留有效束的角序及首尾，索引不重复；角度始终由原始束号计算。
+      const size_t selected=sample_count==1?0:sample*(valid_indices.size()-1)/(sample_count-1);
+      const size_t i=valid_indices[selected];const double r=values[i];
       const double a=laser->GetMinimumAngle()+i*laser->GetAngularResolution()+offset.GetHeading();
       rays.push_back({offset.GetX()+r*std::cos(a),offset.GetY()+r*std::sin(a),offset.GetX(),offset.GetY()});
     }

@@ -2,9 +2,7 @@
 #include <ctime>
 #include "carcar_mapping_console/common.hpp"
 namespace carcar_mapping_console {
-inline std::filesystem::path validate_autonomy_bundle(const std::filesystem::path&root,const std::string&id){
-  const auto directory=validate_bundle(root,id);
-  const auto manifest=json::parse(read_file(directory/"manifest.json"));
+inline void validate_autonomy_manifest(const json & manifest){
   if(manifest.value("diagnostic_only",false))throw std::runtime_error("诊断工程不能继续写图；请选择人工核对可用的已保存工程");
   double range=manifest.value("range_m",0.0),resolution=manifest.value("resolution",0.0);
   std::string loss="None";
@@ -16,7 +14,6 @@ inline std::filesystem::path validate_autonomy_bundle(const std::filesystem::pat
   }
   if(!std::isfinite(range)||!std::isfinite(resolution)||std::abs(range-3.0)>1e-4||std::abs(resolution-.05)>1e-6||loss!="None")
     throw std::runtime_error("工程与本轮3米／5厘米／原损失基线不兼容或缺少参数；保留原入口核对，不混用专项候选");
-  return directory;
 }
 // 状态与资产哈希分离；发布从不修改地图和位姿图。临时文件+rename避免半写状态。
 inline void atomic_json(const std::filesystem::path & path,const json & value) {
@@ -30,6 +27,51 @@ inline json bundle_publication(const std::filesystem::path & directory) {
   if(!std::filesystem::exists(file))return {{"status","legacy"}};
   if(std::filesystem::is_symlink(file))throw std::runtime_error("发布状态不接受符号链接");
   return json::parse(read_file(file));
+}
+// 保存、查看与导航资格分别表达；地图质量异常不应让已保存资产从列表消失。
+inline json saved_map_status(const std::filesystem::path & yaml) {
+  json result{{"saved",false},{"navigation_allowed",false},{"quality","invalid"},{"quality_reason","地图文件不存在或校验未通过"}};
+  json manifest=json::object();
+  try {
+    if(std::filesystem::is_symlink(yaml)||!std::filesystem::is_regular_file(yaml)||std::filesystem::file_size(yaml)==0)return result;
+    const auto directory=yaml.parent_path();
+    const auto manifest_file=directory/"manifest.json";
+    if(std::filesystem::is_symlink(manifest_file))throw std::runtime_error("地图清单不接受符号链接");
+    const bool has_manifest=std::filesystem::exists(manifest_file);
+    if(!has_manifest&&directory.parent_path().filename()=="mapping_sessions")
+      throw std::runtime_error("已保存工程缺少manifest.json，不能按历史独立地图降级使用");
+    if(has_manifest){
+      validate_bundle(directory.parent_path(),directory.filename().string());
+      manifest=json::parse(read_file(manifest_file));
+    }
+    result["saved"]=true;
+    const auto publication=bundle_publication(directory);
+    const auto status=publication.value("status",std::string());
+    if(!has_manifest&&status!="legacy"){
+      result["saved"]=false;throw std::runtime_error("地图状态存在但工程清单缺失，不能确认完整保存");
+    }
+    if(manifest.contains("sha256")&&status!="legacy"&&(!publication.contains("asset_sha256")||publication.at("asset_sha256")!=manifest.at("sha256")))
+      throw std::runtime_error("地图状态记录与资产校验值不一致；文件已保存，可查看，暂不能导航");
+    if(manifest.value("diagnostic_only",false)||status=="diagnostic"){
+      result["quality"]="diagnostic";
+      result["quality_reason"]="地图已保存；本次建图发生定位或地图质量异常，可查看，暂不能用于实车导航";
+    }else if(status=="rejected"){
+      result["quality"]="rejected";
+      result["quality_reason"]="地图已保存；历史记录标记质量未通过，可查看，暂不能用于实车导航";
+    }else if(status=="saved"||status=="candidate"||status=="published"||status=="legacy"){
+      result["quality"]="normal";result["quality_reason"]="";result["navigation_allowed"]=true;
+    }else throw std::runtime_error("地图状态记录无法识别；文件已保存，可查看，暂不能导航");
+  }catch(const std::exception & error){result["quality_reason"]=std::string("地图状态检查未通过：")+error.what();}
+  return result;
+}
+inline bool saved_map_visible(const std::filesystem::path & yaml) {return saved_map_status(yaml).value("saved",false);}
+inline bool saved_map_navigation_allowed(const std::filesystem::path & yaml) {return saved_map_status(yaml).value("navigation_allowed",false);}
+inline std::filesystem::path validate_autonomy_bundle(const std::filesystem::path&root,const std::string&id){
+  const auto directory=validate_bundle(root,id);
+  validate_autonomy_manifest(json::parse(read_file(directory/"manifest.json")));
+  const auto status=saved_map_status(directory/"map.yaml");
+  if(!status.value("navigation_allowed",false))throw std::runtime_error(status.value("quality_reason",std::string("地图质量异常，不能自动续建")));
+  return directory;
 }
 inline bool navigation_map_visible(const std::filesystem::path & yaml) {
   try {

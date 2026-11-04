@@ -1,0 +1,9 @@
+{
+  "files_checked": 128,
+  "large_files": [],
+  "elf_files": [],
+  "credential_pattern_files": [
+    "docs/archive/2026-11-04-启动会话许可循环诊断与修复.md"
+  ],
+  "passed": false
+}

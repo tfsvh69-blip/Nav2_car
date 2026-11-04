@@ -5,6 +5,8 @@ controller_server:
       plugin: carcar_mapping_autonomy::MappingRotationShim
       primary_controller: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
       use_rotate_to_heading: false
+      # 本轮受看护提速候选；最终角速度/加速度包络和碰撞预测保持。
+      rotate_to_heading_angular_vel: 0.28
       angular_dist_threshold: 0.50
       angular_disengage_threshold: 0.10
       forward_sampling_distance: 0.30

@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include "carcar_mapping_console/common.hpp"
 #include "carcar_mapping_console/safety.hpp"
-#include "carcar_mapping_console/live_settings.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -68,6 +67,26 @@ protected:
     http::write(socket,req);beast::flat_buffer buffer;http::response<http::string_body> res;http::read(socket,buffer,res);
     auto value=res.body().empty()?json::object():json::parse(res.body());value["http_status"]=res.result_int();return value;
   }
+  http::response<http::vector_body<unsigned char>> binary_request(const std::string & target){
+    beast::tcp_stream socket(io);socket.connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));
+    http::request<http::empty_body> req(http::verb::get,target,11);req.set(http::field::host,"localhost");http::write(socket,req);
+    beast::flat_buffer buffer;http::response<http::vector_body<unsigned char>> res;http::read(socket,buffer,res);return res;
+  }
+  std::filesystem::path saved_fixture(const std::string & id,bool diagnostic){
+    const auto directory=root/id;std::filesystem::create_directories(directory);
+    nav_msgs::msg::OccupancyGrid value;value.header.frame_id="map";value.info.width=20;value.info.height=10;
+    value.info.resolution=.05;value.info.origin.position.x=-.5;value.info.origin.orientation.w=1;value.data.assign(200,0);
+    nav2_map_server::SaveParameters parameters;parameters.map_file_name=(directory/"map").string();parameters.image_format="pgm";
+    parameters.free_thresh=.25;parameters.occupied_thresh=.65;
+    if(!nav2_map_server::saveMapToFile(value,parameters))throw std::runtime_error("隔离地图夹具保存失败");
+    std::ofstream(directory/"graph.posegraph")<<"fixture graph";std::ofstream(directory/"graph.data")<<"fixture data";
+    json manifest{{"complete",true},{"slam_version","2.6.10"},{"base_frame","base_footprint"},{"review_required",true},
+      {"diagnostic_only",diagnostic},{"range_m",3.},{"resolution",.05}};
+    for(const auto & file:{"map.yaml","map.pgm","graph.posegraph","graph.data"})manifest["sha256"][file]=sha256(directory/file);
+    std::ofstream(directory/"manifest.json")<<manifest.dump();
+    std::ofstream(directory/"publication.json")<<json{{"status",diagnostic?"diagnostic":"candidate"},{"asset_sha256",manifest["sha256"]}}.dump();
+    return directory;
+  }
   bool wait(std::function<bool()> test,double seconds=5){double end=steady()+seconds;while(steady()<end){if(test())return true;usleep(20000);}return false;}
   std::string get_video(){
     beast::tcp_stream socket(io);socket.connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));http::request<http::empty_body> req(http::verb::get,"/api/video.jpg",11);req.set(http::field::host,"localhost");http::write(socket,req);
@@ -77,7 +96,13 @@ protected:
   void send(json value){ws->write(asio::buffer(value.dump()));}
   void connect_control(){ws=std::make_unique<websocket::stream<tcp::socket>>(io);ws->next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));ws->handshake("127.0.0.1:"+std::to_string(port),"/ws/control");auto welcome=read_ws();session=welcome.at("session");}
   void start_gateway(std::string mode="new",std::string bundle=""){
-    std::vector<std::string> args{GATEWAY_EXE,"--ros-args","-p","bind_address:=127.0.0.1","-p","port:="+std::to_string(port),"-p","web_root:=" WEB_ROOT,"-p","map_root:="+root.string(),"-p","mode:="+mode,"-p","tuning_defaults_file:="+(root/"tuning-defaults.json").string()};
+    std::string gateway_exe=GATEWAY_EXE;
+    // 发行验收可回放真实二进制，但必须留在与实车隔离的测试域和本机回环。
+    if(const auto installed=getenv("CARCAR_TEST_GATEWAY_EXE")){
+      ASSERT_STREQ(getenv("ROS_DOMAIN_ID"),"219");ASSERT_STREQ(getenv("ROS_LOCALHOST_ONLY"),"1");
+      gateway_exe=installed;
+    }
+    std::vector<std::string> args{gateway_exe,"--ros-args","-p","bind_address:=127.0.0.1","-p","port:="+std::to_string(port),"-p","web_root:=" WEB_ROOT,"-p","map_root:="+root.string(),"-p","mode:="+mode};
     if(autonomy_profile())args.insert(args.end(),{"-p","autonomy_enabled:=true","-p","task_id:=offline-autonomy"});
     if(!bundle.empty()){args.push_back("-p");args.push_back("bundle_id:="+bundle);}
     if(mode=="standby") {args.insert(args.end(),{"-p","backend_hardware:=false","-p","log_root:="+(root/"logs").string()});}
@@ -127,151 +152,210 @@ protected:
 };
 class BrowserIntegration:public Integration {bool strict_video()const override{return false;}};
 class AutonomyGateway:public BrowserIntegration {bool autonomy_profile()const override{return true;}};
-// 实际网关进程仅运行于隔离夹具；假监督器发布合成状态，不启动硬件。
-TEST_F(AutonomyGateway, LiveSettingsValidateForwardAndPersistConfirmedWithoutStopping) {
-  std::mutex mutex;std::vector<json>forwarded;int stops=0;
-  json value={{"task_id","offline-autonomy"},{"phase","EXPLORING"},{"control_mode","automatic"},{"healthy",true},
-    {"still",false},{"navigation_terminal",false},{"output",{.1,0}},{"request_id",""},{"request_result",""},
-    {"tuning",{{"task_id","offline-autonomy"},{"ready",true},{"age_seconds",.1},{"phase","READY"},{"pending",false},{"confirmed",baseline_tuning_values()},{"requested",{{"global_inflation_radius",1.2}}}}},
-    {"handoff",{{"phase","READY"},{"distance_m",.42}}},
-    {"walls",{{"items",json::array({{{"id","ephemeral"},{"points",{{0.,0.},{1.,0.}}}}})}}}};
-  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
-  auto state_timer=node->create_wall_timer(std::chrono::milliseconds(40),[&]{std::lock_guard<std::mutex>lock(mutex);std_msgs::msg::String message;message.data=value.dump();publisher->publish(message);});
-  auto observed=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){std::lock_guard<std::mutex>lock(mutex);forwarded.push_back(json::parse(m.data));});
-  auto controls=node->create_subscription<std_msgs::msg::String>("/mapping/control/request",10,[&](const std_msgs::msg::String&m){if(json::parse(m.data).value("action","")=="stop"){std::lock_guard<std::mutex>lock(mutex);++stops;}});
-  start_gateway();connect_control();
-  ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).contains("tuning");}));
-  const auto status=request("/api/status");const auto epoch=status.at("task_operations").at("epoch");
-  auto live=[&](const std::string&action,const std::string&id,json extra=json::object()){
-    extra["action"]=action;extra["request_id"]=id;extra["task_id"]="offline-autonomy";extra["operation_epoch"]=epoch;return request("/api/autonomy",extra);};
-  int initial_stops;{std::lock_guard<std::mutex>lock(mutex);initial_stops=stops;}
-  EXPECT_EQ(live("set_tuning","valid-live",{{"values",{{"global_inflation_radius",.6}}}})["http_status"],202);
-  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return !forwarded.empty();}));
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.back()["values"]["global_inflation_radius"],.6);EXPECT_EQ(stops,initial_stops);}
-  EXPECT_EQ(live("set_handoff","bad-handoff",{{"distance_m",.1}})["http_status"],400);
-  EXPECT_EQ(live("set_tuning","unknown-cost",{{"values",{{"hard_clearance",.1}}}})["http_status"],400);
-  EXPECT_EQ(live("set_escape_enabled","bad-boolean",{{"enabled",1}})["http_status"],400);
-  EXPECT_EQ(live("save_tuning","fake-save",{{"values",{{"global_inflation_radius",1.2}}}})["http_status"],400);
-  EXPECT_EQ(live("save_tuning","save-confirmed")["http_status"],202);
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"]["tuning"].value("defaults_saved_request_id","")=="save-confirmed";}));
-  const auto persisted=load_tuning_defaults(root/"tuning-defaults.json");
-  EXPECT_EQ(persisted["values"]["global_inflation_radius"],.5);
-  EXPECT_EQ(persisted["handoff_distance_m"],.42);
-  EXPECT_FALSE(persisted.contains("walls"));
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.size(),1u);EXPECT_EQ(stops,initial_stops);value["tuning"]["pending"]=true;value["tuning"]["phase"]="APPLYING";}
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"]["tuning"].value("pending",false);}));
-  EXPECT_EQ(live("save_tuning","save-pending")["http_status"],409);
-  EXPECT_EQ(load_tuning_defaults(root/"tuning-defaults.json"),persisted);
-  {std::lock_guard<std::mutex>lock(mutex);value["tuning"]["pending"]=false;value["tuning"]["phase"]="READY";value["tuning"]["age_seconds"]=2.1;}
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"]["tuning"].value("age_seconds",0.)>2.;}));
-  EXPECT_EQ(live("save_tuning","save-stale-node")["http_status"],409);
-  EXPECT_EQ(load_tuning_defaults(root/"tuning-defaults.json"),persisted);
-  {std::lock_guard<std::mutex>lock(mutex);value["tuning"]["age_seconds"]=.1;value["tuning"]["ready"]=false;}
-  ASSERT_TRUE(wait([&]{return !request("/api/status")["autonomy"]["tuning"].value("ready",true);}));
-  EXPECT_EQ(live("save_tuning","save-node-unready")["http_status"],409);
-  {std::lock_guard<std::mutex>lock(mutex);value["tuning"]["ready"]=true;value["tuning"]["task_id"]="old-task";}
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"]["tuning"].value("task_id","")=="old-task";}));
-  EXPECT_EQ(live("save_tuning","save-node-old-task")["http_status"],409);
-  EXPECT_EQ(load_tuning_defaults(root/"tuning-defaults.json"),persisted);
-  {std::lock_guard<std::mutex>lock(mutex);value["tuning"]["pending"]=false;value["tuning"]["phase"]="READY";value["tuning"]["task_id"]="offline-autonomy";}
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"]["tuning"].value("phase","")=="READY";}));
-  auto wall=json::parse(R"({"walls":[{"id":"one","points":[[0,0],[1,0]]}],"wall_revision":0,"navigation_generation":2})");
-  EXPECT_EQ(live("set_walls","new-wall",wall)["http_status"],202);
-  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return forwarded.size()==2&&stops>initial_stops;}));
-  {std::lock_guard<std::mutex>lock(mutex);value["phase"]="PAUSED";value["still"]=true;value["navigation_terminal"]=true;value["output"]={0,0};}
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"].value("phase","")=="PAUSED";}));
-  EXPECT_EQ(request("/api/save",json::object())["http_status"],202);
-  ASSERT_TRUE(wait([&]{const auto saved=request("/api/status");return !saved.value("busy",true)&&!saved.value("last_saved_bundle",std::string()).empty();},10));
-  const auto bundle=request("/api/status").at("last_saved_bundle").get<std::string>();
-  const auto manifest=json::parse(read_file(root/bundle/"manifest.json"));
-  EXPECT_FALSE(manifest.at("autonomy").contains("walls"));
+TEST_F(AutonomyGateway, AutomaticStartupSeparatesMappingReadinessFromManualMotionPermission){
+  std::mutex state_mutex;json session_state;
+  auto states=node->create_subscription<std_msgs::msg::String>("/mapping/session/state",10,[&](const std_msgs::msg::String&m){
+    std::lock_guard<std::mutex>lock(state_mutex);session_state=json::parse(m.data);
+  });
+  auto autonomy=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{
+    std_msgs::msg::String m;m.data=json{{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","automatic"},
+      {"still",true},{"auto_start_pending",true},{"manual_policy",{{"version",1},{"mode","local_safety"},
+      {"ignores_virtual_walls",true},{"requires_global_localization",false},{"restricted",false},
+      {"motion_allowed",false},{"map_frozen",false}}},{"restricted_manual",{{"active",false}}}}.dump();autonomy->publish(m);
+  });
+  // 回调捕获局部对象，退出断言前先结束执行器线程。
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(state_mutex);return session_state.value("mapping_ready",false);},2))
+    <<"自动起步不能依赖尚未授予的手动运动许可";
+  {std::lock_guard<std::mutex>lock(state_mutex);EXPECT_FALSE(session_state.value("ready",true));}
+  EXPECT_EQ(nonzero.load(),0);
 }
-TEST_F(AutonomyGateway, WallBypassRequiresOwnerAndAnyConnectedDeviceCanClose) {
-  std::mutex mutex;std::vector<json>forwarded;std::string session_owner;
-  const json value={{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","manual"},{"healthy",true},
-    {"still",true},{"navigation_terminal",true},{"output",{0,0}},{"request_id",""},{"request_result",""}};
-  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
-  auto state_timer=node->create_wall_timer(std::chrono::milliseconds(40),[&]{std_msgs::msg::String message;message.data=value.dump();publisher->publish(message);});
-  auto observed=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){std::lock_guard<std::mutex>lock(mutex);forwarded.push_back(json::parse(m.data));});
-  auto owner_state=node->create_subscription<std_msgs::msg::String>("/mapping/session/state",10,[&](const std_msgs::msg::String&m){std::lock_guard<std::mutex>lock(mutex);session_owner=json::parse(m.data).value("manual_owner_id",std::string());});
-  start_gateway();connect_control();
-  ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).value("phase","")=="MANUAL";}));
-  const auto status=request("/api/status");
-  const auto owner_id=status.at("manual_control").at("owner_id").get<std::string>();
-  const auto epoch=status.at("task_operations").at("epoch");
-  ASSERT_FALSE(owner_id.empty());
-  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return session_owner==owner_id;}));
-  websocket::stream<tcp::socket>observer(io);observer.next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));observer.handshake("127.0.0.1:"+std::to_string(port),"/ws/control");
-  beast::flat_buffer welcome;observer.read(welcome);const auto observer_session=json::parse(beast::buffers_to_string(welcome.data())).at("session").get<std::string>();
-  const auto owner_session=session;session=observer_session;
-  auto denied=request("/api/autonomy",{{"action","set_wall_bypass"},{"enabled",true},{"task_id","offline-autonomy"},{"operation_epoch",epoch},{"request_id","observer-enable"}});
-  EXPECT_EQ(denied["http_status"],409);
-  EXPECT_NE(denied["error"].get<std::string>().find("先取得遥控权"),std::string::npos);
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_TRUE(forwarded.empty());}
-  session=owner_session;
-  EXPECT_EQ(request("/api/autonomy",{{"action","set_wall_bypass"},{"enabled",true},{"task_id","offline-autonomy"},{"operation_epoch",epoch},{"request_id","owner-enable"}})["http_status"],202);
-  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return forwarded.size()==1;}));
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.back()["bypass_owner_id"],owner_id);EXPECT_FALSE(forwarded.back().contains("session"));}
-  session=observer_session;
-  EXPECT_EQ(request("/api/autonomy",{{"action","set_wall_bypass"},{"enabled",false},{"task_id","offline-autonomy"},{"operation_epoch",epoch},{"request_id","observer-close"}})["http_status"],202);
-  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return forwarded.size()==2;}));
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.back()["enabled"],false);EXPECT_NE(forwarded.back()["bypass_owner_id"],owner_id);}
-  session=owner_session;
+TEST_F(AutonomyGateway, HealthyManualSessionBootstrapsWithoutGrantingMotionOrUnknownPolicy){
+  std::mutex state_mutex;json session_state;int policy_version=1;
+  auto states=node->create_subscription<std_msgs::msg::String>("/mapping/session/state",10,[&](const std_msgs::msg::String&m){
+    std::lock_guard<std::mutex>lock(state_mutex);session_state=json::parse(m.data);
+  });
+  auto autonomy=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{
+    std_msgs::msg::String m;std::lock_guard<std::mutex>lock(state_mutex);
+    m.data=json{{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","manual"},
+      {"still",true},{"auto_start_pending",false},{"manual_policy",{{"version",policy_version},{"mode","local_safety"},
+      {"ignores_virtual_walls",true},{"requires_global_localization",false},{"restricted",false},
+      {"motion_allowed",false},{"map_frozen",false}}},{"restricted_manual",{{"active",false}}}}.dump();autonomy->publish(m);
+  });
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(state_mutex);return session_state.value("mapping_ready",false);},2));
+  {std::lock_guard<std::mutex>lock(state_mutex);EXPECT_FALSE(session_state.value("ready",true));policy_version=2;}
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).value("manual_policy",json::object()).value("version",0)==2;}));
+  {std::lock_guard<std::mutex>lock(state_mutex);EXPECT_TRUE(session_state.value("mapping_ready",false));EXPECT_FALSE(session_state.value("ready",true));}
+  EXPECT_EQ(nonzero.load(),0);
 }
-
-TEST_F(AutonomyGateway, WallBypassHandoverPublishesOwnerGapAndPreservesPausedProtection) {
-  std::mutex mutex;std::vector<json>forwarded;std::atomic<bool>allow_gap{false};std::atomic<int>gaps{0};
-  json value={{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","manual"},{"healthy",true},
-    {"still",true},{"navigation_terminal",true},{"output",{0,0}},{"walls",{{"bypass_enabled",true},{"requires_recheck",false}}}};
+TEST_F(BrowserIntegration, SavedMapCatalogAndPreviewRemainAvailableDuringLiveTaskWithoutChangingIt){
+  const auto directory=saved_fixture("20261104_saved",true);saved_fixture("20261103_saved",false);
+  const auto original=sha256(directory/"map.pgm");
+  start_gateway();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  const auto before=request("/api/status");
+  ASSERT_TRUE(wait([&]{const auto value=request("/api/bundles");return !value.value("loading",true)&&value["bundles"].size()==2;}));
+  const auto catalog=request("/api/bundles");ASSERT_EQ(catalog["http_status"],200);
+  ASSERT_EQ(catalog.at("bundles").size(),2u);const auto & entry=catalog.at("bundles").at(0);
+  EXPECT_EQ(entry["id"],"20261104_saved");EXPECT_TRUE(entry.value("saved",false));
+  EXPECT_EQ(entry.value("quality","missing"),"diagnostic");EXPECT_FALSE(entry.value("navigation_allowed",true));
+  const auto preview=binary_request("/api/maps/preview?bundle=20261104_saved");
+  ASSERT_EQ(preview.result_int(),200);ASSERT_FALSE(preview.body().empty());EXPECT_EQ(preview[http::field::content_type],"image/png");
+  const auto meta=json::parse(std::string(preview["X-Map-Meta"]));EXPECT_EQ(meta["width"],20);EXPECT_EQ(meta["height"],10);
+  EXPECT_NEAR(meta["resolution"].get<double>(),.05,1e-6);EXPECT_EQ(meta["bundle"],"20261104_saved");EXPECT_TRUE(meta["saved"]);
+  EXPECT_FALSE(meta["navigation_allowed"]);EXPECT_EQ(meta["quality"],"diagnostic");
+  EXPECT_EQ(binary_request("/api/maps/preview?bundle=../etc").result_int(),400);
+  EXPECT_EQ(binary_request("/api/maps/preview?bundle=missing").result_int(),404);
+  EXPECT_EQ(binary_request("/api/maps/preview?bundle=20261104_saved&path=/etc/passwd").result_int(),400);
+  const auto after=request("/api/status");EXPECT_EQ(after["phase"],before["phase"]);EXPECT_EQ(after["map"],before["map"]);
+  EXPECT_EQ(after["dirty"],before["dirty"]);EXPECT_EQ(sha256(directory/"map.pgm"),original);EXPECT_EQ(nonzero.load(),0);
+  std::ofstream(directory/"map.pgm")<<"tampered";
+  EXPECT_EQ(binary_request("/api/maps/preview?bundle=20261104_saved").result_int(),409);
+}
+TEST_F(AutonomyGateway, LocalManualPermissionWorksWithFailedMapAndRevokesOnUnknownPolicy){
+  std::mutex mutex;std::atomic<int>manuals{0};
+  json value={{"task_id","offline-autonomy"},{"phase","FAULT"},{"healthy",false},{"still",true},{"auto_start_pending",false},
+    {"navigation_terminal",true},{"output",{0,0}},{"request_id",""},{"request_result",""},
+    {"walls",{{"phase","REVIEW_REQUIRED"},{"navigation_ready",false},{"bypass_enabled",false}}},
+    {"manual_policy",{{"version",1},{"mode","local_safety"},{"ignores_virtual_walls",true},
+      {"requires_global_localization",false},{"restricted",false},{"motion_allowed",false},{"map_frozen",false}}}};
   auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
-  auto state_timer=node->create_wall_timer(std::chrono::milliseconds(40),[&]{std::lock_guard<std::mutex>lock(mutex);std_msgs::msg::String message;message.data=value.dump();publisher->publish(message);});
-  auto observed=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){std::lock_guard<std::mutex>lock(mutex);forwarded.push_back(json::parse(m.data));});
-  // 按真实监督器已验证的owner-gap协议回放撤旁路；故意给非零输出，核实网关不能提前移交。
-  auto ownership=node->create_subscription<std_msgs::msg::String>("/mapping/session/state",10,[&](const std_msgs::msg::String&m){
-    if(allow_gap&&json::parse(m.data).value("manual_owner_id",std::string()).empty()){
-      std::lock_guard<std::mutex>lock(mutex);if(value["walls"].value("bypass_enabled",false)){
-        ++gaps;value["phase"]="PAUSED";value["walls"]["bypass_enabled"]=false;value["walls"]["requires_recheck"]=true;value["output"]={.02,0};
-      }
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;
+    {std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}publisher->publish(m);});
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);if(j.value("action","")!="manual")return;
+    std::lock_guard<std::mutex>lock(mutex);++manuals;
+    value.update({{"phase","MANUAL"},{"healthy",true},{"control_mode","manual"},{"request_id",j.at("request_id")},{"request_result","accepted"},
+      {"restricted_manual",{{"active",false},{"ready",false},{"map_frozen",false}}}});
+    value["manual_policy"]["motion_allowed"]=true;
+  });
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="FAILED";}));
+  ASSERT_EQ(request("/api/autonomy",{{"action","manual"},{"request_id","local-manual"}})["http_status"],202);
+  ASSERT_TRUE(wait([&]{return manuals.load()==1;}));
+  // 网关旧地图状态仍失败，监督器已按本地传感器授予手动许可。
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("health","not ready").empty();},2));
+  send({{"action","enable"}});ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("armed",false);}));
+  send({{"action","drive"},{"sequence",1u},{"x",1.0},{"yaw",0.0},{"challenge",""}});
+  ASSERT_TRUE(wait([&]{return output.load()>.001;},1));EXPECT_LE(output.load(),.05);
+  EXPECT_EQ(request("/api/status")["phase"],"FAILED");
+  {std::lock_guard<std::mutex>lock(mutex);value["manual_policy"]["version"]=2;}
+  ASSERT_TRUE(wait([&]{return output.load()==0&&!request("/api/status").value("control",json::object()).value("armed",true);},.8));
+  const auto stopped=nonzero.load();
+  {std::lock_guard<std::mutex>lock(mutex);value["manual_policy"]["version"]=1;}
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("health","not ready").empty();},1));
+  usleep(200000);EXPECT_EQ(nonzero.load(),stopped);EXPECT_DOUBLE_EQ(output.load(),0);
+  EXPECT_FALSE(request("/api/status").value("control",json::object()).value("armed",true));
+}
+TEST_F(AutonomyGateway, LocalManualRequestCancelsPendingGlobalRecheckWithoutLegacyRestrictedFlag){
+  std::mutex mutex;std::atomic<int>manuals{0};
+  json value={{"task_id","offline-autonomy"},{"phase","FAULT"},{"healthy",false},{"still",true},{"auto_start_pending",false},
+    {"navigation_terminal",true},{"output",{0,0}},{"request_id",""},{"request_result",""},
+    {"manual_policy",{{"version",1},{"mode","local_safety"},{"ignores_virtual_walls",true},
+      {"requires_global_localization",false},{"restricted",true},{"motion_allowed",false},{"map_frozen",true},
+      {"linear_limit_mps",.05},{"angular_limit_rps",.10}}}};
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;
+    {std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}publisher->publish(m);});
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);std::lock_guard<std::mutex>lock(mutex);
+    if(j.value("action","")=="recheck"){
+      value["phase"]="RECOVERING";value["request_id"]=j.at("request_id");value["request_result"]="accepted";
+      value["operator_check"]={{"request_id",j.at("request_id")},{"phase","CHECKING"}};
+    }else if(j.value("action","")=="manual"){
+      ++manuals;value["phase"]="MANUAL";value["control_mode"]="manual";
+      value["request_id"]=j.at("request_id");value["request_result"]="accepted";
+      value["restricted_manual"]={{"active",true},{"ready",true},{"map_frozen",true}};
+      value["manual_policy"]["motion_allowed"]=true;
     }
   });
-  struct CallbackScope {std::function<void()> stop;~CallbackScope(){stop();}} callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
-  start_gateway();connect_control();
-  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"].value("phase","")=="MANUAL";}));
-  const auto original_session=session,original_owner=request("/api/status")["manual_control"]["owner_id"].get<std::string>();
-  websocket::stream<tcp::socket>observer(io);observer.next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));observer.handshake("127.0.0.1:"+std::to_string(port),"/ws/control");
-  beast::flat_buffer welcome;observer.read(welcome);const auto next_session=json::parse(beast::buffers_to_string(welcome.data())).at("session").get<std::string>();
-  session=next_session;const auto next_owner=request("/api/operator",{{"action","status"}})["client_id"].get<std::string>();
-  allow_gap=true;ASSERT_EQ(request("/api/operator",{{"action","claim"}})["http_status"],202);
-  ASSERT_TRUE(wait([&]{observer.ping({});return gaps.load()==1;}));
-  ASSERT_TRUE(wait([&]{observer.ping({});const auto s=request("/api/status");return s["manual_control"].value("phase","")=="STOPPING"&&s["autonomy"].value("phase","")=="PAUSED"&&s["autonomy"]["output"][0]==.02;}));
-  for(int i=0;i<15;i++){observer.ping({});const auto current=request("/api/status");EXPECT_EQ(current["manual_control"]["owner_id"],original_owner);EXPECT_EQ(current["manual_control"]["phase"],"STOPPING");usleep(30000);}
-  {std::lock_guard<std::mutex>lock(mutex);value["output"]={0,0};}
-  ASSERT_TRUE(wait([&]{observer.ping({});return request("/api/status")["manual_control"]["owner_id"]==next_owner;}));
-  auto current=request("/api/status");EXPECT_EQ(current["autonomy"]["phase"],"PAUSED");EXPECT_EQ(current["autonomy"]["walls"]["bypass_enabled"],false);EXPECT_EQ(current["autonomy"]["walls"]["requires_recheck"],true);
-  EXPECT_NE(current["manual_control"]["reason"].get<std::string>().find("重新检查"),std::string::npos);
-  // 再次交接若一直没有零输出就超时保留原遥控权；已撤销的旁路不能随之恢复。
-  {std::lock_guard<std::mutex>lock(mutex);value["phase"]="MANUAL";value["walls"]["bypass_enabled"]=true;value["walls"]["requires_recheck"]=false;}
-  ASSERT_TRUE(wait([&]{observer.ping({});return request("/api/status")["autonomy"].value("phase","")=="MANUAL";}));
-  session=original_session;ASSERT_EQ(request("/api/operator",{{"action","claim"}})["http_status"],202);
-  ASSERT_TRUE(wait([&]{observer.ping({});return gaps.load()==2;}));
-  ASSERT_TRUE(wait([&]{observer.ping({});const auto s=request("/api/status");return s["manual_control"].value("phase","")=="STOPPING"&&s["autonomy"].value("phase","")=="PAUSED"&&!s["autonomy"]["walls"].value("bypass_enabled",true);}));
-  ASSERT_TRUE(wait([&]{observer.ping({});return request("/api/status")["manual_control"].value("phase","")=="READY";},7));
-  current=request("/api/status");EXPECT_EQ(current["manual_control"]["owner_id"],next_owner);EXPECT_EQ(current["autonomy"]["phase"],"PAUSED");EXPECT_EQ(current["autonomy"]["walls"]["bypass_enabled"],false);EXPECT_EQ(current["autonomy"]["walls"]["requires_recheck"],true);
-  {std::lock_guard<std::mutex>lock(mutex);EXPECT_TRUE(forwarded.empty());}
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="FAILED";}));
+  ASSERT_EQ(request("/api/autonomy",{{"action","recheck"},{"request_id","global-check"}})["http_status"],202);
+  ASSERT_TRUE(wait([&]{return request("/api/status")["autonomy"].value("phase","")=="RECOVERING";}));
+  const auto accepted=request("/api/autonomy",{{"action","manual"},{"request_id","cancel-global-with-local"}});
+  ASSERT_EQ(accepted["http_status"],202)<<accepted.dump();ASSERT_TRUE(wait([&]{return manuals.load()==1;}));
 }
-
-class ManagedLiveSettingsGateway:public AutonomyGateway {bool managed_backend()const override{return true;}};
-TEST_F(ManagedLiveSettingsGateway, CorruptDefaultsRejectStartBeforeChangingStandby) {
-  std::ofstream(root/"tuning-defaults.json")<<"{not-json";
-  start_gateway("standby");connect_control();
-  const auto before=request("/api/status");EXPECT_EQ(before["task_state"],"STANDBY");
-  const auto result=request("/api/start",{{"mode","new"},{"control_mode","manual"}});
-  EXPECT_EQ(result["http_status"],409);
-  EXPECT_NE(result["error"].get<std::string>().find("默认配置校验失败"),std::string::npos);
-  const auto after=request("/api/status");EXPECT_EQ(after["task_state"],"STANDBY");EXPECT_FALSE(after["busy"].get<bool>());
-  EXPECT_EQ(read_file(root/"tuning-defaults.json"),"{not-json");
+TEST_F(AutonomyGateway, LocalManualUnknownPolicyCannotFallBackToHealthyGlobalMap){
+  std::mutex mutex;
+  json value={{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","manual"},{"healthy",true},
+    {"still",true},{"navigation_terminal",true},{"auto_start_pending",false},{"output",{0,0}},
+    {"restricted_manual",{{"active",false},{"ready",false},{"map_frozen",false}}},
+    {"manual_policy",{{"version",1},{"mode","local_safety"},{"ignores_virtual_walls",true},
+      {"requires_global_localization",false},{"restricted",false},{"motion_allowed",true},{"map_frozen",false}}}};
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;
+    {std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}publisher->publish(m);});
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";},5));
+  // 地图已显示与遥控会话完成握手存在一个发布周期差，先等待页面真实使能条件。
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("health","not ready").empty();}));
+  send({{"action","enable"}});ASSERT_TRUE(wait([&]{return request("/api/status").value("control",json::object()).value("armed",false);}));
+  send({{"action","drive"},{"sequence",1u},{"x",1.0},{"yaw",0.0},{"challenge",""}});
+  ASSERT_TRUE(wait([&]{return output.load()>.001;},1));
+  {std::lock_guard<std::mutex>lock(mutex);value["manual_policy"]["version"]=2;}
+  // 地图仍正常时，未知手动策略也必须在速度租约到期前撤销使能。
+  ASSERT_TRUE(wait([&]{return output.load()==0&&!request("/api/status").value("control",json::object()).value("armed",true);},.5));
+  EXPECT_EQ(request("/api/status")["phase"],"CURRENT");
 }
-
+TEST_F(AutonomyGateway, LocalManualOwnershipHandoverSurvivesPausedOwnerGapAndRequiresNewGesture){
+  std::mutex mutex;std::string observed_owner;std::atomic<bool>saw_pause{false};std::atomic<int>manuals{0};
+  json value={{"task_id","offline-autonomy"},{"phase","MANUAL"},{"control_mode","manual"},{"healthy",false},
+    {"still",true},{"navigation_terminal",true},{"auto_start_pending",false},{"output",{0,0}},
+    {"restricted_manual",{{"active",true},{"ready",true},{"map_frozen",true}}},
+    {"manual_policy",{{"version",1},{"mode","local_safety"},{"ignores_virtual_walls",true},
+      {"requires_global_localization",false},{"restricted",true},{"motion_allowed",true},{"map_frozen",true},
+      {"linear_limit_mps",.05},{"angular_limit_rps",.10}}}};
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[&]{std_msgs::msg::String m;
+    {std::lock_guard<std::mutex>lock(mutex);m.data=value.dump();}publisher->publish(m);});
+  auto sessions=node->create_subscription<std_msgs::msg::String>("/mapping/session/state",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);const auto owner=j.value("manual_owner_id",std::string());std::lock_guard<std::mutex>lock(mutex);
+    // 精确回放真实监督器：交接持有者空窗会先暂停，不能假定一直保持MANUAL。
+    if(owner.empty()&&!observed_owner.empty()){
+      value["phase"]="PAUSED";value["manual_policy"]["motion_allowed"]=false;
+      value["restricted_manual"]["ready"]=false;saw_pause=true;
+    }
+    observed_owner=owner;
+  });
+  auto requests=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,[&](const std_msgs::msg::String&m){
+    const auto j=json::parse(m.data);std::lock_guard<std::mutex>lock(mutex);
+    if(j.value("action","")=="halt"){
+      value["phase"]="PAUSED";value["manual_policy"]["motion_allowed"]=false;value["restricted_manual"]["ready"]=false;
+      value["request_id"]=j.at("request_id");value["request_result"]="accepted";return;
+    }
+    if(j.value("action","")!="manual")return;
+    ++manuals;value["phase"]="MANUAL";value["manual_policy"]["motion_allowed"]=true;
+    value["restricted_manual"]["ready"]=true;value["request_id"]=j.at("request_id");value["request_result"]="accepted";
+  });
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();const auto first_id=request("/api/operator",{{"action","status"}}).at("client_id");
+  ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return !observed_owner.empty();}));
+  websocket::stream<tcp::socket> second(io);second.next_layer().connect(tcp::endpoint(asio::ip::make_address("127.0.0.1"),port));
+  second.handshake("127.0.0.1:"+std::to_string(port),"/ws/control");beast::flat_buffer welcome;second.read(welcome);
+  const auto next_session=json::parse(beast::buffers_to_string(welcome.data())).at("session").get<std::string>();
+  const auto old_session=session;session=next_session;
+  const auto identity=request("/api/operator",{{"action","status"}});const auto next_id=identity.at("client_id");
+  ASSERT_EQ(request("/api/operator",{{"action","claim"}})["http_status"],202);session=old_session;
+  ASSERT_TRUE(wait([&]{return saw_pause.load();},2));
+  ASSERT_TRUE(wait([&]{const auto s=request("/api/status");return s["manual_control"]["owner_id"]==next_id&&s["manual_control"]["phase"]=="READY"&&s["autonomy"].value("phase","")=="MANUAL";},3));
+  EXPECT_EQ(manuals.load(),1);EXPECT_DOUBLE_EQ(output.load(),0);
+  send({{"action","enable"}});send({{"action","drive"},{"sequence",1u},{"x",1.0},{"yaw",0.0},{"challenge",""}});
+  usleep(200000);EXPECT_DOUBLE_EQ(output.load(),0);EXPECT_FALSE(request("/api/status")["control"].value("armed",true));
+  const auto write_second=[&](json body){second.write(asio::buffer(body.dump()));};
+  write_second({{"action","enable"}});ASSERT_TRUE(wait([&]{return request("/api/status")["control"].value("armed",false);}));
+  write_second({{"action","drive"},{"sequence",1u},{"x",1.0},{"yaw",0.0},{"challenge",""}});
+  ASSERT_TRUE(wait([&]{return output.load()>.001;},1));EXPECT_LE(output.load(),.05);
+  write_second({{"action","release"},{"sequence",2u}});ASSERT_TRUE(wait([&]{return output.load()==0;},.5));
+  ASSERT_EQ(request("/api/operator",{{"action","claim"}})["http_status"],202);
+  ASSERT_EQ(request("/api/autonomy",{{"action","halt"},{"request_id","halt-during-second-handover"}})["http_status"],202);
+  ASSERT_TRUE(wait([&]{const auto s=request("/api/status");return s["manual_control"]["owner_id"]==first_id&&s["manual_control"]["phase"]=="READY";},3));
+  usleep(200000);EXPECT_EQ(manuals.load(),1);EXPECT_EQ(request("/api/status")["autonomy"]["phase"],"PAUSED");EXPECT_DOUBLE_EQ(output.load(),0);
+}
 TEST_F(AutonomyGateway, RestrictedTakeoverUsesExistingProtocolAndGuardWhileMapStaysFrozen){
   std::mutex mutex;json forwarded=json::object();
   json value={{"task_id","offline-autonomy"},{"phase","FAULT"},{"control_mode","automatic"},
@@ -452,11 +536,42 @@ TEST_F(AutonomyGateway, RuntimeSpeedForwardsValueAndRequestWithoutStoppingAutono
   auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[state,a]{state->publish(a);});
   ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).value("phase","")=="EXPLORING";}));
   usleep(150000);const auto before=stops.load();
-  const auto accepted=request("/api/autonomy",{{"action","set_speed"},{"speed_mps",.18},{"request_id","runtime-speed"}});
-  ASSERT_EQ(accepted["http_status"],202);ASSERT_TRUE(wait([&]{return speeds.load()==1;}));
-  EXPECT_TRUE(matching);EXPECT_DOUBLE_EQ(received,.18);EXPECT_EQ(stops.load(),before);
-  EXPECT_EQ(request("/api/autonomy",{{"action","set_speed"},{"speed_mps",.19}})["http_status"],400);
+  const auto accepted=request("/api/autonomy",{{"action","set_speed"},{"speed_mps",.20},{"request_id","runtime-speed"}});
+  ASSERT_EQ(accepted["http_status"],202)<<accepted.dump();ASSERT_TRUE(wait([&]{return speeds.load()==1;}));
+  EXPECT_TRUE(matching);EXPECT_DOUBLE_EQ(received,.20);EXPECT_EQ(stops.load(),before);
+  EXPECT_EQ(request("/api/autonomy",{{"action","set_speed"},{"speed_mps",.049}})["http_status"],400);
+  EXPECT_EQ(request("/api/autonomy",{{"action","set_speed"},{"speed_mps",.201}})["http_status"],400);
   EXPECT_EQ(speeds.load(),1);
+}
+TEST_F(AutonomyGateway, HandoffAcceptsPublishedRangeAndRejectsOutOfRangeWithoutStopping) {
+  std::mutex mutex;std::vector<json> forwarded;std::atomic<int> stops{0};
+  auto commands=node->create_subscription<std_msgs::msg::String>("/mapping/autonomy/request",10,
+    [&](const std_msgs::msg::String&m){std::lock_guard<std::mutex>lock(mutex);forwarded.push_back(json::parse(m.data));});
+  auto controls=node->create_subscription<std_msgs::msg::String>("/mapping/control/request",10,
+    [&](const std_msgs::msg::String&m){if(json::parse(m.data).value("action","")=="stop")++stops;});
+  auto state=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  std_msgs::msg::String value;value.data=json{{"task_id","offline-autonomy"},{"phase","EXPLORING"},{"control_mode","automatic"},
+    {"handoff",{{"phase","READY"},{"distance_m",.25}}}}.dump();
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[state,value]{state->publish(value);});
+  struct CallbackScope{std::function<void()>stop;~CallbackScope(){stop();}}callbacks{[this]{executor->cancel();if(thread.joinable())thread.join();}};
+  start_gateway();connect_control();
+  ASSERT_TRUE(wait([&]{return request("/api/status").value("autonomy",json::object()).contains("handoff");}));
+  const auto epoch=request("/api/status").at("task_operations").at("epoch");const auto before=stops.load();
+  auto handoff=[&](double distance,const std::string&id){return request("/api/autonomy",{{"action","set_handoff"},
+    {"distance_m",distance},{"request_id",id},{"task_id","offline-autonomy"},{"operation_epoch",epoch}});};
+  // 走实际HTTP和ROS转发边界；不保存默认、不发送导航目标或驱动使能。
+  size_t count=0;
+  for(double distance:{.15,1.2,1.5}){
+    const auto id="handoff-"+std::to_string(++count);const auto accepted=handoff(distance,id);
+    ASSERT_EQ(accepted["http_status"],202)<<accepted.dump();
+    ASSERT_TRUE(wait([&]{std::lock_guard<std::mutex>lock(mutex);return forwarded.size()==count;}));
+    std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.back()["action"],"set_handoff");
+    EXPECT_EQ(forwarded.back()["request_id"],id);EXPECT_EQ(forwarded.back()["distance_m"],distance);
+  }
+  EXPECT_EQ(handoff(.149,"handoff-too-low")["http_status"],400);
+  EXPECT_EQ(handoff(1.501,"handoff-too-high")["http_status"],400);
+  {std::lock_guard<std::mutex>lock(mutex);EXPECT_EQ(forwarded.size(),3u);}
+  EXPECT_EQ(stops.load(),before);
 }
 TEST_F(AutonomyGateway, RepeatedFaultHeartbeatDoesNotInterruptFrozenDiagnosticSave) {
   start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
@@ -468,10 +583,26 @@ TEST_F(AutonomyGateway, RepeatedFaultHeartbeatDoesNotInterruptFrozenDiagnosticSa
   const auto status=request("/api/status");
   const auto directory=root/status.at("last_saved_bundle").get<std::string>();
   const auto manifest=json::parse(read_file(directory/"manifest.json"));
-  EXPECT_TRUE(manifest["complete"]);EXPECT_TRUE(manifest["diagnostic_only"]);EXPECT_TRUE(manifest["review_required"]);
+  EXPECT_TRUE(manifest["complete"]);EXPECT_TRUE(manifest["diagnostic_only"]);EXPECT_FALSE(manifest["review_required"]);
   EXPECT_EQ(json::parse(read_file(directory/"publication.json"))["status"],"diagnostic");
   EXPECT_EQ(status["phase"],"FAILED");const auto count=relay_count.load();usleep(200000);
   EXPECT_EQ(relay_count,count);EXPECT_DOUBLE_EQ(output,0);
+}
+TEST_F(AutonomyGateway, NormalAutomaticSaveNeedsNoReviewAndIsImmediatelyAvailable){
+  start_gateway();connect_control();ASSERT_TRUE(wait([&]{return request("/api/status").value("phase","")=="CURRENT";}));
+  auto publisher=node->create_publisher<std_msgs::msg::String>("/mapping/autonomy/state",rclcpp::QoS(1).reliable().transient_local());
+  std_msgs::msg::String pending;pending.data=json{{"task_id","offline-autonomy"},{"phase","SAVE_PENDING"},{"control_mode","automatic"},
+    {"save_required",true},{"navigation_terminal",true},{"still",true}}.dump();
+  auto heartbeat=node->create_wall_timer(std::chrono::milliseconds(50),[publisher,pending]{publisher->publish(pending);});
+  ASSERT_TRUE(wait([&]{return !request("/api/status").value("last_saved_bundle",std::string()).empty();},10));
+  const auto status=request("/api/status");const auto id=status.at("last_saved_bundle").get<std::string>();
+  const auto manifest=json::parse(read_file(root/id/"manifest.json"));
+  EXPECT_TRUE(manifest["complete"]);EXPECT_FALSE(manifest["review_required"]);EXPECT_FALSE(manifest["diagnostic_only"]);
+  EXPECT_EQ(json::parse(read_file(root/id/"publication.json"))["status"],"saved");
+  ASSERT_TRUE(wait([&]{const auto value=request("/api/bundles");return !value.value("loading",true)&&value["bundles"].size()==1&&value["bundles"][0].value("saved",false);}));
+  const auto catalog=request("/api/bundles");ASSERT_EQ(catalog["http_status"],200);ASSERT_EQ(catalog["bundles"].size(),1u);
+  EXPECT_TRUE(catalog["bundles"][0]["saved"]);EXPECT_TRUE(catalog["bundles"][0]["navigation_allowed"]);
+  EXPECT_EQ(status.value("result","").find("地图已保存"),0u);EXPECT_EQ(nonzero.load(),0);
 }
 TEST_F(AutonomyGateway, FailedDiagnosticSaveRetriesWithoutResumingScanWrite) {
   save_fails=true;start_gateway();connect_control();
@@ -559,7 +690,7 @@ TEST_F(Integration, ActualWebSocketMotionTimeoutVideoAndReadOnlyInterfaces){
 TEST_F(Integration, SaveFreezesMotionAndProducesVerifiedBundle){
   start_gateway();ASSERT_TRUE(wait([&]{return request("/api/state").value("phase","")=="CURRENT";}));connect_control();usleep(500000);
   EXPECT_EQ(request("/api/save",json::object())["http_status"],202);
-  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&s.value("result","").find("保存完整")!=std::string::npos;},12));
+  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&!s.value("last_saved_bundle",std::string()).empty();},12));
   EXPECT_EQ(nonzero.load(),0);bool complete=false;
   for(const auto&item:std::filesystem::directory_iterator(root)){
     EXPECT_NO_THROW(validate_bundle(root,item.path().filename().string()));
@@ -593,7 +724,7 @@ TEST_F(Integration, SustainedFastJoystickAndStopDiagnosticsRemainObservable) {
 TEST_F(Integration, ResumeDoesNotForwardBeforeHintAndOnlyOneScanBeforeConfirmation){
   start_gateway();ASSERT_TRUE(wait([&]{return request("/api/state").value("phase","")=="CURRENT";}));connect_control();usleep(500000);
   ASSERT_EQ(request("/api/save",json::object())["http_status"],202);
-  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&s.value("result","").find("保存完整")!=std::string::npos;},12));
+  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&!s.value("last_saved_bundle",std::string()).empty();},12));
   std::string bundle;for(auto&item:std::filesystem::directory_iterator(root))bundle=item.path().filename();ASSERT_FALSE(bundle.empty());
   ws.reset();kill_child(gateway);relay_count=0;start_gateway("resume",bundle);usleep(400000);EXPECT_EQ(relay_count.load(),0);connect_control();usleep(500000);
   EXPECT_EQ(request("/api/resume",{{"pose",{0,0,0}}})["http_status"],202);
@@ -607,7 +738,7 @@ class RealSlamIntegration : public Integration { bool real_slam() const override
 TEST_F(RealSlamIntegration, InstalledSlamToolboxGraphSaveAndArbitraryPoseResume){
   start_gateway();ASSERT_TRUE(wait([&]{return request("/api/state").value("phase","")=="CURRENT";},10));connect_control();usleep(500000);
   ASSERT_EQ(request("/api/save",json::object())["http_status"],202);
-  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&s.value("result","").find("保存完整")!=std::string::npos;},15));
+  ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&!s.value("last_saved_bundle",std::string()).empty();},15));
   std::string bundle;for(auto&item:std::filesystem::directory_iterator(root))bundle=item.path().filename();ASSERT_FALSE(bundle.empty());
   EXPECT_NO_THROW(validate_bundle(root,bundle));const auto before=sha256(root/bundle/"graph.posegraph");
   ws.reset();kill_child(gateway);relay_count=0;start_gateway("resume",bundle);connect_control();usleep(500000);
@@ -710,7 +841,7 @@ TEST_F(ManagedIntegration, TabletLifecycleWithoutHardwareOrVideoSavesLoadsAndRes
 }
 TEST_F(Integration, EmptyRestoreResponseWithoutNewPoseCannotUnlock){
   start_gateway();ASSERT_TRUE(wait([&]{return request("/api/state").value("phase","")=="CURRENT";}));connect_control();usleep(500000);
-  ASSERT_EQ(request("/api/save",json::object())["http_status"],202);ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&s.value("result","").find("保存完整")!=std::string::npos;},12));
+  ASSERT_EQ(request("/api/save",json::object())["http_status"],202);ASSERT_TRUE(wait([&]{auto s=request("/api/state");return !s.value("busy",true)&&!s.value("last_saved_bundle",std::string()).empty();},12));
   std::string bundle;for(auto&item:std::filesystem::directory_iterator(root))bundle=item.path().filename();ASSERT_FALSE(bundle.empty());
   ws.reset();kill_child(gateway);emit_pose=false;relay_count=0;start_gateway("resume",bundle);connect_control();usleep(500000);
   EXPECT_EQ(request("/api/resume",{{"pose",{2000,0,0}}})["http_status"],400);

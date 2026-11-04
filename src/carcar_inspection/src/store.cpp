@@ -1,6 +1,9 @@
 // Copyright 2026 carcar maintainers. SPDX-License-Identifier: Apache-2.0
 #include "carcar_inspection/store.hpp"
 #include <memory>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
 namespace carcar_inspection {
 namespace {
 using Statement = std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>;
@@ -20,6 +23,11 @@ Store::Store(const std::filesystem::path & directory) : root_(directory) {
   require(!std::filesystem::is_symlink(root_), "数据目录不能为符号链接");
   std::filesystem::create_directories(root_ / "media");
   try {
+    // 必须先取得目录独占权，再打开数据库和标记中断任务。
+    lock_fd_ = open((root_ / ".inspection.lock").c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    require(lock_fd_ >= 0, "无法打开巡检数据目录锁");
+    require(flock(lock_fd_, LOCK_EX | LOCK_NB) == 0,
+      "巡检数据目录已被其他控制台占用，未打开数据库或修改任务");
     require(sqlite3_open_v2((root_ / "inspection.sqlite3").c_str(), &db_,
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) == SQLITE_OK, "数据库打开失败");
     sqlite3_busy_timeout(db_, 1500);
@@ -33,9 +41,19 @@ Store::Store(const std::filesystem::path & directory) : root_(directory) {
       const int revision = run.at("revision"); run["status"] = "INTERRUPTED";
       run["error"] = "车端程序已重启，旧执行未自动恢复"; put("runs", run, revision);
     }
-  } catch (...) {if (db_) sqlite3_close(db_); db_ = nullptr; throw;}
+  } catch (...) {
+    if (db_) sqlite3_close(db_);
+    db_ = nullptr;
+    if (lock_fd_ >= 0) close(lock_fd_);
+    lock_fd_ = -1;
+    throw;
+  }
 }
-Store::~Store() {if (db_) sqlite3_close(db_);}
+Store::~Store() {
+  if (db_) sqlite3_close(db_);
+  // 不删除锁文件，避免另一个进程锁住被替换的旧文件。
+  if (lock_fd_ >= 0) close(lock_fd_);
+}
 void Store::sql(const char * text) const {
   char * error = nullptr; const int rc = sqlite3_exec(db_, text, nullptr, nullptr, &error);
   const std::string reason = error ? error : sqlite3_errmsg(db_); sqlite3_free(error);

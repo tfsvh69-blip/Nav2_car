@@ -1,4 +1,5 @@
 <launch>
+  <arg name="start_console" default="true"/>
   <!-- APP-001独立实机入口；默认不启动硬件。不得与建图/原导航入口并行。 -->
   <arg name="real_hardware" default="false"/>
   <arg name="enable_navigation" default="false"/>
@@ -63,7 +64,7 @@
       </include>
     </group>
   </group>
-  <include file="$(find-pkg-share carcar_inspection)/launch/console.launch.xml">
+  <include if="$(var start_console)" file="$(find-pkg-share carcar_inspection)/launch/console.launch.xml">
     <arg name="port" value="$(var port)"/>
     <arg name="data_root" value="$(var data_root)"/>
     <arg name="enable_hardware" value="$(var real_hardware)"/>

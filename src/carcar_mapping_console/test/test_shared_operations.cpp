@@ -3,6 +3,22 @@
 #include "carcar_mapping_console/task_requests.hpp"
 using namespace carcar_mapping_console;
 using nlohmann::json;
+TEST(SharedOperations, RepeatedPendingManualStillCancelsNewQueuedAutomaticContinuation){
+  TaskRequests ledger;ledger.reset("task");
+  ASSERT_TRUE(ledger.submit("manual-a","manual",json::object(),1,json(ledger.epoch())).forward);
+  const json epoch=ledger.epoch();
+  ASSERT_TRUE(ledger.submit("resume-b","resume",json::object(),1.01,epoch).queued);
+  ASSERT_TRUE(ledger.submit("manual-c","manual",json::object(),1.02,epoch).error.empty());
+  EXPECT_TRUE(ledger.ready(2).empty());
+  EXPECT_FALSE(ledger.submit("late-resume","resume",json::object(),2,epoch).error.empty());
+}
+TEST(SharedOperations, OrdinaryManualTakeoverCancelsQueuedAutomaticContinuation){
+  TaskRequests ledger;ledger.reset("task");const json epoch=ledger.epoch();
+  ASSERT_TRUE(ledger.submit("queued","resume",json::object(),1,epoch).queued);
+  ASSERT_TRUE(ledger.submit("manual","manual",json::object(),1.01,epoch).forward);
+  EXPECT_TRUE(ledger.ready(2).empty());
+  EXPECT_FALSE(ledger.submit("late","resume",json::object(),2,epoch).error.empty());
+}
 TEST(SharedOperations, DevicesShareTaskIdentityWithoutDisclosingControlTokens){
   OperatorSessions sessions;
   ASSERT_TRUE(sessions.connect("secret-a","public-a"));

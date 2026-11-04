@@ -122,10 +122,11 @@ TEST_F(CheckedPathTree, OldBlackboardPathCannotSkipNewGoalsBeforeTheyAreChecked)
 }
 
 TEST_F(CheckedPathTree, FreshCheckedPathHandsOffIntermediateAndKeepsLastGoal){
- path.poses.back().pose.position.x=.70;board->set("path",path);
- auto intermediate=path.poses.front();intermediate.pose.position.x=.20;
+ // 车仍在原点，中间点剩余弧长1.20米，确实使用本轮放宽的0.80米以上范围。
+ path.poses.back().pose.position.x=1.80;board->set("path",path);
+ auto intermediate=path.poses.front();intermediate.pose.position.x=1.20;
  board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{intermediate,path.poses.back()});
- state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":1,\"handoff\":{\"distance_m\":0.80}";
+ state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":1,\"map_revision\":1,\"handoff\":{\"distance_m\":1.50}";
  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
  tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><MappingPassedGoals input_goals='{goals}' output_goals='{goals}' path='{path}'/></BehaviorTree></root>",board);
  ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
@@ -166,4 +167,50 @@ TEST_F(CheckedPathTree, ProductionTreeHandsOffFreshCheckedPathWhileMapRevisionKe
  const auto remaining=board->get<std::vector<geometry_msgs::msg::PoseStamped>>("goals");
  ASSERT_EQ(remaining.size(),1U)<<"新版本先规划及审查，再在本轮使用新凭据过点，不能一直等待地图静止";
  EXPECT_EQ(remaining.front(),path.poses.back());
+}
+
+TEST_F(CheckedPathTree, ProductionReplanFailureKeepsFreshSafeCommittedRoute){
+ continuous_tree(0);path.poses.back().pose.position.x=1;board->set("path",path);
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{path.poses.back()});
+ ASSERT_EQ(run(),BT::NodeStatus::RUNNING);ASSERT_GT(follows,0);
+ remaining_failures=20;const auto before=follows;
+ std::this_thread::sleep_for(std::chrono::milliseconds(650));
+ EXPECT_EQ(run("EXPLORING",true),BT::NodeStatus::RUNNING)
+   <<"重规划失败不能直接终止仍通过最新地图审查的同一条执行路线";
+ EXPECT_GT(follows,before);
+}
+
+TEST_F(CheckedPathTree, RetainedRouteRejectsNewObstacleNewGoalsAndChangedContext){
+ const auto context=state_context;
+ for(const std::string change:{"obstacle","goals","goal_stamp","task","generation","missing_context","paused"}){
+   SCOPED_TRACE(change);state_context=context;map.data.assign(10000,0);
+   board->set("path",path);board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{path.poses.back()});
+   tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><CheckedMappingPath path='{path}' checked_path='{checked}'/></BehaviorTree></root>",board);
+   ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+   if(change=="obstacle")map.data[50*100+60]=100;
+   if(change=="goals"||change=="goal_stamp"){auto goal=path.poses.back();if(change=="goals")goal.pose.position.y=.1;else goal.header.stamp=node->now();board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{goal});}
+   if(change=="task")state_context=",\"task_id\":\"other\",\"navigation_generation\":1,\"map_revision\":2";
+   if(change=="generation")state_context=",\"task_id\":\"bt-task\",\"navigation_generation\":2,\"map_revision\":2";
+   if(change=="missing_context")state_context="";
+   tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><CheckedMappingPath path='{path}' checked_path='{checked}' reuse_checked_path='true'/></BehaviorTree></root>",board);
+   EXPECT_EQ(run(change=="paused"?"PAUSED":"EXPLORING"),BT::NodeStatus::FAILURE);
+ }
+}
+TEST_F(CheckedPathTree, RetainedRouteRechecksNewMapAndDoesNotRenewItsDeadline){
+ auto mid=path.poses.back();mid.pose.position.x=.5;
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{mid,path.poses.back()});
+ ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+ // 正常过点允许移除前缀；新地图版本仍须重新检查，不要求地图静止。
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{path.poses.back()});changing_revision=2;
+ tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><CheckedMappingPath path='{path}' checked_path='{checked}' reuse_checked_path='true'/></BehaviorTree></root>",board);
+ ASSERT_EQ(run(),BT::NodeStatus::SUCCESS);
+ std::this_thread::sleep_for(std::chrono::milliseconds(1600));
+ EXPECT_EQ(run(),BT::NodeStatus::FAILURE)<<"反复复核不能无限续租旧路线";
+}
+TEST_F(CheckedPathTree, HaltClearsRetainedRouteBeforeAnotherRequest){
+ continuous_tree(0);path.poses.back().pose.position.x=1;board->set("path",path);
+ board->set("goals",std::vector<geometry_msgs::msg::PoseStamped>{path.poses.back()});
+ ASSERT_EQ(run(),BT::NodeStatus::RUNNING);tree.haltTree();
+ tree=factory.createTreeFromText("<root main_tree_to_execute='Main'><BehaviorTree ID='Main'><CheckedMappingPath path='{path}' checked_path='{checked}' reuse_checked_path='true'/></BehaviorTree></root>",board);
+ EXPECT_EQ(run(),BT::NodeStatus::FAILURE);
 }

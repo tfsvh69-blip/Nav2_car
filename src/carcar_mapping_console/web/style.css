@@ -543,10 +543,11 @@ h2 {
   margin-right: 4px;
 }
 .map-key .swatch-global {
-  background: #873c9a;
+  background: linear-gradient(to right, #0200fd, #7f0080, #f90006);
+  width: 28px;
 }
 .map-key .swatch-local {
-  background: #f59119;
+  background: #ff00ff;
 }
 .map-key .swatch-plan {
   background: #00a8bd;
@@ -699,7 +700,7 @@ details[open] > summary::after {
 }
 .autonomy-card .muted,
 .autonomy-card #autonomy-budget,
-#publication-result {
+#saved-map-result {
   font-size: 12px;
   color: var(--muted);
 }
@@ -721,8 +722,7 @@ details[open] > summary::after {
 .autonomy-actions button {
   white-space: normal;
 }
-#auto-finish,
-#map-activate {
+#auto-finish {
   grid-column: 1/-1;
 }
 .task-details {
@@ -800,6 +800,33 @@ details[open] > summary::after {
   flex: none;
   padding-inline: 10px;
 }
+/* 接管资格与实际运动许可分开显示，保护原因紧邻摇杆持续保留。 */
+.manual-motion-feedback {
+  margin: 4px 0 15px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid #527092;
+  border-radius: 6px;
+  background: #f7f9fc;
+  overflow-wrap: anywhere;
+}
+.manual-motion-feedback.blocked {
+  color: #8e2633;
+  border-color: #e3bcc2;
+  border-left-color: #a52e3b;
+  background: #fff5f6;
+}
+.manual-motion-feedback.unconfirmed { color: #536172; }
+.manual-motion-feedback.permitted {
+  color: #23466f;
+  border-left-color: #285bd4;
+  background: #f2f6ff;
+}
+.manual-motion-feedback strong { display: block; font-size: 14px; line-height: 1.6; }
+.manual-motion-feedback p { margin: 7px 0 0; font-size: 12px; line-height: 1.7; }
+.manual-recovery-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+.manual-recovery-actions button { flex: 1 1 130px; padding-inline: 8px; font-size: 12px; }
+.manual-motion-feedback .manual-recovery-status { color: #687380; }
 .eyebrow {
   margin: 0 0 3px;
   font-size: 11px;
@@ -1371,3 +1398,19 @@ footer .icon {
   .wall-existing label { grid-column: 1 / -1; }
   .tuning-input { grid-template-columns: 82px minmax(0, 1fr); }
 }
+
+/* 画墙回执紧邻点击区域，不遮挡手势与停车入口。 */
+.wall-map-feedback { position: absolute; z-index: 3; top: 12px; left: 12px; right: 12px; width: fit-content; max-width: calc(100% - 24px); padding: 9px 12px; border: 1px solid #285bd4; border-radius: 6px; background: #fff; color: #173a83; font-size: 13px; font-weight: 600; line-height: 1.5; pointer-events: none; }
+
+.saved-map-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--blue, #285bd4);
+  text-decoration: none;
+  text-align: center;
+}
+.saved-map-link:focus-visible { outline: 2px solid #285bd4; outline-offset: 3px; }

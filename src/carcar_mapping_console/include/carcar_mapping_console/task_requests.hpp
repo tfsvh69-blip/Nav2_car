@@ -32,6 +32,8 @@ public:
     if(!stopping(action)&&!expected_epoch.is_null()&&
        (!expected_epoch.is_number_unsigned()||expected_epoch.get<std::uint64_t>()!=epoch_))
       return {false,false,{},"本次操作基于停车或任务切换前的旧状态，未下发；等待两端同步后重新选择"};
+    // 新一次人工接管先撤销继续，再判断同类合并，避免旧manual掩盖后来排队的自动请求。
+    if(action=="manual")cancel_continuations("人工接管已撤销旧继续请求，是否冻结由车端本地手动策略确认");
     if(stopping(action)){
       cancel_continuations("已被暂停／停车覆盖，不再等待继续结果；以停车反馈为准");
     }else{
@@ -43,8 +45,6 @@ public:
       }
       if(!ongoing.empty())return {false,false,{},"重新检查尚未结束，本次未重复下发；等待当前检查完成"};
     }
-    // 明确受限接管沿用manual接口；先作废尚未下发的继续，不能被迟到请求抢回自动控制。
-    if(action=="manual"&&extra.is_object()&&extra.value("restricted",false))cancel_continuations("受限接管已撤销旧继续请求，地图保持冻结");
     const bool queued=action=="start"||action=="resume";
     add({id,id,action,queued?"queued":"submitted",queued?"等待跨端停车优先窗口，尚未下发":"已提交车端，等待确认",extra,epoch_,now+.15,now});
     return {!queued,queued,id,{}};

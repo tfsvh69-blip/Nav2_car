@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -16,6 +17,7 @@ struct CheckedHandoffPath {
   HandoffClock::time_point checked_at;
 };
 constexpr const char* handoff_proof_key="mapping_checked_handoff_path";
+constexpr const char* retained_path_key="mapping_retained_checked_path";
 bool handoff_context(const carcar_mapping_autonomy::Json&state,std::string&task,uint64_t&generation,uint64_t&revision){
   try{
     if(!state.is_object()||!state.contains("task_id")||!state["task_id"].is_string())return false;
@@ -45,7 +47,7 @@ public:
       [this](const std_msgs::msg::String&m){try{state_=carcar_mapping_autonomy::Json::parse(m.data);state_at_=std::chrono::steady_clock::now();}catch(...){state_=nullptr;}},options);
     executor_.add_callback_group(group_,node_->get_node_base_interface());
   }
-  static BT::PortsList providedPorts(){return {BT::InputPort<nav_msgs::msg::Path>("path"),BT::OutputPort<nav_msgs::msg::Path>("checked_path")};}
+  static BT::PortsList providedPorts(){return {BT::InputPort<nav_msgs::msg::Path>("path"),BT::OutputPort<nav_msgs::msg::Path>("checked_path"),BT::InputPort<bool>("reuse_checked_path",false,"仅复核短时保留路线")};}
   BT::NodeStatus tick()override{
     executor_.spin_some();const auto now=std::chrono::steady_clock::now();
     config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(handoff_proof_key,nullptr);
@@ -53,7 +55,20 @@ public:
     map_=constrained?constrained_map_:raw_map_;map_at_=constrained?constrained_map_at_:raw_map_at_;
     if(!map_||state_.is_null()||std::chrono::duration<double>(now-map_at_).count()>10||
       std::chrono::duration<double>(now-state_at_).count()>1||state_.value("phase","")!="EXPLORING")return BT::NodeStatus::FAILURE;
-    const auto path=getInput<nav_msgs::msg::Path>("path");if(!path||path.value().poses.empty())return BT::NodeStatus::FAILURE;
+    auto path=getInput<nav_msgs::msg::Path>("path");
+    const bool reuse=getInput<bool>("reuse_checked_path").value();
+    if(reuse){
+      // 仅延续本任务/定位代次内刚刚确认的同一剩余目标序列；不为抢占后的新目标沿用旧路。
+      std::shared_ptr<const CheckedHandoffPath> retained;std::vector<geometry_msgs::msg::PoseStamped> goals;
+      std::string task;uint64_t generation=0,revision=0;
+      if(!config().blackboard->get(retained_path_key,retained)||!retained||
+         !config().blackboard->get("goals",goals)||goals.empty()||goals.size()>retained->goals.size()||
+         !handoff_context(state_,task,generation,revision)||task!=retained->task_id||generation!=retained->navigation_generation||
+         std::chrono::duration<double>(now-retained->checked_at).count()>2.0||
+         !std::equal(goals.rbegin(),goals.rend(),retained->goals.rbegin()))return BT::NodeStatus::FAILURE;
+      path=retained->path;
+    }
+    if(!path||path.value().poses.empty())return BT::NodeStatus::FAILURE;
     try{
       const auto tr=tf_->lookupTransform("map","base_footprint",tf2::TimePointZero);
       const auto age=(node_->now()-rclcpp::Time(tr.header.stamp)).seconds();if(age<-.25||age>.5)return BT::NodeStatus::FAILURE;
@@ -69,8 +84,11 @@ public:
       if(config().blackboard->get("goals",goals)&&!goals.empty()&&handoff_context(state_,task,generation,revision)){
         auto proof=std::make_shared<CheckedHandoffPath>();proof->path=path.value();proof->goals=std::move(goals);
         proof->task_id=std::move(task);proof->navigation_generation=generation;proof->map_revision=revision;proof->checked_at=now;
+        // 复核旧路线不能给两秒保留期限续租；只有真正的新规划成功才更新保留凭据。
+        if(!reuse)config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(retained_path_key,proof);
         config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(handoff_proof_key,std::move(proof));
       }
+      if(reuse)RCLCPP_INFO(node_->get_logger(),"重规划暂未通过；原路线已重新通过当前地图完整净空审查，短暂保留同一FollowPath，未放宽停车保护");
       setOutput("checked_path",path.value());return BT::NodeStatus::SUCCESS;
     }catch(const std::exception&e){RCLCPP_WARN(node_->get_logger(),"路径审查数据未就绪：%s",e.what());return BT::NodeStatus::FAILURE;}
   }
@@ -101,7 +119,7 @@ public:
     }
     return BT::NodeStatus::RUNNING;
   }
-  void halt()override{BT::DecoratorNode::halt();ready_=true;goals_.clear();}
+  void halt()override{BT::DecoratorNode::halt();ready_=true;goals_.clear();config().blackboard->set<std::shared_ptr<const CheckedHandoffPath>>(retained_path_key,nullptr);}
 private:
   bool ready_=true;std::chrono::steady_clock::time_point last_;
   std::vector<geometry_msgs::msg::PoseStamped>goals_;
@@ -164,7 +182,7 @@ public:
       std::chrono::duration<double>(now-at_).count()<1&&state_.value("phase",std::string())=="EXPLORING";
     if(qualified){
       const double radius=state_.value("handoff",carcar_mapping_autonomy::Json::object()).value("distance_m",.25);
-      if(std::isfinite(radius)&&radius>=.15&&radius<=.8){
+      if(std::isfinite(radius)&&radius>=.15&&radius<=1.5){
         const auto tr=tf_->lookupTransform("map","base_footprint",tf2::TimePointZero);const auto age=(node_->now()-rclcpp::Time(tr.header.stamp)).seconds();
         if(age>=-.1&&age<=.5)while(result.size()>1){const auto&p=result.front().pose.position;
           if(carcar_mapping_autonomy::handoff_path_distance(path.value(),{tr.transform.translation.x,tr.transform.translation.y,0},{p.x,p.y,0})>radius)break;

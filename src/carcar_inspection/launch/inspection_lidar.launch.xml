@@ -1,4 +1,5 @@
 <launch>
+  <arg name="start_console" default="true"/>
   <set_env name="LD_LIBRARY_PATH" value="$(find-pkg-prefix carcar_tf2_compat)/lib/carcar_tf2_compat:$(env LD_LIBRARY_PATH)"/>
   <!-- 纯激光新入口；旧inspection_robot深度默认与历史入口保留。 -->
   <arg name="real_hardware" default="false"/><arg name="enable_navigation" default="false"/>
@@ -6,6 +7,7 @@
   <arg name="map" default="$(find-pkg-share carcar_navigation)/maps/nav004_20260914_093032.yaml"/>
   <arg name="port" default="8081"/><arg name="data_root" default="/home/jetson/.local/share/carcar_inspection"/>
   <include file="$(find-pkg-share carcar_inspection)/launch/inspection_robot.launch.xml">
+    <arg name="start_console" value="$(var start_console)"/>
     <arg name="real_hardware" value="$(var real_hardware)"/><arg name="enable_navigation" value="$(var enable_navigation)"/>
     <arg name="enable_goal_navigation" value="$(var enable_goal_navigation)"/><arg name="map" value="$(var map)"/>
     <arg name="port" value="$(var port)"/><arg name="data_root" value="$(var data_root)"/>

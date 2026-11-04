@@ -1,3 +1,6 @@
+#include "carcar_inspection/archive.hpp"
+#include <carcar_interfaces/srv/inspection_runtime.hpp>
+#include <carcar_interfaces/msg/inspection_runtime_state.hpp>
 // Copyright 2026 carcar maintainers. SPDX-License-Identifier: Apache-2.0
 #include <atomic>
 #include <cmath>
@@ -34,7 +37,6 @@
 #include <carcar_interfaces/msg/indicator_command.hpp>
 #include <carcar_mapping_console/http_server.hpp>
 #include <carcar_mapping_console/common.hpp>
-#include <carcar_mapping_console/publication.hpp>
 #include <nav2_msgs/srv/load_map.hpp>
 #include <carcar_mapping_console/safety.hpp>
 #include "carcar_inspection/store.hpp"
@@ -44,6 +46,7 @@
 #include "carcar_inspection/navigation_debug.hpp"
 #include "carcar_inspection/mapping_status_monitor.hpp"
 #include "carcar_inspection/navigation_speed.hpp"
+#include "carcar_inspection/saved_map_catalog.hpp"
 
 namespace carcar_inspection {
 namespace fs = std::filesystem;
@@ -74,10 +77,17 @@ HttpResponse reply(const json & value, unsigned status=200) {
 struct Frame {uint64_t sequence;cv::Mat rgb;double received;int64_t stamp;};
 
 class Console : public rclcpp::Node {
+  using RuntimeService=carcar_interfaces::srv::InspectionRuntime;
+  using RuntimeState=carcar_interfaces::msg::InspectionRuntimeState;
 public:
   Console() : Node("inspection_console"),tf_(get_clock()),listener_(tf_),
     store_(declare_parameter("data_root",std::string("/home/jetson/.local/share/carcar_inspection"))),
     executor_([this](const std::string & kind,const json & context,bool start){return step(kind,context,start);},[this]{halt();}) {
+    managed_runtime_=declare_parameter("managed_runtime",false);
+    velocity_topic_=declare_parameter("cmd_vel_topic",std::string("/cmd_vel"));
+    arrival_xy_=declare_parameter("arrival_xy_tolerance",0.10);
+    arrival_yaw_=declare_parameter("arrival_yaw_tolerance",0.15);
+    require(arrival_xy_>0&&arrival_yaw_>0,"到点容差必须为正数");
     hardware_=declare_parameter("enable_hardware",false);
     navigation_=declare_parameter("enable_navigation",false);
     goal_navigation_=declare_parameter("enable_goal_navigation",navigation_);
@@ -94,6 +104,7 @@ public:
       declare_parameter("mapping_status_url",std::string("http://127.0.0.1:8080/api/status")));
     require(settle_>=0.2&&stop_seconds_>=0.2&&frame_age_>0&&frame_age_<=2&&operation_timeout_>=5&&navigation_timeout_>=10,"候选时间参数不满足保护范围");
     map_root_=declare_parameter("map_root",std::string("/home/jetson/luhao/my_nav_carcar/src/carcar_navigation/maps"));
+    map_catalog_=std::make_unique<SavedMapCatalog>(map_root_);
     web_root_=declare_parameter("web_root",ament_index_cpp::get_package_share_directory("carcar_inspection")+"/web");
     const auto address=declare_parameter("bind_address",std::string("127.0.0.1"));
     const auto port=declare_parameter("port",8081);require(port>0&&port<65536,"网页端口无效");
@@ -164,18 +175,12 @@ public:
       [this](nav_msgs::msg::Path::ConstSharedPtr value){navigation_debug_.path(0,*value,steady());});
     local_path_sub_=create_subscription<nav_msgs::msg::Path>("/local_plan",rclcpp::QoS(1),
       [this](nav_msgs::msg::Path::ConstSharedPtr value){navigation_debug_.path(1,*value,steady());});
-    if(hardware_) {
-      velocity_=create_publisher<geometry_msgs::msg::Twist>(declare_parameter("cmd_vel_topic",std::string("/cmd_vel")),rclcpp::QoS(1));
-      initial_pose_=create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose",rclcpp::QoS(1));
-      indicator_=create_publisher<carcar_interfaces::msg::IndicatorCommand>("/hardware/indicator/command",rclcpp::QoS(1));
-      nav_velocity_sub_=create_subscription<geometry_msgs::msg::Twist>("/inspection/navigation/cmd_vel",rclcpp::QoS(1),
-        [this](geometry_msgs::msg::Twist::ConstSharedPtr value){nav_velocity_=*value;nav_velocity_at_=steady();});
-      depth_pub_=create_publisher<sensor_msgs::msg::PointCloud2>("/inspection/navigation/points",sensor);
-      depth_sub_=create_subscription<sensor_msgs::msg::PointCloud2>("/camera/depth/points",sensor,
-        [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr value){
-          const auto age=(now()-rclcpp::Time(value->header.stamp)).seconds();
-          if(depth_enabled_&&board_==94&&age>=-.05&&age<=.3&&rclcpp::Time(value->header.stamp).nanoseconds()>depth_open_stamp_){depth_pub_->publish(*value);depth_forwarded_at_=steady();}
-        });
+    require(!managed_runtime_||!hardware_,"托管控制台必须以配置模式启动");
+    if(hardware_)attach_outputs();
+    if(managed_runtime_) {
+      runtime_client_=create_client<RuntimeService>("/inspection/runtime/control");
+      runtime_heartbeat_=create_publisher<RuntimeState>("/inspection/runtime/heartbeat",rclcpp::QoS(1));
+      runtime_sub_=create_subscription<RuntimeState>("/inspection/runtime/state",rclcpp::QoS(1),[this](const RuntimeState&m){runtime_message(m);});
     }
     discover_maps();update_snapshot();
     server_=std::make_unique<carcar_mapping_console::HttpServer>(address,static_cast<unsigned short>(port),
@@ -209,8 +214,98 @@ public:
     if(server_)server_->stop();
     executor_.cancel();if(velocity_)velocity_->publish(geometry_msgs::msg::Twist{});
     if(trial_active())halt();
+    if(map_catalog_)map_catalog_->stop();
   }
 private:
+  void attach_outputs() {
+    const auto sensor=rclcpp::SensorDataQoS().keep_last(2);
+      velocity_=create_publisher<geometry_msgs::msg::Twist>(velocity_topic_,rclcpp::QoS(1));
+      initial_pose_=create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose",rclcpp::QoS(1));
+      indicator_=create_publisher<carcar_interfaces::msg::IndicatorCommand>("/hardware/indicator/command",rclcpp::QoS(1));
+      nav_velocity_sub_=create_subscription<geometry_msgs::msg::Twist>("/inspection/navigation/cmd_vel",rclcpp::QoS(1),
+        [this](geometry_msgs::msg::Twist::ConstSharedPtr value){nav_velocity_=*value;nav_velocity_at_=steady();});
+      depth_pub_=create_publisher<sensor_msgs::msg::PointCloud2>("/inspection/navigation/points",sensor);
+      depth_sub_=create_subscription<sensor_msgs::msg::PointCloud2>("/camera/depth/points",sensor,
+        [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr value){
+          const auto age=(now()-rclcpp::Time(value->header.stamp)).seconds();
+          if(depth_enabled_&&board_==94&&age>=-.05&&age<=.3&&rclcpp::Time(value->header.stamp).nanoseconds()>depth_open_stamp_){depth_pub_->publish(*value);depth_forwarded_at_=steady();}
+        });
+    }
+
+  void detach_outputs() {
+    halt();++nav_generation_;++activation_generation_;activation_localization_pending_=false;activation_initial_stamp_=0;map_activation_={{"phase","IDLE"}};pending_=nullptr;nav_goal_.reset();nav_terminal_=true;nav_waiting_=false;
+    hardware_=navigation_=goal_navigation_=false;held_=false;board_=-1;driver_epoch_.clear();
+    velocity_.reset();initial_pose_.reset();indicator_.reset();nav_velocity_sub_.reset();depth_sub_.reset();depth_pub_.reset();
+    speed_=std::make_unique<NavigationSpeed>(*this,false);
+    frames_.clear();tf_.clear();live_map_version_.clear();localized_=false;localization_fault_=true;
+    odom_at_=scan_at_=localization_ready_at_=localization_fault_at_=nav_velocity_at_=-1e9;
+    still_since_=0;teaching_=Teaching{};trial_={{"phase","IDLE"}};
+    {std::lock_guard<std::mutex> lock(snapshot_mutex_);jpeg_.clear();}
+  }
+  void runtime_message(const RuntimeState&m) {
+    if(m.request_id!=runtime_request_||runtime_request_.empty())return;
+    if(!runtime_generation_.empty()&&runtime_generation_!=m.generation)return;
+    runtime_at_=steady();
+    runtime_generation_=m.generation;
+    if(m.phase=="ACTIVE"&&runtime_action_=="prepare")runtime_inflight_=false;
+    if(m.phase=="ACTIVE"&&vehicle_phase_=="STARTING"&&!hardware_) {
+      hardware_=navigation_=goal_navigation_=true;require_depth_=false;attach_outputs();
+      speed_=std::make_unique<NavigationSpeed>(*this,true);
+      activation_localization_pending_=true;activation_initial_stamp_=0;
+      map_activation_={{"phase","WAITING_LOCALIZATION"},{"map_id",map_id_}};
+      runtime_reason_="等待设备就绪，然后按实车位置提交本次初始定位；没有下发目标";
+    } else if(m.phase=="CONFIG_ONLY"||m.phase=="FAULT") {
+      if(hardware_){
+        executor_.cancel();if(!run_.is_null()&&(run_.value("status","")=="RUNNING"||run_.value("status","")=="PAUSED"||!pending_terminal_.empty())){error_=m.reason;persist_run("INTERRUPTED");}
+        pending_terminal_.clear();detach_outputs();
+      }
+      vehicle_phase_=m.phase;runtime_reason_=m.reason;runtime_inflight_=false;
+    }
+  }
+  void runtime_request(const std::string & action) {
+    require(runtime_client_->service_is_ready(),"车辆监督服务未连接，没有启动或切换车辆；请检查8080服务");
+    auto request=std::make_shared<RuntimeService::Request>();request->action=action;request->request_id=runtime_request_;
+    request->map_id=map_id_;request->generation=runtime_generation_;
+    if(runtime_reply_pending_)runtime_client_->remove_pending_request(runtime_service_id_);
+    runtime_inflight_=true;runtime_reply_pending_=true;runtime_deadline_=steady()+3;runtime_action_=action;
+    const auto sequence=++runtime_sequence_;
+    const auto id=runtime_request_;
+    auto pending=runtime_client_->async_send_request(request,[this,id,sequence](rclcpp::Client<RuntimeService>::SharedFuture future){
+      if(id!=runtime_request_||sequence!=runtime_sequence_)return;
+      runtime_inflight_=false;runtime_reply_pending_=false;const auto result=future.get();
+      if(!result->accepted){vehicle_phase_="FAULT";runtime_reason_=result->reason;return;}
+      runtime_generation_=result->generation;runtime_reason_=result->reason;
+      if(runtime_action_=="end")runtime_end_sent_=true;
+    });
+    runtime_service_id_=pending.request_id;
+  }
+  void runtime_tick() {
+    if(!managed_runtime_)return;
+    if(runtime_reply_pending_&&steady()>runtime_deadline_){
+      runtime_client_->remove_pending_request(runtime_service_id_);++runtime_sequence_;runtime_reply_pending_=false;
+      if(runtime_inflight_){runtime_inflight_=false;vehicle_phase_="FAULT";runtime_reason_="车辆监督请求确认超过3秒，保持停车；可以重试结束车辆工作";halt();}
+    }
+    if(steady()-runtime_heartbeat_at_>.2){RuntimeState message;message.generation=runtime_generation_;message.request_id=runtime_request_;message.phase=vehicle_phase_;
+      runtime_heartbeat_->publish(message);runtime_heartbeat_at_=steady();}
+    if(hardware_&&steady()-runtime_at_>2){
+      halt();executor_.cancel();if(!run_.is_null()&&(run_.value("status","")=="RUNNING"||run_.value("status","")=="PAUSED")){error_="车辆监督失联，已停止执行";persist_run("INTERRUPTED");}
+      vehicle_phase_="FAULT";runtime_reason_="车辆监督失联，保持停车；检查8080服务";
+      if(!held_&&!pending_&&hold_client_->service_is_ready())hold(true);
+      return;
+    }
+    if(vehicle_phase_=="STARTING"&&hardware_&&!pending_&&hold_client_->service_is_ready()) {
+      if(!held_)hold(true);
+      else if(still()&&servo_client_->service_is_ready()&&nav_->action_server_is_ready())vehicle_phase_="WAITING_LOCALIZATION";
+    }
+    if(vehicle_phase_=="STARTING"&&steady()-runtime_started_>45){vehicle_phase_="STOPPING";runtime_reason_="设备准备超过45秒，关闭本次硬件；检查日志";runtime_request("end");}
+    if(vehicle_phase_=="WAITING_LOCALIZATION"&&base_health()&&still()&&speed_->ready()){vehicle_phase_="READY";runtime_reason_="定位和设备已就绪，可录入点位或手动开始巡检";}
+    if(vehicle_phase_=="READY"&&!base_health())vehicle_phase_="WAITING_LOCALIZATION";
+    if(vehicle_phase_=="STOPPING"&&hardware_&&!runtime_inflight_&&!runtime_end_sent_) {
+      if(!pending_&&!held_&&hold_client_->service_is_ready())hold(true);
+      if(held_&&still()&&nav_terminal_&&!nav_waiting_&&!pending_&&pending_terminal_.empty())runtime_request("end");
+      else if(steady()-runtime_started_>12){vehicle_phase_="FAULT";runtime_reason_="取消或停稳无法确认，保持锁停；检查现场并排除故障后重试结束";}
+    }
+  }
   struct Job {double deadline;std::string name;std::function<void()> run;std::function<void(const std::string &)> expire;};
   static std::string command_not_run(const std::string & name,const std::string & why) {
     return "上位机没有执行「"+name+"」："+why+"。这条操作没有生效，目标没有下发，车不会动。这是巡检控制台自己的排队超时，不是定位失败，也不是导航器拒绝。请再操作一次；若连续出现，查看车上日志里的 APP-001 请求未执行，处理方向是巡检控制台的控制循环，不是改地图或重设目标点。";
@@ -237,6 +332,12 @@ private:
       }
       if(target=="/api/map.png"){std::lock_guard<std::mutex> lock(snapshot_mutex_);return {map_png_.empty()?404U:200U,"image/png",map_png_,{}};}
       if(target=="/api/video.jpg"){std::lock_guard<std::mutex> lock(snapshot_mutex_);return {jpeg_.empty()?503U:200U,"image/jpeg",jpeg_,{{"X-Frame-Sequence",std::to_string(jpeg_sequence_)},{"X-Source-Stamp",std::to_string(jpeg_stamp_)}}};}
+      if(target.rfind("/api/runs/",0)==0&&target.size()>22&&target.substr(target.size()-12)=="/archive.zip") {
+        const auto id=target.substr(10,target.size()-22);valid_id(id);
+        json run;{std::lock_guard<std::mutex> lock(snapshot_mutex_);for(const auto & item:snapshot_.at("runs"))if(item.at("id")==id){run=item;break;}}
+        if(run.is_null())return reply({{"error","巡检记录不存在"}},404);
+        return {200,"application/zip",run_archive(store_.root(),run),{{"Content-Disposition","attachment; filename=inspection-"+id+".zip"}}};
+      }
       if(target.rfind("/api/media/",0)==0) {
         const auto id=target.substr(11);const auto path=store_.media_path(id);
         if(!fs::is_regular_file(path))return reply({{"error","照片不存在"}},404);
@@ -275,19 +376,26 @@ private:
   json command(const std::string & target,const json & body);
   void control(const json & body);
   void discover_maps() {
-    maps_=json::array();map_paths_.clear();
-    auto add=[this](const fs::path & file,const std::string & id) {
-      if(!fs::is_regular_file(file)||fs::is_symlink(file))return;
-      if(!carcar_mapping_console::navigation_map_visible(file))return;
-      valid_id(id);map_paths_[id]=file;maps_.push_back({{"id",id},{"name",id}});
-    };
-    if(!fs::is_directory(map_root_))return;
-    for(const auto & entry:fs::directory_iterator(map_root_)) {
-      if(entry.is_regular_file()&&entry.path().extension()==".yaml")add(entry.path(),entry.path().stem());
+    auto catalog=map_catalog_->snapshot();maps_=std::move(catalog.maps);map_paths_=std::move(catalog.paths);
+    map_images_=std::move(catalog.images);
+    map_signatures_=std::move(catalog.signatures);
+    if(!map_id_.empty()&&!map_info_.value("planning",false)) {
+      const auto found=map_signatures_.find(map_id_);
+      if(found==map_signatures_.end()||found->second!=selected_map_signature_) {
+        map_info_["navigation_allowed"]=false;
+        map_info_["quality_reason"]="地图文件或状态已变化；当前仅供查看，请重新载入地图后再准备车辆";
+      }
     }
-    const auto sessions=map_root_/"mapping_sessions";
-    if(fs::is_directory(sessions))for(const auto & entry:fs::directory_iterator(sessions))
-      if(entry.is_directory()&&!entry.is_symlink())add(entry.path()/"map.yaml",entry.path().filename());
+  }
+  json catalog_map(const std::string & id) const {
+    for(const auto & item:maps_)if(item.at("id")==id)return item;
+    return nullptr;
+  }
+  void require_navigation_map(const std::string & id) const {
+    const auto item=catalog_map(id);
+    require(!item.is_null(),"地图不存在或文件不完整；没有启动车辆或下发目标，请检查保存结果");
+    require(item.value("navigation_allowed",false),"这张地图仅供查看："+item.value("quality_reason",std::string("建图异常，不能用于实车导航"))+"；没有启动车辆或下发目标，请重新建图");
+    require(SavedMapCatalog::unchanged(map_paths_.at(id),map_images_.at(id),map_signatures_.at(id)),"地图文件正在更新，尚未启动车辆或下发目标；请等待地图列表自动刷新后重试");
   }
   void load_planning_floor() {
     require(!trial_blocking(),"请先取消到点试验并确认停车");
@@ -337,12 +445,16 @@ private:
     require(executor_.phase!="RUNNING"&&executor_.phase!="PAUSED"&&!pending_,"请先结束当前执行或调整");
     require(teaching_.phase=="IDLE"||teaching_.phase=="CONFIRMED"||teaching_.phase=="FAULT","请先完成当前示教");
     const auto found=map_paths_.find(id);require(found!=map_paths_.end(),"地图不存在");
+    const auto catalog=catalog_map(id);
+    if(hardware_)require_navigation_map(id);
     trial_={{"phase","IDLE"}};
     nav_msgs::msg::OccupancyGrid map;
     require(nav2_map_server::loadMapFromYaml(found->second.string(),map)==nav2_map_server::LOAD_MAP_SUCCESS,"地图加载失败");
     require(map.info.width&&map.info.height&&map.data.size()==static_cast<size_t>(map.info.width)*map.info.height,"地图数据不完整");
     loaded_map_=map;map_id_=id;map_version_=map_version(map);map_info_={{"id",id},{"version",map_version_},{"width",map.info.width},{"height",map.info.height},
       {"resolution",map.info.resolution},{"origin",{{"x",map.info.origin.position.x},{"y",map.info.origin.position.y},{"yaw",yaw(map.info.origin.orientation)}}}};
+    selected_map_signature_=map_signatures_.at(id);
+    for(const auto * key:{"saved","navigation_allowed","quality","quality_reason"})if(catalog.contains(key))map_info_[key]=catalog.at(key);
     cv::Mat pixels(map.info.height,map.info.width,CV_8UC1);
     for(unsigned y=0;y<map.info.height;++y)for(unsigned x=0;x<map.info.width;++x){const int v=map.data[y*map.info.width+x];pixels.at<uint8_t>(map.info.height-1-y,x)=v<0?160:static_cast<uint8_t>(255-v*255/100);}
     std::vector<uint8_t> encoded;cv::imencode(".png",pixels,encoded);std::lock_guard<std::mutex> lock(snapshot_mutex_);map_png_=std::move(encoded);
@@ -354,7 +466,7 @@ private:
       return {{"x",t.transform.translation.x},{"y",t.transform.translation.y},{"yaw",yaw(t.transform.rotation)}};
     }catch(const tf2::TransformException &){return nullptr;}
   }
-  bool base_health() {return !activation_localization_pending_&&steady()-odom_at_<.3&&steady()-scan_at_<.5&&!pose().is_null()&&localized_&&!localization_fault_&&
+  bool base_health() {return map_info_.is_object()&&map_info_.value("navigation_allowed",false)&&!activation_localization_pending_&&steady()-odom_at_<.3&&steady()-scan_at_<.5&&!pose().is_null()&&localized_&&!localization_fault_&&
     steady()-localization_ready_at_<.5&&steady()-localization_fault_at_<.5&&map_version_==live_map_version_&&!map_version_.empty();}
   bool perception_health() const {return !require_depth_||(perception_&&steady()-perception_at_<.3);}
   bool topology() const {
@@ -377,7 +489,7 @@ private:
   const Frame * frame(uint64_t sequence) const {for(const auto & f:frames_)if(f.sequence==sequence)return &f;return nullptr;}
   bool frame_fresh(const Frame * value) const {return value&&steady()-value->received<frame_age_&&(now().nanoseconds()-value->stamp)*1e-9<frame_age_;}
   json save_photo(const Frame & value,const std::string & id,bool queue_upload) {
-    require(frame_fresh(&value),"图像已经过期");require(fs::space(store_.root()).available>64ULL*1024*1024,"可用存储空间不足64MiB候选保护限额");
+    require(frame_fresh(&value),"图像已经过期");require(fs::space(store_.root()).available>20ULL*1024*1024*1024+32ULL*1024*1024,"空间不足20GiB预留及本次写入余量");
     const auto path=store_.media_path(id);require(!fs::exists(path),"照片编号已存在，拒绝覆盖");
     const auto temporary=path.string()+".partial.jpg";cv::Mat bgr;cv::cvtColor(value.rgb,bgr,cv::COLOR_RGB2BGR);
     require(cv::imwrite(temporary,bgr,{cv::IMWRITE_JPEG_QUALITY,95}),"照片写入失败");
@@ -429,6 +541,7 @@ private:
     if(!goal_navigation_)return "当前是静止测试，尚未启用单点导航";
     if(!speed_->ready())return "导航速度档位尚未确认，请查看速度设置并重试切档";
     if(map_id_.empty()||(map_info_.is_object()&&map_info_.value("planning",false)))return "请载入实测地图，规划草图不能导航";
+    if(!map_info_.value("navigation_allowed",false))return "这张地图仅供查看："+map_info_.value("quality_reason",std::string("建图异常，不能用于实车导航"));
     if(!base_health())return "请先完成小车初始定位，确认地图、雷达和底盘反馈有效";
     if(!topology())return "速度出口检查未通过，保持停车";
     if(!nav_->action_server_is_ready())return "导航服务尚未就绪";
@@ -477,6 +590,14 @@ private:
     require(x>=0&&y>=0&&x<static_cast<int>(loaded_map_.info.width)&&y<static_cast<int>(loaded_map_.info.height)&&loaded_map_.data[y*loaded_map_.info.width+x]==0,"停车目标必须位于已知空闲栅格，实际净空还须导航和现场验证");
   }
 
+  bool managed_runtime_=false,runtime_inflight_=false,runtime_end_sent_=false,runtime_reply_pending_=false;
+  int64_t runtime_service_id_=0;uint64_t runtime_sequence_=0;double runtime_deadline_=0;std::string runtime_action_;
+  std::string velocity_topic_,vehicle_phase_="CONFIG_ONLY",runtime_request_,runtime_generation_,runtime_reason_;
+  double arrival_stop_at_=0;
+  double runtime_at_=0,runtime_started_=0,runtime_heartbeat_at_=0,arrival_xy_=0.10,arrival_yaw_=0.15;
+  rclcpp::Client<RuntimeService>::SharedPtr runtime_client_;
+  rclcpp::Subscription<RuntimeState>::SharedPtr runtime_sub_;
+  rclcpp::Publisher<RuntimeState>::SharedPtr runtime_heartbeat_;
   bool hardware_=false,navigation_=false,goal_navigation_=false,held_=false,localized_=false,localization_fault_=true,perception_=false,depth_enabled_=false,require_depth_=true;
   rclcpp::Client<nav2_msgs::srv::LoadMap>::SharedPtr load_map_;
   json map_activation_={{"phase","IDLE"}};
@@ -507,6 +628,8 @@ private:
   uint64_t frame_sequence_=0,jpeg_sequence_=0;int64_t jpeg_stamp_=0;int board_=-1;
   std::string session_,hardware_owner_=nonce(),driver_epoch_,map_id_,map_version_,live_map_version_,error_;
   fs::path map_root_,web_root_;std::map<std::string,fs::path> map_paths_;json maps_=json::array(),map_info_=nullptr,snapshot_;
+  std::unique_ptr<SavedMapCatalog> map_catalog_;std::map<std::string,std::string> map_signatures_;std::string selected_map_signature_;
+  std::map<std::string,fs::path> map_images_;
   tf2_ros::Buffer tf_;tf2_ros::TransformListener listener_;Store store_;Teaching teaching_;Executor executor_;
   carcar_mapping_console::Safety manual_;
   std::deque<Frame> frames_;std::vector<uint8_t> jpeg_,map_png_;std::mutex snapshot_mutex_,jobs_mutex_;std::deque<Job> jobs_;
@@ -543,12 +666,35 @@ private:
 };
 
 json Console::command(const std::string & target,const json & body) {
+  if(target=="/api/vehicle/prepare") {
+    require(managed_runtime_,"此入口未启用车辆监督");
+    const auto id=body.at("request_id").get<std::string>();valid_id(id);
+    if(id==runtime_request_)return {{"accepted",true},{"request_id",id}};
+    require(!hardware_&&!runtime_inflight_&&(vehicle_phase_=="CONFIG_ONLY"||vehicle_phase_=="FAULT"),"车辆已准备或操作进行中");
+    discover_maps();require_navigation_map(body.at("map_id"));select_map(body.at("map_id"));
+    runtime_request_=id;runtime_end_sent_=false;runtime_generation_.clear();runtime_started_=steady();vehicle_phase_="STARTING";
+    runtime_reason_="正在申请车辆资源，没有下发目标";
+    try{runtime_request("prepare");}catch(...){vehicle_phase_="FAULT";throw;}
+    return {{"accepted",true},{"request_id",id}};
+  }
+  if(target=="/api/vehicle/end") {
+    require(managed_runtime_,"此入口未启用车辆监督");
+    if(vehicle_phase_=="CONFIG_ONLY")return {{"accepted",true}};
+    require(!runtime_inflight_,"车辆请求正在确认，请稍后重试");
+    runtime_started_=steady();runtime_end_sent_=false;vehicle_phase_="STOPPING";manual_.stop("结束车辆工作");
+    if(trial_active())stop_trial("CANCELED","结束车辆工作");
+    if(executor_.phase=="RUNNING"||executor_.phase=="PAUSED"){executor_.cancel();pending_terminal_="CANCELED";operation_at_=steady();}
+    halt();if(!hardware_)runtime_request("end");
+    return {{"accepted",true},{"request_id",body.value("request_id",runtime_request_)}};
+  }
+  if(managed_runtime_&&(vehicle_phase_=="STOPPING"||vehicle_phase_=="FAULT"))
+    require(target=="/api/map/select"||target=="/api/points/save"||target=="/api/tasks/save", "车辆正在退出或故障锁停，没有下发动作；请先结束车辆工作");
   if(target=="/api/maps/activate") {
     require(!mapping_blocks_inspection(),"建图尚未结束，请先结束建图任务");
     require(map_activation_.value("phase","")!="HOLDING"&&map_activation_.value("phase","")!="LOADING","地图切换执行中，不重复提交");
     require(!trial_blocking()&&executor_.phase!="RUNNING"&&executor_.phase!="PAUSED"&&!pending_&&still(),"地图启用未执行：请先结束运动任务并确认停稳");
     discover_maps();const auto id=body.at("map_id").get<std::string>();
-    const auto found=map_paths_.find(id);require(found!=map_paths_.end(),"地图未发布或不存在");
+    const auto found=map_paths_.find(id);require(found!=map_paths_.end(),"地图不存在或文件不完整");require_navigation_map(id);
     require(load_map_->service_is_ready(),"定位地图服务未启动，请先启动纯激光定位组合；没有切换地图或下发目标");
     const auto request_id=body.value("request_id",nonce());valid_id(request_id);
     activation_localization_pending_=true;activation_initial_stamp_=0;
@@ -578,7 +724,7 @@ json Console::command(const std::string & target,const json & body) {
     RCLCPP_INFO(get_logger(),"APP-001 切档已受理 target=/api/navigation/speed speed_mps=%.2f；等待控制器参数读回，没有下发目标",number(body,"max_linear_mps"));
     return {{"accepted",true},{"speed",speed_->state()}};
   }
-  if(target=="/api/map/select") {select_map(body.at("map_id"));return {{"accepted",true}};}
+  if(target=="/api/map/select") {discover_maps();select_map(body.at("map_id"));return {{"accepted",true}};}
   if(target=="/api/plan/floor") {load_planning_floor();return {{"accepted",true}};}
   if(target=="/api/points/remove") {remove_point(body.at("id"));return {{"accepted",true}};}
   if(target=="/api/points/rename") {rename_point(body.at("id"),body.at("name"));return store_.get("points",body.at("id"));}
@@ -702,7 +848,7 @@ json Console::command(const std::string & target,const json & body) {
     require(hardware_&&!pending_&&pending_terminal_.empty()&&nav_terminal_&&executor_.phase!="RUNNING"&&executor_.phase!="PAUSED","请先结束巡检或当前硬件请求");
     require(board_<0||board_==94,"行驶前相机须保持板端94档");
     require(base_health()&&topology()&&still(),"定位、轮式、雷达或速度出口未就绪");
-    if(held_)hold(false,[this]{manual_.session_ready=base_health();manual_.topology_ok=topology();manual_.gateway_at=steady();manual_.scan_at=scan_at_;manual_.odom_at=odom_at_;require(manual_.enable(session_,"",steady()),manual_.reason);});
+    if(held_)hold(false,[this]{teaching_.finish_for_driving();manual_.session_ready=base_health();manual_.topology_ok=topology();manual_.gateway_at=steady();manual_.scan_at=scan_at_;manual_.odom_at=odom_at_;require(manual_.enable(session_,"",steady()),manual_.reason);});
     else require(manual_.enable(session_,"",steady()),manual_.reason);
     return {{"accepted",true}};
   }
@@ -719,7 +865,7 @@ json Console::command(const std::string & target,const json & body) {
     require(teaching_.phase=="CONFIRMED"||teaching_.phase=="IDLE","请先完成角度确认");
     require(base_health()&&topology()&&nav_->action_server_is_ready(),"地图、定位、雷达、轮式或Nav2未就绪");
     require(!frames_.empty()&&frame_fresh(&frames_.back()),"RGB相机尚未提供新鲜图像");
-    require(fs::space(store_.root()).available>64ULL*1024*1024,"巡检存储空间不足");
+    require(fs::space(store_.root()).available>20ULL*1024*1024*1024+32ULL*1024*1024,"巡检存储空间不足");
     const auto task=store_.get("tasks",body.at("task_id"));require(!task.is_null()&&task.at("map_version")==map_version_,"任务地图版本不一致");
     json snapshot=task;snapshot["points"]=json::array();
     for(const auto & id:task.at("point_ids")) {const auto point=store_.get("points",id);require(!point.is_null()&&point.value("verified",false)&&point.at("map_version")==map_version_,"任务包含尚未试拍确认或版本不一致的点位");snapshot["points"].push_back(point);}
@@ -850,16 +996,35 @@ BT::NodeStatus Console::step(const std::string & kind,const json & context,bool 
       if(trial)trial_["failure_code"]="NAV2_"+nav_result_;
       return BT::NodeStatus::FAILURE;
     }
+    if(!trial) {
+      if(operation_stage_.empty()){operation_stage_="ARRIVAL_STOP";arrival_stop_at_=steady();}
+      require(steady()-arrival_stop_at_<10,"Nav2结束后停稳确认超过10秒，停止巡检并保持停车；没有拍照，请检查轮式反馈与现场状态");
+      if(pending_)return BT::NodeStatus::RUNNING;
+      if(!held_){hold(true,[this]{still_since_=0;});return BT::NodeStatus::RUNNING;}
+      if(!still())return BT::NodeStatus::RUNNING;
+    }
     const auto current=pose();if(current.is_null()) {
       navigation_failure_reason_="Nav2已返回成功，但当前定位估计不可用；已请求停车，没有进入调角或保存，请检查定位与TF数据新鲜度";
       if(trial)trial_["failure_code"]="ARRIVAL_POSE_UNAVAILABLE";
       return BT::NodeStatus::FAILURE;
     }
     const auto desired=context.at("pose");
+    if(!trial) {
+      const double distance=std::hypot(number(current,"x")-number(desired,"x"),number(current,"y")-number(desired,"y"));
+      const double heading=std::abs(std::remainder(number(current,"yaw")-number(desired,"yaw"),2*M_PI));
+      const bool accepted=distance<=arrival_xy_&&heading<=arrival_yaw_;
+      // 保留每次停车位尝试的估计偏差；定位估计不是实体测量真值。
+      run_["arrival_checks"].push_back({{"point_id",context.value("id",std::string("final_parking"))},
+        {"approach_index",context.value("approach_index",0)},{"parking",context.value("parking",false)},
+        {"target",desired},{"pose_estimate",current},{"distance_m",distance},{"yaw_rad",heading},{"accepted",accepted}});
+      persist_run("RUNNING");
+      RCLCPP_INFO(get_logger(),"巡检到点复核 request_id=%s point=%s distance_m=%.4f yaw_rad=%.4f accepted=%d；记录定位估计偏差，不代表实体真值",
+        run_.at("id").get<std::string>().c_str(),context.value("id",std::string("final_parking")).c_str(),distance,heading,accepted);
+    }
     // 单点用于示教：Nav2确认到达后，由人核对实际停车点并保存实测位姿。
     // 整轮巡检保留既有严格到点复核，不用候选目标覆盖实际位置。
-    if(!trial&&(std::hypot(number(current,"x")-number(desired,"x"),number(current,"y")-number(desired,"y"))>.10||
-      std::abs(std::remainder(number(current,"yaw")-number(desired,"yaw"),2*M_PI))>.15)) {
+    if(!trial&&(std::hypot(number(current,"x")-number(desired,"x"),number(current,"y")-number(desired,"y"))>arrival_xy_||
+      std::abs(std::remainder(number(current,"yaw")-number(desired,"yaw"),2*M_PI))>arrival_yaw_)) {
       navigation_failure_reason_="Nav2已成功，但整轮巡检到点复核超出0.10m／0.15rad；保持停车，不执行拍摄";
       return BT::NodeStatus::FAILURE;
     }
@@ -880,6 +1045,7 @@ void Console::tick() {
   if(shutting_down_)return;
   std::deque<Job> jobs;{std::lock_guard<std::mutex> lock(jobs_mutex_);jobs.swap(jobs_);}
   try {
+    runtime_tick();
     speed_->tick(steady());
     for(auto & job:jobs){
       if(steady()<job.deadline)job.run();
@@ -893,7 +1059,9 @@ void Console::tick() {
     if(executor_.phase=="RUNNING") {
       const auto result=executor_.tick();
       if(result==BT::NodeStatus::SUCCESS){run_["parking_status"]="SUCCEEDED";persist_run("SUCCEEDED");}
-      else if(result==BT::NodeStatus::FAILURE)throw std::runtime_error("巡检步骤失败");
+      else if(result==BT::NodeStatus::FAILURE)throw std::runtime_error(
+        operation_=="navigate"&&!navigation_failure_reason_.empty()?navigation_failure_reason_:
+        "巡检执行层未完成步骤："+operation_+"；已请求停车，后续采集未执行。请检查本轮车端日志和设备反馈");
     }
   }catch(const std::exception & e) {
     error_=e.what();manual_.stop(error_);depth_enabled_=false;
@@ -921,7 +1089,7 @@ void Console::tick() {
     try{hold(true);}catch(const std::exception & e){error_=e.what();}
   }
   const auto v=manual_.tick(steady());geometry_msgs::msg::Twist output;
-  if(!held_&&pending_terminal_.empty()&&topology()) {
+  if((!managed_runtime_||vehicle_phase_=="READY")&&!held_&&pending_terminal_.empty()&&topology()) {
     if(((executor_.phase=="RUNNING"&&operation_=="navigate")||trial_.value("phase","")=="NAVIGATING")&&!nav_terminal_&&!nav_waiting_&&base_health()&&perception_health()&&(depth_enabled_||!require_depth_)&&steady()-nav_velocity_at_<.3&&speed_->ready()) {
       output=nav_velocity_;
       output.linear.x=std::clamp(output.linear.x,-.05,speed_->limit());
@@ -944,6 +1112,7 @@ void Console::tick() {
   }
 }
 void Console::update_snapshot() {
+  discover_maps();
   if((map_activation_.value("phase","")=="HOLDING"||map_activation_.value("phase","")=="LOADING")&&steady()>activation_deadline_){
     ++activation_generation_;map_activation_["phase"]="FAILED";error_="地图切换确认超时，保持停车；检查map_server实际地图后重新定位";
   }
@@ -951,7 +1120,7 @@ void Console::update_snapshot() {
   const auto current=pose();const auto view=store_.get("settings","navigation_view");
   auto trial=trial_;trial["active"]=trial_active();
   json value{{"ui_version","inspection-20261021-5"},{"hardware_enabled",hardware_},{"navigation_enabled",navigation_},
-    {"navigation_speed",speed_->state()},{"require_depth",require_depth_},{"map_activation",map_activation_},
+    {"vehicle_runtime",{{"managed",managed_runtime_},{"phase",vehicle_phase_},{"request_id",runtime_request_},{"generation",runtime_generation_},{"reason",runtime_reason_}}},{"navigation_speed",speed_->state()},{"require_depth",require_depth_},{"map_activation",map_activation_},
     {"motion",{{"command_linear_mps",last_output_.linear.x},{"wheel_linear_mps",steady()-odom_at_<.3?json(wheel_vx_):json(nullptr)}}},
     {"navigation_debug",navigation_debug_.snapshot(tf_,steady(),now().seconds())},
     {"goal_navigation_enabled",goal_navigation_},{"navigation_trial",trial},{"goal_navigation_block_reason",trial_block_reason()},

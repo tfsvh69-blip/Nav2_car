@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "desktop",
+      "panel": true,
+      "hidden": true,
+      "overflow": false,
+      "blockedControl": []
+    },
+    {
+      "name": "mobile",
+      "panel": true,
+      "hidden": true,
+      "overflow": false,
+      "blockedControl": []
+    }
+  ],
+  "errors": [],
+  "blocked_http": [
+    {
+      "url": "http://127.0.0.1:8080/api/operator",
+      "method": "POST"
+    },
+    {
+      "url": "http://127.0.0.1:8080/api/operator",
+      "method": "POST"
+    }
+  ],
+  "control_requests_sent": false,
+  "hardware_started": false
+}

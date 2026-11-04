@@ -34,4 +34,11 @@ TEST(AutoMotion, PureTurnKeepsCircularClearanceAndInvalidMotionFailsClosed){
   command.linear.y=.01;EXPECT_DOUBLE_EQ(auto_motion_check(open_map(),Task(),{}, {},command,{}).scale,0);
   command.linear.y=0;command.linear.x=-.01;EXPECT_DOUBLE_EQ(auto_motion_check(open_map(),Task(),{}, {},command,{}).scale,0);
 }
+TEST(AutoMotion, PointTwentyKeepsPredictionAndBrakingProtection){
+ auto command=forward();command.linear.x=.20;
+ EXPECT_DOUBLE_EQ(auto_motion_check(open_map(),Task(),{}, {},command,command).scale,1);
+ EXPECT_LT(auto_motion_check(open_map(),Task(),{},{{.34,0,0}},command,command).scale,1);
+ EXPECT_DOUBLE_EQ(auto_motion_check(open_map(),Task(),{},{{.21,0,0}},command,command).velocity.linear.x,0);
+ command.linear.x=.201;EXPECT_DOUBLE_EQ(auto_motion_check(open_map(),Task(),{}, {},command,{}).scale,0);
+}
 }

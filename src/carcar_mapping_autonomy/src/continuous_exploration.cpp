@@ -217,4 +217,4 @@ bool ca::ContinuousExploration::complete()const{return impl_->complete_;}
 std::string ca::ContinuousExploration::fault()const{return impl_->fault_;}
 ca::Json ca::ContinuousExploration::status()const{return impl_->status();}
 
-void ca::ContinuousExploration::set_handoff_distance(double value){if(!std::isfinite(value)||value<.15||value>.8)throw std::runtime_error("提前衔接距离须为0.15～0.80米");impl_->handoff_distance_=value;}
+void ca::ContinuousExploration::set_handoff_distance(double value){if(!std::isfinite(value)||value<.15||value>1.5)throw std::runtime_error("提前衔接距离须为0.15～1.50米");impl_->handoff_distance_=value;}

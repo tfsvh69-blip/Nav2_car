@@ -132,7 +132,7 @@
           <ol class="workflow-steps" aria-label="流程阶段">
             <li id="workflow-prepare">1 准备</li>
             <li id="workflow-mapping">2 建图</li>
-            <li id="workflow-review">3 结束与审核</li>
+            <li id="workflow-review">3 保存地图</li>
           </ol>
           <div
             class="workflow-status"
@@ -165,6 +165,7 @@
               ><button id="confirm">墙体与朝向已对齐</button>
             </div>
             <div class="map-view">
+              <div id="wall-map-feedback" class="wall-map-feedback" role="status" aria-live="polite" hidden></div>
               <canvas
                 id="map"
                 tabindex="0"
@@ -189,8 +190,8 @@
               <span id="health">等待传感器数据</span
               ><span class="map-key"
                 ><i></i>激光<span><i></i>估计车位</span
-                ><span><i class="swatch-global"></i>全局代价</span
-                ><span><i class="swatch-local"></i>局部代价</span
+                ><span><i class="swatch-global"></i>软代价：低→高</span
+                ><span><i class="swatch-local"></i>障碍</span
                 ><span><i class="swatch-plan"></i>全局路径</span
                 ><span><i class="swatch-follow"></i>局部跟随</span
                 ><span><i class="swatch-arc"></i>预测弧</span></span
@@ -198,7 +199,7 @@
             </div>
             <section id="wall-controls" class="wall-controls" aria-label="本轮临时墙" hidden>
               <div class="wall-controls-heading"><strong>本轮临时墙</strong><span>map 米坐标 · 仅当前任务</span></div>
-              <p id="wall-help">点击地图依次添加折线端点，双指可缩放。应用后车端先停稳、更新保护，再按原任务继续。</p>
+              <p id="wall-help">在原图矩形边界内点击添加折线端点；白色空闲区和图内未知灰格均可画，图外灰色背景不可画。双指可缩放。应用后车端先停稳、更新保护，再按原任务继续。</p>
               <p id="wall-draft" class="wall-draft" aria-live="polite">尚无草稿</p>
               <div class="wall-edit-actions">
                 <button id="wall-draw" aria-pressed="false">开始画墙</button>
@@ -207,8 +208,9 @@
                 <button id="wall-apply" class="primary" disabled>应用临时墙</button>
               </div>
               <div class="wall-existing"><label for="wall-selection">已应用墙</label><select id="wall-selection" aria-label="选择已应用临时墙"><option value="">暂无临时墙</option></select><button id="wall-remove" disabled>移除所选</button></div>
-              <div class="wall-edit-actions"><button id="wall-review" disabled>位置已核对，复核墙</button><button id="wall-bypass" class="wall-bypass" disabled>开启人工墙旁路</button></div>
+              <div class="wall-edit-actions"><button id="wall-review" disabled>位置已核对，复核墙</button></div>
               <p id="wall-protection" class="wall-protection" role="status" hidden>人工墙保护不可用</p>
+              <p id="wall-manual-policy">人工墙使用范围以车端当前策略为准。</p>
               <p id="wall-status" role="status" aria-live="polite">等待车端墙状态</p>
               <p class="wall-scope">红实线为车端已应用墙，橙虚线须复核，蓝虚线仅为草稿。墙不写入地图工程，也不进入巡检。</p>
             </section>
@@ -217,12 +219,13 @@
             <details class="legend">
               <summary>图层与地图说明</summary>
               <div class="nav-layers" id="nav-layers">
+                <label><input id="layer-keepout" type="checkbox" />规划禁入（仅显示）</label>
                 <label
                   ><input
                     id="layer-global-cost"
                     type="checkbox"
                     checked
-                  />全局代价</label
+                  />全局障碍与膨胀</label
                 >
                 <label
                   ><input
@@ -264,7 +267,7 @@
               <p id="legend">
                 激光与轮式里程计生成俯视地图，使用 map
                 坐标系：黑色为占用、白色为空闲、灰色为未知；红点为当前激光，蓝色为估计车位示意（非车身外廓），黄色为人工初始位置。默认
-                绿色虚线圆为本次自动探索边界，绿色方框为返程起点，紫色圆为当前导航目标。橙色细框是车身停车框，0.28×0.26米；车位旁紫色虚圈是半径0.22米的地图检查范围。红框和红圈显示最近5秒内触发规划拒绝的障碍格与检查范围，具体时间见任务说明。实时激光层也会包含静态物体，红色不代表物体正在移动。紫色是全局软代价，橙色色块是局部软代价，青色是全局路径，黄色是控制器正在跟随的路径，橙线是纯追踪的碰撞预测弧。代价图中的红色包括障碍和规划禁入区域；全局禁入还覆盖未知区及净空不足的位置，不代表全部是实体障碍。调整膨胀递减系数改变软代价渐变，不解除硬禁入。透明处是未知或零代价，不能据此认为一定能过。与RViz比较时请对齐话题、图层和时刻，颜色不直接对应。默认
+                绿色虚线圆为本次自动探索边界，绿色方框为返程起点，紫色圆为当前导航目标。橙色细框是车身停车框，0.28×0.26米；车位旁紫色虚圈是半径0.22米的地图检查范围。红框和红圈显示最近5秒内触发规划拒绝的障碍格与检查范围，具体时间见任务说明。实时激光层也会包含静态物体，红色不代表物体正在移动。全局与局部代价采用RViz色标：蓝→紫→红表示软代价由低到高，青色表示内切障碍（99），紫红色表示致命障碍（100）；全局透明度0.40，局部0.55。青色是全局路径，黄色是控制器正在跟随的路径，橙线是纯追踪的碰撞预测弧。全局障碍与膨胀读取禁入合成前的真实代价，紫红色是该层障碍；规划禁入单独以棕色斜纹显示，默认隐藏。勾选只改变本页绘制，不解除未知区、净空不足或人工墙的导航保护。人工墙原有轮廓保持显示。缺少合成前数据时提示等待，不用最终禁入图冒充。调整膨胀递减系数改变软代价渐变，不解除硬禁入。透明处可能是未知或零代价，不能据此认为一定能过。与RViz比较时需对齐话题、图层和时刻；合成前话题为costmap_before_filters。默认
                 5 厘米/格；缩放只改变显示比例，地图约 3
                 秒更新。白色不保证各高度均无障碍。RGB 是前方透视辅助图，640 ×
                 480 为像素数；窗口大小不改变镜头视场，不能与俯视地图逐像素比较。
@@ -367,7 +370,7 @@
                 </div>
                 <div class="tuning-actions"><button id="tuning-restore" disabled>恢复基线</button><button id="tuning-save" disabled>保存为新任务默认</button></div>
                 <p id="tuning-status" role="status" aria-live="polite">等待车端参数服务</p>
-                <div class="handoff-controls"><label for="handoff-distance">提前衔接距离（米）</label><div class="tuning-input"><input id="handoff-distance" type="number" min=".15" max=".8" step=".01" value=".25" inputmode="decimal" disabled><input id="handoff-range" type="range" min=".15" max=".8" step=".01" value=".25" aria-label="提前衔接距离滑块" disabled></div><p id="handoff-status" class="tuning-readback">只影响探索过点；返程仍核对终点。</p></div>
+                <div class="handoff-controls"><label for="handoff-distance">提前衔接距离（米）</label><div class="tuning-input"><input id="handoff-distance" type="number" min=".15" max="1.5" step=".01" value=".25" inputmode="decimal" disabled><input id="handoff-range" type="range" min=".15" max="1.5" step=".01" value=".25" aria-label="提前衔接距离滑块" disabled></div><p id="handoff-status" class="tuning-readback">只影响探索过点；返程仍核对终点。</p></div>
                 <label class="escape-toggle"><input id="escape-enabled" type="checkbox" disabled>允许有界短退解困</label><p id="escape-status" class="muted">现场验证前保持关闭。</p>
               </details>
               <details class="task-details">
@@ -402,7 +405,7 @@
                       id="auto-speed"
                       type="range"
                       min="0.05"
-                      max="0.18"
+                      max="0.20"
                       step="0.01"
                       value="0.10"
                       aria-describedby="auto-speed-status"
@@ -417,30 +420,21 @@
             </section>
             <section
               class="autonomy-card"
-              id="publication-panel"
-              aria-label="地图审核与发布"
+              id="saved-map-panel"
+              aria-label="已保存地图"
               hidden
             >
-              <h3>地图版本</h3>
-              <select id="review-bundle" aria-label="候选与正式工程"></select>
-              <input
-                name="review-note"
-                autocomplete="off"
-                id="review-note"
-                aria-label="现场核对结论"
-                placeholder="填写墙线、尺寸与现场核对结论"
-                maxlength="300"
-              />
-              <p id="publication-help" class="muted">
-                选择候选并填写现场核对结论后，可审核发布。
+              <h3>已保存地图</h3>
+              <select id="saved-map" aria-label="选择已保存地图"></select>
+              <p id="saved-map-help" class="muted">
+                保存后可在这里查看，也可前往巡检选择地图。
               </p>
               <div class="autonomy-actions">
-                <button id="review-approve">审核并发布</button
-                ><button id="review-reject">标记未通过</button
-                ><button id="map-activate">启用已发布地图</button>
+                <button id="saved-map-refresh">刷新列表</button>
+                <a id="saved-map-inspect" class="saved-map-link" href="/inspect/">前往巡检</a>
               </div>
-              <p id="publication-result" aria-live="polite">
-                保存完整与审核发布是两个结果；启用后仍需重新定位，旧点位不迁移。
+              <p id="saved-map-result" aria-live="polite">
+                查看地图不会启动车辆。
               </p>
             </section>
             <section
@@ -462,6 +456,14 @@
               <div id="manual-authority" class="manual-authority" hidden>
                 <p id="manual-owner" role="status" aria-live="polite">正在核对遥控持有者</p>
                 <button id="manual-claim" aria-describedby="manual-owner">接管遥控</button>
+              </div>
+              <div id="manual-motion-feedback" class="manual-motion-feedback" role="status" aria-live="polite" hidden>
+                <strong id="manual-motion-title"></strong>
+                <p id="manual-motion-detail"></p>
+                <div id="manual-recovery-actions" class="manual-recovery-actions" hidden>
+                  <button id="manual-recheck" disabled>检查定位以恢复自动</button>
+                </div>
+                <p id="manual-recovery-status" class="manual-recovery-status"></p>
               </div>
               <label class="field-label" for="gear"
                 >行驶档位<span>命令上限</span></label

@@ -24,6 +24,7 @@ public:
 private:
   void sql(const char * text) const;
   sqlite3 * db_ = nullptr;
+  int lock_fd_ = -1;
   std::filesystem::path root_;
 };
 }  // namespace carcar_inspection

@@ -5,7 +5,7 @@ const source=fs.readFileSync(path.join(__dirname,'../web/app.js'),'utf8');
 const code=source.slice(source.indexOf('function refreshNavigationImages(){'),source.indexOf('function draw('));
 async function run(){
   const requests=[];let closed=0;
-  const context={state:{navigation:{global_costmap:{available:true,sequence:2}}},taskKey:'one',
+  const context={state:{navigation:{obstacle_costmap:{available:true,sequence:2}}},taskKey:'one',
     navImages:{global:{sequence:1,bitmap:{close(){closed++;}},meta:{sequence:1}}},
     performance:{now:()=>100},createImageBitmap:async bitmap=>bitmap,
     fetchTimed:()=>new Promise((resolve,reject)=>requests.push({resolve,reject})),console};
@@ -14,7 +14,7 @@ async function run(){
   requests[0].resolve({ok:true,headers:{get:()=>JSON.stringify({sequence:3})},blob:async()=>({close(){closed++;}})});
   await new Promise(setImmediate);
   assert.equal(context.navImages.global.sequence,3,'应使用实际图片携带的版本');assert.equal(closed,1);
-  context.state.navigation.global_costmap.sequence=4;vm.runInContext('refreshNavigationImages()',context);
+  context.state.navigation.obstacle_costmap.sequence=4;vm.runInContext('refreshNavigationImages()',context);
   requests[1].reject(Error('断线'));await new Promise(setImmediate);
   assert.equal(context.navImages.global.sequence,3);vm.runInContext('refreshNavigationImages()',context);
   assert.equal(requests.length,3,'失败后必须允许重试同一版本');

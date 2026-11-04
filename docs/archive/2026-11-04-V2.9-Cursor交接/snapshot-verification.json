@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "source_files_verified": 1248,
+  "new_clone_cpp_suites": [
+    {
+      "name": "test_mapping_navigation_speed",
+      "tests": 11,
+      "failures": 0,
+      "sha256": "0fe95253959032f0bf40a7723478d5b7f83df785af5d8250d5f01017d70a54db"
+    },
+    {
+      "name": "test_auto_motion",
+      "tests": 5,
+      "failures": 0,
+      "sha256": "b432e29565c982310d8d0c960f7a6cf90cee77103c18461fa813046b54d28b0c"
+    },
+    {
+      "name": "test_manual_motion",
+      "tests": 7,
+      "failures": 0,
+      "sha256": "ecc84ec92ae67103df2cac91382497cf03a2919575815f6cb15df4e72cffde03"
+    },
+    {
+      "name": "test_mapping_recovery_observation",
+      "tests": 8,
+      "failures": 0,
+      "sha256": "a6b3ab3d8cea6b92c2878271aa186dc423ef4e7c827c92b82eb13d7ce4dee73a"
+    }
+  ],
+  "new_clone_cpp_tests": 31,
+  "xml_files_parsed": 48,
+  "yaml_files_parsed": 44,
+  "vue_assets_match_installed": true,
+  "web_js_vm_passed": true,
+  "prior_feature_cpp_tests": 114,
+  "speed_retention_cpp_tests": 50,
+  "prior_and_speed_counts_overlap": true,
+  "physical_tested": false,
+  "hardware_started": false,
+  "root_workspace_index_preserved": true
+}

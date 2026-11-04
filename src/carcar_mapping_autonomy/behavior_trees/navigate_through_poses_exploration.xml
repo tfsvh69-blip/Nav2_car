@@ -5,13 +5,19 @@
       <ExplorationReplan name="continuous_ReplanRate">
         <ReactiveSequence name="continuous_CheckedPlanning">
           <MappingPassedGoals input_goals="{goals}" output_goals="{goals}" path="{path}" name="continuous_RemovePassed"/>
-          <RecoveryNode name="continuous_PlannerRetry" number_of_retries="1">
-            <ComputePathThroughPoses goals="{goals}" path="{candidate_path}" planner_id="ExplorationGrid" name="continuous_Plan"/>
-            <Delay name="continuous_AwaitCostmapPeriod" delay_msec="400">
-              <AlwaysSuccess name="continuous_AllowOneRetry"/>
-            </Delay>
-          </RecoveryNode>
-          <CheckedMappingPath path="{candidate_path}" checked_path="{path}" name="continuous_CheckActualPath"/>
+          <Fallback name="continuous_CheckedReplanFallback">
+            <Sequence name="continuous_NewCheckedPlan">
+              <RecoveryNode name="continuous_PlannerRetry" number_of_retries="1">
+                <ComputePathThroughPoses goals="{goals}" path="{candidate_path}" planner_id="ExplorationGrid" name="continuous_Plan"/>
+                <Delay name="continuous_AwaitCostmapPeriod" delay_msec="400">
+                  <AlwaysSuccess name="continuous_AllowOneRetry"/>
+                </Delay>
+              </RecoveryNode>
+              <CheckedMappingPath path="{candidate_path}" checked_path="{path}" name="continuous_CheckActualPath"/>
+            </Sequence>
+            <!-- 新规划失败时只复核本轮短时保留路径；旧路不安全、过期或目标变化仍失败停车。 -->
+            <CheckedMappingPath path="{path}" checked_path="{path}" reuse_checked_path="true" name="continuous_RecheckRetainedPath"/>
+          </Fallback>
           <MappingPassedGoals input_goals="{goals}" output_goals="{goals}" path="{path}" name="continuous_PassFreshChecked"/>
         </ReactiveSequence>
       </ExplorationReplan>

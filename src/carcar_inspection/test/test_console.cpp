@@ -1,3 +1,5 @@
+#include <carcar_interfaces/srv/inspection_runtime.hpp>
+#include <carcar_interfaces/msg/inspection_runtime_state.hpp>
 // Copyright 2026 carcar maintainers. SPDX-License-Identifier: Apache-2.0
 // 隔离ROS域227、临时数据及替身硬件/导航服务；不打开真实串口。
 #include <gtest/gtest.h>
@@ -43,7 +45,7 @@ double clock_now(){return std::chrono::duration<double>(std::chrono::steady_cloc
 struct Child {
   pid_t pid=-1;
   Child(const std::filesystem::path & root,bool hardware,unsigned port,bool goal_navigation=true,
-      const std::string & mapping_status_url="",double navigation_timeout=180.0,bool require_depth=true) {
+      const std::string & mapping_status_url="",double navigation_timeout=180.0,bool require_depth=true,bool managed=false) {
     std::vector<std::string> args{CONSOLE_EXE,"--ros-args","-p","bind_address:=127.0.0.1","-p","port:="+std::to_string(port),
       "-p","data_root:="+(root/"data").string(),"-p","map_root:="+(root/"maps").string(),"-p","web_root:=" WEB_ROOT,
       "-p",std::string("enable_hardware:=")+(hardware?"true":"false"),"-p",std::string("enable_navigation:=")+(hardware?"true":"false"),
@@ -51,6 +53,7 @@ struct Child {
       "-p",std::string("require_depth:=")+(require_depth?"true":"false"),
       "-p","settle_seconds:=0.2","-p","stop_seconds:=0.2","-p","navigation_timeout_seconds:="+std::to_string(navigation_timeout),"-p",
       "mapping_status_url:="+(mapping_status_url.empty()?std::string("\"\""):mapping_status_url)};
+    args.insert(args.end(),{"-p",std::string("managed_runtime:=")+(managed?"true":"false")});
     std::vector<char*> raw;for(auto & arg:args)raw.push_back(arg.data());raw.push_back(nullptr);
     posix_spawn_file_actions_t actions;posix_spawn_file_actions_init(&actions);
     posix_spawn_file_actions_addopen(&actions,STDOUT_FILENO,(root/"console.log").c_str(),O_CREAT|O_WRONLY|O_TRUNC,0600);
@@ -67,6 +70,17 @@ struct Temporary {
     std::ofstream pgm(root/"maps/testmap.pgm",std::ios::binary);pgm<<"P5\n20 20\n255\n";std::string pixels(400,static_cast<char>(255));pgm.write(pixels.data(),pixels.size());}
   ~Temporary(){if(!::testing::Test::HasFailure())std::filesystem::remove_all(root);else std::cerr<<"测试证据保留："<<root<<'\n';}
 };
+void saved_map(const std::filesystem::path & root,const std::string & id,const std::string & quality) {
+  const auto directory=root/"maps/mapping_sessions"/id;std::filesystem::create_directories(directory);
+  std::filesystem::copy_file(root/"maps/testmap.pgm",directory/"map.pgm");
+  std::ofstream(directory/"map.yaml")<<"image: map.pgm\nmode: trinary\nresolution: 0.1\norigin: [0, 0, 0]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n";
+  std::ofstream(directory/"graph.data")<<"隔离测试图数据";std::ofstream(directory/"graph.posegraph")<<"隔离测试位姿图";
+  json manifest{{"complete",true},{"slam_version","2.6.10"},{"base_frame","base_footprint"},{"review_required",true},
+    {"diagnostic_only",quality=="diagnostic"},{"range_m",3.0},{"resolution",.1}};
+  for(const auto&name:{"map.yaml","map.pgm","graph.data","graph.posegraph"})manifest["sha256"][name]=carcar_mapping_console::sha256(directory/name);
+  std::ofstream(directory/"manifest.json")<<manifest.dump();
+  std::ofstream(directory/"publication.json")<<json{{"status",quality},{"asset_sha256",manifest["sha256"]}};
+}
 class Fixture : public rclcpp::Node {
 public:
   Fixture():Node("inspection_test_fixture"),tf(*this) {
@@ -103,6 +117,7 @@ public:
         last_red=value->r;last_green=value->g;
       });
     hold_service=create_service<Hold>("/hardware/inspection/motion_hold",[this](const Hold::Request::SharedPtr req,Hold::Response::SharedPtr res){
+      if(req->hold&&!held&&goals>0)position.position.x+=arrival_hold_offset.load();
       ++holds;res->accepted=true;res->held=req->hold;res->driver_epoch="offline_driver_epoch";res->board_command=board;held=req->hold;
     });
     servo_service=create_service<Servo>("/hardware/inspection/camera_servo",[this](const Servo::Request::SharedPtr req,Servo::Response::SharedPtr res){
@@ -163,7 +178,7 @@ public:
   std::atomic<int> commands{0},holds{0},goals{0};int board=94;bool held=false;double goal_at=0;
   std::atomic<bool> publish_layers{true},publish_depth{true},valid_scan{true},fail_navigation{false};
   std::atomic<int> loads{0};std::string loaded_path;
-  std::atomic<double> goal_duration{.25},arrival_offset{0},arrival_yaw_offset{0};
+  std::atomic<double> goal_duration{.25},arrival_offset{0},arrival_yaw_offset{0},arrival_hold_offset{0};
   std::atomic<int> red_samples{0},yellow_samples{0},beep_windows{0},last_red{-1},last_green{-1};
   geometry_msgs::msg::Pose position=[](){geometry_msgs::msg::Pose p;p.position.x=p.position.y=1;p.orientation.w=1;return p;}();
   std::shared_ptr<Goal> active;tf2_ros::TransformBroadcaster tf;
@@ -216,6 +231,103 @@ protected:
   void TearDown()override{executor->cancel();thread.join();executor.reset();fixture.reset();rclcpp::shutdown();}
   std::shared_ptr<Fixture> fixture;std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor;std::thread thread;
 };
+TEST_F(ConsoleTest, SavedMapsRefreshWithoutReviewAndDiagnosticMapsRemainPreviewOnly) {
+  Temporary temp;Child child(temp.root,false,18241,true,"",180,false,true);ASSERT_TRUE(startup(18241));Browser b(18241);
+  ASSERT_EQ(b.state()["maps"].size(),1U);
+  saved_map(temp.root,"20261104_103000_candidate","candidate");
+  saved_map(temp.root,"20261104_103100_diagnostic","diagnostic");
+  saved_map(temp.root,"20261104_103200_rejected","rejected");
+  saved_map(temp.root,"20261104_103300_incomplete","candidate");
+  std::filesystem::remove(temp.root/"maps/mapping_sessions/20261104_103300_incomplete/manifest.json");
+  std::filesystem::remove(temp.root/"maps/mapping_sessions/20261104_103300_incomplete/publication.json");
+  // 新图保存后无需重新选择或重启服务，应直接进入列表。
+  ASSERT_TRUE(b.wait([](const json&s){return s["maps"].size()==4;},5));
+  const auto maps=b.state()["maps"];EXPECT_EQ(maps[0]["id"],"20261104_103200_rejected");
+  EXPECT_EQ(maps[1]["quality"],"diagnostic");EXPECT_EQ(maps[1]["navigation_allowed"],false);
+  EXPECT_NE(maps[1]["name"].get<std::string>().find("建图异常，可查看"),std::string::npos);
+  EXPECT_EQ(maps[2]["navigation_allowed"],true);
+  EXPECT_EQ(b.request("/api/vehicle/prepare",{{"request_id","incomplete-prepare"},{"map_id","20261104_103300_incomplete"}}).result_int(),409U);
+  b.post("/api/map/select",{{"map_id","20261104_103100_diagnostic"}});
+  ASSERT_TRUE(b.wait([](const json&s){return !s["map"].is_null()&&s["map"]["id"]=="20261104_103100_diagnostic";}));
+  EXPECT_EQ(b.state()["map"]["navigation_allowed"],false);EXPECT_EQ(b.request("/api/map.png").result_int(),200U);
+  const auto point=b.post("/api/points/save",{{"point",{{"id","preview-point"},{"name","离线候选点"},
+    {"pose",{{"x",1},{"y",1},{"yaw",0}}},{"target_degrees",140.5}}}});
+  EXPECT_EQ(point["map_id"],"20261104_103100_diagnostic");EXPECT_EQ(point["verified"],false);
+  const auto refused=b.request("/api/vehicle/prepare",{{"request_id","diagnostic-prepare"},{"map_id","20261104_103100_diagnostic"}});
+  EXPECT_EQ(refused.result_int(),409U);EXPECT_NE(refused.body().find("仅供查看"),std::string::npos);
+  EXPECT_EQ(b.state()["vehicle_runtime"]["phase"],"CONFIG_ONLY");
+  b.post("/api/map/select",{{"map_id","20261104_103000_candidate"}});
+  EXPECT_EQ(b.state()["map"]["navigation_allowed"],true);
+  // 文件损坏也必须自动撤销资格，不能一直沿用首次发现时的完整性结论。
+  std::ofstream(temp.root/"maps/mapping_sessions/20261104_103000_candidate/map.pgm",std::ios::app)<<"changed";
+  ASSERT_TRUE(b.wait([](const json&s){return s["maps"].size()==3;},5));
+  EXPECT_EQ(b.state()["map"]["navigation_allowed"],false);
+  EXPECT_EQ(fixture->loads,0);EXPECT_EQ(fixture->goals,0);EXPECT_EQ(fixture->commands,0);EXPECT_DOUBLE_EQ(fixture->command_vx,0);
+}
+TEST_F(ConsoleTest, DiagnosticMapCannotReplaceAnActiveVehicleMap) {
+  Temporary temp;saved_map(temp.root,"diagnostic","diagnostic");
+  Child child(temp.root,true,18242,true,"",180,false);ASSERT_TRUE(startup(18242));Browser b(18242);
+  b.post("/api/map/select",{{"map_id","testmap"}});
+  const auto refused=b.request("/api/map/select",{{"map_id","diagnostic"}});
+  EXPECT_EQ(refused.result_int(),409U);EXPECT_NE(refused.body().find("仅供查看"),std::string::npos);
+  EXPECT_EQ(b.state()["map"]["id"],"testmap");EXPECT_EQ(fixture->loads,0);EXPECT_EQ(fixture->goals,0);
+}
+TEST_F(ConsoleTest, LegacyImageAliasIsTrackedWithoutInvalidatingNeighborMaps) {
+  Temporary temp;
+  const auto image=temp.root/"maps/shared-grid.pgm";
+  std::filesystem::copy_file(temp.root/"maps/testmap.pgm",image);
+  std::ofstream(temp.root/"maps/aliasmap.yaml")<<"image: shared-grid.pgm\nmode: trinary\nresolution: 0.1\norigin: [0, 0, 0]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n";
+  Child child(temp.root,false,18244);ASSERT_TRUE(startup(18244));Browser b(18244);
+  b.post("/api/map/select",{{"map_id","testmap"}});
+  std::ofstream(image,std::ios::app)<<"first-change";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1400));
+  EXPECT_EQ(b.state()["map"]["navigation_allowed"],true);
+  b.post("/api/map/select",{{"map_id","aliasmap"}});
+  const auto stamp=std::filesystem::last_write_time(image);const auto replacement=image.parent_path()/"replacement.pgm";
+  std::filesystem::copy_file(image,replacement);
+  {std::fstream out(replacement,std::ios::in|std::ios::out|std::ios::binary);out.seekp(-1,std::ios::end);out.put('X');}
+  std::filesystem::last_write_time(replacement,stamp);std::filesystem::rename(replacement,image);
+  ASSERT_TRUE(b.wait([](const json&s){return s["map"]["navigation_allowed"]==false;},4));
+  EXPECT_EQ(fixture->loads,0);EXPECT_EQ(fixture->goals,0);EXPECT_EQ(fixture->commands,0);
+}
+TEST_F(ConsoleTest, ManagedRuntimeStartsOnlyOnRequestAndDetachesAfterStop) {
+  using Runtime=carcar_interfaces::srv::InspectionRuntime;using State=carcar_interfaces::msg::InspectionRuntimeState;
+  State status;status.phase="CONFIG_ONLY";std::atomic<bool> stale_runtime{false};
+  auto publisher=fixture->create_publisher<State>("/inspection/runtime/state",1);
+  auto service=fixture->create_service<Runtime>("/inspection/runtime/control",[&](std::shared_ptr<rclcpp::Service<Runtime>> handle,std::shared_ptr<rmw_request_id_t> header,Runtime::Request::SharedPtr request){
+    status.request_id=request->request_id;status.generation="test_generation";
+    status.phase=request->action=="prepare"?"ACTIVE":"CONFIG_ONLY";
+    // 故意丢弃准备应答，只通过同代次状态确认；结束操作仍必须可用。
+    if(request->action=="end"){Runtime::Response response;response.accepted=true;response.generation=status.generation;handle->send_response(*header,response);}
+  });
+  auto timer=fixture->create_wall_timer(std::chrono::milliseconds(100),[&]{auto message=status;if(stale_runtime)message.generation="old_generation";publisher->publish(message);});
+  Temporary temp;Child child(temp.root,false,18209,true,"",180,false,true);ASSERT_TRUE(startup(18209));Browser b(18209);
+  ASSERT_TRUE(b.wait([](const json&s){return s["health"]["hardware_interface"]==true;}));
+  EXPECT_EQ(fixture->holds,0);EXPECT_EQ(fixture->commands,0);EXPECT_FALSE(b.state()["hardware_enabled"]);
+  b.post("/api/vehicle/prepare",{{"request_id","prepare1"},{"map_id","testmap"}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["vehicle_runtime"]["phase"]=="WAITING_LOCALIZATION";},8));
+  std::this_thread::sleep_for(std::chrono::milliseconds(3200));
+  EXPECT_EQ(b.state()["vehicle_runtime"]["phase"],"WAITING_LOCALIZATION");
+  EXPECT_EQ(fixture->goals,0);EXPECT_EQ(b.state()["health"]["localization"],false);
+  b.post("/api/localize",{{"pose",{{"x",1},{"y",1},{"yaw",0}}}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["vehicle_runtime"]["phase"]=="READY";},8));
+  b.begin();b.step(140.5);const auto point=b.confirm("point","现场直接录入");EXPECT_TRUE(point["verified"]);EXPECT_EQ(fixture->goals,0);
+  b.begin();b.step(140.5);b.post("/api/manual/enable");
+  ASSERT_TRUE(b.wait([](const json&s){return s["teaching"]["phase"]=="IDLE";}));
+  b.begin();b.step(140.5);b.confirm("point","第二现场点");
+  b.post("/api/vehicle/end",{{"request_id","end1"}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["vehicle_runtime"]["phase"]=="CONFIG_ONLY"&&!s["hardware_enabled"].get<bool>();},8));
+  EXPECT_EQ(b.state()["points"].size(),2U);EXPECT_DOUBLE_EQ(fixture->command_vx,0);
+  ASSERT_TRUE(b.wait([&](const json&){return fixture->get_publishers_info_by_topic("/cmd_vel").empty();}));
+  b.post("/api/vehicle/prepare",{{"request_id","prepare2"},{"map_id","testmap"}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["vehicle_runtime"]["phase"]=="WAITING_LOCALIZATION";},8));
+  EXPECT_EQ(b.state()["health"]["localization"],false);EXPECT_EQ(fixture->goals,0);
+  stale_runtime=true;
+  ASSERT_TRUE(b.wait([](const json&s){return s["vehicle_runtime"]["phase"]=="FAULT";},5));
+  EXPECT_DOUBLE_EQ(fixture->command_vx,0);EXPECT_EQ(fixture->goals,0);
+  // 测试定时器及服务必须在引用状态销毁前停止。
+  timer->cancel();
+}
 TEST_F(ConsoleTest, ConfigurationModeNeverRequestsActuatorCommands) {
   Temporary temp;Child child(temp.root,false,18187);ASSERT_TRUE(startup(18187));Browser b(18187);
   ASSERT_TRUE(b.wait([](const json & s){return s["health"]["hardware_interface"]==true;}));
@@ -328,8 +440,32 @@ TEST_F(ConsoleTest, TeachingThenAutonomousMissionSurvivesBrowserDisconnectAndPar
   asio::io_context io;const auto until=clock_now()+15;json finished;
   while(clock_now()<until){std::this_thread::sleep_for(std::chrono::milliseconds(100));const auto res=b.request("/api/state");finished=json::parse(res.body());if(finished["run"]["status"]!="RUNNING")break;}
   ASSERT_EQ(finished["run"]["status"],"SUCCEEDED")<<finished.dump();
+  const auto archive=b.request("/api/runs/isolated_mission_001/archive.zip");EXPECT_EQ(archive.result_int(),200U);EXPECT_EQ(archive.body().substr(0,2),"PK");
   EXPECT_EQ(finished["run"]["captures"].size(),2U);EXPECT_EQ(finished["run"]["parking_status"],"SUCCEEDED");EXPECT_EQ(fixture->goals,3);EXPECT_TRUE(finished["motion_held"]);
   for(const auto & photo:finished["run"]["captures"])EXPECT_TRUE(std::filesystem::is_regular_file(temp.root/"data/media"/(photo.at("id").get<std::string>()+".jpg")));
+}
+TEST_F(ConsoleTest, PhotoToleranceUsesFreshPoseAfterMotionHold) {
+  Temporary temp;Child child(temp.root,true,18211,true,"",180,false);ASSERT_TRUE(startup(18211));Browser b(18211);
+  const auto task=b.task_one_point();fixture->arrival_hold_offset=.12;
+  b.post("/api/run/start",{{"task_id",task["id"]},{"request_id","arrival_after_hold"}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["run"]["status"]=="FAILED";},15))<<b.state().dump();
+  const auto run=b.state()["run"];EXPECT_TRUE(run["captures"].empty());ASSERT_FALSE(run["arrival_checks"].empty());
+  EXPECT_NEAR(run["arrival_checks"][0]["distance_m"].get<double>(),.12,.001);EXPECT_FALSE(run["arrival_checks"][0]["accepted"].get<bool>());
+}
+TEST_F(ConsoleTest, ThreePointsThreeRunsKeepNinePhotosAndReferenceImages) {
+  Temporary temp;Child child(temp.root,true,18210,true,"",180,false);ASSERT_TRUE(startup(18210));Browser b(18210);
+  b.post("/api/map/select",{{"map_id","testmap"}});
+  ASSERT_TRUE(b.wait([](const json&s){return s["health"]["map_matches"]==true&&s["health"]["localization"]==true&&s["health"]["still"]==true;}));
+  json ids=json::array();for(int i=0;i<3;++i){b.begin();b.step(140.5);ids.push_back(b.confirm("point","三点验证"+std::to_string(i))["id"]);}
+  const auto task=b.post("/api/tasks/save",{{"task",{{"name","三点三轮"},{"point_ids",ids},{"final_parking_pose",{{"x",1.0},{"y",1.0},{"yaw",0.0}}}}}});
+  for(int round=0;round<3;++round){const auto id="three_round_"+std::to_string(round);
+    b.post("/api/run/start",{{"task_id",task["id"]},{"request_id",id}});
+    ASSERT_TRUE(b.wait([](const json&s){return s["run"]["status"]=="SUCCEEDED";},15))<<b.state().dump();
+    EXPECT_EQ(b.state()["run"]["captures"].size(),3U);EXPECT_EQ(b.state()["run"]["arrival_checks"].size(),4U);EXPECT_EQ(b.state()["run"]["parking_status"],"SUCCEEDED");
+    const auto archive=b.request("/api/runs/"+id+"/archive.zip");EXPECT_EQ(archive.result_int(),200U);EXPECT_EQ(archive.body().substr(0,2),"PK");
+  }
+  EXPECT_EQ(fixture->goals,12);size_t photos=0;for(const auto &file:std::filesystem::directory_iterator(temp.root/"data/media"))if(file.path().extension()==".jpg")++photos;
+  EXPECT_EQ(photos,12U);EXPECT_EQ(b.state()["runs"].size(),3U);
 }
 TEST_F(ConsoleTest, RealBrowserCompletesStepwiseTeachingOnTabletAndPhone) {
   if(!std::getenv("INSPECTION_BROWSER_RUNTIME"))GTEST_SKIP()<<"未提供真实浏览器运行入口";

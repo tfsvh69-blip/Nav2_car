@@ -55,9 +55,14 @@ inline bool free_footprint(const nav_msgs::msg::OccupancyGrid & m,const Pose & p
   }
   return !evidence||(evidence->unknown==0&&evidence->occupied==0);
 }
-// 保留已验收的整格对角余量，给跟踪转弯留出空间；基础审查仍为0.22米。
+// 已知障碍保留一格规划余量；未知／图外仍保留整格对角余量。
+// 基础0.22米检查和正式链路的最终运动扫掠保护保持不变。
 inline bool planning_footprint(const nav_msgs::msg::OccupancyGrid&m,const Pose&p){
-  return free_footprint(m,p,.22+std::sqrt(2.0)*m.info.resolution);
+  if(!free_footprint(m,p,.22+m.info.resolution))return false;
+  // 不能把未知边界当作已测定的实体墙；只忽略外圈的已知占用计数。
+  FootprintEvidence evidence;
+  free_footprint(m,p,.22+std::sqrt(2.0)*m.info.resolution,&evidence);
+  return !evidence.invalid&&!evidence.outside&&evidence.unknown==0;
 }
 // 二维栅格射线逐格遍历（DDA）：观测点必须真的能看到前沿，不能隔墙投影到另一侧。
 // 仅终点所在未知格（含SLAM裁剪边界外一格）可未知；中途必须是已知自由区。

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <spawn.h>
@@ -42,7 +43,7 @@ struct NavigationProcess {
 TEST(ContinuousNavigation, TenViaPointsUseOneActionAndNoIntermediateTerminal){
  ASSERT_EQ(std::string(std::getenv("ROS_DOMAIN_ID")?std::getenv("ROS_DOMAIN_ID"):""),"226");
  rclcpp::init(0,nullptr);struct Shutdown{~Shutdown(){rclcpp::shutdown();}} shutdown;
- const std::filesystem::path evidence="log/nav018_r26_snapshot/fixed-route-preemption";std::filesystem::create_directories(evidence);
+ const std::filesystem::path evidence=std::getenv("CARCAR_CONTINUOUS_EVIDENCE")?std::getenv("CARCAR_CONTINUOUS_EVIDENCE"):"log/nav018_r26_snapshot/fixed-route-preemption";std::filesystem::create_directories(evidence);
  auto node=std::make_shared<rclcpp::Node>("continuous_navigation_truth");NavigationProcess child;
  const std::string prior=std::getenv("LD_LIBRARY_PATH")?std::getenv("LD_LIBRARY_PATH"):"";
  const auto compat=ament_index_cpp::get_package_prefix("carcar_tf2_compat")+"/lib/carcar_tf2_compat";
@@ -79,7 +80,7 @@ TEST(ContinuousNavigation, TenViaPointsUseOneActionAndNoIntermediateTerminal){
    nav_msgs::msg::Odometry odom;odom.header.stamp=now;odom.header.frame_id="odom";odom.child_frame_id="base_footprint";
    odom.pose.pose.position.x=x;odom.pose.pose.position.y=y;odom.pose.pose.orientation.z=std::sin(yaw/2);odom.pose.pose.orientation.w=std::cos(yaw/2);odom.twist.twist=velocity;odoms->publish(odom);
    geometry_msgs::msg::TransformStamped tr;tr.header=odom.header;tr.child_frame_id="base_footprint";tr.transform.translation.x=x;tr.transform.translation.y=y;tr.transform.rotation=odom.pose.pose.orientation;tf.sendTransform(tr);
-   map.header.stamp=now;maps->publish(map);std_msgs::msg::String state;state.data="{\"phase\":\"EXPLORING\",\"origin\":[0,0,0],\"radius_m\":20,\"generation\":1}";states->publish(state);
+   map.header.stamp=now;maps->publish(map);std_msgs::msg::String state;state.data="{\"phase\":\"EXPLORING\",\"origin\":[0,0,0],\"radius_m\":20,\"generation\":1,\"task_id\":\"continuous-nav-fixture\",\"navigation_generation\":1,\"map_revision\":1,\"handoff\":{\"distance_m\":0.25}}";states->publish(state);
    sensor_msgs::msg::LaserScan scan;scan.header.stamp=now;scan.header.frame_id="laser_frame";scan.angle_min=-M_PI;scan.angle_increment=2*M_PI/360;scan.angle_max=M_PI;scan.range_min=.05;scan.range_max=12;scan.ranges.resize(361);
    for(size_t i=0;i<scan.ranges.size();++i){const auto a=yaw+scan.angle_min+i*scan.angle_increment;const auto dx=std::cos(a),dy=std::sin(a);double r=12;
      if(dx>1e-6)r=std::min(r,(3.95-x)/dx);else if(dx< -1e-6)r=std::min(r,(-4-x)/dx);

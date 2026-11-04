@@ -67,6 +67,9 @@ TEST_F(ContinuousSupervisorIntegration, ApproachingViaPointLimitsControllerAndPr
  // 位姿和轮式同时沿短步推进，避免把瞬移当成导航连续性证据。
  const double length=std::hypot(point.x,point.y);
  for(double d=.1;d<length-.35;d+=.1){pose_x=odom_x=point.x*d/length;pose_y=odom_y=point.y*d/length;until([]{return false;},.06);}
+ // 当前衔接距离为0.25米，预减速在0.35米内；旧夹具停在范围外永远不会触发。
+ const double approach=std::max(0.,length-.30);
+ pose_x=odom_x=point.x*approach/length;pose_y=odom_y=point.y*approach/length;
  ASSERT_TRUE(until([&]{return limit==60.;},1));
  pose_x=odom_x=point.x;pose_y=odom_y=point.y;
  ASSERT_TRUE(until([this]{return state.value("continuous_exploration",Json::object()).value("passed_points",0)>0;},1));
@@ -107,4 +110,25 @@ TEST_F(ContinuousSupervisorIntegration, PrematureSuccessNeverRecordsUnvisitedEnd
  EXPECT_EQ(routes.back().back().pose.position,original.back().pose.position);
  EXPECT_EQ(state.value("phase",""),"EXPLORING");
  request("pause","premature-pause");ASSERT_TRUE(until([this]{cancel_routes();return state.value("phase","")=="PAUSED";},2));
+}
+
+// 地图与掩膜乱序只临时封锁速度，不能把连续路线当作新的任务取消。
+class LiveContinuousSupervisorIntegration:public ContinuousSupervisorIntegration {
+protected:
+ void SetUp()override{live_mode=recovery_mode=true;ContinuousSupervisorIntegration::SetUp();}
+};
+TEST_F(LiveContinuousSupervisorIntegration, MapReorderingHoldsOutputAndPreservesRoute){
+ request("start","live-continuous-start");
+ ASSERT_TRUE(until([this]{return !routes.empty()&&last_velocity>0;},4))<<state.dump();
+ const auto route=active_routes.back();const auto count=routes.size();
+ live_state=live_mask=false;++grid_width;grid_origin-=.05;
+ ASSERT_TRUE(until([this]{return !state["walls"].value("navigation_ready",true)&&last_velocity==0;},1));
+ until([]{return false;},.45);
+ EXPECT_FALSE(route->is_canceling())<<"短暂地图同步不应取消连续路线";
+ live_state=live_mask=true;
+ ASSERT_TRUE(until([this]{return state["walls"].value("navigation_ready",false)&&last_velocity>0;},2))<<state.dump();
+ EXPECT_EQ(routes.size(),count);
+ request("pause","live-continuous-pause");
+ ASSERT_TRUE(until([this]{cancel_routes();return state.value("phase","")=="PAUSED";},3));
+ EXPECT_EQ(last_velocity,0);
 }

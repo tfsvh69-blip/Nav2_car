@@ -12,7 +12,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>rcl_interfaces</depend>
   <depend>carcar_interfaces</depend><depend>carcar_mapping_console</depend>
-  <depend>nlohmann-json-dev</depend><depend>libsqlite3-dev</depend><depend>libopencv-dev</depend><depend>libssl-dev</depend><depend>libcurl4-openssl-dev</depend>
+  <depend>nlohmann-json-dev</depend><depend>libsqlite3-dev</depend><depend>libopencv-dev</depend><depend>libssl-dev</depend><depend>libcurl4-openssl-dev</depend><depend>libzip-dev</depend>
   <exec_depend>carcar_base</exec_depend><exec_depend>carcar_description</exec_depend><exec_depend>carcar_lidar</exec_depend>
   <exec_depend>carcar_navigation</exec_depend><exec_depend>carcar_camera</exec_depend><exec_depend>launch_ros</exec_depend>
   <test_depend>ament_cmake_gtest</test_depend>

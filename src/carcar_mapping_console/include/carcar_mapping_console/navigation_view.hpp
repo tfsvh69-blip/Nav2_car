@@ -29,7 +29,7 @@ class NavigationView {
   nlohmann::json grid_info(const Grid & layer, tf2_ros::Buffer & buffer, double at, double ros_time) const;
   nlohmann::json path_info(const PathLayer & layer, tf2_ros::Buffer & buffer, double at, double ros_time) const;
   mutable std::mutex mutex_;
-  Grid grids_[2];
+  Grid grids_[4];
   PathLayer paths_[3];
 };
 }  // namespace carcar_mapping_console

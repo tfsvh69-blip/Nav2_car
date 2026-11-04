@@ -1,0 +1,59 @@
+{
+  "id": "NAV-018-SPEED-RETENTION-001",
+  "passed": true,
+  "candidate": {
+    "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy": {
+      "sha256": "5ee8f10c6720d613161e924bd99211e48380bf828d9767a75ce83492e0c867c1",
+      "size": 6474040,
+      "mode": 509
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp": {
+      "sha256": "294d400aa1353393e99d838d413de2c90e9265de017c9eb3778e7d98f9606b43",
+      "size": 5617,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp": {
+      "sha256": "92397ed52eb2ed7277dc19880182d5ac869bf138c663623f148c846f4db08490",
+      "size": 4791,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_auto_motion.cpp": {
+      "sha256": "ea5a44ecf90362cbc23b56b9f44c586b0bcf8e41b05908b4a3522d6748c4ec9c",
+      "size": 2739,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_navigation_speed.cpp": {
+      "sha256": "67cf1587a0c181a679e93407a7a741c175431827bb691e474725a027568b65d3",
+      "size": 6221,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_live_supervisor.cpp": {
+      "sha256": "0f678d62557f4d2059d6ccff3cdbd8eee0de0fa2a6c8ef7f98dcb94f27b40f50",
+      "size": 42392,
+      "mode": 436
+    }
+  },
+  "cpp_tests": 50,
+  "suites": [
+    {
+      "name": "test_mapping_navigation_speed",
+      "tests": 11,
+      "time_s": 0.349,
+      "sha256": "cc4212e280cac9486560cb3a4e8eafba623e1727d8ea3b1c964e1e3120db000a"
+    },
+    {
+      "name": "test_auto_motion",
+      "tests": 5,
+      "time_s": 0.001,
+      "sha256": "8c00756ef02d508e3ded44ae2d4ebcc5bc691cd8f6bfdbacf7b3bf58926d73ff"
+    },
+    {
+      "name": "test_live_supervisor",
+      "tests": 34,
+      "time_s": 64.855,
+      "sha256": "e0263dc2e6909b09bda74aea2f94829db4124211530bacb95028397b6ffa8542"
+    }
+  ],
+  "physical_tested": false,
+  "build_log": "build-speed-retention.log"
+}

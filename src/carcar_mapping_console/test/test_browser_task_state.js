@@ -128,7 +128,7 @@ const completed = {phase:'CURRENT',task_state:'RUNNING',managed:true,busy:false,
     assert(main.includes(result==='failed'?'附近可达候选耗尽':'返程预算耗尽'),'保存前停车屏障丢失已确认的返程失败原因');
     assert(main.includes('轮式停稳后保存'),'返程失败停车屏障没有解释保存尚未开始');
     assert(!main.includes('等待停稳和路径预检'),'返程已经失败仍提示等待路径预检');
-    assert(!main.includes('候选已保存'),'尚未停稳时提前宣称已保存候选');
+    assert(!main.includes('地图已保存'),'尚未停稳时提前宣称已保存候选');
   }
   await incident.next(failed);
   for(const id of ['result','autonomy-quality','workflow-next'])
@@ -235,10 +235,10 @@ const completed = {phase:'CURRENT',task_state:'RUNNING',managed:true,busy:false,
   assert.equal(pendingTimeout.requests.filter(r=>r.url==='/api/autonomy').length,1,'操作确认超时后自动重发返程');
   const done=await render(completed),e=done.elements;
   assert(e.result.textContent.includes('起点不可达'),'旧后端缺少return_destination时丢失具体返程失败原因');
-  assert(e.phase.textContent.includes('候选已保存'),'已保存结束的探索仍显示实时建图');
+  assert(e.phase.textContent.includes('地图已保存'),'已保存结束的探索仍显示实时建图');
   assert.equal(e['auto-finish'].disabled,false,'自动保存后没有可用的结束入口');
   assert(e['auto-finish'].textContent.includes('结束任务'),'完成后按钮仍要求再次探索返程');
-  assert(e['auto-finish'].textContent.includes('候选'),'结束入口没有说明下一步审核候选');
+  assert(e['auto-finish'].textContent.includes('地图'),'结束入口没有说明可查看已保存地图');
   assert.equal(e.end.textContent,'结束本次任务','已保存后结束仍被描述为放弃未保存进度');
   assert.equal(e.save.hidden,true,'已自动保存后仍突出重复保存入口');
   assert.equal(e['auto-start'].hidden,true,'已结束后仍突出不可用的继续自动操作');
@@ -295,7 +295,7 @@ const completed = {phase:'CURRENT',task_state:'RUNNING',managed:true,busy:false,
   assert(idle.elements['task-info'],'待命渲染中断：'+JSON.stringify(vm.runInContext('clientEvents',idle.context)));
   assert.equal(idle.elements['autonomy-panel'].hidden,true,'硬件尚未启动时仍突出一排不可用的自动运行操作');
   assert(idle.elements.phase.textContent.includes('待命'),'返回待命后仍把上一轮候选当成本轮终态');
-  assert(!idle.elements['autonomy-stage'].textContent.includes('候选已保存'),'待命仍显示上一轮自动任务');
+  assert(!idle.elements['autonomy-stage'].textContent.includes('地图已保存'),'待命仍显示上一轮自动任务');
   idle.elements.mode.value='new';idle.elements.start.onclick();
   await new Promise(resolve=>setImmediate(resolve));
   const starts=idle.requests.filter(r=>r.url==='/api/start');

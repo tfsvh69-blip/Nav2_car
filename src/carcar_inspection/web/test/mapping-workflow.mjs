@@ -12,6 +12,7 @@ const directory=path.resolve(process.argv[2]||path.join(root,'log/mapping-workfl
 await fs.mkdir(directory,{recursive:true});
 const profile=await fs.mkdtemp(path.join(os.tmpdir(),'carcar-workflow-browser-'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+let previewRequests=[],previewDelay=0,previewBadMeta=false,catalogLoading=true;
 let offline=false,browser,page,child,chromiumError='',errors=[],requests=[],dialogs=[],operation=0;
 const bundles=[{id:'published-map',valid:true,publication:{status:'published'}},
   {id:'latest-candidate',valid:true,publication:{status:'candidate'}},
@@ -46,16 +47,22 @@ const server=http.createServer(async(req,res)=>{
         json({accepted:true},202);return;
       }
       if(url.pathname==='/api/end'){const id=++operation;state={...structuredClone(initial),completed_operation:id};json({accepted:true,operation:id},202);return;}
-      if(url.pathname==='/api/maps/review'){bundles.find(b=>b.id===body.bundle).publication.status=body.approve?'published':'rejected';json({success:true});return;}
       json({error:'测试夹具未实现该操作'},404);return;
     }
     if(url.pathname==='/api/status'||url.pathname==='/api/state'){json(state,offline?503:200);return;}
-    if(url.pathname==='/api/bundles'){json({bundles});return;}
+    if(url.pathname==='/api/bundles'){json({bundles:catalogLoading?[]:bundles,loading:catalogLoading});return;}
+    if(url.pathname==='/api/maps/preview'){
+      const id=url.searchParams.get('bundle');previewRequests.push(id);if(previewDelay)await pause(previewDelay);
+      if(!bundles.some(b=>b.id===id&&b.valid)){json({error:'保存地图不存在或文件不完整'},404);return;}
+      res.writeHead(200,{'Content-Type':'image/png','X-Map-Meta':JSON.stringify({width:previewBadMeta?121:120,height:80,resolution:.05,origin:[-3,-2,0],bundle:id,saved:true})});
+      res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAHgAAABQCAAAAAD38O5VAAABq0lEQVRoBcXBsREDQQwDsaVaYv8lsCWNI0ZOPtEcoPCGwhsKbyi8ofCGwhsKbyi8ofCGwhsKZe6FUihzL5RCmeXWEEqhzHJrCKVQZrk1hFIos9waQimUWW4NoRTKLLeGUApllltDKIUyy60hlEKZ5dYQSqHMcmsIpVBmuTWEUiiz3BpCKZRZbg2hFMost4ZQCmWWW0MohTLLrSGUQpnl1hBKocxyawilUGa5NYRSKLPcGkIplFluDaEUyiy3hlAKZZZbQyiFMt8s/4ZvQimU+Wb5N3wTSqHMcmsIpVBmuTWEUiiz3BpCKZRZbg2hFMost4ZQCmWWW0MohTLLrSGUQpnl1hBKocxyawilUGa5NYRSKLPcGkIplFluDaEUyiy3hlAKZZZbQyiFMsutIZRCmeXWEEqhzHJrCKVQZrk1hFIos9waQimUWW4NoRTKLLeGUApllltDKIUyy60hlEKZ5dYQSqHMcmsIpVBmuTWEUiiz3BpCKZRZbg2hFMost4ZQCmWWW0MohTLLrSGUQpl7oRTK3Aul8IbCGwpvKLyh8IbCGwpvKLyh8IbCGz/gzLRh4xLBsQAAAABJRU5ErkJggg==','base64'));return;
+    }
     if(url.pathname==='/api/scan'){json({valid:false,version:'fixture'});return;}
     if(url.pathname.startsWith('/api/')){res.writeHead(204);res.end();return;}
     const filename={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/rtc_control.js':'rtc_control.js'}[url.pathname];
     if(!filename){res.writeHead(404);res.end();return;}
-    const content=await fs.readFile(path.join(root,'src/carcar_mapping_console/web',filename));
+    const webRoot=process.env.MAPPING_WEB_ROOT||path.join(root,'src/carcar_mapping_console/web');
+    const content=await fs.readFile(path.join(filename==='rtc_control.js'?path.join(root,'src/carcar_mapping_console/web'):webRoot,filename));
     res.writeHead(200,{'Content-Type':filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':'text/html'});res.end(content);
   }catch(error){res.writeHead(500);res.end(error.message);}
 });
@@ -79,11 +86,18 @@ try{
   });
   page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>{dialogs.push(dialog.message());void dialog.accept();});
   await page.goto(url);
-  await page.waitForFunction(()=>!document.getElementById('start').disabled&&document.getElementById('review-bundle').value==='latest-candidate');
+  assert.equal(await page.locator('#map-activate, #review-approve, #review-reject, #review-note').count(),0,'demo仍要求审核或启用');
+  await page.waitForFunction(()=>document.getElementById('saved-map-help').textContent.includes('正在读取'));
+  catalogLoading=false;
+  await page.waitForFunction(()=>!document.getElementById('start').disabled&&document.getElementById('saved-map').value==='latest-candidate');
   assert.equal(await page.locator('#manual-controls').isVisible(),false);
   assert.equal(await page.locator('#enable').isVisible(),false);
-  assert(await page.locator('#map-activate').isDisabled(),'未发布候选不能突出启用入口');
-  assert(await page.locator('#review-approve').isDisabled(),'未填写核对结论不能审核');
+  assert.equal(await page.locator('#map-activate, #review-approve, #review-reject, #review-note').count(),0,'demo仍要求审核或启用');
+  await page.waitForFunction(()=>savedPreviewId==='latest-candidate');
+  assert(await page.locator('#map-empty').isHidden(),'待命没有回显已保存地图');
+  assert((await page.locator('#health').textContent()).includes('map 坐标系'));
+  assert((await page.locator('#saved-map-result').textContent()).includes('不代表车辆当前位置'));
+  assert.equal(requests.length,0,'查看保存地图产生了写操作');
   await page.screenshot({path:path.join(directory,'desktop-standby.png'),fullPage:true});
   await page.selectOption('#control-mode','automatic');assert.equal(await page.locator('#site-confirmed').count(),0);
   const submitted=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/start'&&response.status()===202);
@@ -96,6 +110,7 @@ try{
   await page.waitForFunction(()=>document.getElementById('workflow-title').textContent==='自动探索中');
   assert.equal(await page.locator('#manual-controls').isVisible(),false);
   assert.equal(await page.locator('#auto-start').isVisible(),false,'自动探索中仍突出开始按钮');
+  await page.locator('#auto-speed').evaluate(input=>{input.closest('details').open=true;});
   await page.waitForFunction(()=>!document.getElementById('auto-speed-apply').disabled);
   await page.locator('#auto-speed').evaluate(input=>{input.value='0.18';input.dispatchEvent(new Event('input'));});
   await page.click('#auto-speed-apply');
@@ -169,27 +184,58 @@ try{
   offline=false;await page.waitForFunction(()=>document.getElementById('workflow-title').textContent==='自动探索已暂停');
   assert.equal(requests.length,posts,'恢复连接不应重发操作');
   state={...state,dirty:false,last_saved_bundle:'latest-candidate',autonomy:{...state.autonomy,phase:'REVIEW_REQUIRED',healthy:false,return_result:'succeeded'}};
-  await page.waitForFunction(()=>document.getElementById('auto-finish').textContent==='结束任务并查看候选');
-  assert(!(await page.locator('#result').textContent()).includes('等待候选保存确认'),'保存终态仍显示正在等待保存');
+  await page.waitForFunction(()=>document.getElementById('auto-finish').textContent==='结束任务并查看地图');
+  assert(!(await page.locator('#result').textContent()).includes('等待地图保存确认'),'保存终态仍显示正在等待保存');
   assert(!(await page.locator('#status-caption').textContent()).includes('独立运行'),'任务结束后仍提示自动任务继续');
   assert.equal(await page.locator('#save-actions').isVisible(),false,'候选已保存仍展示重复保存');
   await page.screenshot({path:path.join(directory,'phone-saved.png'),fullPage:true});
   await page.click('#auto-finish');
-  await page.waitForFunction(()=>!document.getElementById('task-panel').hidden&&document.getElementById('review-bundle').value==='latest-candidate');
-  await page.locator('#review-note').fill('测试夹具现场核对结论，不代表实物地图验收');
-  assert(await page.locator('#review-approve').isEnabled());await page.click('#review-approve');
-  await page.waitForFunction(()=>!document.getElementById('map-activate').disabled);
-  assert.equal(await page.locator('#review-bundle').inputValue(),'latest-candidate','刷新地图列表丢失当前选择');
-  await page.selectOption('#review-bundle','diagnostic-map');assert(await page.locator('#review-approve').isDisabled());assert(await page.locator('#map-activate').isDisabled());
+  await page.waitForFunction(()=>!document.getElementById('task-panel').hidden&&document.getElementById('saved-map').value==='latest-candidate');
+  assert.equal(await page.locator('#saved-map').inputValue(),'latest-candidate','结束后未选中本次保存地图');
+  await page.waitForFunction(()=>savedPreviewId==='latest-candidate');
+  const beforePreview=requests.length;
+  await page.selectOption('#saved-map','diagnostic-map');
+  await page.waitForFunction(()=>savedPreviewId==='diagnostic-map');
+  assert((await page.locator('#saved-map-help').textContent()).includes('建图异常'));
+  assert((await page.locator('#saved-map-help').textContent()).includes('文件已保存'));
+  assert.equal(requests.length,beforePreview,'异常地图预览发送了发布、启用或导航请求');
+  assert((await page.locator('#saved-map-inspect').getAttribute('href')).includes('map=diagnostic-map#points'),'巡检入口未携带选中地图');
+  await page.screenshot({path:path.join(directory,'phone-diagnostic-saved-map.png'),fullPage:true});
+  // 先选图A再选图B，迟到的A响应不能覆盖B。
+  previewDelay=250;
+  await page.selectOption('#saved-map','published-map');
+  await page.selectOption('#saved-map','latest-candidate');
+  await page.waitForFunction(()=>savedPreviewId==='latest-candidate');
+  await pause(400);assert.equal(await page.evaluate(()=>savedPreviewId),'latest-candidate');previewDelay=0;
+  await page.click('#saved-map-refresh');
+  await page.waitForFunction(()=>savedPreviewId==='latest-candidate'&&!savedPreviewPending);
+  assert.equal(await page.locator('#saved-map').inputValue(),'latest-candidate','刷新列表丢失当前选择');
+  // 列表新增完整地图后，无需审核也能自动出现，仍保留当前选择。
+  bundles.push({id:'new-saved-map',valid:true,publication:{status:'saved'}});
+  await page.waitForFunction(()=>document.querySelector('#saved-map option[value="new-saved-map"]'),null,{timeout:8000});
+  assert.equal(await page.locator('#saved-map').inputValue(),'latest-candidate');
+  state.last_saved_bundle='new-saved-map';
+  await page.waitForFunction(()=>savedPreviewId==='new-saved-map');
+  assert.equal(await page.locator('#saved-map').inputValue(),'new-saved-map','本次新保存没有优先回显');
+  previewBadMeta=true;
+  await page.click('#saved-map-refresh');
+  await page.waitForFunction(()=>document.getElementById('saved-map-result').textContent.includes('尺寸信息不一致'));
+  assert.equal(await page.evaluate(()=>savedPreviewId),'','尺寸错误仍显示旧地图');
+  previewBadMeta=false;await page.click('#saved-map-refresh');
+  await page.waitForFunction(()=>savedPreviewId==='new-saved-map');
+  previewDelay=500;await page.selectOption('#saved-map','published-map');
+  state.task_state='STARTING';state.phase='WAITING';
+  await page.waitForFunction(()=>document.getElementById('saved-map-panel').hidden);
+  await pause(750);assert.equal(await page.evaluate(()=>savedPreviewId),'','新任务被迟到的保存图片覆盖');previewDelay=0;
   state={...state,...automatic('FAULT'),completed_operation:state.completed_operation,dirty:false,autonomy:{...automatic('FAULT').autonomy,
     healthy:false,still:true,navigation_terminal:true,output:[0,0],quality_fault:'测试夹具：扫描过期，锁停'}};
   await page.waitForFunction(()=>document.getElementById('auto-finish').textContent==='结束故障任务');
   await page.click('#auto-finish');await page.waitForFunction(()=>document.getElementById('workflow-title').textContent==='准备本轮建图');
   assert.deepEqual(errors,[]);assert.deepEqual(dialogs,[],'普通启动与已保存结束出现多余确认');
   const result={success:true,hardware:false,mocked_http_responses:true,mocked_control_messages:true,real_browser:true,
-    checked:['startup-without-redundant-confirmation','startup-deduplication','startup-progress','runtime-speed-confirmed-state','speed-keeps-pause-available','mode-specific-controls','desktop-tablet-phone','mobile-no-overflow',
+    previewRequests,checked:['startup-without-redundant-confirmation','startup-deduplication','startup-progress','runtime-speed-confirmed-state','speed-keeps-pause-available','mode-specific-controls','desktop-tablet-phone','mobile-no-overflow',
       'online-snapshot-navigation-status-separated','snapshot-failure-continues-valid-navigation','expired-snapshot-protection-pause',
-      'checkpoint-hold-and-resume','recovery-stage-with-stop-available','request-acceptance-versus-stop-completion','late-http-cannot-override-confirmed-state','persistent-feedback','offline-recovery-no-replay','saved-next-step','candidate-selection-and-review-prerequisites','fault-exit-without-resume'],errors};
+      'checkpoint-hold-and-resume','recovery-stage-with-stop-available','request-acceptance-versus-stop-completion','late-http-cannot-override-confirmed-state','persistent-feedback','offline-recovery-no-replay','saved-next-step','catalog-initial-loading','saved-map-preview-without-review','diagnostic-map-visible','preview-response-order','saved-map-list-auto-refresh','latest-save-auto-selected','saved-preview-size-validation','new-task-drops-late-preview','inspection-link-preserves-map-selection','fault-exit-without-resume'],errors};
   await fs.writeFile(path.join(directory,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }catch(error){if(page)await page.screenshot({path:path.join(directory,'failure.png'),fullPage:true}).catch(()=>{});await fs.writeFile(path.join(directory,'failure.json'),JSON.stringify({error:error.message,state,requests,errors},null,2));throw error;}
 finally{

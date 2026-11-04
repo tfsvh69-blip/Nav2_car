@@ -156,3 +156,17 @@ export function canConfirm(teaching, rendered, connected) {
     rendered.sequence > 0
   );
 }
+
+// 生命周期状态保留；展示采集完整性，不能用最终停车成功掩盖缺照片。
+export function runResult(run) {
+  if (!run) return "当前没有巡检任务";
+  if (run.status !== "SUCCEEDED") return labels[run.status] || run.status;
+  const expected = run.snapshot?.points || [];
+  const count = expected.filter((point) => run.captures?.[point.id]?.id).length;
+  if (!count) return "巡检结束，未采集到照片";
+  if (count !== expected.length || run.missed?.length) return `部分完成 · 已采集 ${count}/${expected.length}`;
+  return "全部完成";
+}
+export function fieldTeachingAllowed(mode, arrived, health, hardware) {
+  return mode === "current" ? !!(hardware && health?.still && health?.localization && health?.map_matches) : !!arrived;
+}

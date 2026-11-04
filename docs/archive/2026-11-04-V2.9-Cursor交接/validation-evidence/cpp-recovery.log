@@ -1,0 +1,19 @@
+Internal ctest changing into directory: /home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy
+Test project /home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy
+    Start  8: test_manual_motion
+1/5 Test  #8: test_manual_motion ..................   Passed    0.16 sec
+    Start 37: test_mapping_recovery_core
+2/5 Test #37: test_mapping_recovery_core ..........   Passed    0.41 sec
+    Start 38: test_mapping_recovery_observation
+3/5 Test #38: test_mapping_recovery_observation ...   Passed    0.31 sec
+    Start 39: test_mapping_recovery_initializer
+4/5 Test #39: test_mapping_recovery_initializer ...   Passed    0.32 sec
+    Start 40: test_mapping_recovery_process
+5/5 Test #40: test_mapping_recovery_process .......   Passed   48.49 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Label Time Summary:
+gtest    =  49.70 sec*proc (5 tests)
+
+Total Test time (real) =  49.71 sec

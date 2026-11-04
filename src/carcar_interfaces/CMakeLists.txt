@@ -11,6 +11,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/IndicatorCommand.msg"
+  "msg/InspectionRuntimeState.msg"
+  "srv/InspectionRuntime.srv"
   "srv/SetMotionHold.srv"
   "srv/SetCameraServo.srv"
   DEPENDENCIES builtin_interfaces

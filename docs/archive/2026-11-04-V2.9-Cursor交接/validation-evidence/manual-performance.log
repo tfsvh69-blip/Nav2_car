@@ -1,0 +1,24 @@
+Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 7 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 7 tests from ManualMotion
+[ RUN      ] ManualMotion.CoversForwardReverseAndTurningWithFreshFullObservation
+[       OK ] ManualMotion.CoversForwardReverseAndTurningWithFreshFullObservation (1 ms)
+[ RUN      ] ManualMotion.MissingDirectionAndBrakingObstacleCannotBeAssumedClear
+[       OK ] ManualMotion.MissingDirectionAndBrakingObstacleCannotBeAssumedClear (0 ms)
+[ RUN      ] ManualMotion.SideObstacleOutsideMovingEnvelopeDoesNotStopForward
+[       OK ] ManualMotion.SideObstacleOutsideMovingEnvelopeDoesNotStopForward (0 ms)
+[ RUN      ] ManualMotion.RefusesInvalidBoundsAndPreservesZeroStop
+[       OK ] ManualMotion.RefusesInvalidBoundsAndPreservesZeroStop (0 ms)
+[ RUN      ] ManualMotion.RecordedBlindDirectionsAreDiagnosedWithinBudgetAndSafeReverseIsPreserved
+现场缺束多帧重放 {"max_ms":0.178152,"p99_ms":0.112197,"samples":160}
+[       OK ] ManualMotion.RecordedBlindDirectionsAreDiagnosedWithinBudgetAndSafeReverseIsPreserved (25 ms)
+[ RUN      ] ManualMotion.ComplementaryFramesAndReversedAngularOrderPreserveCoverage
+[       OK ] ManualMotion.ComplementaryFramesAndReversedAngularOrderPreserveCoverage (0 ms)
+[ RUN      ] ManualMotion.TinyAngularResolutionCannotInventAnUnsupportedPoint
+[       OK ] ManualMotion.TinyAngularResolutionCannotInventAnUnsupportedPoint (0 ms)
+[----------] 7 tests from ManualMotion (26 ms total)
+
+[----------] Global test environment tear-down
+[==========] 7 tests from 1 test suite ran. (26 ms total)
+[  PASSED  ] 7 tests.

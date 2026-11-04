@@ -54,15 +54,20 @@ inline json validate_live_request(const std::string&action,const json&input){
   if(action=="set_tuning")allowed.insert("values");
   if(action=="set_handoff")allowed.insert("distance_m");
   if(action=="set_escape_enabled"||action=="set_wall_bypass")allowed.insert("enabled");
+  if(action=="set_escape_enabled")allowed.insert("supervised_trial");
   if(action=="set_walls")allowed.insert("walls");
   if(action=="set_walls"||action=="confirm_walls"){allowed.insert("wall_revision");allowed.insert("navigation_generation");}
   for(auto it=input.begin();it!=input.end();++it)if(!allowed.count(it.key()))throw std::invalid_argument("在线操作包含未支持字段："+it.key());
   json result=json::object();
   if(action=="set_tuning")result["values"]=validate_tuning_values(input.at("values"));
-  if(action=="set_handoff")result["distance_m"]=live_number(input.at("distance_m"),.15,.8,"distance_m");
+  if(action=="set_handoff")result["distance_m"]=live_number(input.at("distance_m"),.15,1.5,"distance_m");
   if(action=="set_escape_enabled"||action=="set_wall_bypass"){
     if(!input.at("enabled").is_boolean())throw std::invalid_argument("enabled必须为布尔值");
     result["enabled"]=input["enabled"];
+  }
+  if(action=="set_escape_enabled"&&input.contains("supervised_trial")){
+    if(!input["supervised_trial"].is_boolean())throw std::invalid_argument("supervised_trial必须为布尔值");
+    result["supervised_trial"]=input["supervised_trial"];
   }
   if(action=="set_walls"||action=="confirm_walls")for(const auto*key:{"wall_revision","navigation_generation"}){
     if(!input.at(key).is_number_unsigned())throw std::invalid_argument(std::string(key)+"必须为非负整数");
@@ -105,7 +110,7 @@ inline json validate_tuning_defaults(const json&value){
   if(!value.is_object()||value.size()!=3||!value.contains("version")||!value["version"].is_number_integer()||value["version"]!=1||
      !value.contains("values")||!value.contains("handoff_distance_m"))throw std::invalid_argument("默认配置版本或字段不兼容，保留原文件并停止加载");
   return {{"version",1},{"values",validate_tuning_values(value["values"],true)},
-    {"handoff_distance_m",live_number(value["handoff_distance_m"],.15,.8,"handoff_distance_m")}};
+    {"handoff_distance_m",live_number(value["handoff_distance_m"],.15,1.5,"handoff_distance_m")}};
 }
 inline json baseline_live_defaults(){return {{"version",1},{"values",baseline_tuning_values()},{"handoff_distance_m",.25}};}
 // 不存在使用基线；损坏、不兼容、超大或链接文件均拒绝，不能静默回退后启动硬件。

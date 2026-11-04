@@ -14,8 +14,12 @@ TEST_F(LiveSettings, MissingFileUsesBaselineWithoutCreatingAnything){
   EXPECT_FALSE(std::filesystem::exists(path.parent_path()));
 }
 TEST_F(LiveSettings, SaveAndReloadOnlyCompleteCostsAndHandoff){
-  auto config=baseline_live_defaults();config["values"]["global_inflation_radius"]=.65;config["handoff_distance_m"]=.45;
+  auto config=baseline_live_defaults();config["values"]["global_inflation_radius"]=.65;config["handoff_distance_m"]=1.5;
   save_tuning_defaults(path,config);
+  EXPECT_EQ(load_tuning_defaults(path),config);
+  auto invalid=config;invalid["handoff_distance_m"]=1.51;
+  EXPECT_THROW(validate_tuning_defaults(invalid),std::exception);
+  EXPECT_THROW(save_tuning_defaults(path,invalid),std::exception);
   EXPECT_EQ(load_tuning_defaults(path),config);
   struct stat metadata{};
   ASSERT_EQ(::stat(path.c_str(),&metadata),0);
@@ -84,6 +88,8 @@ TEST_F(LiveSettings, RequestTypesAndFieldsAreStrict){
   EXPECT_EQ(validate_live_request("set_tuning",{{"values",{{"global_inflation_radius",.6}}}})["values"]["global_inflation_radius"],.6);
   EXPECT_THROW(validate_live_request("set_tuning",{{"values",{{"global_inflation_radius",.6}}},{"speed_mps",.18}}),std::exception);
   EXPECT_THROW(validate_live_request("set_escape_enabled",{{"enabled",1}}),std::exception);
+  EXPECT_EQ(validate_live_request("set_handoff",{{"distance_m",1.5}})["distance_m"],1.5);
+  EXPECT_THROW(validate_live_request("set_handoff",{{"distance_m",1.51}}),std::exception);
   EXPECT_THROW(validate_live_request("set_handoff",{{"distance_m",.1}}),std::exception);
   EXPECT_THROW(validate_live_request("set_handoff",{{"distance_m",.3},{"walls",json::array()}}),std::exception);
   const auto input=json::parse(R"({"walls":[{"id":"line","points":[[0,0],[1,0]]}],"wall_revision":0,"navigation_generation":2})");
@@ -101,4 +107,11 @@ TEST_F(LiveSettings, OnlineCostsDoNotStopAndWallsDoStopManualInput){
   for(const auto&action:{"set_tuning","restore_tuning","save_tuning","set_handoff","set_escape_enabled"})EXPECT_TRUE(online_live_action(action));
   for(const auto&action:{"set_walls","confirm_walls","set_wall_bypass"}){EXPECT_TRUE(live_action(action));
   EXPECT_FALSE(online_live_action(action));}
+}
+
+TEST_F(LiveSettings, SupervisedTrialIsExplicitBooleanAndOnlyForEscape){
+ const json request={{"enabled",true},{"supervised_trial",true}};
+ EXPECT_EQ(validate_live_request("set_escape_enabled",request).at("supervised_trial"),true);
+ EXPECT_THROW(validate_live_request("set_escape_enabled",{{"enabled",true},{"supervised_trial","true"}}),std::exception);
+ EXPECT_THROW(validate_live_request("set_wall_bypass",request),std::exception);
 }

@@ -1,5 +1,18 @@
 # carcar_inspection
 
+**2026-11-03 APP-002-R1：常驻工作台与三点拍照闭环。** 本次在独立候选中继承已发布巡检UI及正式8080源码。普通网页监督唯一的8081控制台；配置模式没有速度、舵机、声光输出和控制器调参。准备车辆显式启动纯激光+RGB组合，保持停车等待本次定位；结束先取消、停稳，再退出硬件，点位和相册继续可读。软件测试与发布结果以项目测试记录同编号为准，完整实车验收由现场操作者发起。
+
+- 地图规划可编辑坐标、车头朝向和85°～160°俯仰目标，只保存草稿；现场试拍确认才置`verified`。现场模式可直接使用遥控后的位置，不要求伪造导航到达记录。`verified`表示现场新画面确认，不代表重复定位精度已经验收。
+- 恢复行驶角度沿用逐步调角与新帧保护；成功启用遥控时废弃旧示教确认，允许继续录入下一点。命令140.5°/板端94档不代表实体反馈。
+- 巡检独立的`navigation_speed_envelope.yaml`统一Nav2、DWB及应用复核为0.10米/0.15弧度；原建图配置不变。继续使用Rotation Shim+DWB，不移植建图的位置-only控制器。
+- 正式任务继续使用现有`run.status`，页面另按真实照片完整性显示全部完成、部分完成或零照片。程序重启不恢复运动；正式任务关闭网页继续，遥控和示教失联停止。
+- 新接口`/api/vehicle/prepare`、`/api/vehicle/end`绑定当前会话和请求编号；`vehicle_runtime`公开准备/定位/退出/故障状态。车端固定服务`/inspection/runtime/control`及状态/心跳带运行代次，网页不能传Launch或任意文件路径。旧独立入口和`start_console=true`默认值保留。
+- 已结束轮次可通过`/api/runs/<id>/archive.zip`下载正式原图和`manifest.json`，参考照片仍单独查看。先校验原图SHA-256；缺失、损坏、超128MiB或不足20GiB预留空间则明确拒绝，不删原图。归档使用独立HTTP工作线程，不阻塞状态和取消接口。
+- 唯一业务所有者由数据目录`.inspection.lock`保护；第二实例在数据库打开前拒绝，不将当前任务误标中断。接口新增不迁移旧JSON或数据库表。
+
+复用依据：ROS 2 Humble Nav2 1.1.20、BehaviorTree.CPP 3.8.7及现有任务编排；[官方PhotoAtWaypoint](https://raw.githubusercontent.com/ros-navigation/navigation2/humble/nav2_waypoint_follower/plugins/photo_at_waypoint.cpp)只提供到点采集接口，本车保留既有停车/调角/新帧联锁。归档新增构建依赖本机已有`libzip-dev 1.7.3`，兼容Ubuntu22.04；[libzip采用BSD-3-Clause](https://libzip.org/license/)，不升级系统依赖；相较另装libarchive，直接复用已安装ZIP库更小。来源及完整许可证保存在包内`LIBZIP-COPYRIGHT.txt`。
+
+
 **2026-10-27 NAV-018：**新增纯激光实验入口 `inspection_lidar.launch.xml`。它关闭深度导航，定位与代价图使用 `/scan/filtered` 和 `nav2_lidar_experimental.yaml`；实机近场再经 Collision Monitor 输出 `/cmd_vel`。默认不启硬件，启动本身不下发目标。启用已发布地图后停在 `WAITING_LOCALIZATION`，须提交本次新初值并等到其后的新 AMCL 结果。旧 `inspection_robot.launch.xml` 的深度默认保留。操作与回滚见[手册39.5](../../docs/操作手册.md#nav-018-operation)。
 
 **2026-10-25 APP-001-R12追加：**本次真实目标已进入Nav2，因起点落在致命障碍区而规划失败；用户确认提交的初值与实物车位不符，须重新定位。主录入地图漏画代价图／路径的问题已修复，网页6项和控制台13项（含实际canvas像素与四层开关检查）通过，静态资源已更新，硬件未重启、仍停车保持。当前以本段为准，下方R11是启动时快照；实物单点与位置／舵机标定尚未通过。见[手册35.10](../../docs/操作手册.md#app-001-r12-operation)及[证据](../../docs/archive/2026-10-25-网页单点失败与图层修复/README.md)。

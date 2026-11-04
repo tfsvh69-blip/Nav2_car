@@ -28,6 +28,8 @@ struct HttpServer::Impl {
   asio::executor_work_guard<asio::io_context::executor_type> work{asio::make_work_guard(io)};
   // 只有一个HTTP工作线程，保持原接口串行语义；磁盘/JSON工作不占控制事件循环。
   asio::thread_pool http_worker{1};
+  // 归档独立排队，不能阻塞状态、暂停及取消请求。
+  asio::thread_pool archive_worker{1};
   Handler handler; Control control; std::thread thread;
   ControlPolicy control_policy;
   // 只在io线程上增删；每个连接继续独立管理写队列、compact和RTC状态。
@@ -109,8 +111,7 @@ struct HttpServer::Impl {
       // 接通或回退都不发停车。运动仍由门控按签发后300ms截止；这里停车会把使能打成来回跳动。
       rtc_active=active;
       if(!active)++rtc_generation;
-      {std::lock_guard<std::mutex> lock(owner.stats_mutex);
-        owner.stats["control_transport"]=active?"webrtc_udp":"websocket";}
+      // 聚合连接状态只由update_connections更新，不能被单个连接短暂覆盖。
       owner.update_connections();
       signal({{"rtc_status",active?"active":"fallback"},{"reason",why}});
       if(!active&&rtc){rtc->close();rtc.reset();}
@@ -152,7 +153,7 @@ struct HttpServer::Impl {
       {std::lock_guard<std::mutex> lock(owner.stats_mutex);owner.stats["tcp_sample_valid"]=valid;
         owner.stats["ws_last_rx_age_ms"]=wire_rx?(steady()-wire_rx)*1000:-1;
         owner.stats["ws_pings_received"]=pings_received;owner.stats["ws_pongs_received"]=pongs_received;
-        owner.stats["rtc"]=rtc_stats;owner.stats["control_transport"]=rtc_active?"webrtc_udp":"websocket";
+        owner.stats["rtc"]=rtc_stats;
         owner.stats["tcp_send_queue_bytes"]=queued;owner.stats["tcp_notsent_bytes"]=not_sent;
         if(valid){owner.stats["tcp_rtt_ms"]=info.tcpi_rtt/1000.0;owner.stats["tcp_unacked"]=info.tcpi_unacked;
           owner.stats["tcp_retransmits"]=info.tcpi_total_retrans;}}
@@ -174,8 +175,8 @@ struct HttpServer::Impl {
       else if(error)reason="transport_error";
       const auto peer_reason=stream.reason();
       rtc_stats["active"]=false;rtc_stats["buffered_bytes"]=0;rtc_stats["reason"]=reason;
-      {std::lock_guard<std::mutex> lock(owner.stats_mutex);owner.stats["connected"]=false;
-        owner.stats["control_transport"]="disconnected";owner.stats["rtc"]=std::move(rtc_stats);
+      {std::lock_guard<std::mutex> lock(owner.stats_mutex);
+        owner.stats["rtc"]=std::move(rtc_stats);
         owner.stats["tcp_sample_valid"]=false;
         owner.stats["disconnects"]=owner.stats.value("disconnects",uint64_t{0})+1;
         owner.stats["last_disconnect"]={{"reason",reason},{"stage",stage},{"error_value",error.value()},
@@ -322,10 +323,15 @@ struct HttpServer::Impl {
       const auto console = std::string(request["X-Mapping-Console"]);
       std::string host; unsigned short port;
       {std::lock_guard<std::mutex> lock(owner.stats_mutex); host = owner.inspect_host; port = owner.inspect_port;}
-      asio::post(owner.http_worker, [self = shared_from_this(), method, upstream_target, body, content_type, console, host, port] {
+      asio::post(upstream_target.find("/archive.zip")!=std::string::npos?owner.archive_worker:owner.http_worker, [self = shared_from_this(), method, upstream_target, body, content_type, console, host, port] {
         HttpResponse result{502, "text/plain; charset=utf-8", {}, {}};
         const std::string unavailable = "巡检页面未启动";
         result.body.assign(unavailable.begin(), unavailable.end());
+        if(upstream_target=="/") {
+          result.type="text/html; charset=utf-8";
+          const std::string page="<!doctype html><html lang='zh-CN'><meta charset='utf-8'><meta name='viewport' content='width=device-width'><meta http-equiv='refresh' content='3'><title>巡检工作台恢复中</title><body style='font-family:sans-serif;max-width:40em;margin:10vh auto;padding:24px'><h1>巡检工作台正在恢复</h1><p>巡检页面未启动或暂时未响应，车辆未因打开页面而启动。</p><p>页面会自动重试。持续出现时请检查巡检控制台日志。</p><a href='/'>返回建图工作台</a></body></html>";
+          result.body.assign(page.begin(),page.end());
+        }
         try {
           asio::io_context local;
           beast::tcp_stream upstream(local);
@@ -340,13 +346,15 @@ struct HttpServer::Impl {
           forwarded.prepare_payload();
           http::write(upstream, forwarded);
           beast::flat_buffer storage;
-          http::response<http::vector_body<unsigned char>> received;
-          http::read(upstream, storage, received);
+          http::response_parser<http::vector_body<unsigned char>> response_parser;
+          response_parser.body_limit(upstream_target.find("/archive.zip")!=std::string::npos?129ULL*1024*1024:8ULL*1024*1024);
+          http::read(upstream, storage, response_parser);
+          auto received=response_parser.release();
           result.status = received.result_int();
           result.type = std::string(received[http::field::content_type]);
           if (result.type.empty()) result.type = "application/octet-stream";
           result.body = std::move(received.body());
-          for (const auto name : {"X-Frame-Sequence", "X-Source-Stamp", "X-Map-Meta", "X-Navigation-Layer"})
+          for (const auto name : {"X-Frame-Sequence", "X-Source-Stamp", "X-Map-Meta", "X-Navigation-Layer", "Content-Disposition"})
             if (received.find(name) != received.end()) result.headers[name] = std::string(received[name]);
         } catch (const std::exception &) {}
         asio::post(self->owner.io, [self, result = std::move(result)]() mutable {self->reply(std::move(result));});
@@ -426,7 +434,7 @@ struct HttpServer::Impl {
         if (!same_origin || (request.method() == http::verb::post && request["X-Mapping-Console"] != "1"))
           return self->reply({403, "text/plain", {'d','e','n','i','e','d'}, {}});
         HttpRequest input{std::string(request.method_string()),std::string(request.target()),request.body()};
-        asio::post(self->owner.http_worker,[self,input=std::move(input)]{
+        asio::post(input.target.find("/archive.zip")!=std::string::npos?self->owner.archive_worker:self->owner.http_worker,[self,input=std::move(input)]{
           HttpResponse response;
           try{response=self->owner.handler(input);}
           catch(const std::exception & error){auto text=json{{"error",error.what()}}.dump();
@@ -444,7 +452,7 @@ struct HttpServer::Impl {
       response->set("Content-Security-Policy", "default-src 'self'; img-src 'self' blob:; connect-src 'self'; style-src 'self'; script-src 'self'; frame-ancestors 'none'");
       for (const auto & field : value.headers) response->set(field.first, field.second);
       response->body() = std::move(value.body); response->keep_alive(keep_alive); response->prepare_payload();
-      stream.expires_after(std::chrono::seconds(3));
+      stream.expires_after(std::chrono::seconds(value.type=="application/zip"?120:3));
       http::async_write(stream, *response, [self = shared_from_this()](beast::error_code ec, std::size_t) {
         if(!ec&&self->keep_alive){self->response.reset();self->read();return;}
         self->stream.socket().shutdown(tcp::socket::shutdown_send, ec);
@@ -482,7 +490,7 @@ struct HttpServer::Impl {
       for (auto & connection : connections) if (auto client = connection.lock()) client->stream.socket().close(ec);
       closed.set_value();
     });
-    done.wait();http_worker.join();work.reset();io.stop(); if (thread.joinable()) thread.join();
+    done.wait();http_worker.join();archive_worker.join();work.reset();io.stop(); if (thread.joinable()) thread.join();
     // 清理未完成 handlers 时 owner 仍然存在。
     io.restart(); io.run();
   }

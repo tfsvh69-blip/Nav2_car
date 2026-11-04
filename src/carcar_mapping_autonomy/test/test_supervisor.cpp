@@ -39,6 +39,7 @@ protected:
   double pose_x=0,pose_y=0,odom_y=0;uint64_t loop_generation=0,slam_sequence=1,loop_rejections=0;
   bool slam_startup_closed=true;double snapshot_interval_seconds=30.0;
   bool freeze_nav_pose=false,session_ready=true,publish_session=true,storage_ready=true,near_obstacle=false;builtin_interfaces::msg::Time nav_pose_stamp;
+  Json session_fields=Json::object();
   bool succeed_return=false,stall_plan=false,stall_after_failures=false,unknown_start=false,automatic_on_boot=false,continuous_mode=false;
   bool succeed_any_return=false,fake_return_success=false,origin_obstacle=false,fill_return_neighborhood=false;
   bool fast_selection_timeout=false,restricted_manual_enabled=false,ack_recovery_cancel=true,force_slam_admission_open=false;
@@ -176,6 +177,11 @@ protected:
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   template<class F>bool until(F f,double timeout){const auto end=std::chrono::steady_clock::now()+std::chrono::duration<double>(timeout);while(std::chrono::steady_clock::now()<end){rclcpp::spin_some(n);if(f())return true;std::this_thread::sleep_for(std::chrono::milliseconds(5));}return f();}
+  Json session_message()const{
+    Json value={{"ready",session_ready},{"manual_owner_id",manual_owner_id},{"storage",{{"start_allowed",storage_ready},{"reason",storage_ready?"":"磁盘余量不足2 GiB"}}}};
+    // 允许从真实会话输入覆盖字段，核对独立地图资格和旧手动资格的闭环。
+    value.update(session_fields);return value;
+  }
   void feed(){
     const auto now=n->now();
     geometry_msgs::msg::TransformStamped t;t.header.stamp=now;t.header.frame_id="map";t.child_frame_id="odom";t.transform.rotation.w=1;tf->sendTransform(t);t.header.frame_id="odom";t.child_frame_id="base_footprint";t.transform.translation.x=odom_x;t.transform.translation.y=odom_y;tf->sendTransform(t);
@@ -214,7 +220,7 @@ protected:
     geometry_msgs::msg::PoseWithCovarianceStamped p;p.header.frame_id="map";p.header.stamp=now;p.pose.pose.orientation.w=1;p.pose.pose.position.x=pose_x;p.pose.pose.position.y=pose_y;if(feed_pose)pose->publish(p);
     if(!freeze_nav_pose)nav_pose_stamp=now;
     geometry_msgs::msg::PolygonStamped fp;fp.header.stamp=nav_pose_stamp;fp.polygon.points.resize(4);fp.header.frame_id="odom";local_pose->publish(fp);fp.header.frame_id="map";global_pose->publish(fp);
-    std_msgs::msg::String j;j.data=Json{{"admission_enabled",force_slam_admission_open||!recovery_state.value("gate_write",false)},{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"startup_closed",slam_startup_closed},{"loop_generation",loop_generation},{"loop_active",loop_active},{"loop_guard",{{"rejections",loop_rejections},{"rolled_back",loop_rejections>0}}}}.dump();slam->publish(j);j.data=Json{{"ready",session_ready},{"manual_owner_id",manual_owner_id},{"storage",{{"start_allowed",storage_ready},{"reason",storage_ready?"":"磁盘余量不足2 GiB"}}}}.dump();if(publish_session)ready->publish(j);
+    std_msgs::msg::String j;j.data=Json{{"admission_enabled",force_slam_admission_open||!recovery_state.value("gate_write",false)},{"sequence",slam_sequence},{"accepted",true},{"accepted_stamp_ns",now.nanoseconds()},{"startup_closed",slam_startup_closed},{"loop_generation",loop_generation},{"loop_active",loop_active},{"loop_guard",{{"rejections",loop_rejections},{"rolled_back",loop_rejections>0}}}}.dump();slam->publish(j);j.data=session_message().dump();if(publish_session)ready->publish(j);
     if(recovery_pub&&!task_id.empty()){recovery_state["task_id"]=task_id;j.data=recovery_state.dump();recovery_pub->publish(j);}
     geometry_msgs::msg::Twist v;v.linear.x=.06;nav_velocity->publish(v);
     if(active&&active->is_canceling()&&ack_cancel){active->canceled(std::make_shared<Nav::Result>());active.reset();}

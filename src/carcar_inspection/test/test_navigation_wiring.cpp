@@ -1,6 +1,7 @@
 // 只提取实际巡检入口中的导航组，在隔离域运行；不启动任何底盘/雷达/相机驱动。
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/parameter_client.hpp>
 #include <tinyxml2.h>
 #include <spawn.h>
 #include <sys/wait.h>
@@ -94,6 +95,10 @@ TEST(NavigationWiring, ActualInspectionGroupKeepsRawSmoothedAndGatedVelocitySepa
          subscribers(node,"/inspection/navigation/cmd_vel").count("nav_event_logger")))break;
       std::this_thread::sleep_for(100ms);
     }
+    auto parameters=std::make_shared<rclcpp::SyncParametersClient>(node,"controller_server");
+    ASSERT_TRUE(parameters->wait_for_service(5s));
+    const auto tolerances=parameters->get_parameters({"general_goal_checker.xy_goal_tolerance","general_goal_checker.yaw_goal_tolerance","FollowPath.xy_goal_tolerance"},5s);
+    ASSERT_EQ(tolerances.size(),3U);EXPECT_DOUBLE_EQ(tolerances[0].as_double(),0.10);EXPECT_DOUBLE_EQ(tolerances[1].as_double(),0.15);EXPECT_DOUBLE_EQ(tolerances[2].as_double(),0.10);
     EXPECT_EQ(publishers(node,"/inspection/navigation/cmd_vel"),std::set<std::string>{"navigation_motion_gate"})
       <<"原始速度与最终门控输出合并，会引入零速竞争和反馈回路";
     EXPECT_EQ(publishers(node,"/cmd_vel_nav"),(std::set<std::string>{"controller_server","behavior_server"}));

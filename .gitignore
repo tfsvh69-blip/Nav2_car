@@ -14,3 +14,10 @@ CMakeCache.txt
 src/vendor/
 /*.log
 /symlink_install_manifest.txt
+
+# 本机部署、备份与构建缓存不纳入源码交接。
+/evidence/
+*.backup
+*.backup.*
+node_modules/
+dist/

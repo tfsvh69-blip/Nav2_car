@@ -22,7 +22,7 @@ public:
     set_=node_.create_client<Set>("/controller_server/set_parameters_atomically");
     get_=node_.create_client<Get>("/controller_server/get_parameters");
   }
-  static bool valid(double value) {return std::isfinite(value)&&value>=.05&&value<=.18;}
+  static bool valid(double value) {return std::isfinite(value)&&value>=.05&&value<=.20;}
   bool pending() const {return phase_=="SETTING"||phase_=="READING";}
   double limit() const {return cap_;}
   bool reject(const std::string & request_id,const std::string & reason) {
@@ -35,7 +35,7 @@ public:
   }
   bool select(double value,double now,const std::string & request_id) {
     if(pending())return false;
-    if(!valid(value))return reject(request_id,"网页调速请求被车端拒绝：速度须在0.05～0.18m/s之间；速度参数未修改。");
+    if(!valid(value))return reject(request_id,"网页调速请求被车端拒绝：速度须在0.05～0.20m/s之间；速度参数未修改。");
     requested_=value;request_id_=request_id;cap_=std::min(cap_,value);error_.clear();
     if(!set_->service_is_ready()||!get_->service_is_ready()) {
       fail("controller_server参数接口未就绪");return false;

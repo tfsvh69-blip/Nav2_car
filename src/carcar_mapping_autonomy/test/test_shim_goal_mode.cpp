@@ -17,7 +17,7 @@ TEST_F(ShimGoalMode,PositionGoalIgnoresTerminalYawWhileReturnCheckerStillRequire
   rclcpp::NodeOptions options;options.automatically_declare_parameters_from_overrides(true).parameter_overrides({
     {"FollowPath.primary_controller",std::string("nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController")},
     {"FollowPath.rotate_to_goal_heading",true},{"FollowPath.use_rotate_to_heading",false},
-    {"FollowPath.desired_linear_vel",.1},{"FollowPath.rotate_to_heading_angular_vel",.22},{"FollowPath.max_angular_accel",3.2},
+    {"FollowPath.desired_linear_vel",.1},{"FollowPath.rotate_to_heading_angular_vel",.28},{"FollowPath.max_angular_accel",3.2},
     {"FollowPath.angular_dist_threshold",.5},{"FollowPath.angular_disengage_threshold",.1},{"FollowPath.forward_sampling_distance",.3},
     {"position.xy_goal_tolerance",.15},{"simple.xy_goal_tolerance",.15},{"simple.yaw_goal_tolerance",.1},{"controller_frequency",10.}});
   auto node=std::make_shared<rclcpp_lifecycle::LifecycleNode>("goal_mode_controller",options);
@@ -35,6 +35,7 @@ TEST_F(ShimGoalMode,PositionGoalIgnoresTerminalYawWhileReturnCheckerStillRequire
   EXPECT_TRUE(position.isGoalReached(query.pose,path.poses.back().pose,stopped));
   controller.setPlan(path);query.header.stamp=node->now();
   const auto returning=controller.computeVelocityCommands(query,stopped,&simple).twist;
+  EXPECT_LE(std::abs(returning.angular.z),.28);
   EXPECT_GT(returning.angular.z,.01)<<"普通返程仍须调整到起点朝向";
   EXPECT_FALSE(simple.isGoalReached(query.pose,path.poses.back().pose,stopped));
   controller.deactivate();controller.cleanup();local->cleanup();

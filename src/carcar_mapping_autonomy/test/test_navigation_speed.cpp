@@ -75,7 +75,7 @@ TEST_F(MappingNavigationSpeedTest,AlreadyArrivedResponseAfterDeadlineCannotRaise
   speed->tick(now+1.51);EXPECT_EQ(speed->state()["phase"],"FAILED");EXPECT_DOUBLE_EQ(speed->limit(),.1);
 }
 TEST_F(MappingNavigationSpeedTest,DuplicatePendingAndInvalidValuesCannotChangeRequest) {
-  for(double invalid:{0.0,.049,.181,std::numeric_limits<double>::infinity(),std::numeric_limits<double>::quiet_NaN()})
+  for(double invalid:{0.0,.049,.201,std::numeric_limits<double>::infinity(),std::numeric_limits<double>::quiet_NaN()})
     EXPECT_FALSE(speed->select(invalid,now,"invalid"));
   ASSERT_TRUE(speed->select(.12,now,"first"));EXPECT_FALSE(speed->select(.18,now,"second"));
   EXPECT_EQ(speed->state()["request_id"],"first");finish();EXPECT_DOUBLE_EQ(speed->limit(),.12);
@@ -90,4 +90,10 @@ TEST_F(MappingNavigationSpeedTest,TaskRejectionCannotOverwritePendingTransaction
   EXPECT_FALSE(speed->reject("late-phase-rejection","当前正在停车"));
   EXPECT_EQ(speed->state()["request_id"],"first");EXPECT_TRUE(speed->pending());
   finish();EXPECT_DOUBLE_EQ(speed->limit(),.18);
+}
+
+TEST_F(MappingNavigationSpeedTest,PointTwentyRequiresReadbackAndRejectsHigher){
+ ASSERT_TRUE(speed->select(.20,now,"new-upper-limit"));EXPECT_DOUBLE_EQ(speed->limit(),.1);
+ finish();EXPECT_DOUBLE_EQ(speed->limit(),.20);
+ EXPECT_FALSE(speed->select(.201,now,"too-high"));EXPECT_DOUBLE_EQ(speed->limit(),.20);
 }

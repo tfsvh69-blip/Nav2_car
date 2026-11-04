@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include "carcar_mapping_autonomy/retreat_planner.hpp"
+#include "carcar_mapping_autonomy/manual_coverage.hpp"
 
 namespace carcar_mapping_autonomy {
 struct ManualMotionCheck {bool allowed=false;std::string reason;};
@@ -55,6 +56,42 @@ inline ManualMotionCheck manual_motion_check(const std::vector<RetreatScan>&scan
     remaining=d::halfplane(remaining,body[edge],body[(edge+1)%4],true);
   }
   if(uncovered.empty())return {true,{}};
+  // 先以真实盲区反例结束不可能完成的覆盖证明；此捷径只拒绝，不产生新放行路径。
+  const d::Rectangle current_body{-options.rear-options.margin,options.front+options.margin,
+    -options.half_width-options.margin,options.half_width+options.margin};
+  if(manual_detail::has_unobserved_witness(observations,region,current_body,uncovered))
+    return {false,"所选方向新增扫掠区存在原始激光缺束或盲区，保持停车"};
+  // 同一原点的连续有效束可先用保守内接宽三角形覆盖，减少逐束裁剪产生的碎片。
+  // 宽三角形半径取所有原三角形最小值，角跨度小于π/3；它严格位于原观测并集内。
+  for(const auto&observation:observations){
+    const auto&s=*observation.scan;const d::Point origin{observation.laser.x,observation.laser.y};
+    // 非常规大角度交回逐束审查，避免浮点精度破坏合并所需的连续角序。
+    if(std::abs(s.angle_min)>16*M_PI||std::abs(observation.laser.yaw)>16*M_PI)continue;
+    const double half=std::abs(s.angle_increment)/2+1e-7;double farthest=0;
+    for(const auto&p:rectangle)farthest=std::max(farthest,std::hypot(p.x-origin.x,p.y-origin.y));
+    if(farthest*std::sin(half)>options.margin/2)continue;
+    for(size_t i=0;i<s.ranges.size();){
+      if(std::chrono::steady_clock::now()-started>std::chrono::milliseconds(8))
+        return {false,"方向扫掠检查超过8毫秒预算，保持停车"};
+      size_t end=i;double radius=std::numeric_limits<double>::infinity();
+      for(;end<s.ranges.size()&&end-i<32&&(end-i)*std::abs(s.angle_increment)+2*half<M_PI/3;++end){
+        const double range=s.ranges[end];if(!std::isfinite(range)||range<s.range_min||range>=s.range_max)break;
+        radius=std::min(radius,std::min(range-1e-6,farthest+options.margin));
+      }
+      if(end-i>=2&&radius>1e-8){
+        const double first=observation.laser.yaw+s.angle_min+i*double(s.angle_increment);
+        const double last=observation.laser.yaw+s.angle_min+(end-1)*double(s.angle_increment);
+        const double left=std::min(first,last)-half,right=std::max(first,last)+half;
+        radius-=1e-8;const d::Point triangle[]={origin,
+          {origin.x+radius*std::cos(left),origin.y+radius*std::sin(left)},
+          {origin.x+radius*std::cos(right),origin.y+radius*std::sin(right)}};
+        manual_detail::subtract_observed_triangle(uncovered,triangle);
+        if(uncovered.empty())return {true,{}};
+        if(uncovered.size()>1024)return {false,"方向观测过于碎片化，保持停车等待更完整激光"};
+      }
+      i=end>i?end:i+1;
+    }
+  }
   for(const auto&observation:observations){
     const auto&s=*observation.scan;const d::Point origin{observation.laser.x,observation.laser.y};
     const double half=std::abs(s.angle_increment)/2+1e-7;double farthest=0;
@@ -82,17 +119,7 @@ inline ManualMotionCheck manual_motion_check(const std::vector<RetreatScan>&scan
         std::min({triangle[0].y,triangle[1].y,triangle[2].y}),
         std::max({triangle[0].y,triangle[1].y,triangle[2].y})};
       if(!d::overlaps(triangle_bounds,region))continue;
-      std::vector<d::Polygon> next;
-      for(const auto&piece:uncovered){
-        if(!d::overlaps(triangle_bounds,d::bounds(piece))){next.push_back(piece);continue;}
-        auto remaining=piece;
-        for(size_t edge=0;edge<3&&!remaining.empty();++edge){
-          auto outside=d::halfplane(remaining,triangle[edge],triangle[(edge+1)%3],false);
-          if(d::area(outside)>1e-12)next.push_back(std::move(outside));
-          remaining=d::halfplane(remaining,triangle[edge],triangle[(edge+1)%3],true);
-        }
-      }
-      uncovered=std::move(next);if(uncovered.empty())return {true,{}};
+      manual_detail::subtract_observed_triangle(uncovered,triangle);if(uncovered.empty())return {true,{}};
       if(uncovered.size()>1024)return {false,"方向观测过于碎片化，保持停车等待更完整激光"};
     }
   }

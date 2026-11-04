@@ -120,10 +120,25 @@ public:
     s.free_conflict=free_samples?double(conflicts)/free_samples:1;
     s.cost=s.mean+.4*(1-s.coverage)+.5*s.free_conflict;return s;
   }
-  struct Verification{ReferenceScore score;double ambiguity_margin=0,global_margin=0;bool unique=false;size_t global_evaluations=0;};
+  struct Verification{ReferenceScore score;double ambiguity_margin=0,global_margin=0;bool unique=false,ambiguity_checked=false;size_t global_evaluations=0;};
+  static std::vector<std::string> verification_failure_reasons(const Verification&v){
+    std::vector<std::string> failed;
+    if(v.score.points<ReferenceScore::minimum_points)failed.push_back("有效匹配点不足50点");
+    if(v.score.coverage<ReferenceScore::minimum_coverage)failed.push_back("参考图覆盖不足80%");
+    if(v.score.hit_ratio<ReferenceScore::minimum_hit_ratio)failed.push_back("激光重合不足70%");
+    if(v.score.mean>ReferenceScore::maximum_mean)failed.push_back("平均残差超过0.10米");
+    if(v.score.free_conflict>ReferenceScore::maximum_free_conflict)failed.push_back("自由区冲突超过8%");
+    // 基础评分不合格会提前返回；默认unique=false不能冒充已经发现了竞争位置。
+    if(v.ambiguity_checked&&!v.unique){
+      if(v.global_evaluations<24)failed.push_back("全图竞争位置样本不足，无法确认唯一车位");
+      else failed.push_back("多解竞争：参考图仍存在同样合理的位置，不能确认唯一车位");
+    }
+    return failed;
+  }
   Verification verify(const Pose&p,const std::vector<Ray>&rays)const{
     Verification v;v.score=score(p,rays);
     if(!v.score.acceptable())return v;
+    v.ambiguity_checked=true;
     double alternative=std::numeric_limits<double>::infinity();
     // 明确检查与候选显著不同的附近位置／朝向；重复走廊和镜像可拒绝。
     for(int iy=-5;iy<=5;++iy)for(int ix=-5;ix<=5;++ix)for(int ia=-4;ia<=4;++ia){
@@ -189,6 +204,17 @@ private:
   }
   nav_msgs::msg::OccupancyGrid map_;std::vector<float>distance_;
 };
+// 超时摘要只陈述本轮实际取得的候选与检查结果，不把尚未执行的检查写成失败。
+inline std::string recovery_verification_timeout_reason(const Json&verification,size_t verified_frames){
+  std::string reason="AMCL旁路验证超时：已验证 "+std::to_string(verified_frames)+"/6 帧";
+  if(verification.empty())return reason+"；未取得可验证的AMCL候选，请检查候选、扫描时间对齐及参考图；保持停车";
+  const auto failed=verification.find("failed_checks");
+  if(failed!=verification.end()&&failed->is_array())for(const auto&check:*failed)
+    if(check.is_string())reason+="；"+check.get<std::string>();
+  if(!verification.value("ambiguity_checked",false))reason+="；多解检查尚未执行，先满足基础几何门槛";
+  else if(verification.value("unique",false))reason+="；单帧几何和多解检查已通过，尚未满足连续六帧及至少1秒的验证要求";
+  return reason+"；保持停车";
+}
 class MultiFrameVerification {
 public:
   size_t count=0;int64_t last_stamp=0;double first_time=0;

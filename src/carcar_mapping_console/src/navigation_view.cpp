@@ -25,21 +25,32 @@ std::array<double, 2> apply(double x, double y, const Pose2 & pose) {
 }
 
 void NavigationView::grid(size_t index, const nav_msgs::msg::OccupancyGrid & value, double at) {
-  if (index >= 2 || !value.info.width || !value.info.height || !std::isfinite(value.info.resolution) || value.info.resolution <= 0 ||
+  if (index >= 4 || !value.info.width || !value.info.height || !std::isfinite(value.info.resolution) || value.info.resolution <= 0 ||
     static_cast<uint64_t>(value.info.width) * value.info.height > 4000000 ||
     value.data.size() != static_cast<size_t>(value.info.width) * value.info.height) return;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (grids_[index].received && at - grids_[index].at < 0.4) return;
+    if (index != 3 && grids_[index].received && at - grids_[index].at < 0.4) return;
   }
   cv::Mat pixels(value.info.height, value.info.width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
   for (uint32_t y = 0; y < value.info.height; ++y) for (uint32_t x = 0; x < value.info.width; ++x) {
     const auto cost = value.data[y * value.info.width + x];
     if (cost <= 0) continue;
     auto & pixel = pixels.at<cv::Vec4b>(value.info.height - 1 - y, x);
-    pixel = cost >= 99 ? cv::Vec4b(55, 45, 225, 210) : index == 0 ?
-      cv::Vec4b(210, 60, 135, static_cast<uint8_t>(45 + cost)) :
-      cv::Vec4b(25, 145, 245, static_cast<uint8_t>(45 + cost));
+    // 对齐 RViz Humble 的 costmap 色标；透明度沿用 navigation_lite.rviz。
+    // OpenCV 按 BGRA 存储，99 内切障碍与 100 致命／禁入必须分别显示。
+    const uint8_t alpha = index == 1 ? 140 : 102;
+    if (index == 3) {
+      // 静态禁入掩膜只作轻量斜纹，不覆盖真实障碍和软代价色标。
+      pixel = cv::Vec4b(30, 130, 190, (x + y) % 6 == 0 ? 100 : 12);
+      continue;
+    }
+    if (cost == 100) pixel = cv::Vec4b(255, 0, 255, alpha);
+    else if (cost == 99) pixel = cv::Vec4b(255, 255, 0, alpha);
+    else if (cost <= 98) {
+      const uint8_t red = 255 * cost / 100;
+      pixel = cv::Vec4b(255 - red, 0, red, alpha);
+    } else pixel = cv::Vec4b(0, 255, 0, alpha);  // 非法正值遵循 RViz 的绿色警示。
   }
   std::vector<unsigned char> encoded;
   if (!cv::imencode(".png", pixels, encoded, {cv::IMWRITE_PNG_COMPRESSION, 1})) return;
@@ -100,17 +111,17 @@ nlohmann::json NavigationView::path_info(const PathLayer & layer, tf2_ros::Buffe
 
 nlohmann::json NavigationView::snapshot(tf2_ros::Buffer & buffer, double at, double ros_time) const {
   std::lock_guard<std::mutex> lock(mutex_);
-  const char * grid_names[] = {"global_costmap", "local_costmap"};
+  const char * grid_names[] = {"global_costmap", "local_costmap", "obstacle_costmap", "keepout_mask"};
   const char * path_names[] = {"global_path", "local_path", "prediction"};
   nlohmann::json result;
-  for (size_t i = 0; i < 2; ++i) result[grid_names[i]] = grid_info(grids_[i], buffer, at, ros_time);
+  for (size_t i = 0; i < 4; ++i) result[grid_names[i]] = grid_info(grids_[i], buffer, at, ros_time);
   for (size_t i = 0; i < 3; ++i) result[path_names[i]] = path_info(paths_[i], buffer, at, ros_time);
   return result;
 }
 
 NavigationView::Image NavigationView::image(size_t index, tf2_ros::Buffer & buffer, double at, double ros_time) const {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (index >= 2) return {};
+  if (index >= 4) return {};
   return {grids_[index].png, grid_info(grids_[index], buffer, at, ros_time)};
 }
 }  // namespace carcar_mapping_console

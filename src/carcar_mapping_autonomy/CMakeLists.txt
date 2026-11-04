@@ -137,6 +137,7 @@ if(BUILD_TESTING)
   target_include_directories(test_manual_motion PRIVATE include)
   ament_target_dependencies(test_manual_motion sensor_msgs nav_msgs)
   target_link_libraries(test_manual_motion nlohmann_json::nlohmann_json)
+  target_compile_definitions(test_manual_motion PRIVATE MANUAL_SCAN_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/manual_scan_20261104.json")
   ament_add_gtest(test_loop_guard test/test_loop_guard.cpp)
   target_include_directories(test_loop_guard PRIVATE include)
   ament_target_dependencies(test_loop_guard slam_toolbox nav_msgs)
@@ -310,7 +311,7 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_continuous_supervisor rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs diagnostic_msgs)
   target_link_libraries(test_continuous_supervisor nlohmann_json::nlohmann_json)
   target_compile_definitions(test_continuous_supervisor PRIVATE AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>" SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
-  set_tests_properties(test_continuous_supervisor PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=224;ROS_LOCALHOST_ONLY=1")
+  set_tests_properties(test_continuous_supervisor PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=228;ROS_LOCALHOST_ONLY=1" RESOURCE_LOCK live_supervisor_domain_228)
   add_dependencies(test_continuous_supervisor mapping_autonomy test_slow_graph)
   ament_add_gtest(test_mapping_scan_pose test/test_scan_pose.cpp)
   target_include_directories(test_mapping_scan_pose PRIVATE include)
@@ -334,6 +335,11 @@ if(BUILD_TESTING)
   find_package(nav2_costmap_2d REQUIRED)
   find_package(nav2_velocity_smoother REQUIRED)
   ament_add_gtest(test_mapping_recovery_core test/test_recovery_core.cpp)
+  ament_add_gtest(test_mapping_recovery_observation test/test_recovery_observation.cpp)
+  target_include_directories(test_mapping_recovery_observation PRIVATE include)
+  target_compile_definitions(test_mapping_recovery_observation PRIVATE RECOVERY_OBSERVATION_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data")
+  ament_target_dependencies(test_mapping_recovery_observation nav_msgs sensor_msgs tf2)
+  target_link_libraries(test_mapping_recovery_observation nlohmann_json::nlohmann_json)
   target_include_directories(test_mapping_recovery_core PRIVATE include)
   ament_target_dependencies(test_mapping_recovery_core nav_msgs)
   target_link_libraries(test_mapping_recovery_core nlohmann_json::nlohmann_json OpenSSL::Crypto)
@@ -629,4 +635,69 @@ endif()
 
 # BT按库名装载；导出库目录使标准setup在全新进程中也能找到插件。
 ament_export_libraries(carcar_checked_path_bt_node carcar_mapping_rotation_shim carcar_subcell_smac_planner carcar_revision_inflation)
+
+# 只读显示出口不参与任何代价计算，使用独立库便于回退。
+add_library(carcar_display_costmap SHARED src/display_costmap_layer.cpp)
+target_include_directories(carcar_display_costmap PUBLIC include)
+ament_target_dependencies(carcar_display_costmap nav2_costmap_2d pluginlib rclcpp nav_msgs)
+pluginlib_export_plugin_description_file(nav2_costmap_2d display_costmap_plugin.xml)
+install(TARGETS carcar_display_costmap LIBRARY DESTINATION lib)
+if(BUILD_TESTING)
+  ament_add_gtest(test_display_costmap test/test_display_costmap.cpp)
+  target_include_directories(test_display_costmap PRIVATE include)
+  ament_target_dependencies(test_display_costmap nav2_costmap_2d nav2_util pluginlib rclcpp nav_msgs tf2_ros)
+  target_link_libraries(test_display_costmap carcar_display_costmap)
+  set_tests_properties(test_display_costmap PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=224;ROS_LOCALHOST_ONLY=1")
+endif()
+
+if(BUILD_TESTING)
+  ament_add_gtest(test_planning_margin test/test_planning_margin.cpp)
+  target_include_directories(test_planning_margin PRIVATE include)
+  ament_target_dependencies(test_planning_margin nav_msgs)
+  ament_add_gtest(test_clearance_corridors test/test_clearance_corridors.cpp TIMEOUT 60)
+  target_include_directories(test_clearance_corridors PRIVATE include)
+  target_link_libraries(test_clearance_corridors carcar_subcell_smac_planner)
+  ament_target_dependencies(test_clearance_corridors nav2_smac_planner nav2_costmap_2d nav2_controller nav2_regulated_pure_pursuit_controller nav2_rotation_shim_controller rclcpp)
+  target_compile_definitions(test_clearance_corridors PRIVATE
+    SUBCELL_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/data/stop_subcell_20261031.json"
+    RPP_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_rpp.yaml"
+    SHIM_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/config/controller_shim_rpp.yaml")
+  set_tests_properties(test_clearance_corridors PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=213;ROS_LOCALHOST_ONLY=1" RESOURCE_LOCK clearance_domain_213)
+endif()
+
+# 显式指定隔离网关时才构建跨包闭环，避免测试误连正式8080或真实硬件。
+set(CARCAR_STARTUP_GATEWAY_EXE "" CACHE FILEPATH "会话启动闭环使用的独立网关")
+set(CARCAR_STARTUP_WEB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../carcar_mapping_console/web" CACHE PATH "会话启动闭环网页资源")
+if(BUILD_TESTING AND CARCAR_STARTUP_GATEWAY_EXE)
+  ament_add_gtest(test_session_startup test/test_session_startup.cpp TIMEOUT 45)
+  target_include_directories(test_session_startup PRIVATE include)
+  target_compile_options(test_session_startup PRIVATE -O0)
+  target_compile_definitions(test_session_startup PRIVATE
+    AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>"
+    SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>"
+    CARCAR_STARTUP_GATEWAY_EXE="${CARCAR_STARTUP_GATEWAY_EXE}"
+    CARCAR_STARTUP_WEB_ROOT="${CARCAR_STARTUP_WEB_ROOT}")
+  ament_target_dependencies(test_session_startup rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs diagnostic_msgs)
+  target_link_libraries(test_session_startup nlohmann_json::nlohmann_json)
+  add_dependencies(test_session_startup mapping_autonomy test_slow_graph)
+  set_tests_properties(test_session_startup PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=228;ROS_LOCALHOST_ONLY=1"
+    RESOURCE_LOCK live_supervisor_domain_228)
+endif()
+
+if(BUILD_TESTING)
+  ament_add_gtest(test_collision_manual test/test_collision_manual.cpp TIMEOUT 45)
+  target_include_directories(test_collision_manual PRIVATE include)
+  target_compile_options(test_collision_manual PRIVATE -O0)
+  target_compile_definitions(test_collision_manual PRIVATE
+    AUTONOMY_EXE="$<TARGET_FILE:mapping_autonomy>"
+    SLOW_GRAPH_LIBRARY="$<TARGET_FILE:test_slow_graph>")
+  ament_target_dependencies(test_collision_manual rclcpp rclcpp_action std_msgs std_srvs sensor_msgs geometry_msgs nav_msgs nav2_msgs tf2_ros explore_lite_msgs diagnostic_msgs lifecycle_msgs)
+  target_link_libraries(test_collision_manual nlohmann_json::nlohmann_json)
+  add_dependencies(test_collision_manual mapping_autonomy test_slow_graph)
+  set_tests_properties(test_collision_manual PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=227;ROS_LOCALHOST_ONLY=1"
+    RESOURCE_LOCK collision_manual_domain_227)
+endif()
+
 ament_package()

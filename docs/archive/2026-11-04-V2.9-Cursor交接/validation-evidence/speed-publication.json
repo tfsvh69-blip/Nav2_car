@@ -1,0 +1,93 @@
+{
+  "id": "NAV-018-SPEED-RETENTION-001",
+  "date": "2026-11-04T23:34:50.606180+08:00",
+  "backup": "/home/jetson/luhao/my_nav_carcar_return_nearby_release.20261104-233442-644392-speed-retention.backup",
+  "idle_before": {
+    "date": "2026-11-04T23:34:45.842434+08:00",
+    "mapping": {
+      "phase": "STANDBY",
+      "task_state": "STANDBY",
+      "busy": false,
+      "dirty": false,
+      "video_running": false,
+      "inspection_running": false
+    },
+    "inspection_phase": "CONFIG_ONLY",
+    "hardware_enabled": false
+  },
+  "changed": [
+    "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy",
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp",
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp",
+    "src/carcar_mapping_autonomy/test/test_auto_motion.cpp",
+    "src/carcar_mapping_autonomy/test/test_navigation_speed.cpp",
+    "src/carcar_mapping_autonomy/test/test_live_supervisor.cpp"
+  ],
+  "candidate": {
+    "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy": {
+      "sha256": "5ee8f10c6720d613161e924bd99211e48380bf828d9767a75ce83492e0c867c1",
+      "size": 6474040,
+      "mode": 509
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp": {
+      "sha256": "294d400aa1353393e99d838d413de2c90e9265de017c9eb3778e7d98f9606b43",
+      "size": 5617,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp": {
+      "sha256": "92397ed52eb2ed7277dc19880182d5ac869bf138c663623f148c846f4db08490",
+      "size": 4791,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_auto_motion.cpp": {
+      "sha256": "ea5a44ecf90362cbc23b56b9f44c586b0bcf8e41b05908b4a3522d6748c4ec9c",
+      "size": 2739,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_navigation_speed.cpp": {
+      "sha256": "67cf1587a0c181a679e93407a7a741c175431827bb691e474725a027568b65d3",
+      "size": 6221,
+      "mode": 436
+    },
+    "src/carcar_mapping_autonomy/test/test_live_supervisor.cpp": {
+      "sha256": "0f678d62557f4d2059d6ccff3cdbd8eee0de0fa2a6c8ef7f98dcb94f27b40f50",
+      "size": 42392,
+      "mode": 436
+    }
+  },
+  "postcheck": {
+    "idle": {
+      "date": "2026-11-04T23:34:50.063367+08:00",
+      "mapping": {
+        "phase": "STANDBY",
+        "task_state": "STANDBY",
+        "busy": false,
+        "dirty": false,
+        "video_running": false,
+        "inspection_running": false
+      },
+      "inspection_phase": "CONFIG_ONLY",
+      "hardware_enabled": false
+    },
+    "runtime": {
+      "MainPID": "19399",
+      "ActiveState": "active",
+      "SubState": "running",
+      "executable": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_console/lib/carcar_mapping_console/mapping_web_gateway",
+      "exe_sha256": "3e04b6b7329f7ad2268fc8abec019f43d8d5057ff68a036fe18012755f3e18a9"
+    },
+    "http_sha256": {
+      "/": "fdc227a37f018b44d560598127903109bdcde72f8cd7a0528944d850bdef4264",
+      "/app.js": "beffdecb1a559e95c4d67ee36fdfd1f790ab3183e875fcc293381a002e90f4a4",
+      "/style.css": "3057c2ae51cc7a7d4d743290bd642d0199e5ddae9564d155230fdd4b45cf1e43"
+    },
+    "inspection_page_status": 200,
+    "hardware_started": false,
+    "control_requests_sent": false
+  },
+  "retained_verified": 992,
+  "service_restarted": true,
+  "unit_configuration_changed": false,
+  "hardware_started": false,
+  "control_requests_sent": false
+}

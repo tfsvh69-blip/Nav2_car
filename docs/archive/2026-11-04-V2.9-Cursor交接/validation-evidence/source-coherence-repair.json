@@ -1,0 +1,32 @@
+[
+  {
+    "file": "include/carcar_mapping_autonomy/continuous_exploration.hpp",
+    "from": "/home/jetson/luhao/my_nav_carcar_session_startup_20261104/src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/continuous_exploration.hpp",
+    "before": "cce2abf354aaeb330b63bf9a3e15f818520622476ee30045c924b59454dd909f",
+    "after": "f0cc536ea68dd767a7864a365060f51a906facc997ee7598cad0647e3483af62"
+  },
+  {
+    "file": "include/carcar_mapping_autonomy/exploration_route.hpp",
+    "from": "/home/jetson/luhao/my_nav_carcar_session_startup_20261104/src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/exploration_route.hpp",
+    "before": "57e272bbdf316302768239163af2957910a710ff61362ce2758fe04a46a8a32e",
+    "after": "db741ed4dae275e1ae192c634cca4980b4b3fbafd33f49890feb592107eff49d"
+  },
+  {
+    "file": "include/carcar_mapping_autonomy/obstacle_escape.hpp",
+    "from": "/home/jetson/luhao/my_nav_carcar_session_startup_20261104/src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/obstacle_escape.hpp",
+    "before": "f1e472858a68dd9848f93bcefeee1bdfe546b40ed2aff8683aa8fcb480e080c7",
+    "after": "9085ecea9ccedb2395b30b6e15d5e6f72aad7bf3e9bf9c81b2256b8391ffa822"
+  },
+  {
+    "file": "src/continuous_exploration.cpp",
+    "from": "/home/jetson/luhao/my_nav_carcar_session_startup_20261104/src/carcar_mapping_autonomy/src/continuous_exploration.cpp",
+    "before": "d095c9f7c007e1bb9a10573db4c6cbc1237809f400fb3e1a05a2c57d31fa7a92",
+    "after": "38f295b43dc1548ed5eb4c0ddf5d1f0496c6123cc22da3938fa5774b8d318ab5"
+  },
+  {
+    "file": "src/exploration_route.cpp",
+    "from": "/home/jetson/luhao/my_nav_carcar_session_startup_20261104/src/carcar_mapping_autonomy/src/exploration_route.cpp",
+    "before": "246e349418c131dec844558b4705b2e460dee03a1ad4780ab14d85857de38a79",
+    "after": "d4019adde307ee8c706fa7efa225e587d378471f5adbc05ff933736906165d64"
+  }
+]

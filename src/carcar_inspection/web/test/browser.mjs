@@ -122,7 +122,7 @@ try {
   );
   const canvas = page.getByLabel("场地地图，点击设置停车位置并拖动设置朝向");
   // 断言主录入地图的真实像素，不能仅凭图层状态“收到数据”判断已绘制。
-  await page.locator(".navigation-debug > summary").click();
+  await page.getByText("导航调试图层与数据状态", {exact:true}).click();
   const layerOptions = page.locator(".navigation-layer-option input");
   for (let index=0;index<4;index++) await layerOptions.nth(index).uncheck();
   const samples = [
@@ -250,7 +250,7 @@ try {
     );
   }
   await page.getByRole("button", { name: "准备车辆", exact: true }).click();
-  await page.getByText("启动时已经下发，不用再点确认。").waitFor();
+  await page.getByText("这是行驶命令约定，没有实体角度反馈。").waitFor();
   assert.equal(
     await page
       .getByRole("button", { name: "确认相机可用于行驶（94档）", exact: true })
@@ -261,7 +261,7 @@ try {
   await page.getByRole("button", { name: "录入巡检点", exact: true }).click();
   await page.getByRole("button", { name: "新增点位", exact: true }).click();
   await page.getByRole("button", { name: "下发目标，让小车前往", exact: true }).click();
-  await page.getByText(/^\s*尚未下发：请先在地图上选择停车位置/).waitFor();
+  await page.getByText(/请先在地图上选择停车位置/).first().waitFor();
   assert.equal((await (await fetch(`${url}/api/state`)).json()).navigation_trial.phase,"IDLE","目标未选择时必须明确提示，并且不能发送导航");
   await page
     .locator('input[placeholder="例如：走廊仪表"]')
@@ -299,7 +299,7 @@ try {
   ));
   await page.reload();
   await page.locator(".aside-foot").filter({hasText:"操作者已连接"}).waitFor();
-  await page.waitForFunction(()=>Math.abs(Number(document.querySelector('.editor input[type="number"]')?.value)-1.35)<.001);
+  await page.waitForFunction(()=>Math.abs(Number(document.querySelector('.editor .form-row input[type="number"]')?.value)-1.35)<.001);
   assert(Math.abs(Number(await page.getByLabel("X / 米",{exact:true}).inputValue())-1.35)<.001,"刷新应恢复当前已到达候选，不能重发目标");
   await name.fill("导航后实车确认点");
   await page.getByRole("button", { name: "开始停车调角", exact: true }).click();
@@ -347,6 +347,24 @@ try {
     return image?.complete && image.naturalWidth > 0;
   });
   await page.getByRole("button", { name: "录入巡检点", exact: true }).click();
+  const beforeFieldGoals=writes.filter(path=>path==="/api/teach/navigate").length;
+  await page.getByLabel("录入方式",{exact:true}).selectOption("current");
+  await page.getByText("现场遥控与继续录入",{exact:true}).click();
+  await page.getByRole("button",{name:"恢复行驶角度，准备继续遥控",exact:true}).click();
+  await waitForState(state=>state.teaching.phase==="AWAITING_CONFIRMATION"&&state.teaching.board_command===94);
+  await page.getByRole("button",{name:"启用遥控",exact:true}).click();
+  await waitForState(state=>state.teaching.phase==="IDLE");
+  await page.getByRole("button",{name:"新增点位",exact:true}).click();
+  await name.fill("现场直接录入点");
+  await page.getByRole("button",{name:"开始停车调角",exact:true}).click();
+  await waitForState(state=>state.teaching.phase==="READY");
+  await page.getByRole("button",{name:"下发当前目标",exact:true}).click();
+  await waitEnabled("4. 确认实车位置与画面，保存巡检点");
+  await page.getByRole("button",{name:"4. 确认实车位置与画面，保存巡检点",exact:true}).click();
+  const fieldState=await waitForState(state=>state.points.some(point=>point.name==="现场直接录入点"&&point.verified));
+  const fieldPoint=fieldState.points.find(point=>point.name==="现场直接录入点");
+  assert.equal(fieldPoint.reference.navigation_request_id,undefined,"现场录入不能伪造导航到达记录");
+  assert.equal(writes.filter(path=>path==="/api/teach/navigate").length,beforeFieldGoals,"现场录入不能补发导航目标");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${directory}/tablet.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -354,24 +372,11 @@ try {
   await page.screenshot({ path: `${directory}/phone.png`, fullPage: true });
   assert.equal(
     await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      () => document.documentElement.scrollWidth > innerWidth + 1,
     ),
     false,
     "手机页面出现横向溢出",
   );
-  if (process.env.UI_REDESIGN_EVIDENCE) {
-    const output = process.env.UI_REDESIGN_EVIDENCE;
-    await fs.mkdir(output, { recursive: true });
-    await fs.writeFile(`${output}/inspection-state.json`, JSON.stringify(await (await fetch(`${url}/api/state`)).json(), null, 2));
-    await fs.copyFile(`${directory}/tablet.png`, `${output}/inspection-tablet.png`);
-    await fs.copyFile(`${directory}/phone.png`, `${output}/inspection-phone.png`);
-    // 保存正式候选的可见视口，避免超长截图缩小后难以阅读。
-    for (const [name, width, height] of [["desktop", 1440, 1100], ["tablet", 1024, 900], ["phone", 390, 844]]) {
-      await page.setViewportSize({ width, height });
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await page.screenshot({ path: `${output}/inspection-${name}-viewport.png` });
-    }
-  }
   assert.deepEqual(errors, []);
   console.log(
     "真实浏览器完成导航到点→修改坐标再导航→调角新画面→按实车位置保存；平板与手机截图已保存",

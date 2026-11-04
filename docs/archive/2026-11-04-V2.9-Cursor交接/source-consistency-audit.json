@@ -1,0 +1,721 @@
+{
+  "schema": 1,
+  "id": "NAV-018-V29-SOURCE-CONSISTENCY-AUDIT",
+  "prepared_at": "2026-11-04T23:29:02.942611+08:00",
+  "status": "审计完成；速度保留补丁进行中，最终发布/提交/标签状态由主代理冻结后更新",
+  "read_only_audit_of_product_code": true,
+  "product_or_formal_files_modified_by_auditor": false,
+  "source_manifest_reference": {
+    "path": "source-manifest.json",
+    "sha256_at_audit": "fe7be19154b4eba647eeddd08121d1569e4b581dd723c9a51fe4179f1d4dc86d",
+    "installed_resource_entries": 39,
+    "source_policy": "LIVE完整核心与inspection现行console为骨架，叠当前正式安装资源；本轮最终改动已经CAS同步，待速度保留补丁复验后再冻结",
+    "binding_note": "此为审计时摘要；source-manifest后续冻结会更新，本文不代替最终冻结清单。",
+    "final_source_manifest_sha256": "53b5df64f01c878d63eede2c84a3bedb7c006931dd631ddf934abf680eed66ca"
+  },
+  "comparison_scope": {
+    "phase": "本轮23:06恢复/手动修复之后、速度保留补丁之前发现的20项LIVE与候选差异",
+    "pre_correction_difference_count": 20,
+    "group_counts": {
+      "headers": 3,
+      "independent_runtime_sources": 2,
+      "configuration_and_metadata": 6,
+      "tests": 9
+    },
+    "current_difference_count_at_write": 17,
+    "current_difference_paths_at_write": [
+      "README.md",
+      "behavior_trees/navigate_through_poses_exploration.xml",
+      "config/controller_shim_rpp.yaml",
+      "config/nav2_mapping.yaml",
+      "include/carcar_mapping_autonomy/mapping_rotation_shim.hpp",
+      "launch/navigation.launch.xml",
+      "package.xml",
+      "src/checked_path_bt.cpp",
+      "src/known_space.cpp",
+      "test/exploration_evaluation.cpp",
+      "test/test_checked_path_bt.cpp",
+      "test/test_continuous_navigation.cpp",
+      "test/test_continuous_supervisor.cpp",
+      "test/test_exploration_route.cpp",
+      "test/test_live_supervisor.cpp",
+      "test/test_recovery_process.cpp",
+      "test/virtual_room.cpp"
+    ],
+    "inventory": [
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp",
+        "group": "headers",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": true,
+        "direct_dependency_record_present": true,
+        "dependency_records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/evidence/speed-retention-before/auto_motion.hpp",
+        "pre_speed_correction_sha256": "14f49cb97d0010ae9940ff1dcce83a5214e178ceec07c518e731d48be137fd90",
+        "LIVE_sha256_at_audit": "92397ed52eb2ed7277dc19880182d5ac869bf138c663623f148c846f4db08490",
+        "candidate_sha256_at_audit": "92397ed52eb2ed7277dc19880182d5ac869bf138c663623f148c846f4db08490",
+        "snapshot_sha256_at_audit": "92397ed52eb2ed7277dc19880182d5ac869bf138c663623f148c846f4db08490",
+        "candidate_current_equals_LIVE": true,
+        "snapshot_equals_LIVE": true,
+        "meaning": "旧候选拒绝大于0.18m/s的最终运动输入；现行LIVE保留上限0.20及原预测/制动检查。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp",
+        "group": "headers",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": true,
+        "direct_dependency_record_present": true,
+        "dependency_records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/evidence/speed-retention-before/navigation_speed.hpp",
+        "pre_speed_correction_sha256": "0b955c8777ab6d6f12c03e69711e31b1f5d6d655f5cadb3825c03b41503217da",
+        "LIVE_sha256_at_audit": "294d400aa1353393e99d838d413de2c90e9265de017c9eb3778e7d98f9606b43",
+        "candidate_sha256_at_audit": "294d400aa1353393e99d838d413de2c90e9265de017c9eb3778e7d98f9606b43",
+        "snapshot_sha256_at_audit": "294d400aa1353393e99d838d413de2c90e9265de017c9eb3778e7d98f9606b43",
+        "candidate_current_equals_LIVE": true,
+        "snapshot_equals_LIVE": true,
+        "meaning": "旧候选仅接纳至0.18m/s；现行LIVE接纳至0.20并等待真实读回，0.201仍拒绝。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/mapping_rotation_shim.hpp",
+        "group": "headers",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/mapping_rotation_shim.hpp",
+        "pre_speed_correction_sha256": "b10538fbb4787227a3f601661dad30fa7732682f57f968ba7224669bb63334ba",
+        "LIVE_sha256_at_audit": "bacd52d587edd27b4fbae3ea74716c0ca1f4178e6530258c24d5b061d2392d52",
+        "candidate_sha256_at_audit": "b10538fbb4787227a3f601661dad30fa7732682f57f968ba7224669bb63334ba",
+        "snapshot_sha256_at_audit": "bacd52d587edd27b4fbae3ea74716c0ca1f4178e6530258c24d5b061d2392d52",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行LIVE包含ParameterRevisionFence及PositionGoalChecker分流；本轮未重编正式Shim共享库。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/src/checked_path_bt.cpp",
+        "group": "independent_runtime_sources",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/src/checked_path_bt.cpp",
+        "pre_speed_correction_sha256": "e539f7112d51b7095a1c36ea8acca4fa08424efee837b7d67f276f0367fe9be8",
+        "LIVE_sha256_at_audit": "4fb71bef58d0794e18ecfb023958045b9299d052444e214e61a89cef4972112e",
+        "candidate_sha256_at_audit": "e539f7112d51b7095a1c36ea8acca4fa08424efee837b7d67f276f0367fe9be8",
+        "snapshot_sha256_at_audit": "4fb71bef58d0794e18ecfb023958045b9299d052444e214e61a89cef4972112e",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行LIVE包含MappingPassedGoals、同任务/代次/目标的2秒安全旧路复核及人工墙约束图；本轮未重编正式BT共享库。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/src/known_space.cpp",
+        "group": "independent_runtime_sources",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/src/known_space.cpp",
+        "pre_speed_correction_sha256": "6629e93cb5a17b711cb215bc59e725c4f26ce3e93b6b62fca701dd64af035470",
+        "LIVE_sha256_at_audit": "832d0ab3062db2177f9cd999f650bddeb66e054e5ee7808e3ca7c389f1f87b49",
+        "candidate_sha256_at_audit": "6629e93cb5a17b711cb215bc59e725c4f26ce3e93b6b62fca701dd64af035470",
+        "snapshot_sha256_at_audit": "832d0ab3062db2177f9cd999f650bddeb66e054e5ee7808e3ca7c389f1f87b49",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行LIVE使用navigation_map_topic参数；旧候选固定订阅/map，本轮未重编正式known_space节点。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/README.md",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/README.md",
+        "pre_speed_correction_sha256": "21fac2a42c7c93c6c3ab9d15ca48a13f5e03f03391c10bd201ba46fe3f6f15d1",
+        "LIVE_sha256_at_audit": "b164f7e42ef050de362f18c5baa4b0159e156576d6df15546f181cffc66ca4f7",
+        "candidate_sha256_at_audit": "21fac2a42c7c93c6c3ab9d15ca48a13f5e03f03391c10bd201ba46fe3f6f15d1",
+        "snapshot_sha256_at_audit": "b164f7e42ef050de362f18c5baa4b0159e156576d6df15546f181cffc66ca4f7",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "记录已发布在线参数、人工墙、转弯衔接与安全旧路保留，避免旧说明误作当前默认。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/package.xml",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/package.xml",
+        "pre_speed_correction_sha256": "e5a4eea905075a6276b4540f2d27f1502c776a4582b63e5915f06e8ae3f1bca0",
+        "LIVE_sha256_at_audit": "1fcc390b60f1799db5f9be34338665975e0b71163ac9e39a096401ce1aba8eb5",
+        "candidate_sha256_at_audit": "e5a4eea905075a6276b4540f2d27f1502c776a4582b63e5915f06e8ae3f1bca0",
+        "snapshot_sha256_at_audit": "1fcc390b60f1799db5f9be34338665975e0b71163ac9e39a096401ce1aba8eb5",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行LIVE将nav2_controller由test_depend声明为运行/构建depend，与控制器头及插件用途对应。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/behavior_trees/navigate_through_poses_exploration.xml",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/behavior_trees/navigate_through_poses_exploration.xml",
+        "pre_speed_correction_sha256": "79d83059716feea9c8b7003034c9eae49068fb0092960bce1287f1b3a9982b71",
+        "LIVE_sha256_at_audit": "923773da8841c32998ac2044fe1ef3322b95e9f0825a784bfbb6a77609d6affa",
+        "candidate_sha256_at_audit": "79d83059716feea9c8b7003034c9eae49068fb0092960bce1287f1b3a9982b71",
+        "snapshot_sha256_at_audit": "923773da8841c32998ac2044fe1ef3322b95e9f0825a784bfbb6a77609d6affa",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "与已部署MappingPassedGoals和reuse_checked_path插件接口配对。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/config/controller_shim_rpp.yaml",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/config/controller_shim_rpp.yaml",
+        "pre_speed_correction_sha256": "f1e33fa6a9d6377f00cd5cc3aa07789ad8bb7b4720b3981337f8b66bb48af6df",
+        "LIVE_sha256_at_audit": "590d67610d3f3182997ede863cca8a369af7f4e78e719dd00532b25beb0323a7",
+        "candidate_sha256_at_audit": "f1e33fa6a9d6377f00cd5cc3aa07789ad8bb7b4720b3981337f8b66bb48af6df",
+        "snapshot_sha256_at_audit": "590d67610d3f3182997ede863cca8a369af7f4e78e719dd00532b25beb0323a7",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行安装保留0.28rad/s对准值。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/config/nav2_mapping.yaml",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/config/nav2_mapping.yaml",
+        "pre_speed_correction_sha256": "6d44f4309b12dd5b50af4a7850bc6d323ae30ef40b688867be2dc8895c0c38fa",
+        "LIVE_sha256_at_audit": "0abaea90cd3b3792072959ab85026616107e48c763cb5930941f8685b6dc5bcc",
+        "candidate_sha256_at_audit": "6d44f4309b12dd5b50af4a7850bc6d323ae30ef40b688867be2dc8895c0c38fa",
+        "snapshot_sha256_at_audit": "0abaea90cd3b3792072959ab85026616107e48c763cb5930941f8685b6dc5bcc",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行安装速度平滑器允许0.20m/s上限。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/launch/navigation.launch.xml",
+        "group": "configuration_and_metadata",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/launch/navigation.launch.xml",
+        "pre_speed_correction_sha256": "fb1804adadc34490ebfed41bc06546049969a3f1b3d2890970862cb01dae8e29",
+        "LIVE_sha256_at_audit": "3e55ed5ddb46a4ede985694c9aca83e781a07094d63ce3761872f307ed021178",
+        "candidate_sha256_at_audit": "fb1804adadc34490ebfed41bc06546049969a3f1b3d2890970862cb01dae8e29",
+        "snapshot_sha256_at_audit": "3e55ed5ddb46a4ede985694c9aca83e781a07094d63ce3761872f307ed021178",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "现行安装包含在线参数、临时墙派生导航图及nav2_live覆盖。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/exploration_evaluation.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/exploration_evaluation.cpp",
+        "pre_speed_correction_sha256": "054be8c6514b0503799cfa4f100f8fd4f076e21ac3d27d8dc0bb437435c44f0f",
+        "LIVE_sha256_at_audit": "210712491535db35ad6d0b6f69e0d091387f76d77de326d9082cf849918b812d",
+        "candidate_sha256_at_audit": "054be8c6514b0503799cfa4f100f8fd4f076e21ac3d27d8dc0bb437435c44f0f",
+        "snapshot_sha256_at_audit": "210712491535db35ad6d0b6f69e0d091387f76d77de326d9082cf849918b812d",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_auto_motion.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/evidence/speed-retention-before/test_auto_motion.cpp",
+        "pre_speed_correction_sha256": "4ac76fa2afdff37a657b6b6b84475476c8d7457a059f017f3ce71532bd61a6b0",
+        "LIVE_sha256_at_audit": "ea5a44ecf90362cbc23b56b9f44c586b0bcf8e41b05908b4a3522d6748c4ec9c",
+        "candidate_sha256_at_audit": "ea5a44ecf90362cbc23b56b9f44c586b0bcf8e41b05908b4a3522d6748c4ec9c",
+        "snapshot_sha256_at_audit": "ea5a44ecf90362cbc23b56b9f44c586b0bcf8e41b05908b4a3522d6748c4ec9c",
+        "candidate_current_equals_LIVE": true,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_checked_path_bt.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/test_checked_path_bt.cpp",
+        "pre_speed_correction_sha256": "e00a2f299e0b55d50ab379ff238f45f3f7a04113de6d398cf45efa37b8ae3f19",
+        "LIVE_sha256_at_audit": "3b63b35d2d82b54933560650ae2c0aadf7b13ea2dfe582affddd64af4f08b323",
+        "candidate_sha256_at_audit": "e00a2f299e0b55d50ab379ff238f45f3f7a04113de6d398cf45efa37b8ae3f19",
+        "snapshot_sha256_at_audit": "3b63b35d2d82b54933560650ae2c0aadf7b13ea2dfe582affddd64af4f08b323",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_continuous_navigation.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/test_continuous_navigation.cpp",
+        "pre_speed_correction_sha256": "cc79be3419682f2722cce407f98fe925af8482317dfe303448b7afbc465b7541",
+        "LIVE_sha256_at_audit": "8f891896e97b1ea660a9b9bb4cc0820a27938b990a4ffb5481ebbc3209fa7b9f",
+        "candidate_sha256_at_audit": "cc79be3419682f2722cce407f98fe925af8482317dfe303448b7afbc465b7541",
+        "snapshot_sha256_at_audit": "8f891896e97b1ea660a9b9bb4cc0820a27938b990a4ffb5481ebbc3209fa7b9f",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_continuous_supervisor.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/test_continuous_supervisor.cpp",
+        "pre_speed_correction_sha256": "6c0064649f35b11a28822487ee12626752a506a8766782068ec90c574e72ed9c",
+        "LIVE_sha256_at_audit": "317f45b841ec05f7f28a30222c50b79ce69a0ebed45a82bd43f48898c97f1a24",
+        "candidate_sha256_at_audit": "6c0064649f35b11a28822487ee12626752a506a8766782068ec90c574e72ed9c",
+        "snapshot_sha256_at_audit": "317f45b841ec05f7f28a30222c50b79ce69a0ebed45a82bd43f48898c97f1a24",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_exploration_route.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/test_exploration_route.cpp",
+        "pre_speed_correction_sha256": "6191e481f7247f1a5d00916c3bf545ebe4b9560116083d73993fd0804f14cdae",
+        "LIVE_sha256_at_audit": "56125111a80e31abe0a64170ac04aaedbabd90a12778a3e205a6b051d8c30311",
+        "candidate_sha256_at_audit": "6191e481f7247f1a5d00916c3bf545ebe4b9560116083d73993fd0804f14cdae",
+        "snapshot_sha256_at_audit": "56125111a80e31abe0a64170ac04aaedbabd90a12778a3e205a6b051d8c30311",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_navigation_speed.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/evidence/speed-retention-before/test_navigation_speed.cpp",
+        "pre_speed_correction_sha256": "909403ce7577cbf8a8249e46ee4e82de8763393bcc5a9400b1c95f72b6d8edd4",
+        "LIVE_sha256_at_audit": "67cf1587a0c181a679e93407a7a741c175431827bb691e474725a027568b65d3",
+        "candidate_sha256_at_audit": "67cf1587a0c181a679e93407a7a741c175431827bb691e474725a027568b65d3",
+        "snapshot_sha256_at_audit": "67cf1587a0c181a679e93407a7a741c175431827bb691e474725a027568b65d3",
+        "candidate_current_equals_LIVE": true,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/test_recovery_process.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/test_recovery_process.cpp",
+        "pre_speed_correction_sha256": "5d05f64467010edfa14f90ed30ceb3e89207f74734c215b509a629c91874b550",
+        "LIVE_sha256_at_audit": "f3dfab66719dfc88b14db38985746dad6ee934b3ab5073b29566dc22baab0764",
+        "candidate_sha256_at_audit": "5d05f64467010edfa14f90ed30ceb3e89207f74734c215b509a629c91874b550",
+        "snapshot_sha256_at_audit": "f3dfab66719dfc88b14db38985746dad6ee934b3ab5073b29566dc22baab0764",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/test/virtual_room.cpp",
+        "group": "tests",
+        "compiled_into_new_mapping_autonomy_before_speed_correction": false,
+        "direct_dependency_record_present": false,
+        "dependency_records": [],
+        "pre_speed_correction_bytes_source": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/carcar_mapping_autonomy/test/virtual_room.cpp",
+        "pre_speed_correction_sha256": "1c55de47883df7ade459c1399986ceeafb7435d0021d9dff2bbb49aaa10e58dd",
+        "LIVE_sha256_at_audit": "485a00af62ab271e50dc562a336f1d32553fb88e1df77e2490fd9764997b4bfc",
+        "candidate_sha256_at_audit": "1c55de47883df7ade459c1399986ceeafb7435d0021d9dff2bbb49aaa10e58dd",
+        "snapshot_sha256_at_audit": "485a00af62ab271e50dc562a336f1d32553fb88e1df77e2490fd9764997b4bfc",
+        "candidate_current_equals_LIVE": false,
+        "snapshot_equals_LIVE": true,
+        "meaning": "对应既有已发布能力的回归、真实协议夹具、时间/参数隔离或证据路径更新；不是本轮正式运行ELF输入。"
+      }
+    ]
+  },
+  "runtime_dependency_audit": {
+    "method": "读取真实编译器生成的supervisor.cpp与mapping_continuous_exploration对象依赖.o.d，逐SHA比较其包内文件。",
+    "package_dependency_count": 30,
+    "targets": [
+      "mapping_autonomy",
+      "mapping_continuous_exploration"
+    ],
+    "records": [
+      {
+        "host_path": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+        "sha256": "d31c864ff8036b6630089b5ff50d4242b82ebd5ecb3f2aca9fc8ce2f256ccee3",
+        "candidate_relative": "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+      },
+      {
+        "host_path": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/third_party/explore_lite/src/frontier_search.cpp.o.d",
+        "sha256": "739e98a677711f1d2c3964c2370661c6de47432080032d5dc808115580dd6431",
+        "candidate_relative": "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/third_party/explore_lite/src/frontier_search.cpp.o.d"
+      },
+      {
+        "host_path": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d",
+        "sha256": "58ea835b80bba857ca4f45e03043b988dbbd314db010df93d2304895ac139a02",
+        "candidate_relative": "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+      },
+      {
+        "host_path": "/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d",
+        "sha256": "2be5cbd86347dec191a2a5e180a7c8eedf5696596bf07797d3eafa65d5a18772",
+        "candidate_relative": "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d"
+      }
+    ],
+    "dependencies": [
+      {
+        "path": "src/carcar_mapping_autonomy/../third_party/explore_lite/include/explore/costmap_tools.h",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/third_party/explore_lite/src/frontier_search.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/../third_party/explore_lite/include/explore/frontier_search.h",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/home/jetson/luhao/my_nav_carcar_recovery_sweep_20261104/src/third_party/explore_lite/src/frontier_search.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/backup_motion.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/continuous_exploration.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/costmap_rebuild.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/exploration_route.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/handoff.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/known_obstacle_clearance.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/manual_coverage.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/manual_motion.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/map_fingerprint.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/map_geometry.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/near_field.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/observation_selector.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/obstacle_escape.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/planning_departure.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/recovery_wall_review.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/retreat_planner.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/return_selector.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/route_validation.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/subcell_departure.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/supervisor_output.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/task.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d",
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/task_walls.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/topology_monitor.hpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/src/continuous_exploration.cpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/continuous_exploration.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/src/exploration_route.cpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_continuous_exploration.dir/src/exploration_route.cpp.o.d"
+        ]
+      },
+      {
+        "path": "src/carcar_mapping_autonomy/src/supervisor.cpp",
+        "records": [
+          "build/carcar_mapping_autonomy/CMakeFiles/mapping_autonomy.dir/src/supervisor.cpp.o.d"
+        ]
+      }
+    ],
+    "direct_regression_paths_before_correction": [
+      "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/auto_motion.hpp",
+      "src/carcar_mapping_autonomy/include/carcar_mapping_autonomy/navigation_speed.hpp"
+    ],
+    "third_direct_regression_found": false,
+    "other_dependencies_note": "map_geometry、task、continuous_exploration、exploration_route及配置解析相关头与LIVE一致；package.xml和Launch不会编入此ELF。"
+  },
+  "formal_runtime_observation_at_audit": {
+    "path": "/home/jetson/luhao/my_nav_carcar_return_nearby_release/install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_autonomy",
+    "sha256": "6a48176a8efe024157ec967b5227b119debae09b9a87940ba4b36e1b4920d33c",
+    "contains_018_rejection_text": true,
+    "contains_020_rejection_text": false,
+    "note": "审计时读数，不代表后续补丁完成状态；两速度头及真实进程红绿由独立代理继续处理。"
+  },
+  "preserved_shared_runtime_artifacts": [
+    {
+      "formal_relative": "install/carcar_mapping_autonomy/lib/libcarcar_checked_path_bt_node.so",
+      "sha256": "2474edf7af8c3bfd691b8e980edc52033fe3180aaf22af1d391780574bdd963e",
+      "marker": "MappingPassedGoals",
+      "marker_present": true,
+      "interpretation": "符号/字符串与现行LIVE能力相符；仅作已有产物证据，不等于完整二进制到源码可复现证明。",
+      "updated_by_this_audit": false
+    },
+    {
+      "formal_relative": "install/carcar_mapping_autonomy/lib/libcarcar_mapping_rotation_shim.so",
+      "sha256": "d8718ee662de9aba29c79cff89e0d9b6d405ca8ac432da493890cf6c2a761d0d",
+      "marker": "PositionGoalChecker",
+      "marker_present": true,
+      "interpretation": "符号/字符串与现行LIVE能力相符；仅作已有产物证据，不等于完整二进制到源码可复现证明。",
+      "updated_by_this_audit": false
+    },
+    {
+      "formal_relative": "install/carcar_mapping_autonomy/lib/carcar_mapping_autonomy/mapping_known_space",
+      "sha256": "e703f43ac0fa2be12d8c1f91ee7e9fd5d4d9ab1e498b984372702c043594be65",
+      "marker": "navigation_map_topic",
+      "marker_present": true,
+      "interpretation": "符号/字符串与现行LIVE能力相符；仅作已有产物证据，不等于完整二进制到源码可复现证明。",
+      "updated_by_this_audit": false
+    }
+  ],
+  "prior_publication_evidence": [
+    {
+      "repository_doc": "docs/archive/2026-11-03-在线调参与临时人工墙/README.md",
+      "host_evidence": "/home/jetson/luhao/my_nav_carcar/log/nav018_live_tuning_20261103/deployment/publication.json",
+      "host_evidence_sha256": "df7c885d0620037eb70d1f1469923d0afbfd3f3da956e056ca2a7a2e880c5bd4",
+      "date": "2026-11-03T15:02:48.953810+08:00",
+      "claim": "在线调参、派生导航图及参数代次屏障；文档记源码ab07b57f97124cc899ebe5d498f588f372530d71。",
+      "doc_present_in_snapshot": true
+    },
+    {
+      "repository_doc": "docs/archive/2026-11-03-转弯衔接与安全旧路径保留.md",
+      "host_evidence": "/home/jetson/luhao/my_nav_carcar_live_tuning_20261103/log/turn_continuity_20261103/publication.json",
+      "host_evidence_sha256": "34cfd675e04322ccce8248648d72ff0edbbae7ad0e26962b98faf78aee4cdd28",
+      "date": "2026-11-03",
+      "claim": "仅更新BT库与配套行为树，保留安全旧路分支。",
+      "doc_present_in_snapshot": true
+    },
+    {
+      "repository_doc": "docs/archive/2026-11-03-画墙交互与连续导航取消修复.md",
+      "host_evidence": null,
+      "host_evidence_sha256": null,
+      "date": "2026-11-03",
+      "claim": "现场记录0.20 READY和实际输出；实车结论限当轮。",
+      "doc_present_in_snapshot": true
+    },
+    {
+      "repository_doc": "docs/archive/2026-11-04-速度与提前衔接校验回退修复.md",
+      "host_evidence": null,
+      "host_evidence_sha256": null,
+      "date": "2026-11-04",
+      "claim": "明确原车端已有0.20/1.50；当轮修正网关/网页漂移。",
+      "doc_present_in_snapshot": true
+    }
+  ],
+  "vue_source_reconciliation": {
+    "App_vue_delta": {
+      "old_lines": 2608,
+      "current_lines": 2626,
+      "added": 19,
+      "removed": 1,
+      "hunks": 3,
+      "scope": "异常图导航资格提示、从map查询参数预选、拒绝异常图准备车辆。"
+    },
+    "mapping_workflow_test_delta": {
+      "old_lines": 198,
+      "current_lines": 244,
+      "added": 62,
+      "removed": 16,
+      "hunks": 5,
+      "scope": "已保存地图可见/预览、目录加载、乱序与尺寸校验、选择保持和巡检链接回归。"
+    },
+    "test_console_cpp_delta": {
+      "old_lines": 610,
+      "current_lines": 680,
+      "added": 70,
+      "removed": 0,
+      "hunks": 2,
+      "scope": "3项地图完整性/异常图只读/图像别名变化回归。"
+    },
+    "classification": "正式源码记录滞后：现行inspection网页源码已在隔离snapshot重建并逐SHA复现当前安装资源，不是将dist当源码替代。",
+    "proof_file": "vue-rebuild.json",
+    "proof_sha256": "4a23506b950102c9c058195946189ab219957cfd7c1519d28bf177b8bc5b506e",
+    "rebuild_result": {
+      "passed": true,
+      "assets": {
+        "THIRD_PARTY_NOTICES.txt": "154e63a1ad67beb196445d0f964d9b70a2417c1005c5631f1e0a28928f2b59d2",
+        "CARCAR-LICENSE.txt": "e0133205932bd4403aa7d3e959be6f2a97148ec25f12ec2614e77418cb941a1e",
+        "index.html": "e5fe45f7f7ae4c2ecf32bac285aa2d0cb7263901465dba1209db831d66cd0123",
+        "VUE-LICENSE.txt": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+        "assets/index-CEJP08wH.css": "d7d3d10993f9b58e0e230c2199a9c6928653ae40eecdad634be401efd078084b",
+        "assets/index-MMrce2XR.js": "4e35091379c270a70df86067577d94b3c5a701c05c6aab8003690384cc68a59e"
+      },
+      "exact_match_installed": true
+    }
+  },
+  "snapshot_decisions": {
+    "core_source": "my_nav_carcar_live_tuning_20261103/src/carcar_mapping_autonomy完整包，本轮最终源码已CAS同步；速度保留补丁复验后再最终绑定。",
+    "console_source": "my_nav_carcar_inspection_20261103/src/carcar_mapping_console现行包。",
+    "inspection_web_source": "my_nav_carcar_inspection_20261103/src/carcar_inspection现行Vue源码、package-lock与测试，dist不作为源码替代。",
+    "resource_overlay": "source-manifest列出的39项当前实际安装share资源逐项映射回源码，防止重建使用旧参数/Launch/BT。",
+    "navigation_directory": "保留V2.8/candidate导航实体目录，禁止带入formal或inspection的外部绝对symlink；旧根两项录包测试较旧不覆盖。",
+    "root_workspace": "根旧源码不整包覆盖新快照；其他包、历史资产和Git历史继承完整基线。"
+  },
+  "validation_boundaries": {
+    "physical_tested": false,
+    "hardware_started_by_this_audit": false,
+    "new_full_recovery_confirmed_on_vehicle": false,
+    "new_snapshot_tag_or_push_confirmed_by_this_audit": false,
+    "speed_retention_followup_final_result_pending": false,
+    "shared_libraries_not_replaced_for_this_audit": true,
+    "speed_retention_final_software_verified": true
+  },
+  "asset_policy": "保留已跟踪历史地图、模型、标定、许可证；新快照仅纳入必要小夹具和摘要，不上传原始大rosbag、运行数据库、备份、构建/依赖缓存或凭据。",
+  "speed_retention_repair": {
+    "status": "published_and_software_verified",
+    "id": "NAV-018-SPEED-RETENTION-001",
+    "published_at": "2026-11-04T23:34:50.606180+08:00",
+    "cpp_tests": 50,
+    "backup": "/home/jetson/luhao/my_nav_carcar_return_nearby_release.20261104-233442-644392-speed-retention.backup",
+    "updated_files": 6,
+    "hardware_started": false,
+    "physical_tested": false
+  }
+}

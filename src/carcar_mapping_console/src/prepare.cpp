@@ -2,7 +2,6 @@
 #include "carcar_mapping_console/serial_preflight.hpp"
 #include "carcar_mapping_console/publication.hpp"
 #include "carcar_mapping_console/storage.hpp"
-#include "carcar_mapping_console/live_settings.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <unistd.h>
 #include <iostream>
@@ -10,7 +9,6 @@ using namespace carcar_mapping_console;
 int main(int argc, char ** argv) {
   try {
     bool hardware = false, backend = false, autonomy=false; std::string control_mode="manual",task_id;
-    std::string tuning_defaults=default_tuning_file().string();
     std::string mode = "new", bundle, root = (std::filesystem::current_path()/"src/carcar_navigation/maps/mapping_sessions").string();
     std::string serial = "/dev/myserial", lidar = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0", slam_params;
     for (int i = 1; i < argc; ++i) {
@@ -26,7 +24,6 @@ int main(int argc, char ** argv) {
       else if (key == "--slam-params") slam_params = value;
       else if (key == "--control-mode") control_mode=value;
       else if (key == "--task-id") task_id=value;
-      else if (key == "--tuning-defaults") tuning_defaults=value;
       else throw std::runtime_error("未知参数 " + key);
     }
     if (mode != "new" && mode != "resume") throw std::runtime_error("mode 必须为 new 或 resume");
@@ -37,8 +34,6 @@ int main(int argc, char ** argv) {
       if (!std::filesystem::is_regular_file(slam_params)) throw std::runtime_error("候选SLAM参数文件不存在");
       slam_params = std::filesystem::canonical(slam_params).string();
     }
-    const auto tuning_path=checked_tuning_path(tuning_defaults);
-    const auto tuning_configuration=autonomy?load_tuning_defaults(tuning_path):baseline_live_defaults();
     root = std::filesystem::absolute(root).string(); if (mode == "resume") {
       if(autonomy)validate_autonomy_bundle(root,bundle);else validate_bundle(root,bundle);
     }
@@ -62,9 +57,7 @@ int main(int argc, char ** argv) {
       "map_root:="+root, "serial_port:="+serial, "lidar_port:="+lidar};
     if (!bundle.empty()) arguments.push_back("bundle_id:=" + bundle);
     if (!slam_params.empty()) arguments.push_back("slam_params_file:=" + slam_params);
-    if(autonomy){arguments.push_back("control_mode:="+control_mode);arguments.push_back("task_id:="+task_id);
-      arguments.push_back("tuning_defaults_file:="+tuning_path.string());
-      arguments.push_back("handoff_distance_m:="+std::to_string(tuning_configuration.at("handoff_distance_m").get<double>()));}
+    if(autonomy){arguments.push_back("control_mode:="+control_mode);arguments.push_back("task_id:="+task_id);}
     if (backend) {
       arguments.push_back("start_gateway:=false"); arguments.push_back("start_camera:=false");
       arguments.push_back("require_video:=false");

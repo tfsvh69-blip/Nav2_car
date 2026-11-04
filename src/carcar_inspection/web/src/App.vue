@@ -26,10 +26,13 @@ import {
   sitePath,
   trialLabel,
   trialMatchesTarget,
+  runResult,
+  fieldTeachingAllowed,
 } from "./workflow.js";
 function site(path) {
   return sitePath(path, import.meta.env.BASE_URL);
 }
+const entryMode = ref("navigation");
 const page = ref("points"),
   state = ref({
     maps: [],
@@ -46,6 +49,16 @@ const session = ref(""),
   selectedMap = ref(""),
   videoUrl = ref(""),
   rendered = reactive({ sequence: 0, revision: -1 });
+const selectedMapInfo = computed(() =>
+  state.value.maps.find((item) => item.id === selectedMap.value) || state.value.map,
+);
+const selectedMapNavigationReason = computed(() =>
+  selectedMapInfo.value?.navigation_allowed === false
+    ? selectedMapInfo.value.quality_reason || "这张地图建图异常，可载入查看和编辑点位，请重新建图后再准备车辆。"
+    : "",
+);
+const mapFromLink = new URLSearchParams(window.location.search).get("map");
+let mapFromLinkApplied = false;
 const canvas = ref(null),
   planCanvas = ref(null),
   selectedId = ref(""),
@@ -166,12 +179,34 @@ async function loadNavigationImages(value) {
 const pointSaved = computed(
   () => !!draft.id && points.value.some((p) => p.id === draft.id && p.verified),
 );
+const fieldReady = computed(() => fieldTeachingAllowed(entryMode.value, trialArrived.value, state.value.health, state.value.hardware_enabled));
+const vehicleLabels = {CONFIG_ONLY:"配置模式",STARTING:"准备车辆中",WAITING_LOCALIZATION:"等待本次定位",READY:"车辆已就绪",STOPPING:"正在结束车辆工作",FAULT:"车辆准备异常"};
+async function prepareVehicle() {
+  await post("/api/vehicle/prepare", {request_id:requestId(),map_id:selectedMap.value || state.value.map?.id});
+  notice.value="准备请求已提交；等待设备就绪后，在地图上标明小车当前的位置和朝向。";
+}
+async function endVehicle() {
+  cancelSlider();
+  await post("/api/vehicle/end", {request_id:requestId()});
+  notice.value="正在取消并确认停车，硬件退出后仍可查看点位和照片。";
+}
+async function restoreDrivingAngle() {
+  cancelSlider();
+  if (["IDLE", "FAULT", "CONFIRMED"].includes(teaching.value.phase)) await begin();
+  const until=Date.now()+5000;
+  while(!["READY","AWAITING_CONFIRMATION"].includes(teaching.value.phase)) {
+    if(Date.now()>until)throw new Error("停车调角准备超时，请检查车端反馈");
+    await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  sliderTarget.value=140.5;
+  await commitSlider();
+}
 const pointCanConfirm = computed(
   () =>
     confirmable.value &&
     !sliderRunning.value &&
     !sliderDirty.value &&
-    trialArrived.value &&
+    fieldReady.value &&
     state.value.health.localization &&
     state.value.health.map_matches,
 );
@@ -184,7 +219,7 @@ const navItems = [
 ];
 const pageDescriptions = {
   overview: "先确认车在地图中的位置。行驶时镜头固定为 140.5°，不用再确认。",
-  points: "先导航到候选停车位，再以实车停靠结果调整位置和拍摄角度。",
+  points: "地图规划后导航到点，或遥控到实地位置，再调角试拍确认。",
   sketch: "先把想法放在图上，再到现场确认。",
   tasks: "安排巡检顺序，设定最终停车位置。",
   running: "跟随任务进度，查看采集结果。",
@@ -204,7 +239,7 @@ const servoSlider = createServoSlider({
     allowed:
       !stopped &&
       page.value === "points" &&
-      trialArrived.value &&
+      fieldReady.value &&
       !trialActive.value,
     held: state.value.motion_held,
     still: state.value.health.still,
@@ -488,6 +523,11 @@ async function poll() {
       };
       image.src = site(`/api/map.png?v=${mapVersion}`);
     }
+    // 建图页只传递选择；首次取得列表后预选，不自动载入地图或启动车辆。
+    if (!mapFromLinkApplied && mapFromLink && value.maps.some((item) => item.id === mapFromLink)) {
+      selectedMap.value = mapFromLink;
+      mapFromLinkApplied = true;
+    }
     await nextTick();
     draw();
     planDraw();
@@ -684,7 +724,7 @@ async function confirm(purpose = "point") {
     expected_revision: draft.revision,
   };
   if (draft.id) payload.id = draft.id;
-  if (purpose !== "navigation" && trialArrived.value)
+  if (purpose !== "navigation" && entryMode.value === "navigation" && trialArrived.value)
     payload.trial_id = trial.value.request_id;
   if (purpose === "approach") payload.point_id = draft.id;
   const p = await post("/api/teach/confirm", payload);
@@ -1394,6 +1434,18 @@ onBeforeUnmount(() => {
             <ConsoleIcon name="plus" />新建任务</button
           ><span>当前图 {{ state.map?.id || "未选择" }}</span>
         </div>
+        <p v-if="selectedMapNavigationReason" class="status-wait" role="status">
+          {{ selectedMapNavigationReason }}；仍可载入并编辑点位。
+        </p>
+        <section v-if="state.vehicle_runtime?.managed" class="card" aria-label="车辆工作台">
+          <h2>{{ vehicleLabels[state.vehicle_runtime.phase] || state.vehicle_runtime.phase }}</h2>
+          <p>{{ state.vehicle_runtime.reason || "配置和照片随时可用，准备车辆后才能进行现场操作。" }}</p>
+          <div class="buttons">
+            <button :disabled="busy || !connected || !(selectedMap || state.map?.id) || !!selectedMapNavigationReason || !['CONFIG_ONLY','FAULT'].includes(state.vehicle_runtime.phase) || state.hardware_enabled" :title="selectedMapNavigationReason" @click="action(prepareVehicle)">准备车辆</button>
+            <button :disabled="busy || !connected || state.vehicle_runtime.phase === 'CONFIG_ONLY'" @click="action(endVehicle)">结束车辆工作</button>
+          </div>
+          <p class="caption">准备会启动车辆设备，但不下发导航目标。建图与巡检互斥；退出车辆工作不会删除照片和点位。</p>
+        </section>
         <section
           v-if="state.navigation_speed?.enabled"
           class="card speed-controls"
@@ -1568,8 +1620,8 @@ onBeforeUnmount(() => {
               <p
                 :class="state.health.perception ? 'status-good' : 'status-wait'"
               >
-                深度避障：{{
-                  state.health.perception
+                感知要求：{{
+                  !state.require_depth ? "纯激光导航，RGB用于拍照" : state.health.perception
                     ? "当前有效"
                     : "当前未放行；下发后仍会检查新点云与图层重建"
                 }}
@@ -1581,7 +1633,13 @@ onBeforeUnmount(() => {
             class="card editor"
             aria-label="巡检点位编辑"
           >
-            <h2>2. 下发目标，让小车前往</h2>
+            <h2>2. 选择录入方式</h2>
+            <label>录入方式<select aria-label="录入方式" v-model="entryMode" :disabled="trialActive || sliderRunning" @change="cancelSlider">
+              <option value="navigation">地图规划与导航到点</option><option value="current">现场示教：使用当前实车位置</option>
+            </select></label>
+            <p v-if="entryMode === 'current'" class="caption">可先用下方遥控停靠，再开始停车调角；保存的是确认时的定位估计，候选坐标不会冒充实车位置。</p>
+            <label>草稿俯仰目标 / °<input id="draft-angle" v-model.number="draft.target_degrees" type="number" min="85" max="160" step="0.5" :disabled="trialActive" /></label>
+            <p class="caption">编辑草稿角度只保存计划，不发送舵机命令。</p>
             <label
               >点位名称<input
                 v-model="draft.name"
@@ -2190,13 +2248,13 @@ onBeforeUnmount(() => {
           </p>
           <p v-if="page === 'overview'" class="caption">
             行驶时镜头固定为 140.5°（板端 94
-            档）。启动时已经下发，不用再点确认。到点后如果要改拍摄角度，再到「录入巡检点」里调。
+            档）。这是行驶命令约定，没有实体角度反馈。到点后如果要改拍摄角度，再到「录入巡检点」里调。
           </p>
         </article>
         <article v-if="page === 'points'" class="card">
           <h2>3. 实车到点后，调整镜头并试拍</h2>
-          <p v-if="!trialArrived" class="status-wait">
-            请先完成上方单点导航并停稳。修改候选坐标后，需要重新导航验证，才能确认保存。
+          <p v-if="!fieldReady" class="status-wait">
+            {{ entryMode === "current" ? "请先遥控到目标位置，松手停稳，并确认当前定位与地图有效。" : "请先完成单点导航并停稳；修改候选坐标后需重新导航验证。" }}
           </p>
           <ol class="steps">
             <li :class="{ done: state.motion_held }">
@@ -2225,7 +2283,7 @@ onBeforeUnmount(() => {
               !connected ||
               !state.hardware_enabled ||
               trialActive ||
-              (page === 'points' && !trialArrived) ||
+              (page === 'points' && !fieldReady) ||
               !['IDLE', 'FAULT', 'CONFIRMED'].includes(teaching.phase)
             "
             @click="action(begin)"
@@ -2238,8 +2296,8 @@ onBeforeUnmount(() => {
               }}<small>°</small></strong
             ><span
               >{{ sliderDirty || sliderRunning ? "滑块目标" : "S1俯仰目标" }} ·
-              已下发目标 {{ teaching.target_degrees?.toFixed(1) }}° · 板端命令
-              {{ teaching.board_command ?? "—" }} 档</span
+              <template v-if="state.hardware_enabled && teaching.phase !== 'IDLE'">本次目标 {{ teaching.target_degrees?.toFixed(1) }}° · 最近确认板端命令 {{ teaching.board_command ?? "—" }} 档</template>
+              <template v-else>默认目标，尚未开始本次硬件调角</template></span
             >
           </div>
           <label class="servo-slider-label" for="servo-angle-slider"
@@ -2256,7 +2314,7 @@ onBeforeUnmount(() => {
             :disabled="
               busy ||
               !connected ||
-              !trialArrived ||
+              !fieldReady ||
               !state.motion_held ||
               !state.health.still ||
               ![
@@ -2340,7 +2398,8 @@ onBeforeUnmount(() => {
         </article>
       </section>
       <details v-if="page === 'points'" class="card remote">
-        <summary>高级：手动遥控（首次录入优先使用单点导航）</summary>
+        <summary>现场遥控与继续录入</summary>
+        <button :disabled="busy || !fieldReady || sliderRunning" @click="action(restoreDrivingAngle)">恢复行驶角度，准备继续遥控</button>
         <div>
           <h2>手动遥控</h2>
           <p class="caption">
@@ -2418,7 +2477,7 @@ onBeforeUnmount(() => {
         <h2>
           {{
             state.run
-              ? labels[state.run.status] || state.run.status
+              ? runResult(state.run)
               : "当前没有巡检任务"
           }}
         </h2>
@@ -2443,6 +2502,9 @@ onBeforeUnmount(() => {
           <p v-if="state.run.error" class="status-wait">
             {{ state.run.error }}
           </p>
+          <ul v-if="state.run.missed?.length" class="caption">
+            <li v-for="miss in state.run.missed" :key="miss.point_id">{{ state.run.snapshot.points.find(p => p.id === miss.point_id)?.name || miss.point_id }}：全部备选停车位未通过导航或到点复核，本点未拍摄；请检查本轮清单的到点记录及导航日志。</li>
+          </ul>
           <div class="buttons">
             <button
               :disabled="busy || state.run.status !== 'RUNNING'"
@@ -2509,7 +2571,8 @@ onBeforeUnmount(() => {
         >
           <div class="card-title">
             <h2>{{ run.snapshot.name }}</h2>
-            <span>{{ labels[run.status] || run.status }}</span>
+            <a v-if="['SUCCEEDED','FAILED','CANCELED','INTERRUPTED','LOCKED'].includes(run.status)" :href="site(`/api/runs/${run.id}/archive.zip`)" download>下载整轮照片与清单</a>
+            <span>{{ runResult(run) }}</span>
           </div>
           <p>
             {{ Object.keys(run.captures || {}).length }} /
@@ -2525,6 +2588,9 @@ onBeforeUnmount(() => {
           <p class="caption">
             {{ run.error || "照片已保存在小车，可直接在此查看和下载。" }}
           </p>
+          <ul v-if="run.missed?.length" class="caption">
+            <li v-for="miss in run.missed" :key="miss.point_id">{{ run.snapshot.points.find(p => p.id === miss.point_id)?.name || miss.point_id }}：全部备选停车位未通过导航或到点复核，本点未拍摄；请检查本轮清单的到点记录及导航日志。</li>
+          </ul>
           <div class="photos">
             <figure v-for="photo in run.captures" :key="photo.id">
               <a :href="site(`/api/media/${photo.id}`)" download

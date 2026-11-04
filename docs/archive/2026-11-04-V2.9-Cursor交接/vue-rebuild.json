@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "assets": {
+    "THIRD_PARTY_NOTICES.txt": "154e63a1ad67beb196445d0f964d9b70a2417c1005c5631f1e0a28928f2b59d2",
+    "CARCAR-LICENSE.txt": "e0133205932bd4403aa7d3e959be6f2a97148ec25f12ec2614e77418cb941a1e",
+    "index.html": "e5fe45f7f7ae4c2ecf32bac285aa2d0cb7263901465dba1209db831d66cd0123",
+    "VUE-LICENSE.txt": "1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175",
+    "assets/index-CEJP08wH.css": "d7d3d10993f9b58e0e230c2199a9c6928653ae40eecdad634be401efd078084b",
+    "assets/index-MMrce2XR.js": "4e35091379c270a70df86067577d94b3c5a701c05c6aab8003690384cc68a59e"
+  },
+  "exact_match_installed": true
+}

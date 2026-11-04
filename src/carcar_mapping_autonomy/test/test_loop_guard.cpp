@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include <filesystem>
+#include <fstream>
+#include <limits>
 #include "carcar_mapping_autonomy/loop_guard.hpp"
 #include "carcar_mapping_autonomy/frozen_scan_validation.hpp"
 namespace ca=carcar_mapping_autonomy;
@@ -79,4 +82,73 @@ TEST_F(LoopGuardTest, FrozenValidationRestoresNormalLoopClosingEvenWhenMatchingT
   mapper.setParamDoLoopClosing(false);
   {ca::FrozenScanValidation transaction(&mapper,true);}
   EXPECT_FALSE(mapper.getParamDoLoopClosing());
+}
+
+
+class SamplingLoopGuardTest:public ::testing::Test{
+protected:
+  karto::Mapper mapper;karto::Dataset dataset;GuardSolver solver;
+  void populate(const std::vector<double>&ranges,double minimum_angle=-M_PI,
+    double angular_resolution=M_PI/180,karto::Pose2 offset=karto::Pose2()){
+    auto*laser=karto::LaserRangeFinder::CreateLaserRangeFinder(karto::LaserRangeFinder_Custom,karto::Name("loop-sampling-test"));
+    laser->SetMinimumRange(.05);laser->SetMaximumRange(12);laser->SetRangeThreshold(3);
+    laser->SetMinimumAngle(minimum_angle);laser->SetMaximumAngle(minimum_angle+(ranges.size()-1)*angular_resolution);
+    laser->SetAngularResolution(angular_resolution);laser->SetOffsetPose(offset);dataset.Add(laser,true);
+    mapper.setParamMinimumTravelDistance(0);mapper.setParamMinimumTimeInterval(0);mapper.setParamDoLoopClosing(false);
+    // 重复扫描仅建立可判读的几何夹具，不能代替现场回环正确性验证。
+    for(int k=0;k<8;++k){auto*scan=new karto::LocalizedRangeScan(laser->GetName(),ranges);
+      scan->SetOdometricPose(karto::Pose2());scan->SetCorrectedPose(karto::Pose2());scan->SetTime(k+1);
+      ASSERT_TRUE(mapper.Process(scan));dataset.Add(scan);}
+  }
+  karto::LocalizedRangeScan*current(){return mapper.GetAllProcessedScans().back();}
+};
+
+TEST_F(SamplingLoopGuardTest, RecordedSparseScanKeepsDistinctValidBeams){
+  const auto file=std::filesystem::path(__FILE__).parent_path()/"data/loop_guard_scan448_20261104.json";
+  std::ifstream input(file);ASSERT_TRUE(input.is_open());const auto fixture=nlohmann::json::parse(input);
+  std::vector<double>ranges;for(const auto&value:fixture["ranges"])ranges.push_back(value.is_null()?NAN:value.get<double>());
+  populate(ranges,fixture["angle_min"],fixture["angle_increment"]);
+  const auto score=ca::LoopGuard::score(mapper,current());
+  EXPECT_EQ(score.points,fixture["expected_valid_points"].get<size_t>());EXPECT_TRUE(score.acceptable());
+  ca::LoopGuard guard;guard.begin(mapper);EXPECT_TRUE(guard.finish(mapper,solver));EXPECT_EQ(solver.resets,0U);
+}
+
+TEST_F(SamplingLoopGuardTest, FortyNineDistinctPointsStillReject){
+  std::vector<double>ranges(361,4.0);for(size_t i=0;i<49;++i)ranges[1+6*i]=2;
+  populate(ranges);const auto score=ca::LoopGuard::score(mapper,current());
+  EXPECT_EQ(score.points,49U);EXPECT_FALSE(score.acceptable());
+  ca::LoopGuard guard;guard.begin(mapper);EXPECT_FALSE(guard.finish(mapper,solver));EXPECT_EQ(solver.resets,1U);
+}
+
+TEST_F(SamplingLoopGuardTest, FiftyDistinctPointsPassGeometryWithoutChangingThreshold){
+  std::vector<double>ranges(361,4.0);for(size_t i=0;i<50;++i)ranges[1+6*i]=2;
+  populate(ranges);const auto score=ca::LoopGuard::score(mapper,current());
+  EXPECT_EQ(score.points,50U);EXPECT_TRUE(score.acceptable());
+  ca::LoopGuard guard;guard.begin(mapper);EXPECT_TRUE(guard.finish(mapper,solver));EXPECT_EQ(solver.resets,0U);
+}
+
+TEST_F(SamplingLoopGuardTest, DenseWideScanRemainsBounded){
+  std::vector<double>ranges(720,2.0);populate(ranges,-M_PI,2*M_PI/719);
+  const auto score=ca::LoopGuard::score(mapper,current());EXPECT_EQ(score.points,180U);EXPECT_TRUE(score.acceptable());
+}
+
+TEST_F(SamplingLoopGuardTest, InvalidReturnsPreserveOriginalAnglesAndSensorOffset){
+  const double angle_min=-M_PI,increment=2*M_PI/719;
+  std::vector<double>ranges(720,4.0);
+  for(size_t i=0;i<ranges.size();++i){switch(i%4){
+    case 0:ranges[i]=std::numeric_limits<double>::infinity();break;
+    case 1:ranges[i]=std::numeric_limits<double>::quiet_NaN();break;
+    case 2:ranges[i]=.10;break;
+    default:ranges[i]=-.5;break;}}
+  for(size_t k=0;k<60;++k){const auto i=37+11*k;ranges[i]=1.5+.35*std::sin(5*(angle_min+i*increment));}
+  populate(ranges,angle_min,increment,karto::Pose2(.11,-.07,.24));
+  const auto score=ca::LoopGuard::score(mapper,current());EXPECT_EQ(score.points,60U);EXPECT_TRUE(score.acceptable());
+}
+
+TEST_F(SamplingLoopGuardTest, NoValidReturnsStillRollback){
+  populate(std::vector<double>(361,2.0));auto*scan=current();
+  scan->SetRangeReadings(std::vector<double>(361,std::numeric_limits<double>::infinity()));
+  scan->SetCorrectedPoseAndUpdate(scan->GetCorrectedPose());
+  const auto score=ca::LoopGuard::score(mapper,scan);EXPECT_EQ(score.points,0U);EXPECT_FALSE(score.acceptable());
+  ca::LoopGuard guard;guard.begin(mapper);EXPECT_FALSE(guard.finish(mapper,solver));EXPECT_EQ(solver.resets,1U);
 }
